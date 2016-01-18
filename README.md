@@ -17,13 +17,13 @@ This is the same design as the SST tables on rocksdb and leveldb(not stable yet)
 
 # References:
 
-* ![Persistent memory programming - pmem](http://pmem.io/)
-* ![Seastar Project](http://www.seastar-project.org/)
-* ![Data plain developtment kit - DPDK](http://dpdk.org/)
-* ![RAMCloud](https://ramcloud.atlassian.net/wiki/download/attachments/6848571/RAMCloudPaper.pdf)
-* ![Making lockless synchronization fast: performance implications of memory reclamation1](http://doi.ieeecomputersociety.org/10.1109/IPDPS.2006.163)
-* ![All files are not created equal: On the complexity of crafting crash-consistent applications](http://research.cs.wisc.edu/wind/Publications/alice-osdi14.pdf)
-* ![File consistency - danluu's blog post](http://danluu.com/file-consistency/)
+* [Persistent memory programming - pmem](http://pmem.io/)
+* [Seastar Project](http://www.seastar-project.org/)
+* [Data plain developtment kit - DPDK](http://dpdk.org/)
+* [RAMCloud](https://ramcloud.atlassian.net/wiki/download/attachments/6848571/RAMCloudPaper.pdf)
+* [Making lockless synchronization fast: performance implications of memory reclamation1](http://doi.ieeecomputersociety.org/10.1109/IPDPS.2006.163)
+* [All files are not created equal: On the complexity of crafting crash-consistent applications](http://research.cs.wisc.edu/wind/Publications/alice-osdi14.pdf)
+* [File consistency - danluu's blog post](http://danluu.com/file-consistency/)
 
 Yours Truly,
 ![gallegoxx](https://twitter.com/gallegoxx)
