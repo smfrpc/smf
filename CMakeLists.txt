@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.6)
-set(GOOBLY_VERSION_NUMBER "0.0.1")
+set(SMURF_VERSION "0.0.1")
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 enable_testing ()
