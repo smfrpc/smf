@@ -10,7 +10,8 @@ enable_testing ()
 
 # Don't forget to add them to the run_test.sh
 link_directories (
-  ${PROTOBUF_LIB_PATH}
+  ${PROJECT_SOURCE_DIR}/meta/tmp/seastar/build/release
+  ${PROJECT_SOURCE_DIR}/meta/tmp/seastar/build/dpdk/lib
   ${PROJECT_SOURCE_DIR}/meta/tmp/folly/folly/.libs
   ${PROJECT_SOURCE_DIR}/meta/tmp/nvml/src/nondebug
   /usr/local/lib # must be last if locals aren't used
@@ -20,6 +21,9 @@ include_directories (
   SYSTEM
   ${PROJECT_SOURCE_DIR}/meta/tmp/folly/folly
   ${PROJECT_SOURCE_DIR}/meta/tmp/nvml/src/include
+  ${PROJECT_SOURCE_DIR}/meta/tmp/seastar
+  ${PROJECT_SOURCE_DIR}/meta/tmp/seastar/build/release/gen
+  ${PROJECT_SOURCE_DIR}/meta/tmp/seastar/build/dpdk/include
   )
 include_directories (
   ${PROJECT_SOURCE_DIR}/src
@@ -30,6 +34,32 @@ function (join VALUES SEP OUTPUT)
   set (${OUTPUT} "${_TMP_STR}" PARENT_SCOPE)
 endfunction ()
 
+# FIXME(agallego):
+# I copied this flags from the meta/tmp/seastar/build/release/seastar.pc
+# If they are dynamic per system figure out how to bring them in. I couldn't
+# find a way to do it with cmake
+#
+# Same with the includes, and library paths. - effectively you should be able to
+# do just this:
+# g++ `pkg-config --cflags --libs $SEASTAR/build/release/seastar.pc` foo.cc
+# and it would do the right thing. CMake TODO
+#
+set(SEASTAR_CFLAGS
+  -DHAVE_DPDK
+  -DRTE_MACHINE_CPUFLAG_SSE
+  -DRTE_MACHINE_CPUFLAG_SSE2
+  -DRTE_MACHINE_CPUFLAG_SSE3
+  -DRTE_MACHINE_CPUFLAG_SSSE3
+  -DRTE_MACHINE_CPUFLAG_SSE4_1
+  -DRTE_MACHINE_CPUFLAG_SSE4_2
+  -DRTE_MACHINE_CPUFLAG_AES
+  -DRTE_MACHINE_CPUFLAG_PCLMULQDQ
+  -DRTE_MACHINE_CPUFLAG_AVX
+  -DRTE_COMPILE_TIME_CPUFLAGS=RTE_CPUFLAG_SSE,RTE_CPUFLAG_SSE2,RTE_CPUFLAG_SSE3,RTE_CPUFLAG_SSSE3,RTE_CPUFLAG_SSE4_1,RTE_CPUFLAG_SSE4_2,RTE_CPUFLAG_AES,RTE_CPUFLAG_PCLMULQDQ,RTE_CPUFLAG_AVX
+  -DHAVE_XEN
+  -DHAVE_HWLOC
+  -DHAVE_NUMA
+  )
 
 set(BASE_FLAGS
   "-fPIC"
@@ -48,7 +78,14 @@ set(BASE_FLAGS
   "-Wcast-align"
   "-Wmissing-field-initializers"
   "-O2"
-  "-ggdb"
+
+  # These are from the seastar project flags
+
+  "-fvisibility=hidden"
+  "-Wno-error=literal-suffix"
+  "-Wno-literal-suffix"
+  "-Wno-invalid-offsetof"
+  "-march=native"
   )
 
 set (CXX_FLAG_LIST
@@ -98,9 +135,50 @@ set (LIBFOLLY
   :libicudata.so.52 #not sure
   )
 
-add_executable (gbly
+set (DYN_LIBSEASTAR
+  seastar
+  pthread
+  aio
+  boost_program_options
+  boost_system
+  boost_filesystem
+  stdc++
+  m
+  boost_unit_test_framework
+  boost_thread
+  cryptopp
+  rt
+  gnutls
+  gnutlsxx
+  xenstore
+  rte_pmd_vmxnet3_uio
+  rte_pmd_i40e
+  rte_pmd_ixgbe
+  rte_pmd_e1000
+  rte_pmd_ring
+  rte_hash
+  rte_kvargs
+  rte_mbuf
+  ethdev
+  rte_eal
+  rte_malloc
+  rte_mempool
+  rte_ring
+  rte_cmdline
+  rte_cfgfile
+  rt
+  m
+  dl
+  hwloc
+  numa
+  pciaccess
+  xml2
+  z
+  )
+
+add_executable (smf
   ${PROJECT_SOURCE_DIR}/src/smf/main.cc
   )
-target_link_libraries (gbly ${LIBFOLLY} ${LIBGRPC})
+target_link_libraries (smf ${DYN_LIBSEASTAR})
 
 #add_subdirectory (test)
