@@ -13,8 +13,11 @@ around mmap(2) files and posix_fallocate(2) / truncate(2) + more.
 encouraged and fast up to this max (65'536 bytes). Records bigger will get split
 This is the same design as the SST tables on rocksdb and leveldb(not stable yet)
 
+# debugging - set core_pattern
 
-
+```
+ root$ echo 'core.%e.%p.%h.%t' > /proc/sys/kernel/core_pattern
+```
 # References:
 
 * [Persistent memory programming - pmem](http://pmem.io/)
