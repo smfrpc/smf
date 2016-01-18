@@ -21,6 +21,8 @@
   with_items:
     - 'g++-5'
     - 'gcc-5'
+    - 'g++-5-multilib'
+    - 'gcc-5-multilib'
     - 'gcc-5-doc'
     - 'ccache'
     - 'cmake'
@@ -45,4 +47,4 @@
     - 'libdouble-conversion-dev'
     - 'libunwind8-dev' #folly & glog stack unwindiwng
     - 'libssl-dev' # END folly lib deps
-    - 'uuid-dev'
+    - 'uuid-dev' # lib nvml

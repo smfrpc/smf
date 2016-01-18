@@ -1,0 +1,47 @@
+---
+
+
+# also depends on - but instaalled at common
+# 'libboost1.55-all-dev' #Folly lib deps start here
+
+- name: install deps for seastar
+  sudo: yes
+  apt:
+    name='{{item}}'
+    state=installed
+    update_cache=yes
+    cache_valid_time=3600
+    force=yes
+  with_items:
+    - libaio-dev
+    - ninja-build
+    - ragel
+    - libhwloc-dev
+    - libnuma-dev
+    - libpciaccess-dev
+    - libcrypto++-dev
+    - libxen-dev
+    - libxml2-dev
+    - xfslibs-dev
+    - libgnutls28-dev
+
+- name: Sync soure from git
+  git:
+    repo='https://github.com/scylladb/seastar.git'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/seastar'
+    update=yes
+    recursive=yes
+    version='f03e918'
+    force=yes
+
+- command: ./configure.py --enable-dpdk --compiler=g++-5
+  args:
+    chdir: '{{goobly_cache_dir}}/seastar'
+    creates: '{{goobly_cache_dir}}/seastar/build.ninja'
+
+- command: ninja
+  args:
+    chdir: '{{goobly_cache_dir}}/seastar'
+    creates: '{{goobly_cache_dir}}/seastar/foo.aaaa'
