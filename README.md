@@ -26,4 +26,4 @@ This is the same design as the SST tables on rocksdb and leveldb(not stable yet)
 * [File consistency - danluu's blog post](http://danluu.com/file-consistency/)
 
 Yours Truly,
-[gallegoxx](https://twitter.com/gallegoxx)
+[@gallegoxx](https://twitter.com/gallegoxx)
