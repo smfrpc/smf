@@ -1,0 +1,48 @@
+---
+
+- name: install ppas for debian compiler and emacs
+  apt_repository: repo='{{item}}' state=present
+  sudo: yes
+  with_items:
+    - 'ppa:ubuntu-toolchain-r/test'
+    - 'ppa:ubuntu-elisp/ppa'
+
+
+# TODO(agallego)
+# Note this is pending glog download, configure and link, needs sandbox
+- name: Install all dev system tools
+  sudo: yes
+  apt:
+    name='{{item}}'
+    state=installed
+    update_cache=yes
+    cache_valid_time=3600
+    force=yes
+  with_items:
+    - 'g++-5'
+    - 'gcc-5'
+    - 'gcc-5-doc'
+    - 'ccache'
+    - 'cmake'
+    - 'git'
+    - 'binutils-gold'
+    - 'ccache'
+    - 'libunwind8-dev'
+    - 'clang-3.6'
+    - 'clang-format-3.6' # compiler needed
+    - 'clang-modernize-3.6' # compiler formatter
+    - 'libgoogle-perftools-dev' # profiling tools
+    - 'doxygen' # needed for docs
+    - 'libgtest-dev' #grpc & folly
+    - 'libgflags-dev' #grpc & folly
+    - 'libgoogle-glog-dev' #grpc & folly
+    - 'libboost1.55-all-dev' #Folly lib deps start here
+    - 'libjemalloc-dev' # beter allocator
+    - 'liblzma-dev'
+    - 'libsnappy-dev'
+    - 'liblz4-dev'
+    - 'libevent-dev'
+    - 'libdouble-conversion-dev'
+    - 'libunwind8-dev' #folly & glog stack unwindiwng
+    - 'libssl-dev' # END folly lib deps
+    - 'uuid-dev'

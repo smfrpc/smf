@@ -1,0 +1,28 @@
+---
+
+- name: Sync soure from git
+  git:
+    repo='https://github.com/facebook/folly.git'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/folly'
+    update=yes
+    recursive=yes
+    version='v0.57.0'
+    force=yes
+
+- command: autoreconf -ivf
+  args:
+    chdir: '{{goobly_cache_dir}}/folly/folly'
+    # ignore_errors: yes
+    creates: '{{goobly_cache_dir}}/folly/folly/configure'
+
+- command: ./configure
+  args:
+    chdir: '{{goobly_cache_dir}}/folly/folly'
+    creates: '{{goobly_cache_dir}}/folly/folly/Makefile'
+
+- command: make -j{{ansible_processor_vcpus}}
+  args:
+    chdir: '{{goobly_cache_dir}}/folly/folly'
+    creates: '{{goobly_cache_dir}}/folly/folly/.libs/libfolly.so.57.0.0'

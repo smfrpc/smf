@@ -1,0 +1,20 @@
+DIR=$(git rev-parse --show-toplevel)/meta
+if [[ -e ${DIR}/tmp/bin/activate ]]; then
+    source ${DIR}/tmp/bin/activate
+else
+    sudo apt-get update -qq
+    sudo apt-get install -y \
+         software-properties-common \
+         python-dev \
+         python-pip
+
+    sudo pip install virtualenv
+    echo "Creating work directory ${PWD}/tmp"
+    mkdir -p ${DIR}/tmp
+    virtualenv ${DIR}/tmp
+    source ${DIR}/tmp/bin/activate
+    pip install paramiko PyYAML Jinja2 httplib2
+    pip install ansible
+    echo "Successfully installed ansible!"
+    echo "Next: ansible-playbook playbooks/devbox_all.yml"
+fi

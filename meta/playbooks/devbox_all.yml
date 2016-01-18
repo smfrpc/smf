@@ -1,0 +1,10 @@
+---
+
+- name: Install & build all development dependencies
+  hosts: localhost
+  roles:
+    - compilation_tooling
+    - google_benchmark
+    - folly
+    - gtest
+    - nvml

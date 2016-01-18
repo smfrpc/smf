@@ -1,0 +1,25 @@
+---
+
+- name: Sync soure from git
+  git:
+    repo='https://github.com/google/googletest.git'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/googletest'
+    update=yes
+    recursive=yes
+    version='35fb11e'
+    force=yes
+
+
+- file: path='{{goobly_cache_dir}}/googletest/build' state=directory
+
+- command: cmake -DBUILD_GTEST=1 -DBUILD_GMOCK=1 '{{goobly_cache_dir}}/googletest'
+  args:
+    chdir: '{{goobly_cache_dir}}/googletest/build'
+    creates: '{{goobly_cache_dir}}/googletest/build/Makefile'
+
+- command: make -j{{ansible_processor_vcpus}}
+  args:
+    chdir: '{{goobly_cache_dir}}/googletest/build'
+    creates: '{{goobly_cache_dir}}/googletest/build/googlemock/gtest/libgtest.a'
