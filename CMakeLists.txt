@@ -113,7 +113,6 @@ set (LIBSEASTAR
   boost_filesystem
   stdc++
   m
-  boost_unit_test_framework
   boost_thread
   cryptopp
   rt
