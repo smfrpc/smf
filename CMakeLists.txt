@@ -34,7 +34,31 @@ function (join VALUES SEP OUTPUT)
   set (${OUTPUT} "${_TMP_STR}" PARENT_SCOPE)
 endfunction ()
 
+
+# TODO(agallego): So these flags work on my desktop.
+# specially the avx cpu flag, etc. THese are proc specific/architect specific
+# So def not gna work for every computer.
+# Refactor, but not sure why cmake can't read the pkg-config thing :( ugh
+#
+set(SEASTAR_CFLAGS
+  -DHAVE_DPDK
+  -DRTE_MACHINE_CPUFLAG_SSE
+  -DRTE_MACHINE_CPUFLAG_SSE2
+  -DRTE_MACHINE_CPUFLAG_SSE3
+  -DRTE_MACHINE_CPUFLAG_SSSE3
+  -DRTE_MACHINE_CPUFLAG_SSE4_1
+  -DRTE_MACHINE_CPUFLAG_SSE4_2
+  -DRTE_MACHINE_CPUFLAG_AES
+  -DRTE_MACHINE_CPUFLAG_PCLMULQDQ
+  -DRTE_MACHINE_CPUFLAG_AVX
+  -DRTE_COMPILE_TIME_CPUFLAGS=RTE_CPUFLAG_SSE,RTE_CPUFLAG_SSE2,RTE_CPUFLAG_SSE3,RTE_CPUFLAG_SSSE3,RTE_CPUFLAG_SSE4_1,RTE_CPUFLAG_SSE4_2,RTE_CPUFLAG_AES,RTE_CPUFLAG_PCLMULQDQ,RTE_CPUFLAG_AVX
+  -DHAVE_XEN
+  -DHAVE_HWLOC
+  -DHAVE_NUMA
+  )
+
 set(BASE_FLAGS
+  ${SEASAR_CFLAGS}
   "-fPIC"
   "-fuse-ld=gold"
   "-Wall"
