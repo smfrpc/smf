@@ -34,33 +34,6 @@ function (join VALUES SEP OUTPUT)
   set (${OUTPUT} "${_TMP_STR}" PARENT_SCOPE)
 endfunction ()
 
-# FIXME(agallego):
-# I copied this flags from the meta/tmp/seastar/build/release/seastar.pc
-# If they are dynamic per system figure out how to bring them in. I couldn't
-# find a way to do it with cmake
-#
-# Same with the includes, and library paths. - effectively you should be able to
-# do just this:
-# g++ `pkg-config --cflags --libs $SEASTAR/build/release/seastar.pc` foo.cc
-# and it would do the right thing. CMake TODO
-#
-set(SEASTAR_CFLAGS
-  -DHAVE_DPDK
-  -DRTE_MACHINE_CPUFLAG_SSE
-  -DRTE_MACHINE_CPUFLAG_SSE2
-  -DRTE_MACHINE_CPUFLAG_SSE3
-  -DRTE_MACHINE_CPUFLAG_SSSE3
-  -DRTE_MACHINE_CPUFLAG_SSE4_1
-  -DRTE_MACHINE_CPUFLAG_SSE4_2
-  -DRTE_MACHINE_CPUFLAG_AES
-  -DRTE_MACHINE_CPUFLAG_PCLMULQDQ
-  -DRTE_MACHINE_CPUFLAG_AVX
-  -DRTE_COMPILE_TIME_CPUFLAGS=RTE_CPUFLAG_SSE,RTE_CPUFLAG_SSE2,RTE_CPUFLAG_SSE3,RTE_CPUFLAG_SSSE3,RTE_CPUFLAG_SSE4_1,RTE_CPUFLAG_SSE4_2,RTE_CPUFLAG_AES,RTE_CPUFLAG_PCLMULQDQ,RTE_CPUFLAG_AVX
-  -DHAVE_XEN
-  -DHAVE_HWLOC
-  -DHAVE_NUMA
-  )
-
 set(BASE_FLAGS
   "-fPIC"
   "-fuse-ld=gold"
@@ -78,8 +51,6 @@ set(BASE_FLAGS
   "-Wcast-align"
   "-Wmissing-field-initializers"
   "-O2"
-
-
   )
 
 set (CXX_FLAG_LIST
@@ -89,13 +60,10 @@ set (CXX_FLAG_LIST
   "-Woverloaded-virtual"
   "-Wsign-promo"
   "-Wreorder"
-  # These are from the seastar project flags
-  ${SEASTAR_CFLAGS}
   "-fvisibility=hidden"
   "-Wno-error=literal-suffix"
   "-Wno-literal-suffix"
   "-Wno-invalid-offsetof"
-  "-march=native"
   )
 
 # set(GCC_COVERAGE_COMPILE_FLAGS "-fprofile-arcs -ftest-coverage")
@@ -136,9 +104,8 @@ set (LIBFOLLY
   :libicudata.so.52 #not sure
   )
 
-set (DYN_LIBSEASTAR
+set (LIBSEASTAR
  -Wl,--whole-archive,-lseastar,--no-whole-archive
-  #seastar
   pthread
   aio
   boost_program_options
@@ -181,6 +148,6 @@ set (DYN_LIBSEASTAR
 add_executable (smf
   ${PROJECT_SOURCE_DIR}/src/smf/main.cc
   )
-target_link_libraries (smf ${DYN_LIBSEASTAR})
+target_link_libraries (smf ${LIBSEASTAR})
 
 #add_subdirectory (test)
