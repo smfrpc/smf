@@ -79,13 +79,7 @@ set(BASE_FLAGS
   "-Wmissing-field-initializers"
   "-O2"
 
-  # These are from the seastar project flags
 
-  "-fvisibility=hidden"
-  "-Wno-error=literal-suffix"
-  "-Wno-literal-suffix"
-  "-Wno-invalid-offsetof"
-  "-march=native"
   )
 
 set (CXX_FLAG_LIST
@@ -95,6 +89,13 @@ set (CXX_FLAG_LIST
   "-Woverloaded-virtual"
   "-Wsign-promo"
   "-Wreorder"
+  # These are from the seastar project flags
+  ${SEASTAR_CFLAGS}
+  "-fvisibility=hidden"
+  "-Wno-error=literal-suffix"
+  "-Wno-literal-suffix"
+  "-Wno-invalid-offsetof"
+  "-march=native"
   )
 
 # set(GCC_COVERAGE_COMPILE_FLAGS "-fprofile-arcs -ftest-coverage")
@@ -136,7 +137,8 @@ set (LIBFOLLY
   )
 
 set (DYN_LIBSEASTAR
-  seastar
+ -Wl,--whole-archive,-lseastar,--no-whole-archive
+  #seastar
   pthread
   aio
   boost_program_options
