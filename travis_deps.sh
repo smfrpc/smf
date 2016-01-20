@@ -1,5 +1,5 @@
 #!/bin/bash --login
-set -ex
+#set -ex
 lsb_release -a
 git_root=$(git rev-parse --show-toplevel)
 
