@@ -44,6 +44,4 @@
 - command: ninja
   args:
     chdir: '{{goobly_cache_dir}}/seastar'
-    creates: '{{goobly_cache_dir}}/seastar/foo.aaaa'
-  async: 9000 # 30 mins
-  poll: 10
+    creates: '{{goobly_cache_dir}}/seastar/build/release/seastar.pc'
