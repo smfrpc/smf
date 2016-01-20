@@ -1,4 +1,4 @@
-# smurf
+# smurf [![Build Status](https://travis-ci.org/senior7515/smurf.svg?branch=master)](https://travis-ci.org/senior7515/smurf)
 Fastest durable log broker in the west.
 
 # tl;dr
