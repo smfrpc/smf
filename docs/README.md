@@ -9,6 +9,10 @@ Effively same as kafka: http://kafka.apache.org/documentation.html#messageformat
 * Big difference: The same format as is on wire, is used on the payload of the
 **HTTP POST**
 
+* Because the primary target platform is x86, all ints are encoded as
+little endian. *NOT* network order or big endian. This is true for
+the **message length** and the **crc** check.
+
 ```
 
 message length : 4 bytes (value: 1+4+n)
