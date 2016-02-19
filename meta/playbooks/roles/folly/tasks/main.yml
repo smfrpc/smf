@@ -46,4 +46,4 @@
 - command: make -j{{ansible_processor_vcpus}} install
   args:
     chdir: '{{goobly_cache_dir}}/folly/folly'
-    creates: '{{goobly_cache_dir}}/folly/folly/.libs/libfolly.so.57.0.0'
+    creates: '{{third_party_dir}}/lib/libfolly.a'

@@ -34,3 +34,6 @@ bazel-*
 src/third_party/bin/
 src/third_party/include/
 src/third_party/lib/
+src/third_party/etc/
+src/third_party/lib64/
+src/third_party/share/

@@ -24,7 +24,7 @@
 
 - name: Compile
   command:
-    make -j{{ansible_processor_vcpus}} install DESTDIR="{{third_party_dir}}"
+    make -j{{ansible_processor_vcpus}} install DESTDIR="{{third_party_dir}}" prefix=/
   args:
     chdir: '{{goobly_cache_dir}}/nvml'
-    creates: '{{goobly_cache_dir}}/nvml/src/nondebug/libpmemlog.so'
+    creates: '{{third_party_dir}}/lib/libpmemlog.so'
