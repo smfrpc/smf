@@ -29,8 +29,9 @@ cc_library(
 cc_library(
     name = "seastar",
     linkstatic=1,
+    srcs = ["lib/seastar.a"]
     hdrs = glob([
-        "include/seastar/*.h",
+        "include/dpdk/*.h",
         "include/seastar/*.hh"
     ]),
     linkopts = [
