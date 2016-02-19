@@ -1,4 +1,5 @@
 ---
 
+third_party_dir: '{{inventory_dir}}../src/third_party'
 goobly_cache_dir: '{{inventory_dir}}/tmp'
 user_bin_dir: '{{ansible_env.HOME}}/bin'

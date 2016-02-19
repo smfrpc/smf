@@ -4,8 +4,6 @@
   hosts: localhost
   roles:
     - compilation_tooling
-    - google_benchmark
     - folly
-    - gtest
     - nvml
     - seastar

@@ -14,10 +14,9 @@
 - command: autoreconf -ivf
   args:
     chdir: '{{goobly_cache_dir}}/folly/folly'
-    # ignore_errors: yes
     creates: '{{goobly_cache_dir}}/folly/folly/configure'
 
-- command: ./configure
+- command: ./configure --with-pic --prefix="{{third_party_dir}}"
   args:
     chdir: '{{goobly_cache_dir}}/folly/folly'
     creates: '{{goobly_cache_dir}}/folly/folly/Makefile'
