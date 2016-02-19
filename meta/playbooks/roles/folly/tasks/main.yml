@@ -1,5 +1,27 @@
 ---
 
+- name: install deps
+  sudo: yes
+  apt:
+    name='{{item}}'
+    state=installed
+    update_cache=yes
+    cache_valid_time=3600
+    force=yes
+  with_items:
+    - 'libgtest-dev'
+    - 'libgflags-dev'
+    - 'libgoogle-glog-dev'
+    - 'libboost1.55-all-dev'
+    - 'libjemalloc-dev'
+    - 'liblzma-dev'
+    - 'libsnappy-dev'
+    - 'liblz4-dev'
+    - 'libevent-dev'
+    - 'libdouble-conversion-dev'
+    - 'libunwind8-dev'
+    - 'libssl-dev'
+
 - name: Sync soure from git
   git:
     repo='https://github.com/facebook/folly.git'
@@ -21,7 +43,7 @@
     chdir: '{{goobly_cache_dir}}/folly/folly'
     creates: '{{goobly_cache_dir}}/folly/folly/Makefile'
 
-- command: make -j{{ansible_processor_vcpus}}
+- command: make -j{{ansible_processor_vcpus}} install
   args:
     chdir: '{{goobly_cache_dir}}/folly/folly'
     creates: '{{goobly_cache_dir}}/folly/folly/.libs/libfolly.so.57.0.0'

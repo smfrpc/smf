@@ -30,3 +30,7 @@ build/
 
 # bazel
 bazel-*
+
+src/third_party/bin/
+src/third_party/include/
+src/third_party/lib/

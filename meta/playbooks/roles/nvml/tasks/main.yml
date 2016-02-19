@@ -1,5 +1,16 @@
 ---
 
+- name: install deps
+  sudo: yes
+  apt:
+    name='{{item}}'
+    state=installed
+    update_cache=yes
+    cache_valid_time=3600
+    force=yes
+  with_items:
+    - 'uuid-dev'
+
 - name: Sync soure from git
   git:
     repo='https://github.com/pmem/nvml.git'
@@ -12,7 +23,8 @@
     force=yes
 
 - name: Compile
-  command: make -j{{ansible_processor_vcpus}}
+  command:
+    make -j{{ansible_processor_vcpus}} install prefix="{{third_party_dir}}"
   args:
     chdir: '{{goobly_cache_dir}}/nvml'
     creates: '{{goobly_cache_dir}}/nvml/src/nondebug/libpmemlog.so'

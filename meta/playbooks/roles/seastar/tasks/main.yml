@@ -1,10 +1,7 @@
 ---
 
 
-# also depends on - but instaalled at common
-# 'libboost1.55-all-dev' #Folly lib deps start here
-
-- name: install deps for seastar
+- name: install deps
   sudo: yes
   apt:
     name='{{item}}'
@@ -13,6 +10,7 @@
     cache_valid_time=3600
     force=yes
   with_items:
+    - libboost1.55-all-dev
     - libaio-dev
     - ninja-build
     - ragel
@@ -33,15 +31,15 @@
     dest='{{goobly_cache_dir}}/seastar'
     update=yes
     recursive=yes
-    version='f03e918'
+    version='cf1716f'
     force=yes
 
-- command: ./configure.py --enable-dpdk --compiler=g++-5
+- command: ./configure.py --enable-dpdk --compiler=g++-5  --with-pic --prefix="{{third_party_dir}}"
   args:
     chdir: '{{goobly_cache_dir}}/seastar'
     creates: '{{goobly_cache_dir}}/seastar/build.ninja'
 
-- command: ninja
+- command: ninja install
   args:
     chdir: '{{goobly_cache_dir}}/seastar'
     creates: '{{goobly_cache_dir}}/seastar/build/release/seastar.pc'

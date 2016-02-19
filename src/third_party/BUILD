@@ -6,7 +6,7 @@ cc_library(
     name = "folly",
     hdrs = glob(["include/folly/*.h"]),
     linkstatic=1,
-    srcs = ["lib/libfolly.so.57.0.0"],
+    srcs = ["lib/libfolly.a"],
     copts = ["-Ilib"],
     linkopts = [
         "-libboost_filesystem.so.1.55.0"
