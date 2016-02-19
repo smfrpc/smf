@@ -34,12 +34,54 @@
     version='cf1716f'
     force=yes
 
-- command: ./configure.py --enable-dpdk --compiler=g++-5  --with-pic --prefix="{{third_party_dir}}"
+# Does not support  --prefix="{{third_party_dir}}"
+# Does not support ccache either. oiiiiiiiiiii
+- command: ./configure.py --enable-dpdk --compiler=g++-5
   args:
     chdir: '{{goobly_cache_dir}}/seastar'
     creates: '{{goobly_cache_dir}}/seastar/build.ninja'
 
-- command: ninja install
+# does not support install
+- command: ninja
   args:
     chdir: '{{goobly_cache_dir}}/seastar'
-    creates: '{{goobly_cache_dir}}/seastar/build/release/seastar.pc'
+    creates: '{{goobly_cache_dir}}/seastar/build/release/libseastar.a'
+
+- name: copy main seastar.a lib
+  copy:
+    src='{{goobly_cache_dir}}/seastar/build/release/libseastar.a'
+    dest="{{third_party_dir}}/lib/libseastar.a"
+
+- name: copy all the libseastar dpdk includes
+  copy:
+    src='{{goobly_cache_dir}}/seastar/build/dpdk/lib/{{item}}'
+    dest="{{third_party_dir}}/lib/{{item}}"
+  with_items:
+    - libethdev.a
+    - librte_kvargs.a
+    - librte_pmd_cxgbe.a
+    - librte_pmd_ixgbe.a
+    - librte_ring.a
+    - librte_cfgfile.a
+    - librte_malloc.a
+    - librte_pmd_e1000.a
+    - librte_pmd_null.a
+    - librte_timer.a
+    - librte_cmdline.a
+    - librte_mbuf.a
+    - librte_pmd_enic.a
+    - librte_pmd_ring.a
+    - librte_vhost.a
+    - librte_eal.a
+    - librte_mempool.a
+    - librte_pmd_fm10k.a
+    - librte_pmd_virtio.a
+    - librte_hash.a
+    - librte_pmd_af_packet.a
+    - librte_pmd_i40e.a
+    - librte_pmd_vmxnet3_uio.a
+
+- name: copy all the libseastar dpdk includes
+  copy:
+    src='{{goobly_cache_dir}}/seastar/build/dpdk/include/'
+    dest="{{third_party_dir}}/include/dpdk/"
