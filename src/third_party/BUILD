@@ -1,13 +1,13 @@
 # TODO(agallego)
 # 1. Add versions to the seastar application dependent libraries
-# 2. Try to tream it down
-
+#
 
 cc_library(
     name = "folly",
     hdrs = glob(["include/folly/*.h"]),
+    linkstatic=1,
     srcs = ["lib/libfolly.so.57.0.0"],
-    copts = ["-Ilib"]
+    copts = ["-Ilib"],
     linkopts = [
         "-libboost_filesystem.so.1.55.0"
         ,"-libboost_system.so.1.55.0"
@@ -27,13 +27,14 @@ cc_library(
 )
 
 cc_library(
-    name = "core_deps",
+    name = "seastar",
+    linkstatic=1,
     hdrs = glob([
         "include/seastar/*.h",
         "include/seastar/*.hh"
     ]),
     linkopts = [
-        ,"-Wl,--whole-archive,-lseastar,--no-whole-archive"
+        "-Wl,--whole-archive,-lseastar,--no-whole-archive"
         ,"-pthread"
         ,"-aio"
         ,"-boost_program_options"
