@@ -1,7 +1,6 @@
 cc_binary(
     name = "smf",
     srcs = ["main.cc"],
-    deps = ["//src/third_party:folly"],
     copts = [
         "-fPIC"
         ,"-fuse-ld=gold"
@@ -28,5 +27,6 @@ cc_binary(
         ,"-Wno-error=literal-suffix"
         ,"-Wno-literal-suffix"
         ,"-Wno-invalid-offsetof"
-    ]
+    ],
+    deps = ["//src/third_party:gargamellibs"]
 )
