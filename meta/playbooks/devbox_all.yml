@@ -6,4 +6,3 @@
     - compilation_tooling
     - folly
     - nvml
-    - seastar
