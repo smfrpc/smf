@@ -17,8 +17,7 @@
     chdir: '{{goobly_cache_dir}}/wangle/wangle'
     creates: '{{goobly_cache_dir}}/wangle/wangle/Makefile'
 
-- command:
-    LD_LIBRARY_PATH="{{third_party_dir}}/lib" make -j{{ansible_processor_vcpus}} install
+- command: make -j{{ansible_processor_vcpus}} install
   args:
     chdir: '{{goobly_cache_dir}}/wangle/wangle'
     creates: '{{third_party_dir}}/lib/libwangle.a'
