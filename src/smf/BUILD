@@ -19,5 +19,5 @@ cc_binary(
     #     ,"-Wno-literal-suffix"
     #     ,"-Wno-invalid-offsetof"
     # ],
-    deps = ["//src/third_party:folly"]
+    deps = ["//src/third_party:wangle"]
 )

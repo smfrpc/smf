@@ -1,0 +1,24 @@
+---
+
+- name: add add-apt-repostory
+  apt: pkg=python-software-properties state=present update_cache=yes
+  sudo: yes
+
+- name: add webupd8 ppa
+  sudo: yes
+  apt_repository: repo='ppa:webupd8team/java' state=present
+
+- name: auto accept oracle jdk 8 license
+  shell: echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections
+  sudo: yes
+
+- name: install java8
+  sudo: yes
+  apt:
+    name='{{item}}'
+    state=present
+    update_cache=yes
+    cache_valid_time=3600
+  with_items:
+    - ca-certificates
+    - oracle-java8-installer

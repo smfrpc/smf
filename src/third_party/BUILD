@@ -26,6 +26,18 @@ cc_library(
     visibility = ["//visibility:public"]
 )
 
+cc_library(
+    name = "wangle",
+    includes = ["include"],
+    linkstatic=1,
+    srcs = [
+        "lib/libwangle.a",
+    ],
+    deps = ["//src/third_party:folly"],
+    visibility = ["//visibility:public"]
+)
+
+
 # TODO(agallego) -
 #
 # Enable seastar later.
