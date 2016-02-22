@@ -6,3 +6,4 @@
     - compilation_tooling
     - folly
     - nvml
+    - wangle # depends on folly being first

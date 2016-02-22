@@ -1,0 +1,24 @@
+---
+
+- name: Sync soure from git
+  git:
+    repo='https://github.com/facebook/wangle.git'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/wangle'
+    update=yes
+    recursive=yes
+    version='v0.13.0'
+    force=yes
+
+- command:
+    cmake -DBUILD_TESTS=0 -DCMAKE_INSTALL_PREFIX:PATH="{{third_party_dir}}"  '{{goobly_cache_dir}}/wangle/wangle'
+  args:
+    chdir: '{{goobly_cache_dir}}/wangle/wangle'
+    creates: '{{goobly_cache_dir}}/wangle/wangle/Makefile'
+
+- command:
+    LD_LIBRARY_PATH="{{third_party_dir}}/lib" make -j{{ansible_processor_vcpus}} install
+  args:
+    chdir: '{{goobly_cache_dir}}/wangle/wangle'
+    creates: '{{third_party_dir}}/lib/libwangle.a'
