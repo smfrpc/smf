@@ -1,0 +1,9 @@
+---
+
+- name: Install & build all development dependencies
+  hosts: localhost
+  roles:
+    - folly
+    - nvml
+    - wangle # depends on folly being first
+    - proxygen # depends on wangle

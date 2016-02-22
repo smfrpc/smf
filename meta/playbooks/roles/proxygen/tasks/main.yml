@@ -1,0 +1,31 @@
+---
+
+- name: Sync soure from git
+  git:
+    repo='https://github.com/facebook/proxygen.git'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/proxygen'
+    update=yes
+    recursive=yes
+    version='v0.32.0'
+    force=yes
+
+- command: autoreconf -ivf
+  args:
+    chdir: '{{goobly_cache_dir}}/proxygen/proxygen'
+    creates: '{{goobly_cache_dir}}/proxygen/proxygen/configure'
+
+- name: configure proxygen
+  shell:
+    CPPFLAGS=-I"{{third_party_dir}}/include" \
+    LDFLAGS=-L"{{third_party_dir}}/lib" ./configure --with-pic \
+    --prefix="{{third_party_dir}}"
+  args:
+    chdir: '{{goobly_cache_dir}}/proxygen/proxygen'
+    creates: '{{goobly_cache_dir}}/proxygen/proxygen/Makefile'
+
+- command: make -j{{ansible_processor_vcpus}} install
+  args:
+    chdir: '{{goobly_cache_dir}}/proxygen/proxygen'
+    creates: '{{third_party_dir}}/lib/libproxygenlib.a'
