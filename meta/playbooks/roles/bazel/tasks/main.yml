@@ -1,0 +1,16 @@
+---
+
+- name: ensure that user has bin/ directory
+  file: path=~/bin state=directory
+
+- get_url:
+    url='https://github.com/bazelbuild/bazel/releases/download/0.1.5/bazel-0.1.5-installer-linux-x86_64.sh'
+    dest=~/bin/bazel-0.1.5-installer-linux-x86_64.sh
+  register: needs_bazel_install
+
+- file: path=~/bin/bazel-0.1.5-installer-linux-x86_64.sh mode='ugo+x'
+
+- name: install bazel in usr directory
+  shell: JAVA_HOME=/usr/lib/jvm/java-8-oracle ~/bin/bazel-0.1.5-installer-linux-x86_64.sh --user
+  args:
+    creates: ~/bin/bazel

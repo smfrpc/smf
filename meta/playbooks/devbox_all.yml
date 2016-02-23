@@ -1,11 +1,5 @@
 ---
 
-- name: Install & build all development dependencies
-  hosts: localhost
-  roles:
-    - compilation_tooling
-    - google_benchmark
-    - folly
-    - gtest
-    - nvml
-    - seastar
+
+- include: system_wide_deps.yml
+- include: dev_libraries.yml
