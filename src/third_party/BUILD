@@ -25,6 +25,7 @@ cc_library(
         ,"-lssl"
         ,"-lgflags"
         ,"-lglog"
+        ,"-lm"
     ],
     visibility = ["//visibility:public"]
 )
@@ -45,8 +46,8 @@ cc_library(
     includes = ["include"],
     linkstatic=1,
     srcs = [
-        "lib/libproxygenlib.a",
-        "lib/libproxygenhttpserver.a"
+        "lib/libproxygenhttpserver.a",
+        "lib/libproxygenlib.a"
     ],
     deps = ["//src/third_party:wangle"],
     linkopts = [
