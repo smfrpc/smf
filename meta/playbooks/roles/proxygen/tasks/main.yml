@@ -8,7 +8,7 @@
     dest='{{goobly_cache_dir}}/proxygen'
     update=yes
     recursive=yes
-    version='v0.32.0'
+    version='1ca8296'
     force=yes
 
 - command: autoreconf -ivf

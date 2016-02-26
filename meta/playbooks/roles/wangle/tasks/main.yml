@@ -8,11 +8,11 @@
     dest='{{goobly_cache_dir}}/wangle'
     update=yes
     recursive=yes
-    version='v0.13.0'
+    version='ec31c04' # needed for proxygen > 57.0
     force=yes
 
 - command:
-    cmake -DBUILD_TESTS=0 -DCMAKE_INSTALL_PREFIX:PATH="{{third_party_dir}}"  '{{goobly_cache_dir}}/wangle/wangle'
+    cmake -DBUILD_TESTS=0 -DCMAKE_INSTALL_PREFIX:PATH="{{third_party_dir}}" '{{goobly_cache_dir}}/wangle/wangle'
   args:
     chdir: '{{goobly_cache_dir}}/wangle/wangle'
     creates: '{{goobly_cache_dir}}/wangle/wangle/Makefile'
