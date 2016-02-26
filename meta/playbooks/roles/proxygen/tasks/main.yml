@@ -1,5 +1,16 @@
 ---
 
+- name: install deps
+  sudo: yes
+  apt:
+    name='{{item}}'
+    state=installed
+    update_cache=yes
+    cache_valid_time=3600
+    force=yes
+  with_items:
+    - 'libcap-dev'
+
 - name: Sync soure from git
   git:
     repo='https://github.com/facebook/proxygen.git'
