@@ -10,6 +10,7 @@
     force=yes
   with_items:
     - 'libcap-dev'
+    - 'gperf'
 
 - name: Sync soure from git
   git:
