@@ -30,8 +30,9 @@
     dest='{{goobly_cache_dir}}/folly'
     update=yes
     recursive=yes
-    version='705e751' # needed for proxygen > 57.0
+    version='705e751'
     force=yes
+    #version needed for proxygen > 57.0
 
 - command: autoreconf -ivf
   args:
