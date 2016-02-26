@@ -22,28 +22,28 @@ DEFINE_int32(http_port, 11000, "Port to listen on with HTTP protocol");
 DEFINE_int32(spdy_port, 11001, "Port to listen on with SPDY protocol");
 DEFINE_int32(h2_port, 11002, "Port to listen on with HTTP/2 protocol");
 DEFINE_string(ip, "localhost", "IP/Hostname to bind to");
-DEFINE_int32(threads, 0, "Number of threads to listen on. Numbers <= 0 "
+DEFINE_int32(threads,
+             0,
+             "Number of threads to listen on. Numbers <= 0 "
              "will use the number of cores on this machine.");
 
 class EchoHandlerFactory : public RequestHandlerFactory {
- public:
-  void onServerStart(folly::EventBase* evb) noexcept override {
+  public:
+  void onServerStart(folly::EventBase *evb) noexcept override {
     stats_.reset(new EchoStats);
   }
 
-  void onServerStop() noexcept override {
-    stats_.reset();
-  }
+  void onServerStop() noexcept override { stats_.reset(); }
 
-  RequestHandler* onRequest(RequestHandler*, HTTPMessage*) noexcept override {
+  RequestHandler *onRequest(RequestHandler *, HTTPMessage *) noexcept override {
     return new EchoHandler(stats_.get());
   }
 
- private:
+  private:
   folly::ThreadLocalPtr<EchoStats> stats_;
 };
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
   google::InstallFailureSignalHandler();
@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
     {SocketAddress(FLAGS_ip, FLAGS_h2_port, true), Protocol::HTTP2},
   };
 
-  if (FLAGS_threads <= 0) {
+  if(FLAGS_threads <= 0) {
     FLAGS_threads = sysconf(_SC_NPROCESSORS_ONLN);
     CHECK(FLAGS_threads > 0);
   }
@@ -64,17 +64,14 @@ int main(int argc, char* argv[]) {
   options.idleTimeout = std::chrono::milliseconds(60000);
   options.shutdownOn = {SIGINT, SIGTERM};
   options.enableContentCompression = true;
-  options.handlerFactories = RequestHandlerChain()
-      .addThen<EchoHandlerFactory>()
-      .build();
+  options.handlerFactories =
+    RequestHandlerChain().addThen<EchoHandlerFactory>().build();
 
   HTTPServer server(std::move(options));
   server.bind(IPs);
 
   // Start HTTPServer mainloop in a separate thread
-  std::thread t([&] () {
-    server.start();
-  });
+  std::thread t([&]() { server.start(); });
 
   t.join();
   return 0;
