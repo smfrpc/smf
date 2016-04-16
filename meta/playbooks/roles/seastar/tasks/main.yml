@@ -31,7 +31,7 @@
     dest='{{goobly_cache_dir}}/seastar'
     update=yes
     recursive=yes
-    version='cf1716f'
+    version='2185f37'
     force=yes
 
 # Does not support  --prefix="{{third_party_dir}}"
