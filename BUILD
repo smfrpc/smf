@@ -1,5 +1,8 @@
 cc_binary(
     name = "smf",
-    srcs = ["main.cc"],
+    includes=["src"],
+    srcs = [
+        "src/smf/main.cc",
+    ],
     deps = ["//src/third_party:seastar"]
 )
