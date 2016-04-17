@@ -7,11 +7,9 @@ cc_library(
     name = "seastar",
     includes = ["include/seastar", "include/dpdk"],
     linkstatic=1,
-    srcs = [
-    ],
     linkopts = [
         # seastar deps
-        ,"-Wl,--whole-archive,-L:lib/libseastar.a,--no-whole-archive"
+        "-Wl,--whole-archive,-L:lib/libseastar.a,--no-whole-archive"
         ,"-laio"
         ,"-lboost_program_options"
         ,"-lboost_system"

@@ -1,0 +1,10 @@
+#!/bin/bash --login
+# set -ex
+JAVA_HOME=/usr/lib/jvm/java-8-oracle
+bzl="$HOME/bin/bazel"
+"$bzl" build \
+       -c opt  \
+       --verbose_failures \
+       --verbose_explanations \
+       --explain=/dev/stdout \
+       //:all
