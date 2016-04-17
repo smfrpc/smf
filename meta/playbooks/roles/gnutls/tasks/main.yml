@@ -1,0 +1,37 @@
+---
+
+- name: download gnutls
+  get_url:
+    url="ftp://ftp.gnutls.org/gcrypt/gnutls/v3.4/gnutls-3.4.11.tar.xz"
+    dest="{{goobly_cache_dir}}/gnutls-3.4.11.tar.xz"
+
+- name: decompress gnutls
+  unarchive:
+    src="{{goobly_cache_dir}}/gnutls-3.4.11.tar.xz"
+    dest="{{goobly_cache_dir}}/"
+
+- name: install deps
+  sudo: yes
+  apt:
+    name='{{item}}'
+    state=installed
+    update_cache=yes
+    cache_valid_time=3600
+    force=yes
+  with_items:
+    - build-essential
+    - nettle-dev
+    - libgmp-dev
+    - libtasn1-dev
+
+
+#./configure && make && make install
+- command: ./configure --prefix="{{third_party_dir}}" --with-included-tasn1
+  args:
+    chdir: '{{goobly_cache_dir}}/gnutls-3.4.11'
+    creates: '{{goobly_cache_dir}}/gnutls-3.4.11/Makefile'
+
+- command: "make install -j{{ansible_processor_vcpus}}"
+  args:
+    chdir: '{{goobly_cache_dir}}/gnutls-3.4.11'
+    creates: '/usr/local/lib/libgnutls.so.28.22.0'
