@@ -1,17 +1,11 @@
 # smurf [![Build Status](https://travis-ci.org/senior7515/smurf.svg?branch=master)](https://travis-ci.org/senior7515/smurf)
-Fastest durable log broker in the west.
+
+Still not sure, if I should write an hdfs,kafka,or nothing w/ seastar.
+check back in later - playing w/ the rpc mechanisms here.
 
 # tl;dr
 
-Mechanically friendly logging service.
-
-* Using the Seastar project we can bypass the TCP stack and run in user mode
-* The persistent memory programming module allows you to store - reliably
-bytes to disk at memory speeds. It is effectively a series of abstractions
-around mmap(2) files and posix_fallocate(2) / truncate(2) + more.
-* The format is intended for mid size records ~64KB. Records smaller are
-encouraged and fast up to this max (65'536 bytes). Records bigger will get split
-This is the same design as the SST tables on rocksdb and leveldb(not stable yet)
+using seastar-project.org for multiple projects. direction to be defined
 
 # debugging - set core_pattern
 
