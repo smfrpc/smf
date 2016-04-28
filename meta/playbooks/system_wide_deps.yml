@@ -3,6 +3,4 @@
 - name: Install & build all development dependencies
   hosts: localhost
   roles:
-    - java
-    - bazel
     - compilation_tooling
