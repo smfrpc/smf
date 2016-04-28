@@ -136,9 +136,14 @@ set (LIBSEASTAR
   z
   )
 
-add_executable (smf
-  ${PROJECT_SOURCE_DIR}/src/smf/main.cc
+add_executable (smf_server
+  ${PROJECT_SOURCE_DIR}/src/smf/server.cc
   )
-target_link_libraries (smf ${LIBSEASTAR})
+target_link_libraries (smf_server ${LIBSEASTAR})
+
+add_executable (smf_client
+  ${PROJECT_SOURCE_DIR}/src/smf/client.cc
+  )
+target_link_libraries (smf_client ${LIBSEASTAR})
 
 #add_subdirectory (test)

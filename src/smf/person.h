@@ -16,7 +16,7 @@ template <typename Output>
 void write(const person_serializer &, Output &output, const person &data) {
   //[int32(size_of_payload)][payload]
   uint32_t size = data.name.size();
-  out.write(reinterpret_cast<const char *>(&size), sizeof(size));
+  output.write(reinterpret_cast<const char *>(&size), sizeof(size));
   output.write(data.name.c_str(), data.name.size());
 }
 template <typename Input>
