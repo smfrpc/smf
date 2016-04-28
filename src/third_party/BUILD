@@ -3,11 +3,12 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "seastar",
     includes = ["include/seastar", "include/dpdk"],
-    hdrs = glob(["include/seastar/**/*.hh","include/dpdk/*.h"]),
+    hdrs = glob(["include/seastar/**/*.hh",
+                 "include/seastar/*.hh",
+                 "include/dpdk/*.h"]),
     linkstatic=1,
     linkopts = [
-        # seastar deps
-        "-Wl,--whole-archive,-L:lib/libseastar.a,--no-whole-archive"
+        "-Wl,--whole-archive,-lseastar,--no-whole-archive"
         ,"-laio"
         ,"-lboost_program_options"
         ,"-lboost_system"
