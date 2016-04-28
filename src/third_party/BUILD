@@ -1,11 +1,9 @@
 package(default_visibility = ["//visibility:public"])
-# TODO(agallego) -
-#
-# Enable seastar later.
-#
+
 cc_library(
     name = "seastar",
     includes = ["include/seastar", "include/dpdk"],
+    hdrs = glob(["include/seastar/**/*.hh","include/dpdk/*.h"]),
     linkstatic=1,
     linkopts = [
         # seastar deps
