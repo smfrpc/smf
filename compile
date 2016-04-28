@@ -7,3 +7,6 @@ if [[ ! -e $git_root/build/Makefile ]]; then
 fi
 nprocs=$(grep -c ^processor /proc/cpuinfo)
 make -j$nprocs
+if [[ "$1" == "test" ]]; then
+    ctest -V -j$nprocs
+fi
