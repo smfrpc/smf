@@ -1,0 +1,9 @@
+#!/bin/bash --login
+git_root=$(git rev-parse --show-toplevel)
+mkdir -p $git_root/build
+cd $git_root/build
+if [[ ! -e $git_root/build/Makefile ]]; then
+    cmake $git_root
+fi
+nprocs=$(grep -c ^processor /proc/cpuinfo)
+make -j$nprocs
