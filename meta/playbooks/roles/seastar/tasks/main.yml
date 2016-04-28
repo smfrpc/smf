@@ -41,11 +41,22 @@
     chdir: '{{goobly_cache_dir}}/seastar'
     creates: '{{goobly_cache_dir}}/seastar/build.ninja'
 
+- debug: msg="ninja -j(({{ansible_processor_vcpus}}-1))"
+
 # does not support install
-- command: ninja
+- shell: "ninja -j$((({{ansible_processor_vcpus}}-1)))"
   args:
     chdir: '{{goobly_cache_dir}}/seastar'
     creates: '{{goobly_cache_dir}}/seastar/build/release/libseastar.a'
+
+- file: path="{{item}}" state=directory
+  with_items:
+    - "{{third_party_dir}}/lib"
+    - "{{third_party_dir}}/include"
+    - "{{third_party_dir}}/include/seastar"
+    - "{{third_party_dir}}/include/seastar/net"
+    - "{{third_party_dir}}/include/dpdk"
+
 
 - name: copy main seastar.a lib
   copy:
