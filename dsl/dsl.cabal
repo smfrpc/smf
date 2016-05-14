@@ -38,4 +38,4 @@ test-suite dsl-test
 
 source-repository head
   type:     git
-  location: https://github.com/githubuser/dsl
+  location: https://github.com/senior7515/smurf/dsl
