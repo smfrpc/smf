@@ -18,7 +18,7 @@ else
     source ${DIR}/tmp/bin/activate
     pip install paramiko PyYAML Jinja2 httplib2
     # turns out that ansible 2.0.0.v1 is so broken
-    pip install ansible==1.9.2
+    pip install ansible==2.0.0.2
     echo "Successfully installed ansible!"
     echo "Next: ansible-playbook playbooks/devbox_all.yml"
 fi

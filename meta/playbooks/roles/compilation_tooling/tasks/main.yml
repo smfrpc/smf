@@ -1,18 +1,13 @@
 ---
 
 - name: Install all dev system tools
-  sudo: yes
-  dnf:
-    name='{{item}}'
-    state=installed
+  become: yes
+  dnf: name='{{item}}'
   with_items:
-    - 'g++'
-    - 'gcc'
+    - 'gcc-c++'
     - 'ccache'
     - 'cmake'
     - 'git'
     - 'binutils'
-    - 'ccache'
     - 'clang'
-    - 'clang-format' # compiler needed
     - 'doxygen' # needed for docs

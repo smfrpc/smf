@@ -1,12 +1,13 @@
 ---
 
 - name: install deps
-  sudo: yes
+  become: yes
   dnf:
     name='{{item}}'
     state=installed
   with_items:
     - uuid-devel
+    - jemalloc-devel
 
 - name: Sync soure from git
   git:

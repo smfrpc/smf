@@ -2,10 +2,9 @@
 
 
 - name: install deps
-  sudo: yes
+  become: yes
   dnf:
     name='{{item}}'
-    state=installed
   with_items:
     - libaio-devel
     - ninja-build
@@ -37,10 +36,7 @@
     chdir: '{{goobly_cache_dir}}/seastar'
     creates: '{{goobly_cache_dir}}/seastar/build.ninja'
 
-- debug: msg="ninja -j(({{ansible_processor_vcpus}}-1))"
-
-# does not support install
-- shell: "ninja -j$((({{ansible_processor_vcpus}}-1)))"
+- shell: "ninja-build -j$((({{ansible_processor_vcpus}}-1)))"
   args:
     chdir: '{{goobly_cache_dir}}/seastar'
     creates: '{{goobly_cache_dir}}/seastar/build/release/libseastar.a'
