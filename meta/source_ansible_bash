@@ -8,7 +8,8 @@ else
          libffi-devel \
          openssl-devel \
          redhat-rpm-config \
-         python-dnf
+         python-dnf \
+         libselinux-python
 
     sudo pip install pip --upgrade
     sudo pip install virtualenv
