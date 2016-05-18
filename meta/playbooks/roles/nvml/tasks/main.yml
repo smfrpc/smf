@@ -2,14 +2,11 @@
 
 - name: install deps
   sudo: yes
-  apt:
+  dnf:
     name='{{item}}'
     state=installed
-    update_cache=yes
-    cache_valid_time=3600
-    force=yes
   with_items:
-    - 'uuid-dev'
+    - uuid-devel
 
 - name: Sync soure from git
   git:
@@ -19,7 +16,7 @@
     dest='{{goobly_cache_dir}}/nvml'
     update=yes
     recursive=yes
-    version='0.4'
+    version='1.0'
     force=yes
 
 - name: Compile

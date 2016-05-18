@@ -3,25 +3,24 @@
 
 - name: install deps
   sudo: yes
-  apt:
+  dnf:
     name='{{item}}'
     state=installed
-    update_cache=yes
-    cache_valid_time=3600
-    force=yes
   with_items:
-    - libboost1.55-all-dev
-    - libaio-dev
+    - libaio-devel
     - ninja-build
     - ragel
-    - libhwloc-dev
-    - libnuma-dev
-    - libpciaccess-dev
-    - libcrypto++-dev
-    - libxen-dev
-    - libxml2-dev
-    - xfslibs-dev
-    - libgnutls28-dev
+    - hwloc-devel
+    - numactl-devel
+    - libpciaccess-devel
+    - cryptopp-devel
+    - xen-devel
+    - boost-devel
+    - libxml2-devel
+    - xfsprogs-devel
+    - gnutls-devel
+    - libubsan
+    - libasan
 
 - name: Sync soure from git
   git:
@@ -31,12 +30,9 @@
     dest='{{goobly_cache_dir}}/seastar'
     update=yes
     recursive=yes
-    version='cf1716f'
     force=yes
 
-# Does not support  --prefix="{{third_party_dir}}"
-# Does not support ccache either. oiiiiiiiiiii
-- command: ./configure.py --enable-dpdk --compiler=g++-5
+- command: ./configure.py --enable-dpdk
   args:
     chdir: '{{goobly_cache_dir}}/seastar'
     creates: '{{goobly_cache_dir}}/seastar/build.ninja'
