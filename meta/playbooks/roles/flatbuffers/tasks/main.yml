@@ -1,0 +1,31 @@
+---
+- name: Sync soure from git
+  git:
+    repo='https://github.com/google/flatbuffers.git'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/flatbuffers'
+    update=yes
+    recursive=yes
+    force=yes
+
+
+- file:
+    path='{{goobly_cache_dir}}/flatbuffers/build'
+    state=directory
+
+- command: cmake -DCMAKE_INSTALL_PREFIX:PATH='{{third_party_dir}}' '{{goobly_cache_dir}}/flatbuffers'
+  args:
+    chdir: '{{goobly_cache_dir}}/flatbuffers/build'
+    creates: '{{goobly_cache_dir}}/flatbuffers/build/Makefile'
+
+- shell: "make install -j$((({{ansible_processor_vcpus}}-1)))"
+  args:
+    chdir: '{{goobly_cache_dir}}/flatbuffers/build'
+    creates: '{{third_party_dir}}/lib/libflatbuffers.a'
+
+- file: path='{{cmake_dir}}' state=directory
+
+- copy:
+    src='{{goobly_cache_dir}}/flatbuffers/CMake/BuildFlatBuffers.cmake'
+    dest='{{cmake_dir}}/BuildFlatBuffers.cmake'

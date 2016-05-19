@@ -4,3 +4,4 @@
   hosts: localhost
   roles:
     - seastar
+    - flatbuffers
