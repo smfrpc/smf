@@ -4,10 +4,10 @@
   become: yes
   dnf: name='{{item}}'
   with_items:
-    - 'gcc-c++'
-    - 'ccache'
-    - 'cmake'
-    - 'git'
-    - 'binutils'
-    - 'clang'
-    - 'doxygen' # needed for docs
+    - gcc-c++
+    - ccache
+    - cmake
+    - git
+    - binutils
+    - clang
+    - doxygen
