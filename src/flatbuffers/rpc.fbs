@@ -1,0 +1,54 @@
+namespace smurf.rpc;
+enum Method:byte { Get, Post }
+
+// union Equipment { Weapon } // Optionally add more tables.
+// struct Vec3 {
+//   x:float;
+//   y:float;
+//   z:float;
+// }
+// table Monster {
+//   pos:Vec3; // Struct.
+//   mana:short = 150;
+//   hp:short = 100;
+//   name:string;
+//   friendly:bool = false (deprecated);
+//   inventory:[ubyte];  // Vector of scalars.
+//   color:Color = Blue; // Enum.
+//   weapons:[Weapon];   // Vector of tables.
+//   equipped:Equipment; // Union.
+// }
+// table Weapon {
+//   name:string;
+//   damage:short;
+// }
+// root_type Monster;
+
+table GetRequest{
+  name:string;
+}
+table GetResponse{
+  name:string;
+}
+table PostRequest{
+  name:string;
+}
+table PostResponse{
+  name:string;
+}
+
+union RPCRequest {
+  GetRequest, PostRequest
+}
+
+union RPCResponse {
+  GetResponse, PostResponse
+}
+
+table RPC {
+  method: Method;
+  request: RPCRequest;
+  response: RPCResponse;
+}
+
+root_type RPC;
