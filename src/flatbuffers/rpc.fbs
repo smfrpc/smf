@@ -28,8 +28,8 @@ table Header {
 }
 
 table RPC {
-  version: uint32 = 0;
-  status: uint32 = 200;
+  version: uint = 0;
+  status: uint = 200;
   headers: [Header];
   request: RPCRequest;
   response: RPCResponse;
