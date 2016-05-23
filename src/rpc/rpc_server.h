@@ -1,17 +1,19 @@
 #pragma once
 #include "core/distributed.hh"
 
-class tcp_server {
+// smf
+#include "rpc/rpc_server.h"
+namespace smf {
+class rpc_server {
   private:
-  lw_shared_ptr<server_socket> _listener;
-  sharded_cache &_cache;
-  distributed<system_stats> &_system_stats;
-  uint16_t _port;
+  lw_shared_ptr<server_socket> listener_;
+  distributed<system_stats> &rpc_stats_;
+  uint16_t port_;
   struct connection {
-    connected_socket _socket;
-    socket_address _addr;
-    input_stream<char> _in;
-    output_stream<char> _out;
+    connected_socket socket_;
+    socket_address addr_;
+    input_stream<char> in_;
+    output_stream<char> out;
     ascii_protocol _proto;
     distributed<system_stats> &_system_stats;
     connection(connected_socket &&socket,
@@ -31,15 +33,13 @@ class tcp_server {
   };
 
   public:
-  tcp_server(sharded_cache &cache,
-             distributed<system_stats> &system_stats,
-             uint16_t port = 11211)
-    : _cache(cache), _system_stats(system_stats), _port(port) {}
+  tcp_server(distributed<system_stats> &rpc_stats, uint16_t port = 11225)
+    : rpc_stats_(system_stats), port_(port) {}
 
   void start() {
     listen_options lo;
     lo.reuse_address = true;
-    _listener = engine().listen(make_ipv4_address({_port}), lo);
+    listener_ = engine().listen(make_ipv4_address({_port}), lo);
     keep_doing([this] {
       return _listener->accept().then(
         [this](connected_socket fd, socket_address addr) mutable {
@@ -137,7 +137,8 @@ class stats_printer {
 //         return make_ready_future<>();
 //       })
 //       .then([&, port] {
-//         return tcp_server.start(std::ref(cache), std::ref(system_stats), port);
+//         return tcp_server.start(std::ref(cache), std::ref(system_stats),
+//         port);
 //       })
 //       .then([&tcp_server] {
 //         return tcp_server.invoke_on_all(&memcache::tcp_server::start);
@@ -157,7 +158,8 @@ class stats_printer {
 //           (size_t)config["max-datagram-size"].as<int>());
 //       })
 //       .then(
-//         [&] { return udp_server.invoke_on_all(&memcache::udp_server::start); })
+//         [&] { return udp_server.invoke_on_all(&memcache::udp_server::start);
+//         })
 //       .then([&stats, start_stats = config.count("stats")] {
 //         if(start_stats) {
 //           stats.start();
@@ -165,3 +167,4 @@ class stats_printer {
 //       });
 //   });
 // }
+}

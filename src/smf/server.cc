@@ -1,16 +1,8 @@
 #include <iostream>
-#include <stdexcept>
-#include "core/app-template.hh"
-#include "rpc/rpc_server.h"
+#include "rpc/rpc_generated.h"
+int main(int args, char** argv, char** env){
 
-int main(int argc, char **argv) {
-  distributed<smf::rpc_server> rpc_server;
-  app_template app;
-  try {
-    app.run(argc, argv, f);
-  } catch(const std::runtime_error &e) {
-    std::cerr << "Couldn't start application: " << e.what() << "\n";
-    return 1;
-  }
-  return 0;
+  // read file char* data
+  auto rpc = GetRPC(data);
+  std::cout << "hello world" << std::endl;
 }

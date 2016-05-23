@@ -1,7 +1,23 @@
 namespace smurf.rpc;
 
+table Header {
+  name: string;
+  value: string;
+}
+
+table Metadata {
+  headers: [Header];
+  version: uint = 0;
+  status: uint = 200;
+  client_id: uint;
+  checksum: uint;
+}
+
 table GetRequest{
-  name:string;
+  table_name:string;
+  offset: uint;
+  partition: uint;
+
 }
 table GetResponse{
   name:string;
@@ -22,15 +38,10 @@ union RPCResponse {
   GetResponse, PostResponse
 }
 
-table Header {
-  name: string;
-  value: string;
-}
+
 
 table RPC {
-  version: uint = 0;
-  status: uint = 200;
-  headers: [Header];
+
   request: RPCRequest;
   response: RPCResponse;
 }
