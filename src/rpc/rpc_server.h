@@ -7,48 +7,49 @@ namespace smf {
 class rpc_server {
   private:
   lw_shared_ptr<server_socket> listener_;
-  distributed<system_stats> &rpc_stats_;
+  distributed<rpc_stats> &stats_;
   uint16_t port_;
   struct connection {
     connected_socket socket_;
     socket_address addr_;
     input_stream<char> in_;
     output_stream<char> out;
-    ascii_protocol _proto;
-    distributed<system_stats> &_system_stats;
+    prc_size_based_parser proto_;
+    distributed<rpc_stats> &stats_;
     connection(connected_socket &&socket,
                socket_address addr,
-               sharded_cache &c,
-               distributed<system_stats> &system_stats)
-      : _socket(std::move(socket))
-      , _addr(addr)
-      , _in(_socket.input())
-      , _out(_socket.output())
-      , _proto(c, system_stats)
-      , _system_stats(system_stats) {
-      _system_stats.local()._curr_connections++;
-      _system_stats.local()._total_connections++;
+               distributed<rpc_stats> &stats)
+      : socket_(std::move(socket))
+      , addr_(addr)
+      , in_(socket_.input())   // has no alternate ctor
+      , out_(socket_.output()) // has no alternate ctor
+      , stats_(stats) {
+      stats_.local().active_connections++;
+      stats_.local().total_connections++;
     }
-    ~connection() { _system_stats.local()._curr_connections--; }
+    ~connection() { stats_.local().active_connections--; }
   };
 
   public:
-  tcp_server(distributed<system_stats> &rpc_stats, uint16_t port = 11225)
-    : rpc_stats_(system_stats), port_(port) {}
+  tcp_server(distributed<rpc_stats> &stats, uint16_t port = 11225)
+    : stats_(stats), port_(port) {}
 
   void start() {
     listen_options lo;
     lo.reuse_address = true;
-    listener_ = engine().listen(make_ipv4_address({_port}), lo);
+    listener_ = engine().listen(make_ipv4_address({port_}), lo);
     keep_doing([this] {
-      return _listener->accept().then(
+      return listener_->accept().then(
         [this](connected_socket fd, socket_address addr) mutable {
-          auto conn = make_lw_shared<connection>(std::move(fd), addr, _cache,
-                                                 _system_stats);
+          auto conn =
+            make_lw_shared<connection>(std::move(fd), addr, _cache, stats_);
+
+          // keep open forever until the client shuts down the socket
+          // no need to close the connction
           do_until([conn] { return conn->_in.eof(); },
                    [this, conn] {
-                     return conn->_proto.handle(conn->_in, conn->_out)
-                       .then([conn] { return conn->_out.flush(); });
+                     return conn->proto_.handle(conn->_in, conn->_out)
+                       .then([conn] { return conn->out_.flush(); });
                    })
             .finally([conn] { return conn->_out.close().finally([conn] {}); });
         });
@@ -59,36 +60,7 @@ class rpc_server {
   future<> stop() { return make_ready_future<>(); }
 };
 
-class stats_printer {
-  private:
-  timer<> _timer;
-  sharded_cache &_cache;
 
-  public:
-  stats_printer(sharded_cache &cache) : _cache(cache) {}
-
-  void start() {
-    _timer.set_callback([this] {
-      _cache.stats().then([this](auto stats) {
-        auto gets_total = stats._get_hits + stats._get_misses;
-        auto get_hit_rate =
-          gets_total ? ((double)stats._get_hits * 100 / gets_total) : 0;
-        auto sets_total = stats._set_adds + stats._set_replaces;
-        auto set_replace_rate =
-          sets_total ? ((double)stats._set_replaces * 100 / sets_total) : 0;
-        std::cout << "items: " << stats._size << " " << std::setprecision(2)
-                  << std::fixed << "get: " << stats._get_hits << "/"
-                  << gets_total << " (" << get_hit_rate << "%) "
-                  << "set: " << stats._set_replaces << "/" << sets_total << " ("
-                  << set_replace_rate << "%)";
-        std::cout << std::endl;
-      });
-    });
-    _timer.arm_periodic(std::chrono::seconds(1));
-  }
-
-  future<> stop() { return make_ready_future<>(); }
-};
 
 } /* namespace memcache */
 
