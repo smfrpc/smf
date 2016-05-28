@@ -1,5 +1,7 @@
 #pragma once
 // include timer from seastar
+#include <core/timer-set.hh>
+
 #include "rpc/rpc_stats.h"
 
 class stats_printer {
@@ -11,7 +13,9 @@ class stats_printer {
 
   void start() {
     timer_.set_callback([this] {
-      stats().then([this](auto stats) { std::cout << stats << std::endl; });
+      stats().then([this](auto stats) {
+        std::cout << "Periodic stats: " << stats << std::endl;
+      });
     });
     timer_.arm_periodic(period_);
   }

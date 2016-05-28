@@ -18,6 +18,7 @@
     - gnutls-devel
     - libubsan
     - libasan
+    - lksctp-tools-devel
 
 - name: Sync soure from git
   git:
