@@ -5,3 +5,4 @@
   roles:
     - seastar
     - flatbuffers
+    - kafka
