@@ -12,6 +12,13 @@ using seastar-project.org for multiple projects. direction to be defined
 ```
  root$ echo 'core.%e.%p.%h.%t' > /proc/sys/kernel/core_pattern
 ```
+# getting started
+```bash
+ root$ cd $ROOT/meta
+ root$ source source_ansible_bash
+ root$ ansible-playbook playbooks/devbox_all.yml
+```
+
 # References:
 
 * [Persistent memory programming - pmem](http://pmem.io/)
