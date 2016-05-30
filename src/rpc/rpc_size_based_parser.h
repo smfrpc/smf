@@ -8,6 +8,7 @@ class rpc_size_based_parser {
   rpc_size_based_parser(size_t max_size = 0) : max_size_(max_size) {}
   void parse() {}
   future<> handle(input_stream<char> in, output_stream<char> out) {
+
     return make_ready_future<>();
   }
   private:
