@@ -1,4 +1,7 @@
 #pragma once
+#include <ostream>
+
+namespace smf {
 
 struct rpc_stats {
   size_t active_connections{};
@@ -25,13 +28,15 @@ struct rpc_stats {
     return *this; // make a copy for map_reduce framework
   }
   std::ostream &operator<<(std::ostream &o) {
-    o << "active conn: " << active_connections << std::endl
-      << "total conn: " << total_connections << std::endl
-      << "in bytes: " << in_bytes << std::endl
-      << "out bytes: " << out_bytes << std::endl
-      << "bad requests: " << bad_requests << std::endl
-      << "completed requests: " << completed_requests_ << std::endl
-      << "too large requests: " << too_large_requests << std::endl;
+    o << "active conn: " << active_connections << ", "
+      << "total conn: " << total_connections << ", "
+      << "in bytes: " << in_bytes << ", "
+      << "out bytes: " << out_bytes << ", "
+      << "bad requests: " << bad_requests << ", "
+      << "completed requests: " << completed_requests << ", "
+      << "too large requests: " << too_large_requests;
     return o;
   }
+  future<> stop() { return make_ready_future<>(); }
 };
+}
