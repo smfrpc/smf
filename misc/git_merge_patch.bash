@@ -18,6 +18,6 @@ git_root=$(git rev-parse --show-toplevel)
 cd $git_root
 
 
-git am -3 --scissors $patch_file
-
+git am $patch_file
+git push origin master
 git send-email HEAD^..HEAD --compose --subject "$subject_line" --to smurf-dev@googlegroups.com
