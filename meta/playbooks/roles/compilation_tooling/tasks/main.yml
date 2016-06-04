@@ -11,3 +11,4 @@
     - binutils
     - clang
     - doxygen
+    - gtest-devel

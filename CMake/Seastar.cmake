@@ -1,5 +1,9 @@
 find_package(PkgConfig REQUIRED)
-set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${PROJECT_SOURCE_DIR}/meta/tmp/seastar/build/release")
+IF(CMAKE_BUILD_TYPE MATCHES Debug)
+  set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${PROJECT_SOURCE_DIR}/meta/tmp/seastar/build/debug")
+ELSE()
+  set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${PROJECT_SOURCE_DIR}/meta/tmp/seastar/build/release")
+ENDIF()
 pkg_search_module(SEASTAR REQUIRED seastar)
 
 # MESSAGE(STATUS "SEASTAR SEASTAR_FOUND: " ${SEASTAR_FOUND})

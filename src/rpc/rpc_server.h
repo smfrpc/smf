@@ -24,7 +24,7 @@ class rpc_server {
           // no need to close the connction
           do_until([conn] { return conn->in.eof(); },
                    [this, conn] {
-                     return conn->proto.handle(conn->in, conn->out)
+                     return conn->proto.handle(conn->in, conn->out, conn->stats)
                        .then([conn] { return conn->out.flush(); });
                    })
             .finally([conn] { return conn->out.close().finally([conn] {}); });

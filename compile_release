@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+git_root=$(git rev-parse --show-toplevel)
+mkdir -p $git_root/build
+cd $git_root/build
+cmake -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_ALL_TESTS=True $git_root
+
+nprocs=$(grep -c ^processor /proc/cpuinfo)
+make -j$nprocs
+ctest -V -j$nprocs

@@ -5,10 +5,10 @@ namespace smf.fbs.rpc;
 /// many flags at the same time, i.e.: enable crc32 checks and
 /// have the payload be zlib compressed.
 ///
-enum Flags: uint {
-  SNAPPY: 1 << 0;
-  ZLIB: 1 << 1;
-  VERIFY_PAYLOAD: 1 << 2;
+enum Flags:uint (bit_flags) {
+  SNAPPY,
+    ZLIB,
+  VERIFY_PAYLOAD
 }
 
 /// \brief: header parsed by rpc engine
@@ -17,7 +17,7 @@ enum Flags: uint {
 ///
 struct Header {
   size: uint;
-  flags: Flags;
+  flags: Flags = 0;
   crc32: uint;
 }
 
@@ -31,7 +31,7 @@ struct Header {
 /// or any other protocol, so a byte array is the lowest abstraction
 ///
 table Payload {
-  body: [byte];
+  body: [ubyte];
 }
 
 /// \brief: how the nodes communicate with one another

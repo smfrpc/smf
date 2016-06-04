@@ -1,0 +1,11 @@
+#!/bin/bash
+git_root=$(git rev-parse --show-toplevel)
+flatc="$git_root/src/third_party/bin/flatc"
+if [[ ! -e $flatc ]]; then
+    echo "flatbuffers compiler does not exist, cannot generate schemas"
+    exit 1;
+fi
+for f in $(ls ./*.json); do
+    echo "Generating schema $f"
+    $flatc -b $git_root/src/flatbuffers/rpc.fbs $f
+done

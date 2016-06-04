@@ -6,7 +6,7 @@ table RaftHeader {
 }
 
 table RaftMetadata {
-  headers: [Header];
+  headers: [RaftHeader];
   version: uint = 0;
   status: uint = 200;
   client_id: uint;

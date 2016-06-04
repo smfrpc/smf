@@ -1,12 +1,15 @@
-#!/bin/bash --login
-#set -ex
-git_root=$(git rev-parse --show-toplevel)
-grpc_libs_path="$git_root/meta/tmp/grpc/libs/opt"
-protobuf_libs_path="$git_root/meta/tmp/grpc/third_party/protobuf/src/.libs"
-nvml_libs="$git_root/meta/tmp/nvml/src/nondebug"
-gtest_libs="$git_root/meta/tmp/googletest/build/googlemock/gtest:$git_root/meta/tmp/googletest/build/googlemock:$git_root/meta/tmp/google_benchmark"
+#!/bin/bash
+#set -x
+set -e
+test=$1
 
-export LD_LIBRARY_PATH=$grpc_libs_path:$protobuf_libs_path:$gtest_libs:$nvml_libs:$LD_LIBRARY_PATH
+if [[ ! -e  $test ]]; then
+    exit 1
+fi
+
+git_root=$(git rev-parse --show-toplevel)
+third_party_libs_dir="$git_root/src/third_party/lib:$git_root/src/third_party/lib64"
+export LD_LIBRARY_PATH=$third_party_libs_dir:$LD_LIBRARY_PATH
 export GLOG_logtostderr=${GLOG_logtostderr:='1'}
 export GLOG_v=${GLOG_v:='1'}
 export GLOG_vmodule=${GLOG_vmodule,''}
@@ -18,7 +21,10 @@ export GTEST_BREAK_ON_FAILURE=${GTEST_BREAK_ON_FAILURE:='1'}
 export GTEST_REPEAT=${GTEST_REPEAT:='1'}
 # export GTEST_FILTER='] = ARGUMENTS.get('filter','*')
 
-cd $1
-test=$2
+cd $2
+if [[ -e "pre_test_hook" ]]; then
+    echo "Running pre test hook"
+    sh ./pre_test_hook
+fi
 echo "Running $2 inside $1 directory"
 exec $test

@@ -1,12 +1,12 @@
-#!/bin/bash --login
+#!/bin/bash
+set -e
 git_root=$(git rev-parse --show-toplevel)
 mkdir -p $git_root/build
 cd $git_root/build
 if [[ ! -e $git_root/build/Makefile ]]; then
-    cmake $git_root
+    cmake -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_ALL_TESTS=False $git_root
 fi
 nprocs=$(grep -c ^processor /proc/cpuinfo)
 make -j$nprocs
-if [[ "$1" == "test" ]]; then
-    ctest -V -j$nprocs
-fi
+ctest -V -j$nprocs
