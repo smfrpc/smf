@@ -1,49 +1,46 @@
-namespace smf.rpc;
+namespace smf.fbs.rpc;
 
-table Header {
-  name: string;
-  value: string;
+/// \brief: headers that are stored in an int
+/// so they need to be inclusive. That is, you can turn on
+/// many flags at the same time, i.e.: enable crc32 checks and
+/// have the payload be zlib compressed.
+///
+enum Flags: uint {
+  SNAPPY: 1 << 0;
+  ZLIB: 1 << 1;
+  VERIFY_PAYLOAD: 1 << 2;
 }
 
-table Metadata {
-  headers: [Header];
-  version: uint = 0;
-  status: uint = 200;
-  client_id: uint;
-  checksum: uint;
+/// \brief: header parsed by rpc engine
+/// must be sizeof()'able
+/// that is, must be a struct in fbs language
+///
+struct Header {
+  size: uint;
+  flags: Flags;
+  crc32: uint;
 }
 
-table GetRequest{
-  table_name:string;
-  offset: uint;
-  partition: uint;
-
-}
-table GetResponse{
-  name:string;
-}
-table PostRequest{
-  name:string;
-  body:[byte];
-}
-table PostResponse{
-  name:string;
+/// \brief: Payload needs to be a table because internally
+/// we actually don't hold a pointer to the RPC table, we
+/// construct the header from the socket and then construct
+/// the payload from the socket. So we need a fbs table to wrap
+/// the byte array of the body of the request.
+///
+/// The idea here is that the `body' will actually be another flatbuffer
+/// or any other protocol, so a byte array is the lowest abstraction
+///
+table Payload {
+  body: [byte];
 }
 
-union RPCRequest {
-  GetRequest, PostRequest
-}
-
-union RPCResponse {
-  GetResponse, PostResponse
-}
-
-
-
+/// \brief: how the nodes communicate with one another
+/// FIXME(agallego): - experiment if you can just send an RPC or if you have to
+/// desugar it into 2 buffers. That is, write the header and then write the
+/// payload
 table RPC {
-
-  request: RPCRequest;
-  response: RPCResponse;
+  header: Header;
+  payload: Payload;
 }
 
 root_type RPC;

@@ -1,0 +1,48 @@
+namespace smf.fbs.raft;
+
+table RaftHeader {
+  name: string;
+  value: string;
+}
+
+table RaftMetadata {
+  headers: [Header];
+  version: uint = 0;
+  status: uint = 200;
+  client_id: uint;
+  checksum: uint;
+}
+
+table RaftGetRequest{
+  table_name:string;
+  offset: uint;
+  partition: uint;
+
+}
+table RaftGetResponse{
+  name:string;
+}
+table RaftPostRequest{
+  name:string;
+  body:[byte];
+}
+table RaftPostResponse{
+  name:string;
+}
+
+union RaftRPCRequest {
+  RaftGetRequest, RaftPostRequest
+}
+
+union RaftRPCResponse {
+  RaftGetResponse, RaftPostResponse
+}
+
+
+
+table RaftRPC {
+  request: RaftRPCRequest;
+  response: RaftRPCResponse;
+}
+
+root_type RaftRPC;
