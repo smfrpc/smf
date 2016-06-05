@@ -1,14 +1,16 @@
 #pragma once
+// seastar
 #include <core/distributed.hh>
-#include <util/log.hh>
 // smf
-#include "rpc/rpc_stats.h"
-#include "rpc/rpc_size_based_parser.h"
+#include "log.h"
+#include "rpc/rpc_server_stats.h"
+#include "rpc/rpc_decoder.h"
 
 namespace smf {
+
 class rpc_server {
   public:
-  rpc_server(distributed<rpc_stats> &stats, uint16_t port)
+  rpc_server(distributed<rpc_server_stats> &stats, uint16_t port)
     : stats_(stats), port_(port) {}
 
   void start() {
@@ -18,16 +20,22 @@ class rpc_server {
     keep_doing([this] {
       return listener_->accept().then(
         [this](connected_socket fd, socket_address addr) mutable {
+          log.info("accepted connection");
           auto conn = make_lw_shared<connection>(std::move(fd), addr, stats_);
 
           // keep open forever until the client shuts down the socket
           // no need to close the connction
-          do_until([conn] { return conn->in.eof(); },
+          do_until([conn] { return conn->istream().eof(); },
                    [this, conn] {
-                     return conn->proto.handle(conn->in, conn->out, conn->stats)
-                       .then([conn] { return conn->out.flush(); });
+                     log.info("asking protocol to handle data");
+                     return conn->protocol()
+                       .handle(conn->istream(), conn->ostream(), stats_)
+                       .then([conn] { return conn->ostream().flush(); });
                    })
-            .finally([conn] { return conn->out.close().finally([conn] {}); });
+            .finally([conn] {
+              log.info("closing connections");
+              return conn->ostream().close().finally([conn] {});
+            });
         });
     })
       .or_terminate();
@@ -37,27 +45,35 @@ class rpc_server {
 
   private:
   lw_shared_ptr<server_socket> listener_;
-  distributed<rpc_stats> &stats_;
+  distributed<rpc_server_stats> &stats_;
   uint16_t port_;
-  struct connection {
-    connected_socket socket;
-    socket_address addr;
-    input_stream<char> in;
-    output_stream<char> out;
-    rpc_size_based_parser proto;
-    distributed<rpc_stats> &stats;
-    connection(connected_socket &&socket,
-               socket_address addr,
-               distributed<rpc_stats> &stats)
-      : socket(std::move(socket))
-      , addr(addr)
-      , in(socket.input())   // has no alternate ctor
-      , out(socket.output()) // has no alternate ctor
-      , stats(stats) {
-      stats.local().active_connections++;
-      stats.local().total_connections++;
+
+  class connection {
+    public:
+    connection(connected_socket &&sock,
+               socket_address address,
+               distributed<rpc_server_stats> &stats)
+      : socket_(std::move(sock))
+      , addr_(address)
+      , in_(socket_.input())   // has no alternate ctor
+      , out_(socket_.output()) // has no alternate ctor
+      , stats_(stats) {
+      stats_.local().active_connections++;
+      stats_.local().total_connections++;
     }
-    ~connection() { stats.local().active_connections--; }
+    ~connection() { stats_.local().active_connections--; }
+
+    input_stream<char> &istream() { return in_; }
+    output_stream<char> &ostream() { return out_; }
+    rpc_decoder &protocol() { return proto_; }
+
+    private:
+    connected_socket socket_;
+    socket_address addr_;
+    input_stream<char> in_;
+    output_stream<char> out_;
+    rpc_decoder proto_;
+    distributed<rpc_server_stats> &stats_;
   };
 };
 

@@ -3,7 +3,8 @@
 
 namespace smf {
 
-struct rpc_stats {
+class rpc_server_stats {
+  public:
   size_t active_connections{};
   size_t total_connections{};
   size_t in_bytes{};
@@ -14,8 +15,8 @@ struct rpc_stats {
   // you need this so you can invoke
   // on a distributed<type> obj_ a map reduce
   // i.e.:
-  // obj_.map_reduce(adder<type>, &outer::rpc_stats);
-  void operator+=(const rpc_stats &o) {
+  // obj_.map_reduce(adder<type>, &outer::rpc_server_stats);
+  void operator+=(const rpc_server_stats &o) {
     active_connections += o.active_connections;
     total_connections += o.total_connections;
     in_bytes += o.in_bytes;
@@ -24,19 +25,21 @@ struct rpc_stats {
     completed_requests += o.completed_requests;
     too_large_requests += o.too_large_requests;
   }
-  rpc_stats self() {
+  rpc_server_stats self() {
     return *this; // make a copy for map_reduce framework
   }
-  std::ostream &operator<<(std::ostream &o) {
-    o << "active conn: " << active_connections << ", "
-      << "total conn: " << total_connections << ", "
-      << "in bytes: " << in_bytes << ", "
-      << "out bytes: " << out_bytes << ", "
-      << "bad requests: " << bad_requests << ", "
-      << "completed requests: " << completed_requests << ", "
-      << "too large requests: " << too_large_requests;
-    return o;
-  }
+
   future<> stop() { return make_ready_future<>(); }
 };
+
+std::ostream &operator<<(std::ostream &o, const rpc_server_stats &s) {
+  o << "active conn: " << s.active_connections << ", "
+    << "total conn: " << s.total_connections << ", "
+    << "in bytes: " << s.in_bytes << ", "
+    << "out bytes: " << s.out_bytes << ", "
+    << "bad requests: " << s.bad_requests << ", "
+    << "completed requests: " << s.completed_requests << ", "
+    << "too large requests: " << s.too_large_requests;
+  return o;
+}
 }

@@ -6,9 +6,11 @@ namespace smf.fbs.rpc;
 /// have the payload be zlib compressed.
 ///
 enum Flags:uint (bit_flags) {
+  /// \brief MUST BE THE FIRST ONE so that we can crc32
+  /// check the compressed payload if enabled
+  VERIFY_PAYLOAD,
   SNAPPY,
-    ZLIB,
-  VERIFY_PAYLOAD
+    ZLIB
 }
 
 /// \brief: header parsed by rpc engine
@@ -21,6 +23,14 @@ struct Header {
   crc32: uint;
 }
 
+/// \brief used for extra headers, ala HTTP
+/// The use case for the core is to support
+/// zipkin/google-Dapper style tracing
+table DynamicHeader {
+  key: string;
+  value: string;
+}
+
 /// \brief: Payload needs to be a table because internally
 /// we actually don't hold a pointer to the RPC table, we
 /// construct the header from the socket and then construct
@@ -31,6 +41,7 @@ struct Header {
 /// or any other protocol, so a byte array is the lowest abstraction
 ///
 table Payload {
+  dynamic_headers: [DynamicHeader];
   body: [ubyte];
 }
 
