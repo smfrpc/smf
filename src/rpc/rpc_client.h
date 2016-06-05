@@ -1,78 +1,77 @@
 #pragma once
+// seastar
+#include <core/future-util.hh>
+// smf
+#include "log.h"
+#include "hashing_utils.h"
+#include "rpc/rpc_recv_context.h"
 
 namespace smf {
-// distributed<client> clients;
-// transport protocol = transport::TCP;
-class client {
+class rpc_client {
   public:
-  class connection {
-    connected_socket socket_;
-    input_stream<char> read_buf_;
-    output_stream<char> write_buf_;
-    rpc_client_stats &stats_;
+  rpc_client(ipv4_addr server_addr) : server_addr_(server_addr) {}
 
-    public:
-    connection(connected_socket &&fd, stats)
-      : socket_(std::move(fd))
-      , read_buf_(socket_.input())
-      , write_buf_(socket_.output())
-      , stats_(stats) {}
+  /// \brief rpc clients should override this method
+  virtual future<> recv(std::uniqe_ptr<rpc_recv_context> ctx) {}
 
-    future<> do_read() {
-      return _read_buf.read_exactly(rx_msg_size)
-        .then([this](temporary_buffer<char> buf) {
-          _bytes_read += buf.size();
-          if(buf.size() == 0) {
-            return make_ready_future();
-          } else {
-            return do_read();
-          }
+  /// \brief
+  /// \return
+  virtual future<> send(rpc_request &&req) final {
+    if(!conn_) {
+      return engine()
+        .net()
+        .connect(make_ipv4_address(server_addr_), local_, transport::TCP)
+        .then([this](connected_socket fd) {
+          conn_ = std::move(std::make_unique<connection>(std::move(fd)));
+          return chain_send(std::move(req));
         });
     }
+    return chain_send(std::move(req));
+  }
+  virtual future<> stop() { return make_ready_future(); }
+  virtual ~rpc_client() {}
 
-    future<> do_write(int end) {
-      if(end == 0) {
-        return make_ready_future();
-      }
-      return _write_buf.write(str_txbuf)
-        .then([this, end] {
-          _bytes_write += tx_msg_size;
-          return _write_buf.flush();
-        })
-        .then([this, end] { return do_write(end - 1); });
+  private:
+  future<> chain_send(rpc_request &&req) {
+    req.finish();
+    return rpc_send_context(conn_->ostream(), buf, len)
+      .send()
+      .then([this, oneway] { return chain_recv(oneway); });
+  }
+  future<> chain_recv(bool oneway) {
+    if(oneway) {
+      return make_ready_future<>();
     }
-
-
-    future<> start(ipv4_addr server_addr, std::string test, unsigned ncon) {
-      _server_addr = server_addr;
-      _concurrent_connections = ncon * smp::count;
-      _total_pings = _pings_per_connection * _concurrent_connections;
-      _test = test;
-
-      for(unsigned i = 0; i < ncon; i++) {
-        socket_address local =
-          socket_address(::sockaddr_in{AF_INET, INADDR_ANY, {0}});
-        engine()
-          .net()
-          .connect(make_ipv4_address(server_addr), local, protocol)
-          .then([this, server_addr, test](connected_socket fd) {
-            auto conn = new connection(std::move(fd));
-            (this->*tests.at(test))(conn).then_wrapped([this, conn](auto &&f) {
-              delete conn;
-              try {
-                f.get();
-              } catch(std::exception &ex) {
-                fprint(std::cerr, "request error: %s\n", ex.what());
-              }
-            });
-          });
+    auto ctx = std::make_unique<rpc_recv_context>(conn_->istream());
+    return ctx->parse().then([this, ctx = std::move(ctx)] {
+      if(!recv_ctx->is_parsed()) {
+        log.error("Invalid response");
+        return make_ready_future<>();
       }
-      return make_ready_future();
-    }
-    future<> stop() { return make_ready_future(); }
+      return recv(std::move(ctx));
+    });
+  }
+
+  private:
+  ipv4_addr server_addr_;
+  socket_address local_ =
+    socket_address(::sockaddr_in{AF_INET, INADDR_ANY, {0}});
+  std::unique_ptr<connection> conn_ = nullptr;
+
+  private:
+  class connection {
+    public:
+    connection(connected_socket &&fd)
+      : socket_(std::move(fd)), in_(socket_.input()), out_(socket_.output()) {}
+    input_stream<char> &istream() { return in_; };
+    onput_stream<char> &ostream() { return out_; };
 
     private:
-    ipv4_addr server_addr_;
-    rpc_client_stats stats_;
+    connected_socket socket_;
+    input_stream<char> in_;
+    output_stream<char> out_;
+    // TODO(agallego) - add stats
+    // rpc_client_stats &stats_;
   };
+};
 }

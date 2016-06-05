@@ -2,7 +2,7 @@
 #set -x
 set -e
 test=$1
-
+directory=$2
 if [[ ! -e  $test ]]; then
     exit 1
 fi
@@ -21,10 +21,11 @@ export GTEST_BREAK_ON_FAILURE=${GTEST_BREAK_ON_FAILURE:='1'}
 export GTEST_REPEAT=${GTEST_REPEAT:='1'}
 # export GTEST_FILTER='] = ARGUMENTS.get('filter','*')
 
-cd $2
+set -x
+cd $directory
 if [[ -e "pre_test_hook" ]]; then
     echo "Running pre test hook"
     sh ./pre_test_hook
 fi
-echo "Running $2 inside $1 directory"
 exec $test
+set +x
