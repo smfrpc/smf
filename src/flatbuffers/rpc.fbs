@@ -27,7 +27,9 @@ struct Header {
 /// The use case for the core is to support
 /// zipkin/google-Dapper style tracing
 table DynamicHeader {
-  key: string;
+  /// alows for binary search lookup
+  /// use with CreateVectorOfSortedTables<> instead of the CreateVector
+  key: string (key);
   value: string;
 }
 

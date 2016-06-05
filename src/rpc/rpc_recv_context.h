@@ -6,12 +6,20 @@
 #include "hashing_utils.h"
 #include "flatbuffers/rpc_generated.h"
 namespace smf {
-using std::experimental::optional;
+namespace exp = std::experimental;
 class rpc_recv_context {
   public:
-  rpc_recv_context(input_stream<char> &in, size_t max_request_size)
+  rpc_recv_context(input_stream<char> &in, size_t max_request_size = 0)
     : in_(in), max_request_size_(max_request_size) {}
 
+
+  void reset() {
+    parsed_ = false;
+    header_buf_ = std::move(temporary_buffer<char>());
+    body_buf_ = std::move(temporary_buffer<char>());
+    header_ = nullptr;
+    payload_ = nullptr;
+  }
 
   /// \brief determines if we've correctly parsed the request
   /// \return true iff we fully parsed the request & the request is supported
@@ -54,10 +62,8 @@ class rpc_recv_context {
         return in_.read_exactly(hdr->size())
           .then([this](temporary_buffer<char> body) {
             body_buf_ = std::move(body);
-            for(uint32_t i = fbs::rpc::Flags::Flags_MIN,
-                         j = fbs::rpc::Flags::Flags_MAX,
-                         k = fbs::rpc::Flags::Flags_MIN;
-                i < j; i = 1 << ++k) {
+            for(uint32_t i = fbs::rpc::Flags::Flags_NONE, k = i;
+                i < fbs::rpc::Flags::Flags_ANY; i = 1 << ++k) {
               switch(i) {
               case fbs::rpc::Flags::Flags_SNAPPY:
                 log.error("Snappy compression not supported yet");
@@ -96,9 +102,9 @@ class rpc_recv_context {
   /// because the flatbuffers compiler can force only primitive types that
   /// are padded to the largest member size
   /// This is the main reason we are using flatbuffers - no serialization cost
-  optional<fbs::rpc::Header *> header() {
+  exp::optional<fbs::rpc::Header *> header() {
     if(!parsed_) {
-      return std::experimental::nullopt;
+      return exp::nullopt;
     }
     if(!header_) {
       header_ = reinterpret_cast<fbs::rpc::Header *>(header_buf_.get_write());
@@ -112,15 +118,15 @@ class rpc_recv_context {
   ///
   /// This is the main reason we are using flatbuffers - no serialization cost
   ///
-  optional<fbs::rpc::Payload *> payload() {
+  exp::optional<fbs::rpc::Payload *> payload() {
     if(!parsed_) {
-      return std::experimental::nullopt;
+      return exp::nullopt;
     }
     if(header_->flags() != 0) {
       // no flags supported at the moment. no compression, etc.
       //
       log.error("Header flags are not supported yet");
-      return std::experimental::nullopt;
+      return exp::nullopt;
     }
     if(!payload_) {
       payload_ = flatbuffers::GetMutableRoot<fbs::rpc::Payload>(

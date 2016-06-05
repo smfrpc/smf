@@ -27,9 +27,12 @@ ENDIF()
 
 
 add_executable (simple_flatbuffers_tests ${TEST_ROOT}/flatbuffers/simple.cc)
-#add_dependencies(simple_flatbuffers_tests rpc_serialization)
 target_link_libraries(simple_flatbuffers_tests --std=gnu++1y -lgtest)
 register_fast_test (simple_flatbuffers_tests ${TEST_ROOT}/flatbuffers)
+
+add_executable (rpc_request_tests ${TEST_ROOT}/rpc_request/rpc_request_tests.cc)
+target_link_libraries(rpc_request_tests --std=gnu++1y -lgtest)
+register_fast_test (rpc_request_tests ${TEST_ROOT}/rpc_request)
 
 
 
