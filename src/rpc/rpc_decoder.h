@@ -15,12 +15,11 @@ class rpc_decoder {
   future<> handle(input_stream<char> &in,
                   output_stream<char> &out,
                   distributed<rpc_server_stats> &stats) {
-    auto recv_ctx = std::make_unique<rpc_recv_context>(in, max_size_);
-    return recv_ctx->parse().then([recv_ctx = std::move(recv_ctx)] {
-      if(recv_ctx->is_parsed()) {
-        log.info("Finished parsing the requeset");
+    return parse_rpc_recv_context(in).then([](auto recv_ctx) {
+      if(recv_ctx) {
+        LOG_INFO("Finished parsing the requeset");
       } else {
-        log.error("Invalid request");
+        LOG_INFO("Invalid request");
       }
     });
   }

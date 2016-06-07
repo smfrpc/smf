@@ -21,7 +21,7 @@ class rpc_server_stats_printer {
       stats().then([this](rpc_server_stats stats) {
         std::stringstream ss;
         ss << "Periodic stats: " << stats << std::endl;
-        log.info(ss.str().c_str());
+        LOG_INFO("{}", ss.str());
       });
     });
     timer_.arm_periodic(period_);

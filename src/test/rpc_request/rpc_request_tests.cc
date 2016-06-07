@@ -37,6 +37,25 @@ TEST(rpc_request, add_dynamic_header) {
     "FooBar32");
 }
 
+TEST(rpc_request, invalid_payload_size) {
+  auto p = std::make_unique<rpc_request>(nullptr, 234234);
+  p->finish();
+  ASSERT_TRUE(p->is_finished());
+  ASSERT_FALSE(p->is_oneway());
+  ASSERT_EQ(p->length(), 32);
+}
+
+TEST(rpc_request, header) {
+  fbs::rpc::Header hdr(1, (smf::fbs::rpc::Flags)2, 3);
+  uint8_t hdrcopy[sizeof(hdr)]{0};
+  memcpy((char*)hdrcopy, (char *)&hdr, sizeof(hdr));
+  fbs::rpc::Header *hdr2 = (fbs::rpc::Header *)&hdrcopy[0];
+  ASSERT_EQ(hdr2->size(), 1);
+  ASSERT_EQ((int)hdr2->flags(), 2);
+  ASSERT_EQ(hdr2->crc32(), 3);
+}
+
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

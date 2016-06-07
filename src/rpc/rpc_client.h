@@ -1,77 +1,89 @@
 #pragma once
+// std
+#include <memory>
 // seastar
+#include <core/reactor.hh>
 #include <core/future-util.hh>
+#include <net/api.hh> // todo - forward decl
+
 // smf
 #include "log.h"
 #include "hashing_utils.h"
 #include "rpc/rpc_recv_context.h"
+#include "rpc/rpc_request.h"
+#include "rpc/rpc_client_connection.h"
+#include "rpc/rpc_send_context.h"
 
 namespace smf {
 class rpc_client {
   public:
-  rpc_client(ipv4_addr server_addr) : server_addr_(server_addr) {}
+  rpc_client(ipv4_addr server_addr) : server_addr_(std::move(server_addr)) {
+    LOG_INFO("constructed rpc_client");
+  }
 
   /// \brief rpc clients should override this method
-  virtual future<> recv(std::uniqe_ptr<rpc_recv_context> ctx) {}
+  virtual future<> recv(rpc_recv_context &&ctx) {
+    LOG_INFO("HOORAY GOT A REPLY");
+    return make_ready_future<>();
+  }
 
   /// \brief
   /// \return
-  virtual future<> send(rpc_request &&req) final {
-    if(!conn_) {
-      return engine()
-        .net()
-        .connect(make_ipv4_address(server_addr_), local_, transport::TCP)
-        .then([this](connected_socket fd) {
-          conn_ = std::move(std::make_unique<connection>(std::move(fd)));
-          return chain_send(std::move(req));
-        });
-    }
-    return chain_send(std::move(req));
+  virtual future<> send(rpc_request &&req, bool oneway = false) final {
+    return connect().then([this, r = std::move(req), oneway]() mutable {
+      return chain_send(std::move(r), oneway);
+    });
   }
   virtual future<> stop() { return make_ready_future(); }
-  virtual ~rpc_client() {}
+  virtual ~rpc_client() {
+    if(conn_) {
+      delete conn_;
+    }
+  }
 
   private:
-  future<> chain_send(rpc_request &&req) {
-    req.finish();
-    return rpc_send_context(conn_->ostream(), buf, len)
-      .send()
+  future<> connect() {
+    LOG_INFO("connecting");
+    if(conn_ != nullptr) {
+      LOG_INFO("socket non null");
+      return make_ready_future<>();
+    }
+    LOG_INFO("Not connected, creating new tcp connection");
+    socket_address local =
+      socket_address(::sockaddr_in{AF_INET, INADDR_ANY, {0}});
+    return engine()
+      .net()
+      .connect(make_ipv4_address(server_addr_), local, seastar::transport::TCP)
+      .then([this](connected_socket fd) mutable {
+        LOG_INFO("creating a new rpc_client_connection");
+        conn_ = new rpc_client_connection(std::move(fd));
+        LOG_INFO("finished creating rpc client connection");
+      });
+  }
+  future<> chain_send(rpc_request &&req, bool oneway) {
+    LOG_INFO("chain_send");
+    return rpc_send_context(conn_->ostream(), std::move(req))
       .then([this, oneway] { return chain_recv(oneway); });
   }
   future<> chain_recv(bool oneway) {
+    LOG_INFO("chain_recv");
     if(oneway) {
       return make_ready_future<>();
     }
-    auto ctx = std::make_unique<rpc_recv_context>(conn_->istream());
-    return ctx->parse().then([this, ctx = std::move(ctx)] {
-      if(!recv_ctx->is_parsed()) {
-        log.error("Invalid response");
-        return make_ready_future<>();
-      }
-      return recv(std::move(ctx));
-    });
+
+    return parse_rpc_recv_context(conn_->istream())
+      .then([this](std::experimental::optional<rpc_recv_context> ctx) mutable {
+        if(!ctx) {
+          LOG_ERROR("Invalid response");
+          return make_ready_future<>();
+        }
+        return recv(std::move(ctx.value()));
+      });
   }
 
   private:
   ipv4_addr server_addr_;
-  socket_address local_ =
-    socket_address(::sockaddr_in{AF_INET, INADDR_ANY, {0}});
-  std::unique_ptr<connection> conn_ = nullptr;
-
-  private:
-  class connection {
-    public:
-    connection(connected_socket &&fd)
-      : socket_(std::move(fd)), in_(socket_.input()), out_(socket_.output()) {}
-    input_stream<char> &istream() { return in_; };
-    onput_stream<char> &ostream() { return out_; };
-
-    private:
-    connected_socket socket_;
-    input_stream<char> in_;
-    output_stream<char> out_;
-    // TODO(agallego) - add stats
-    // rpc_client_stats &stats_;
-  };
+  // std::unique_ptr<rpc_client_connection> conn_;
+  rpc_client_connection *conn_ = nullptr;
 };
 }

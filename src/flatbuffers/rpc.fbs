@@ -7,10 +7,11 @@ namespace smf.fbs.rpc;
 ///
 enum Flags:uint (bit_flags) {
   /// \brief MUST BE THE FIRST ONE so that we can crc32
-  /// check the compressed payload if enabled
+  /// check the compressed payload if enabled. After decompression we can verify
+  /// the payload with the flatbuffers Verifyer
   VERIFY_PAYLOAD,
-  SNAPPY,
-    ZLIB
+  /// \brief the payload is compressed using -lsnappy
+  SNAPPY
 }
 
 /// \brief: header parsed by rpc engine
@@ -43,17 +44,25 @@ table DynamicHeader {
 /// or any other protocol, so a byte array is the lowest abstraction
 ///
 table Payload {
+  /// Known Headers
+  /// x-routing: consistent-hash
+  ///     sends the consistent hashing based on the source addr to the
+  ///     destination core - useful for locality
+  ///
+  /// x-routing: broadcast
+  ///     spawns a seastar::map_reduce style on a method - useful for shutdown
+  ///
+  /// x-routing: round-robin
+  ///     sends the request to the seastar::smp_send(count % smp_cores)
+  ///
+  /// x-verify-schema: 1
+  ///    \code
+  ///    `Verifier(buf, len, 64 /* max depth */, 1000000, /* max tables */)`
+  ///    \endcode
+  ///    of flatbuffers to verify if the contents of the payload are valid.
+  ///
   dynamic_headers: [DynamicHeader];
   body: [ubyte];
 }
 
-/// \brief: how the nodes communicate with one another
-/// FIXME(agallego): - experiment if you can just send an RPC or if you have to
-/// desugar it into 2 buffers. That is, write the header and then write the
-/// payload
-table RPC {
-  header: Header;
-  payload: Payload;
-}
-
-root_type RPC;
+root_type Payload;

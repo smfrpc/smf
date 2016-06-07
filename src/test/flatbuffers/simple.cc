@@ -10,7 +10,7 @@ using namespace flatbuffers;
 
 TEST(HeaderBufferTest, build_read_header) {
   FlatBufferBuilder fbb;
-  Header hdr(987565, Flags::Flags_ZLIB, 23423);
+  Header hdr(987565, Flags::Flags_SNAPPY, 23423);
   void *buf = (void *)&hdr;
   std::cout << "sizeof smf::fbs::rpc::Header: " << sizeof(Header) << std::endl;
   Header *hdr2 = (Header *)(buf);
