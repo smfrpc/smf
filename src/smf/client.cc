@@ -14,7 +14,8 @@ int main(int args, char **argv, char **env) {
       smf::LOG_INFO("setting up the client");
       smf::rpc_client client(ipv4_addr{"127.0.0.1", 11225});
       smf::LOG_INFO("Client all set up... making request");
-      smf::rpc_request req((uint8_t *)"hello", 5);
+      smf::rpc_envelope req("hello");
+      req.set_request_id(1,2);
       smf::LOG_INFO("About to send rpc request to server");
       client.send(std::move(req));
     });

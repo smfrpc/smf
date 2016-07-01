@@ -6,7 +6,7 @@
 #include <net/api.hh>
 // smf
 #include "rpc/rpc_server_stats.h"
-#include "rpc/rpc_decoder.h"
+
 namespace smf {
 namespace exp = std::experimental;
 inline net::keepalive_params default_linux_tcp_keepalive() {
@@ -79,17 +79,21 @@ class rpc_server_connection {
 
   input_stream<char> &istream() { return in_; }
   output_stream<char> &ostream() { return out_; }
-  rpc_decoder &protocol() { return proto_; }
-  bool error() const { return error_; }
+  bool has_error() const { return has_error_; }
+  void set_error(const char *e) {
+    has_error_ = true;
+    error_ = sstring(e);
+  }
+  sstring get_error() const { return error_; }
 
   private:
   connected_socket socket_;
   socket_address addr_;
   input_stream<char> in_;
   output_stream<char> out_;
-  rpc_decoder proto_;
   distributed<rpc_server_stats> &stats_;
   rpc_server_connection_options opts_;
-  bool error_{false};
+  bool has_error_{false};
+  sstring error_;
 };
 }

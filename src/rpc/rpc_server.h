@@ -1,56 +1,36 @@
 #pragma once
+// std
+#include <algorithm>
 // seastar
 #include <core/distributed.hh>
 // smf
-#include "log.h"
 #include "rpc/rpc_server_connection.h"
-
+#include "rpc/rpc_handle_router.h"
 
 namespace smf {
 
 class rpc_server {
   public:
-  rpc_server(distributed<rpc_server_stats> &stats, uint16_t port)
-    : stats_(stats), port_(port) {}
+  rpc_server(distributed<rpc_server_stats> &stats, uint16_t port);
+  void start();
+  future<> stop();
+  void register_router(std::unique_ptr<rpc_handle_router> r);
 
-  void start() {
-    listen_options lo;
-    lo.reuse_address = true;
-    listener_ = engine().listen(make_ipv4_address({port_}), lo);
-    keep_doing([this] {
-      return listener_->accept().then(
-        [this](connected_socket fd, socket_address addr) mutable {
-          LOG_INFO("accepted connection");
-          auto conn =
-            make_lw_shared<rpc_server_connection>(std::move(fd), addr, stats_);
-          return do_until(
-                   [conn] { return conn->istream().eof() || conn->error(); },
-                   [this, conn] {
-                     LOG_INFO("asking protocol to handle data");
-                     return conn->protocol()
-                       .handle(conn->istream(), conn->ostream(), stats_)
-                       .then([conn] { return conn->ostream().flush(); });
-                   })
-            .finally([conn] {
-              LOG_INFO("closing connections");
-              return conn->ostream().close().finally([conn] {
-                if(conn->error()) {
-                  log.error("There was an error with the connection");
-                }
-                // Add metrics!
-              });
-            });
-        });
-    })
-      .or_terminate();
-  }
+  private:
+  future<> handle_client_connection(lw_shared_ptr<rpc_server_connection> conn);
+  future<> dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
+                        rpc_recv_context &&ctx);
+  rpc_handle_router *find_router(const rpc_recv_context &ctx);
 
-  future<> stop() { return make_ready_future<>(); }
 
   private:
   lw_shared_ptr<server_socket> listener_;
   distributed<rpc_server_stats> &stats_;
-  uint16_t port_;
+  const uint16_t port_;
+
+  std::vector<std::unique_ptr<rpc_handle_router>> routers_{};
+  // missing incoming_filer vector
+  // missing outgoing_filter vector
 };
 
 } /* namespace memcache */

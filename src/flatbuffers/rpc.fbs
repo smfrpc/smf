@@ -44,6 +44,23 @@ table DynamicHeader {
 /// or any other protocol, so a byte array is the lowest abstraction
 ///
 table Payload {
+  /// \brief used for sending and receiving, read carefully.
+  ///
+  /// Receiving:
+  ///
+  /// Uses the same as HTTP status - on the receiving end
+  /// We don't want to pay the cost of parsing a header
+  /// On every response as does HTTP. std::to_string and std::stol()
+  /// are needlesly expensive
+  ///
+  /// Sending:
+  ///
+  /// Used with the xor hash of Service::ID() ^ Service::Method::ID()
+  /// This is how the server multiplexer figures out what function pointer
+  /// to call
+  ///
+  meta: uint;
+
   /// Known Headers
   /// x-routing: consistent-hash
   ///     sends the consistent hashing based on the source addr to the

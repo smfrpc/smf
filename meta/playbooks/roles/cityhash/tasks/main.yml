@@ -1,0 +1,26 @@
+---
+
+- name: Sync soure from git
+  git:
+    repo='https://github.com/google/cityhash'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/cityhash'
+    update=yes
+    recursive=yes
+    version='8af9b8c'
+    force=yes
+
+- name: Configure
+  shell:
+    ./configure --with-pic --prefix='{{third_party_dir}}'
+  args:
+    chdir: '{{goobly_cache_dir}}/cityhash'
+    creates: '{{goobly_cache_dir}}/cityhash/Makefile'
+
+- name: Install
+  shell:
+    make install CXXFLAGS="-g -O3" -j{{ansible_processor_vcpus}}
+  args:
+    chdir: '{{goobly_cache_dir}}/cityhash'
+    creates: '{{third_party_dir}}/lib/libcityhash.a'

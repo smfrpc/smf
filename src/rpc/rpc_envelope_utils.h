@@ -1,19 +1,14 @@
 #pragma once
 // seastar
+#include <core/future.hh>
 #include <core/iostream.hh>
-// smf
+//smf
 #include "log.h"
-#include "rpc/rpc_request.h"
+#include "rpc/rpc_envelope.h"
 namespace smf {
-/// \brief given an output stream and a buf* that points to a serialized
-/// smf::fbs::rpc::Payload object buffer in flatbuffers. This class
-/// will schedule the sending of the bytes to the destination correctly
-/// including compression, crc chekcs, etc
-future<> rpc_send_context(output_stream<char> &out, rpc_request &&req) {
+inline future<> rpc_envelope_send(output_stream<char> &out,
+                                  rpc_envelope &&req) {
   static constexpr size_t kRPCHeaderSize = sizeof(fbs::rpc::Header);
-  LOG_INFO("Header size of {}", kRPCHeaderSize);
-  // TODO(agallego) - add header such as session id, etc to the rpc
-  // request headers
   LOG_INFO("finishing buffer");
   req.finish();
   fbs::rpc::Header hdr = req.header();

@@ -30,7 +30,7 @@ int main(int args, char **argv, char **env) {
     smf::LOG_INFO("starting stats");
     return stats.start()
       .then([&rpc, &stats, port] {
-        smf::LOG_INFO("Starting rpc system");
+        smf::LOG_INFO("Starting rpc system on: {}", port);
         return rpc.start(std::ref(stats), port);
       })
       .then([&rpc] {
