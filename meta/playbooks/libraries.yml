@@ -6,3 +6,4 @@
     - seastar
     - flatbuffers
     - kafka
+    - cityhash

@@ -2,11 +2,13 @@ cmake_minimum_required (VERSION 3.0)
 set(SMURF_VERSION "0.0.1")
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 set(FLATBUFFERS_FLATC_EXECUTABLE ${PROJECT_SOURCE_DIR}/src/third_party/bin/flatc)
+set(FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS --gen-name-strings)
 INCLUDE (CMake/BuildFlatBuffers.cmake)
 INCLUDE (CMake/Seastar.cmake)
 INCLUDE (CMake/ccache.cmake)
 INCLUDE (CMake/base_flags.cmake)
 INCLUDE (CMake/join_function.cmake)
+INCLUDE (CMake/rpc_lib_sources.cmake)
 
 message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 enable_testing ()
@@ -55,17 +57,18 @@ set (CXX_FLAG_LIST
 # set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -v" )
 join ("${CXX_FLAG_LIST}" " " CMAKE_CXX_FLAGS)
 
+add_library (smfrpc STATIC ${RPC_LIB_SOURCES})
+target_link_libraries (smfrpc ${SEASTAR_LDFLAGS})
+add_dependencies(smfrpc rpc_serialization)
 
 # Server
-
 add_executable (smf_server ${PROJECT_SOURCE_DIR}/src/smf/server.cc)
 add_dependencies(smf_server rpc_serialization)
-target_link_libraries (smf_server ${SEASTAR_LDFLAGS})
+target_link_libraries (smf_server smfrpc)
 
 # Client
-
 add_executable (smf_client ${PROJECT_SOURCE_DIR}/src/smf/client.cc)
 add_dependencies(smf_client rpc_serialization)
-target_link_libraries (smf_client ${SEASTAR_LDFLAGS})
+target_link_libraries (smf_client smfrpc)
 
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/test)

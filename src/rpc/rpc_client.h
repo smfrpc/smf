@@ -1,77 +1,44 @@
 #pragma once
 // seastar
-#include <core/future-util.hh>
+#include <net/api.hh>
 // smf
-#include "log.h"
-#include "hashing_utils.h"
 #include "rpc/rpc_recv_context.h"
+#include "rpc/rpc_envelope.h"
+#include "rpc/rpc_client_connection.h"
 
 namespace smf {
+/// \brief class intented for communicating with a remote host
+///        this class is relatively cheap outside of the socket cost
+///        the intended use case is single threaded, callback driven
+///
+/// Call send() to initiate the protocol. If the request is oneway=true
+/// then no recv() callbcak will be issued. Otherwise, you can
+/// parse the contents of the server response on recv() callback
+///
 class rpc_client {
   public:
-  rpc_client(ipv4_addr server_addr) : server_addr_(server_addr) {}
+  rpc_client(ipv4_addr server_addr);
 
-  /// \brief rpc clients should override this method
-  virtual future<> recv(std::uniqe_ptr<rpc_recv_context> ctx) {}
+  /// \brief if on the send(oneway=false) then this is the callback
+  ///        issued when the server replies
+  virtual future<> recv(rpc_recv_context &&ctx);
 
-  /// \brief
-  /// \return
-  virtual future<> send(rpc_request &&req) final {
-    if(!conn_) {
-      return engine()
-        .net()
-        .connect(make_ipv4_address(server_addr_), local_, transport::TCP)
-        .then([this](connected_socket fd) {
-          conn_ = std::move(std::make_unique<connection>(std::move(fd)));
-          return chain_send(std::move(req));
-        });
-    }
-    return chain_send(std::move(req));
-  }
-  virtual future<> stop() { return make_ready_future(); }
-  virtual ~rpc_client() {}
+  /// \brief actually does the send to the remote location
+  /// \param req - the bytes to send
+  /// \param oneway - if oneway, then, no recv request is issued
+  ///        this is useful for void functions
+  ///
+  virtual future<> send(rpc_envelope &&req, bool oneway = false) final;
+  virtual future<> stop();
+  virtual ~rpc_client();
 
   private:
-  future<> chain_send(rpc_request &&req) {
-    req.finish();
-    return rpc_send_context(conn_->ostream(), buf, len)
-      .send()
-      .then([this, oneway] { return chain_recv(oneway); });
-  }
-  future<> chain_recv(bool oneway) {
-    if(oneway) {
-      return make_ready_future<>();
-    }
-    auto ctx = std::make_unique<rpc_recv_context>(conn_->istream());
-    return ctx->parse().then([this, ctx = std::move(ctx)] {
-      if(!recv_ctx->is_parsed()) {
-        log.error("Invalid response");
-        return make_ready_future<>();
-      }
-      return recv(std::move(ctx));
-    });
-  }
+  future<> connect();
+  future<> chain_send(rpc_envelope &&req, bool oneway);
+  future<> chain_recv(bool oneway);
 
   private:
   ipv4_addr server_addr_;
-  socket_address local_ =
-    socket_address(::sockaddr_in{AF_INET, INADDR_ANY, {0}});
-  std::unique_ptr<connection> conn_ = nullptr;
-
-  private:
-  class connection {
-    public:
-    connection(connected_socket &&fd)
-      : socket_(std::move(fd)), in_(socket_.input()), out_(socket_.output()) {}
-    input_stream<char> &istream() { return in_; };
-    onput_stream<char> &ostream() { return out_; };
-
-    private:
-    connected_socket socket_;
-    input_stream<char> in_;
-    output_stream<char> out_;
-    // TODO(agallego) - add stats
-    // rpc_client_stats &stats_;
-  };
+  rpc_client_connection *conn_ = nullptr;
 };
 }

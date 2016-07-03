@@ -20,21 +20,21 @@ int main(int args, char **argv, char **env) {
   app.add_options()("rpc_port", bpo::value<uint16_t>()->default_value(11225),
                     "rpc port");
   return app.run_deprecated(args, argv, [&] {
-    smf::log.info("Setting up at_exit hooks");
+    smf::LOG_INFO("Setting up at_exit hooks");
     engine().at_exit([&] { return rpc.stop(); });
     engine().at_exit([&] { return stats.stop(); });
 
 
     auto &&config = app.configuration();
     uint16_t port = config["rpc_port"].as<uint16_t>();
-    smf::log.info("starting stats");
+    smf::LOG_INFO("starting stats");
     return stats.start()
       .then([&rpc, &stats, port] {
-        smf::log.info("Starting rpc system");
+        smf::LOG_INFO("Starting rpc system on: {}", port);
         return rpc.start(std::ref(stats), port);
       })
       .then([&rpc] {
-        smf::log.info("Invoking rpc start on all cores");
+        smf::LOG_INFO("Invoking rpc start on all cores");
         return rpc.invoke_on_all(&smf::rpc_server::start);
       });
   });
