@@ -4,7 +4,8 @@
 #include "hashing_utils.h"
 namespace smf {
 rpc_envelope::rpc_envelope(const char *buf_to_copy) {
-  init((uint8_t *)buf_to_copy, std::strlen(buf_to_copy));
+  init((uint8_t *)buf_to_copy,
+       buf_to_copy == nullptr ? 0 : std::strlen(buf_to_copy));
 }
 rpc_envelope::rpc_envelope(const char *buf_to_copy, size_t len) {
   static_assert(sizeof(char) == sizeof(uint8_t), "char is not 8 bits");
