@@ -7,6 +7,9 @@
 #include "rpc/rpc_server.h"
 #include "rpc/rpc_server_stats_printer.h"
 
+// templates
+#include "hello_sample_service.h"
+
 namespace bpo = boost::program_options;
 
 int main(int args, char **argv, char **env) {

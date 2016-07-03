@@ -9,6 +9,7 @@ INCLUDE (CMake/ccache.cmake)
 INCLUDE (CMake/base_flags.cmake)
 INCLUDE (CMake/join_function.cmake)
 INCLUDE (CMake/rpc_lib_sources.cmake)
+INCLUDE (CMake/smf_gen_sources.cmake)
 
 message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 enable_testing ()
@@ -57,18 +58,21 @@ set (CXX_FLAG_LIST
 # set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -v" )
 join ("${CXX_FLAG_LIST}" " " CMAKE_CXX_FLAGS)
 
+
+# smf rpc
 add_library (smfrpc STATIC ${RPC_LIB_SOURCES})
 target_link_libraries (smfrpc ${SEASTAR_LDFLAGS})
 add_dependencies(smfrpc rpc_serialization)
+# template server
+add_executable (rpc_template_server ${PROJECT_SOURCE_DIR}/src/rpc/templates/server.cc)
+target_link_libraries (rpc_template_server smfrpc)
+# template client
+add_executable (rpc_template_client ${PROJECT_SOURCE_DIR}/src/rpc/templates/client.cc)
+target_link_libraries (rpc_template_client smfrpc)
+# generator
+add_executable (smf_gen ${SMF_GEN_SOURCES})
+target_link_libraries (smf_gen ${BASE_FLAG} ${SMF_GEN_LIBS})
 
-# Server
-add_executable (smf_server ${PROJECT_SOURCE_DIR}/src/smf/server.cc)
-add_dependencies(smf_server rpc_serialization)
-target_link_libraries (smf_server smfrpc)
 
-# Client
-add_executable (smf_client ${PROJECT_SOURCE_DIR}/src/smf/client.cc)
-add_dependencies(smf_client rpc_serialization)
-target_link_libraries (smf_client smfrpc)
-
+# run all the tests
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/test)

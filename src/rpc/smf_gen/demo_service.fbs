@@ -1,0 +1,14 @@
+namespace smf_gen.fbs.rpc;
+
+table Request {
+  name: string;
+}
+
+table Response {
+  name: string;
+}
+
+
+rpc_service SmurfStorage {
+  Get(Request):Response;
+}

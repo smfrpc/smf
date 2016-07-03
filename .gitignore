@@ -38,3 +38,4 @@ src/third_party/etc/
 src/third_party/lib64/
 src/third_party/share/
 .gdb_history
+*.smf.fb.h*

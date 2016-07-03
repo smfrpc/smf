@@ -31,7 +31,7 @@ class rpc_handle_router {
   void register_rpc_service(rpc_service *s);
 
   private:
-  std::unordered_map<uint32_t, rpc_service_method_handle *> dispatch_{};
+  std::unordered_map<uint32_t, rpc_service_method_handle> dispatch_{};
   std::vector<std::unique_ptr<rpc_service>> services_{};
 };
 }

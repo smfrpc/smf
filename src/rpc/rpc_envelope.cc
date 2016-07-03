@@ -3,6 +3,9 @@
 // smf
 #include "hashing_utils.h"
 namespace smf {
+rpc_envelope::rpc_envelope(const flatbuffers::FlatBufferBuilder &fbb) {
+  init(fbb.GetBufferPointer(), fbb.GetSize());
+}
 rpc_envelope::rpc_envelope(const char *buf_to_copy) {
   init((uint8_t *)buf_to_copy,
        buf_to_copy == nullptr ? 0 : std::strlen(buf_to_copy));

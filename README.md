@@ -1,7 +1,7 @@
-# smurf [![Build Status](https://travis-ci.org/senior7515/smurf.svg?branch=master)](https://travis-ci.org/senior7515/smurf)
+# smurf
 
-Still not sure, if I should write an hdfs,kafka,or nothing w/ seastar.
-check back in later - playing w/ the rpc mechanisms here.
+* RPC mechanism using flatbuffers & seastar.
+* Code generation for services.
 
 # tl;dr
 

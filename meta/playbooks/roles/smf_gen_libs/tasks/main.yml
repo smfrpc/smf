@@ -1,0 +1,8 @@
+---
+
+- name: Install all dev system tools
+  become: yes
+  dnf: name='{{item}}'
+  with_items:
+    - gflags-devel
+    - glog-devel

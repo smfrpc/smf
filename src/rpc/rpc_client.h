@@ -1,4 +1,6 @@
 #pragma once
+// std
+#include <experimental/optional>
 // seastar
 #include <net/api.hh>
 // smf
@@ -17,25 +19,24 @@ namespace smf {
 ///
 class rpc_client {
   public:
+  using opt_recv_ctx_t = std::experimental::optional<rpc_recv_context>;
   rpc_client(ipv4_addr server_addr);
-
-  /// \brief if on the send(oneway=false) then this is the callback
-  ///        issued when the server replies
-  virtual future<> recv(rpc_recv_context &&ctx);
 
   /// \brief actually does the send to the remote location
   /// \param req - the bytes to send
   /// \param oneway - if oneway, then, no recv request is issued
   ///        this is useful for void functions
   ///
-  virtual future<> send(rpc_envelope &&req, bool oneway = false) final;
+  virtual future<opt_recv_ctx_t> send(rpc_envelope &&req,
+                                      bool oneway = false) final;
+
   virtual future<> stop();
   virtual ~rpc_client();
 
   private:
   future<> connect();
-  future<> chain_send(rpc_envelope &&req, bool oneway);
-  future<> chain_recv(bool oneway);
+  future<opt_recv_ctx_t> chain_send(rpc_envelope &&req, bool oneway);
+  future<opt_recv_ctx_t> chain_recv(bool oneway);
 
   private:
   ipv4_addr server_addr_;

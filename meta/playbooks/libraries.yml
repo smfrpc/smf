@@ -7,3 +7,4 @@
     - flatbuffers
     - kafka
     - cityhash
+    - smf_gen_libs

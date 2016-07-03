@@ -12,6 +12,11 @@ namespace smf {
 ///
 class rpc_envelope {
   public:
+  /// \brief convenience method. copy the byte array of the flatbuffer builder
+  /// \args buf_to_copy - is a pointer to the flatbuffers after the user called
+  /// fbb->finished()
+  rpc_envelope(const flatbuffers::FlatBufferBuilder &fbb);
+
   /// \brief copy the byte array to internal data structures.
   /// \args buf_to_copy - is a pointer to the byte array to send to remote
   /// convenience method for sending literals. i.e.: rpc_envelope("hello")
