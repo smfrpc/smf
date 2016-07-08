@@ -185,11 +185,17 @@ void print_header_service(smf_printer *printer,
   printer->indent();
 
   // print the overrides for smurf
-  printer->print(*vars,
-                 "virtual const char *service_name() const override final { "
-                 "return \"$Service$\";}\n");
-  printer->print(*vars, "virtual uint32_t service_id() const override final { "
-                        "return $ServiceID$; }\n");
+  printer->print("virtual const char *service_name() const override final {\n");
+  printer->indent();
+  printer->print(*vars,"return \"$Service$\";\n");
+  printer->outdent();
+  printer->print("}\n");
+
+  printer->print("virtual uint32_t service_id() const override final {\n");
+  printer->indent();
+  printer->print(*vars, "return $ServiceID$;\n");
+  printer->outdent();
+  printer->print("}\n");
 
   print_header_service_index(printer, service);
 
