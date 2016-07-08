@@ -56,29 +56,31 @@ struct rpc_server_connection_options {
 };
 class rpc_server_connection {
   public:
-  rpc_server_connection(connected_socket &&sock,
+  rpc_server_connection(connected_socket sock,
                         socket_address address,
                         distributed<rpc_server_stats> &stats,
                         rpc_server_connection_options opts = {})
-    : socket_(std::move(sock))
+    : socket(std::move(sock))
+    , istream(socket.input())  // has no alternate ctor
+    , ostream(socket.output()) // has no alternate ctor
     , addr_(address)
-    , in_(socket_.input())   // has no alternate ctor
-    , out_(socket_.output()) // has no alternate ctor
     , stats_(stats)
     , opts_(opts) {
 
-    socket_.set_nodelay(opts_.nodelay);
+    socket.set_nodelay(opts_.nodelay);
     if(opts_.keepalive) {
-      socket_.set_keepalive(true);
-      socket_.set_keepalive_parameters(opts_.keepalive.value());
+      socket.set_keepalive(true);
+      socket.set_keepalive_parameters(opts_.keepalive.value());
     }
     stats_.local().active_connections++;
     stats_.local().total_connections++;
   }
   ~rpc_server_connection() { stats_.local().active_connections--; }
 
-  input_stream<char> &istream() { return in_; }
-  output_stream<char> &ostream() { return out_; }
+  connected_socket socket;
+  input_stream<char> istream;
+  output_stream<char> ostream;
+
   bool has_error() const { return has_error_; }
   void set_error(const char *e) {
     has_error_ = true;
@@ -87,10 +89,7 @@ class rpc_server_connection {
   sstring get_error() const { return error_; }
 
   private:
-  connected_socket socket_;
   socket_address addr_;
-  input_stream<char> in_;
-  output_stream<char> out_;
   distributed<rpc_server_stats> &stats_;
   rpc_server_connection_options opts_;
   bool has_error_{false};

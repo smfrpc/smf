@@ -33,6 +33,7 @@ set (FLATBUFFERS_FILES
   ${PROJECT_SOURCE_DIR}/src/flatbuffers/raft.fbs
   )
 
+# build the RPC Types
 build_flatbuffers(
   #flatbuffers_schemas
   "${FLATBUFFERS_FILES}"
@@ -49,7 +50,23 @@ build_flatbuffers(
   #copy_text_schemas_dir
   "${PROJECT_SOURCE_DIR}/src/flatbuffers"
   )
-
+# Compile the Types for the RPC tests - kinda recursive - sigh
+build_flatbuffers(
+  #flatbuffers_schemas
+  "${PROJECT_SOURCE_DIR}/src/rpc/smf_gen/demo_service.fbs"
+  #schema_include_dirs
+  "${PROJECT_SOURCE_DIR}/src/rpc/smf_gen"
+  #custom_target_name
+  smf_gen_demo_types
+  #additional_dependencies
+  ""
+  #generated_includes_dir
+  "${PROJECT_SOURCE_DIR}/src/rpc/smf_gen"
+  #binary_schemas_dir
+  "${PROJECT_SOURCE_DIR}/src/rpc/smf_gen"
+  #copy_text_schemas_dir
+  "${PROJECT_SOURCE_DIR}/src/rpc/smf_gen"
+  )
 
 set (CXX_FLAG_LIST
   ${SEASTAR_CFLAGS}
@@ -62,17 +79,18 @@ join ("${CXX_FLAG_LIST}" " " CMAKE_CXX_FLAGS)
 # smf rpc
 add_library (smfrpc STATIC ${RPC_LIB_SOURCES})
 target_link_libraries (smfrpc ${SEASTAR_LDFLAGS})
-add_dependencies(smfrpc rpc_serialization)
+add_dependencies(smfrpc rpc_serialization smf_gen_demo_types)
+# generator
+add_executable (smf_gen ${SMF_GEN_SOURCES})
+target_link_libraries (smf_gen ${BASE_FLAG} ${SMF_GEN_LIBS})
 # template server
 add_executable (rpc_template_server ${PROJECT_SOURCE_DIR}/src/rpc/templates/server.cc)
 target_link_libraries (rpc_template_server smfrpc)
 # template client
 add_executable (rpc_template_client ${PROJECT_SOURCE_DIR}/src/rpc/templates/client.cc)
 target_link_libraries (rpc_template_client smfrpc)
-# generator
-add_executable (smf_gen ${SMF_GEN_SOURCES})
-target_link_libraries (smf_gen ${BASE_FLAG} ${SMF_GEN_LIBS})
+
 
 
 # run all the tests
-add_subdirectory (${PROJECT_SOURCE_DIR}/src/test)
+# add_subdirectory (${PROJECT_SOURCE_DIR}/src/test)

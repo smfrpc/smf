@@ -134,7 +134,7 @@ void print_header_service_index(smf_printer *printer,
     printer->indent();
     printer->print(vars, "\"$MethodName$\", $MethodId$,\n");
     printer->print(
-      "[this](smf::rpc_recv_context &&c) -> future<smf::rpc_envelope> {\n");
+      "[this](smf::rpc_recv_context c) -> future<smf::rpc_envelope> {\n");
     printer->indent();
     printer->print(vars, "return $MethodName$(std::move(c));\n");
     printer->outdent();
@@ -156,7 +156,7 @@ void print_header_service_method(smf_printer *printer,
   vars["InType"] = method->input_type_name();
   vars["OutType"] = method->output_type_name();
   printer->print("virtual future<smf::rpc_envelope>\n");
-  printer->print(vars, "$MethodName$(smf::rpc_recv_context &&rec) {\n");
+  printer->print(vars, "$MethodName$(smf::rpc_recv_context rec) {\n");
   printer->indent();
   printer->print(vars,
                  "/*Input type: $InType$*/\n/*Output type: $OutType$*/\n");
@@ -187,7 +187,7 @@ void print_header_service(smf_printer *printer,
   // print the overrides for smurf
   printer->print("virtual const char *service_name() const override final {\n");
   printer->indent();
-  printer->print(*vars,"return \"$Service$\";\n");
+  printer->print(*vars, "return \"$Service$\";\n");
   printer->outdent();
   printer->print("}\n");
 
@@ -235,15 +235,17 @@ void print_header_client_method(smf_printer *printer,
   vars["MethodName"] = proper_postfix_token(method->name(), "Send");
   vars["MethodID"] = std::to_string(method->method_id());
   vars["ServiceID"] = std::to_string(method->service_id());
-  printer->print(
-    "future<std::experimental::optional<smf::rpc_recv_context>>\n");
-  printer->print(vars, "$MethodName$(smf::rpc_envelope &&req) {\n");
+  vars["InType"] = method->input_type_name();
+  vars["OutType"] = method->output_type_name();
+
+  printer->print(vars, "future<smf::rpc_recv_ctx_t<$OutType$>>\n");
+  printer->print(vars, "$MethodName$(smf::rpc_envelope req) {\n");
   printer->indent();
   printer->print(vars, "// RequestID: $ServiceID$ ^ $MethodID$\n");
   printer->print(vars, "// ServiceID: $ServiceID$ == crc32(ServiceName)\n");
   printer->print(vars, "// MethodID:  $MethodID$ == crc32(MethodName)\n");
   printer->print(vars, "req.set_request_id($ServiceID$, $MethodID$);\n");
-  printer->print("return send(std::move(req),false);\n");
+  printer->print(vars, "return send<$OutType$>(req.to_temp_buf(),false);\n");
   printer->outdent();
   printer->print("}\n");
 }
@@ -257,6 +259,15 @@ void print_header_client(smf_printer *printer,
 
   printer->print(*vars, "class $ClientName$: public smf::rpc_client {\n"
                         " public:\n");
+  printer->indent();
+
+  // print ctor
+  printer->print(*vars, "$ClientName$(ipv4_addr "
+                        "server_addr)\n:smf::rpc_client(std::move(server_addr))"
+                        " {}\n");
+
+  printer->outdent();
+  printer->print("\n");
   printer->indent();
 
   for(int i = 0; i < service->method_count(); ++i) {

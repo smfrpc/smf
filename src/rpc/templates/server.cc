@@ -6,9 +6,12 @@
 #include "log.h"
 #include "rpc/rpc_server.h"
 #include "rpc/rpc_server_stats_printer.h"
+#include "rpc/rpc_handle_router.h"
 
 // templates
-#include "hello_sample_service.h"
+#include "rpc/smf_gen/demo_service.smf.fb.h"
+
+class storage_service : public smf_gen::fbs::rpc::SmurfStorage {};
 
 namespace bpo = boost::program_options;
 
@@ -33,8 +36,12 @@ int main(int args, char **argv, char **env) {
     smf::LOG_INFO("starting stats");
     return stats.start()
       .then([&rpc, &stats, port] {
-        smf::LOG_INFO("Starting rpc system on: {}", port);
-        return rpc.start(std::ref(stats), port);
+        return rpc.start(std::ref(stats), port)
+          .then([&rpc] {
+            smf::LOG_INFO("Registering smf_gen::fbs::rpc::storage_service");
+            return rpc.invoke_on_all(
+              &smf::rpc_server::register_service<storage_service>);
+          });
       })
       .then([&rpc] {
         smf::LOG_INFO("Invoking rpc start on all cores");

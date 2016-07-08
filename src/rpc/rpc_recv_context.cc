@@ -35,8 +35,6 @@ rpc_recv_context::parse(input_stream<char> &in) {
   using ret_type = optional<rpc_recv_context>;
 
   static constexpr size_t kRPCHeaderSize = sizeof(fbs::rpc::Header);
-  LOG_INFO("about to read the size: {}", kRPCHeaderSize);
-
   return in.read_exactly(kRPCHeaderSize)
     .then([&in](temporary_buffer<char> header) {
       // validate the header
@@ -44,12 +42,7 @@ rpc_recv_context::parse(input_stream<char> &in) {
         LOG_ERROR("Invalid header size `{}`. skipping req", header.size());
         return make_ready_future<ret_type>(nullopt);
       }
-
-      LOG_INFO("Got a header buf of size: {}", header.size());
       fbs::rpc::Header *hdr = (fbs::rpc::Header *)header.get_write();
-
-      LOG_INFO("Read the header: size:{}, flags:{}, crc32:{}", hdr->size(),
-               hdr->flags(), hdr->crc32());
 
       // TODO(agallego) - add resource limits like seastar rpc
       // if(max_request_size_ > 0 && hdr->size() > max_request_size_) {

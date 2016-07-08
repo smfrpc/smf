@@ -1,6 +1,7 @@
+# Seastar doesn't finish linking w/ gold linker
+# "-fuse-ld=gold"
 set(BASE_FLAGS
   "-fPIC"
-  "-fuse-ld=gold"
   "-Wall"
   "-Werror"
   "-Wextra"
@@ -19,6 +20,8 @@ set(BASE_FLAGS
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   set(BASE_FLAGS
     ${BASE_FLAGS}
+    "-lasan"
+    "-lubsan"
     "-O0"
     "-ggdb"
     )

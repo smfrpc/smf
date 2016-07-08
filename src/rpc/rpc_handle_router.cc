@@ -14,7 +14,7 @@ future<rpc_envelope> rpc_handle_router::handle(rpc_recv_context &&recv) {
   return dispatch_.find(recv.request_id())->second.apply(std::move(recv));
 }
 
-void rpc_handle_router::register_rpc_service(rpc_service *s) {
+void rpc_handle_router::register_service(std::unique_ptr<rpc_service> s) {
   assert(s != nullptr);
   uint32_t srv = s->service_id();
   for(auto h : s->methods()) {
@@ -22,5 +22,6 @@ void rpc_handle_router::register_rpc_service(rpc_service *s) {
     auto id = (srv ^ h.method_id);
     dispatch_.insert({id, h});
   }
+  services_.push_back(std::move(s));
 }
 } // namespace

@@ -27,13 +27,12 @@ ENDIF()
 
 
 add_executable (simple_flatbuffers_tests ${TEST_ROOT}/flatbuffers/simple.cc)
-target_link_libraries(simple_flatbuffers_tests --std=gnu++1y -lgtest)
+target_link_libraries(simple_flatbuffers_tests -lgtest smfrpc)
 register_fast_test (simple_flatbuffers_tests ${TEST_ROOT}/flatbuffers)
 
 add_executable (rpc_request_tests
-  ${PROJECT_SOURCE_DIR}/src/rpc/rpc_envelope.cc
   ${TEST_ROOT}/rpc_request/rpc_request_tests.cc)
-target_link_libraries(rpc_request_tests --std=gnu++1y -lgtest)
+target_link_libraries(rpc_request_tests  -lgtest smfrpc)
 register_fast_test (rpc_request_tests ${TEST_ROOT}/rpc_request)
 
 

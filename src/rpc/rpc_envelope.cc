@@ -2,7 +2,30 @@
 #include <cstring>
 // smf
 #include "hashing_utils.h"
+
+// FIXME - delete log
+#include "log.h"
+
 namespace smf {
+future<> rpc_envelope::send(output_stream<char> &out,
+                            temporary_buffer<char> buf) {
+  return out.write(std::move(buf))
+    .then([&out] {
+      return out.flush();
+    });
+}
+
+temporary_buffer<char> rpc_envelope::to_temp_buf() {
+  size_t hdr_size = sizeof(fbs::rpc::Header);
+  this->finish();
+  temporary_buffer<char> buf(hdr_size + fbb_->GetSize());
+  std::copy((char *)&header_, (char *)&header_ + hdr_size, buf.get_write());
+  std::copy((char *)fbb_->GetBufferPointer(),
+            (char *)fbb_->GetBufferPointer() + fbb_->GetSize(),
+            buf.get_write() + hdr_size);
+  return std::move(buf);
+}
+
 rpc_envelope::rpc_envelope(const flatbuffers::FlatBufferBuilder &fbb) {
   init(fbb.GetBufferPointer(), fbb.GetSize());
 }
@@ -17,9 +40,16 @@ rpc_envelope::rpc_envelope(const char *buf_to_copy, size_t len) {
 rpc_envelope::rpc_envelope(const uint8_t *buf_to_copy, size_t len) {
   init(buf_to_copy, len);
 }
-const uint8_t *rpc_envelope::buffer() { return fbb_->GetBufferPointer(); }
-size_t rpc_envelope::length() { return fbb_->GetSize(); }
-const fbs::rpc::Header &rpc_envelope::header() const { return header_; }
+
+rpc_envelope::rpc_envelope(rpc_envelope &&o) noexcept
+  : fbb_(std::move(o.fbb_)),
+    meta_(o.meta_),
+    oneway_(o.oneway_),
+    finished_(o.finished_),
+    header_(std::move(o.header_)),
+    headers_(std::move(o.headers_)),
+    user_buf_(std::move(o.user_buf_)) {}
+
 void rpc_envelope::add_dynamic_header(const char *header, const char *value) {
   auto k = fbb_->CreateString(header);
   auto v = fbb_->CreateString(value);
@@ -55,8 +85,8 @@ void rpc_envelope::init(const uint8_t *buf_to_copy, size_t len) {
 void rpc_envelope::post_process_buffer() {
   // assumes that the builder is .Finish()
   using fbs::rpc::Flags;
-  auto crc = crc_32((const char *)buffer(), length());
-  header_ = fbs::rpc::Header(length(), Flags::Flags_VERIFY_PAYLOAD, crc);
+  auto crc = crc_32((const char *)fbb_->GetBufferPointer(), fbb_->GetSize());
+  header_ = fbs::rpc::Header(fbb_->GetSize(), Flags::Flags_VERIFY_PAYLOAD, crc);
   finished_ = true;
 }
 } // end namespace

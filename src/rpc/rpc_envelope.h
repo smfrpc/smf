@@ -1,4 +1,7 @@
 #pragma once
+// seastar
+#include <core/future.hh>
+#include <core/iostream.hh>
 // smf
 #include "rpc_generated.h"
 // Note: This class has no dependency on seastar so that we can
@@ -12,6 +15,8 @@ namespace smf {
 ///
 class rpc_envelope {
   public:
+  static future<> send(output_stream<char> &out, temporary_buffer<char> req);
+
   /// \brief convenience method. copy the byte array of the flatbuffer builder
   /// \args buf_to_copy - is a pointer to the flatbuffers after the user called
   /// fbb->finished()
@@ -36,23 +41,16 @@ class rpc_envelope {
   ///
   rpc_envelope(const uint8_t *buf_to_copy, size_t len);
 
-  /// \brief pointer to the underlying byte buffer. This SHOULD
-  /// be call after finished() is called. Check if safe to call via
-  /// `is_finished()`
-  /// \return a pointer to the byte buffer
-  ///
-  const uint8_t *buffer();
 
-  /// \brief length to accompany the buffer() method call.
-  /// This MUST be called AFTER `finished()` it is unsafe to use before
-  /// \return the length of the byte buffer
-  ///
-  size_t length();
+  /// \brief copy ctor deleted
+  rpc_envelope(const rpc_envelope &o) = delete;
 
-  /// \brief this will be nil (set to 0's) if not finished()
-  /// \return the header describing the byte buffer backing the request
+  /// \brief move ctor
+  rpc_envelope(rpc_envelope &&o) noexcept;
+
+  /// \brief convenience method for transofrming thi into tmpbuf
   ///
-  const fbs::rpc::Header &header() const;
+  temporary_buffer<char> to_temp_buf();
 
   /// \brief add a key=value pair ala HTTP/1.1 so that the decoding
   /// end has meta information about the request. For example, specify the
@@ -93,6 +91,7 @@ class rpc_envelope {
   /// length sepcify and other connection specific headers
   ///
   void post_process_buffer();
+
 
   private:
   // must be first

@@ -10,6 +10,8 @@ namespace smf {
 ///
 class rpc_handle_router {
   public:
+  void register_service(std::unique_ptr<rpc_service> s);
+  future<> stop();
   /// \brief, MUST BE FAST - blocks the thread
   /// there will be a header specifying the requested resource
   /// use LookupByKey - as headers are guaranteed to be sorted
