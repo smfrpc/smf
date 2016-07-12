@@ -10,16 +10,19 @@ class rpc_server_stats_printer {
   public:
   using duration_t = timer<>::duration;
   rpc_server_stats_printer(distributed<rpc_server_stats> &stats,
-                           duration_t d = std::chrono::seconds(1));
+                           duration_t d = std::chrono::minutes(2));
 
   void start();
   future<> stop();
 
   private:
-  future<rpc_server_stats> stats();
+  /// \brief calls map_reduce on distributed<stats>
+  ///
+  future<rpc_server_stats> aggregate_stats();
 
   private:
   timer<> timer_;
+  uint32_t timer_callback_counter_{0};
   distributed<rpc_server_stats> &stats_;
   duration_t period_;
 };

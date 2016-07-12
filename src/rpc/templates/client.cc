@@ -1,6 +1,7 @@
 // std
 #include <iostream>
 #include <chrono>
+#include <thread>
 // seastar
 #include <core/distributed.hh>
 #include <core/app-template.hh>
@@ -20,6 +21,7 @@ class rpc_client_wrapper {
     smf::LOG_INFO("setting up the client");
     client_ = make_lw_shared<smf_gen::fbs::rpc::SmurfStorageClient>(
       ipv4_addr{ip, port});
+    client_->enable_histogram_metrics();
   }
 
   future<> send_request() {
@@ -29,20 +31,9 @@ class rpc_client_wrapper {
     smf::rpc_envelope env(builder_.GetBufferPointer(), builder_.GetSize());
 
     builder_.Clear(); // reuse it
-
-    auto begin_send_t = std::chrono::high_resolution_clock::now();
-
     return client_->GetSend(std::move(env))
-      .then([begin_send_t](auto reply) mutable {
-        if(reply) {
-          auto duration =
-            std::chrono::duration_cast<std::chrono::microseconds>(
-              std::chrono::high_resolution_clock::now() - begin_send_t)
-              .count();
-          smf::LOG_INFO(
-            "Got reply from server with status: {} in {} microseconds",
-            reply.ctx->status(), duration);
-        } else {
+      .then([](auto reply) mutable {
+        if(!reply) {
           smf::LOG_INFO("Well.... the server had an OoOps!");
         }
       })
@@ -51,6 +42,9 @@ class rpc_client_wrapper {
           smf::LOG_INFO("Sending req: {}", num_of_req_);
           return this->send_request();
         } else {
+          smf::LOG_INFO("================================");
+          smf::LOG_INFO("Thread ID: {}", std::this_thread::get_id());
+          client_->get_histogram()->stdout_print();
           return make_ready_future<>();
         }
       });
@@ -70,13 +64,13 @@ int main(int args, char **argv, char **env) {
   app_template app;
   app.add_options()("rpc_port", bpo::value<uint16_t>()->default_value(11225),
                     "rpc port")(
-    "ip_address", bpo::value<std::string>()->default_value("localhost"),
+    "ip_address", bpo::value<std::string>()->default_value("127.0.0.1"),
     "ip address of server");
   try {
-    auto &&config = app.configuration();
-    uint16_t port = config["rpc_port"].as<uint16_t>();
-    const char *ip = config["ip_address"].as<std::string>().c_str();
     return app.run_deprecated(args, argv, [&] {
+      auto &&config = app.configuration();
+      uint16_t port = config["rpc_port"].as<uint16_t>();
+      const char *ip = config["ip_address"].as<std::string>().c_str();
       smf::LOG_INFO("setting up exit hooks");
       engine().at_exit([&] { return clients.stop(); });
       return clients.start(ip, port, 400)

@@ -8,6 +8,7 @@
 #include "rpc/rpc_envelope.h"
 #include "rpc/rpc_client_connection.h"
 #include "log.h"
+#include "histogram.h"
 
 namespace smf {
 template <typename T> struct rpc_recv_ctx_t {
@@ -57,13 +58,24 @@ class rpc_client {
   template <typename T>
   future<rpc_recv_ctx_t<T>> send(temporary_buffer<char> buf,
                                  bool oneway = false) {
-    return this->connect().then([this, b = std::move(buf), oneway]() mutable {
-      return this->chain_send<T>(std::move(b), oneway);
-    });
+    return this->connect().then([
+      this,
+      b = std::move(buf),
+      oneway,
+      mesure = is_histogram_enabled() ? hist_->auto_measure() : nullptr
+    ]() mutable { return this->chain_send<T>(std::move(b), oneway); });
   }
 
   virtual future<> stop();
   virtual ~rpc_client();
+  virtual void enable_histogram_metrics(bool enable = true) final;
+  bool is_histogram_enabled() { return hist_.operator bool(); }
+  histogram *get_histogram() {
+    if(hist_) {
+      return hist_.get();
+    }
+    return nullptr;
+  }
 
   private:
   future<> connect();
@@ -86,8 +98,10 @@ class rpc_client {
       });
   }
 
+
   private:
   ipv4_addr server_addr_;
   rpc_client_connection *conn_ = nullptr;
+  std::unique_ptr<histogram> hist_;
 };
 }

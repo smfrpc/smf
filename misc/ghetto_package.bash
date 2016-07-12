@@ -11,9 +11,11 @@ for b in ${black_list[@]}; do
     libs=$(echo "${libs}" | sed s/"${b}"//g | sed  '/^$/d')
 done
 
-echo "LIBRARIES: $libs"
-
 output_dir="/tmp/${program_name}_$(git log --oneline -n1 | awk '{print $1}')"
+
+if [[ -e $output_dir ]]; then
+    rm -rf $output_dir;
+fi
 
 mkdir -p $output_dir/lib
 mkdir -p $output_dir/bin

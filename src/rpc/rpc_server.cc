@@ -14,6 +14,8 @@ void rpc_server::start() {
   keep_doing([this] {
     return listener_->accept().then(
       [this](connected_socket fd, socket_address addr) mutable {
+        stats_.local().total_connections++;
+        stats_.local().active_connections++;
         auto conn =
           make_lw_shared<rpc_server_connection>(std::move(fd), addr, stats_);
         return handle_client_connection(conn);
@@ -22,33 +24,47 @@ void rpc_server::start() {
     .or_terminate(); // end keep_doing
 }
 
-future<> rpc_server::stop() { return make_ready_future<>(); }
+future<> rpc_server::stop() {
+  try {
+    sstring s = "histogram_shard_" + to_sstring(engine().cpu_id()) + ".csv";
+    FILE *fp = fopen(s.c_str(), "w");
+    if(fp) {
+      hist_->print(fp);
+      fclose(fp);
+    }
+  } catch(...) {
+  }
+  return make_ready_future<>();
+}
 
 future<> rpc_server::handle_client_connection(
   lw_shared_ptr<rpc_server_connection> conn) {
   return do_until(
     [conn] { return conn->istream.eof() || conn->has_error(); },
     [this, conn]() mutable {
+
       // TODO(agallego) -
       // Add connection limits and pass to
       // parse_rpc_recv_context() fn to prevent OOM erros
+      auto metric = hist_->auto_measure();
       return rpc_recv_context::parse(conn->istream)
-        .then([this, conn](auto recv_ctx) {
+        .then([this, conn, m = std::move(metric)](auto recv_ctx) mutable {
           if(!recv_ctx) {
+            stats_.local().bad_requests++;
             conn->set_error("Could not parse the request");
             return make_ready_future<>();
           }
           return this->dispatch_rpc(conn, std::move(recv_ctx.value()))
-            .finally([conn] {
-              return conn->ostream.flush().finally([conn] {
+            .finally([this, conn, metric = std::move(m)] {
+              return conn->ostream.flush().finally([this, conn] {
                 if(conn->has_error()) {
                   LOG_ERROR("There was an error with the connection: {}",
                             conn->get_error());
-                  // Add metrics!
+                  stats_.local().active_connections--;
                   return conn->ostream.close();
                 }
+                stats_.local().completed_requests++;
                 return make_ready_future<>();
-                // Add metrics!
               });
             }); // end finally()
         });     //  parse_rpc_recv_context.then()
@@ -58,19 +74,22 @@ future<> rpc_server::handle_client_connection(
 future<> rpc_server::dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
                                   rpc_recv_context &&ctx) {
   if(ctx.request_id() == 0) {
+    stats_.local().bad_requests++;
     conn->set_error("Missing request_id. Invalid request");
     return make_ready_future<>();
   }
   if(!routes_.can_handle_request(ctx.request_id(),
                                  ctx.payload->dynamic_headers())) {
-    // TODO(agallego) - add metrics
-    //
+    stats_.local().no_route_requests++;
     conn->set_error("Can't find route for request. Invalid");
     return make_ready_future<>();
   }
+  stats_.local().in_bytes += ctx.header_buf.size() + ctx.body_buf.size();
+
   // TODO(agallego) - missing incoming filters and outgoing filters
   return routes_.handle(std::move(ctx))
-    .then([conn](rpc_envelope e) mutable {
+    .then([this, conn](rpc_envelope e) mutable {
+      stats_.local().out_bytes += e.size();
       return smf::rpc_envelope::send(conn->ostream, e.to_temp_buf());
     });
 }

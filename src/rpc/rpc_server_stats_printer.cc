@@ -10,9 +10,10 @@ rpc_server_stats_printer::rpc_server_stats_printer(
 
 void rpc_server_stats_printer::start() {
   timer_.set_callback([this] {
-    stats().then([this](rpc_server_stats stats) {
+    ++timer_callback_counter_;
+    aggregate_stats().then([this](rpc_server_stats stats) {
       std::stringstream ss;
-      ss << "Periodic stats: " << stats << std::endl;
+      ss << stats;
       LOG_INFO("{}", ss.str());
     });
   });
@@ -21,9 +22,10 @@ void rpc_server_stats_printer::start() {
 
 future<> rpc_server_stats_printer::stop() { return make_ready_future<>(); }
 
-future<rpc_server_stats> rpc_server_stats_printer::stats() {
+future<rpc_server_stats> rpc_server_stats_printer::aggregate_stats() {
   // rpc_server_stats needs to support the + operator,
   // the mapreduce framework is per core!
   return stats_.map_reduce(adder<rpc_server_stats>(), &rpc_server_stats::self);
 }
+
 } // end namespace

@@ -9,10 +9,7 @@
 namespace smf {
 future<> rpc_envelope::send(output_stream<char> &out,
                             temporary_buffer<char> buf) {
-  return out.write(std::move(buf))
-    .then([&out] {
-      return out.flush();
-    });
+  return out.write(std::move(buf)).then([&out] { return out.flush(); });
 }
 
 temporary_buffer<char> rpc_envelope::to_temp_buf() {
@@ -24,6 +21,11 @@ temporary_buffer<char> rpc_envelope::to_temp_buf() {
             (char *)fbb_->GetBufferPointer() + fbb_->GetSize(),
             buf.get_write() + hdr_size);
   return std::move(buf);
+}
+
+size_t rpc_envelope::size() {
+  static size_t hdr_size = sizeof(fbs::rpc::Header);
+  return hdr_size + fbb_->GetSize();
 }
 
 rpc_envelope::rpc_envelope(const flatbuffers::FlatBufferBuilder &fbb) {

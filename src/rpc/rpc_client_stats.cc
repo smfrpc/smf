@@ -12,10 +12,10 @@ rpc_client_stats rpc_client_stats::self() {
 }
 future<> rpc_client_stats::stop() { return make_ready_future<>(); }
 std::ostream &operator<<(std::ostream &o, const rpc_client_stats &s) {
-  o << "in bytes: " << s.in_bytes << ", "
-    << "out bytes: " << s.out_bytes << ", "
-    << "bad requests: " << s.bad_requests << ", "
-    << "completed requests: " << s.completed_requests;
+  o << "{'in_bytes': " << s.in_bytes << ","
+    << "'out_bytes': " << s.out_bytes << ","
+    << "'bad_reqs': " << s.bad_requests << ","
+    << "'completed_reqs': " << s.completed_requests << "}";
   return o;
 }
 }

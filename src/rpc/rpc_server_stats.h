@@ -12,6 +12,7 @@ class rpc_server_stats {
   size_t in_bytes{};
   size_t out_bytes{};
   size_t bad_requests{};
+  size_t no_route_requests{};
   size_t completed_requests{};
   size_t too_large_requests{};
   // you need this so you can invoke

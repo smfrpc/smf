@@ -48,6 +48,9 @@ class rpc_envelope {
   /// \brief move ctor
   rpc_envelope(rpc_envelope &&o) noexcept;
 
+  /// \brief approx size unreliable unless finished() is called
+  size_t size();
+
   /// \brief convenience method for transofrming thi into tmpbuf
   ///
   temporary_buffer<char> to_temp_buf();

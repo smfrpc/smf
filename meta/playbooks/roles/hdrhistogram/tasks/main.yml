@@ -1,0 +1,30 @@
+---
+
+- name: Sync soure from git
+  git:
+    repo='https://github.com/HdrHistogram/HdrHistogram_c.git'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/hdrhistogram'
+    update=yes
+    recursive=yes
+    version='04db500'
+    force=yes
+
+- file:
+    path='{{goobly_cache_dir}}/hdrhistogram/build'
+    state=directory
+
+- name: Configure
+  shell:
+    cmake -DCMAKE_INSTALL_PREFIX:PATH='{{third_party_dir}}' '{{goobly_cache_dir}}/hdrhistogram'
+  args:
+    chdir: '{{goobly_cache_dir}}/hdrhistogram/build'
+    creates: '{{goobly_cache_dir}}/hdrhistogram/build/Makefile'
+
+- name: Install
+  shell:
+    make install CXXFLAGS="-fPIC -O3" -j{{ansible_processor_vcpus}}
+  args:
+    chdir: '{{goobly_cache_dir}}/hdrhistogram/build'
+    creates: '{{third_party_dir}}/lib/libhdr_histogram_static.a'

@@ -39,7 +39,11 @@ rpc_recv_context::parse(input_stream<char> &in) {
     .then([&in](temporary_buffer<char> header) {
       // validate the header
       if(kRPCHeaderSize != header.size()) {
-        LOG_ERROR("Invalid header size `{}`. skipping req", header.size());
+        if(in.eof()) {
+          LOG_ERROR("Input stream failed to read. input_stream::eof");
+        } else {
+          LOG_ERROR("Invalid header size `{}`. skipping req", header.size());
+        }
         return make_ready_future<ret_type>(nullopt);
       }
       fbs::rpc::Header *hdr = (fbs::rpc::Header *)header.get_write();
