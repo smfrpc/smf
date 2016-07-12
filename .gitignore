@@ -39,3 +39,5 @@ src/third_party/lib64/
 src/third_party/share/
 .gdb_history
 *.smf.fb.h*
+build_debug/
+build_release/
