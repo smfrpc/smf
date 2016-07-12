@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 git_root=$(git rev-parse --show-toplevel)
-mkdir -p $git_root/build
-cd $git_root/build
+build_dir=$git_root/build_release
+mkdir -p $build_dir
+cd $build_dir
 cmake -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_ALL_TESTS=True $git_root
 

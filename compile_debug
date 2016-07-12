@@ -1,9 +1,10 @@
 #!/bin/bash
 set -e
 git_root=$(git rev-parse --show-toplevel)
-mkdir -p $git_root/build
-cd $git_root/build
-if [[ ! -e $git_root/build/Makefile ]]; then
+build_dir=$git_root/build_debug
+mkdir -p $build_dir
+cd $build_dir
+if [[ ! -e $build_dir/Makefile ]]; then
     cmake -DCMAKE_BUILD_TYPE=Debug \
           -DCMAKE_ALL_TESTS=False $git_root
 fi
