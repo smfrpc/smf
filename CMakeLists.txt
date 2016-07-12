@@ -93,4 +93,4 @@ target_link_libraries (rpc_template_client smfrpc)
 
 
 # run all the tests
-# add_subdirectory (${PROJECT_SOURCE_DIR}/src/test)
+add_subdirectory (${PROJECT_SOURCE_DIR}/src/test)
