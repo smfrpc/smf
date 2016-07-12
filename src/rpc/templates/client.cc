@@ -10,13 +10,16 @@
 // templates
 #include "rpc/smf_gen/demo_service.smf.fb.h"
 
+namespace bpo = boost::program_options;
+
 
 class rpc_client_wrapper {
   public:
-  rpc_client_wrapper(size_t req_num = 400) : num_of_req_(req_num) {
+  rpc_client_wrapper(const char *ip, uint16_t port, size_t req_num)
+    : num_of_req_(req_num) {
     smf::LOG_INFO("setting up the client");
     client_ = make_lw_shared<smf_gen::fbs::rpc::SmurfStorageClient>(
-      ipv4_addr{"127.0.0.1", 11225});
+      ipv4_addr{ip, port});
   }
 
   future<> send_request() {
@@ -63,17 +66,25 @@ class rpc_client_wrapper {
 
 int main(int args, char **argv, char **env) {
   std::cerr << "About to start the client" << std::endl;
-  app_template app;
   distributed<rpc_client_wrapper> clients;
-  // leak memory
+  app_template app;
+  app.add_options()("rpc_port", bpo::value<uint16_t>()->default_value(11225),
+                    "rpc port")(
+    "ip_address", bpo::value<std::string>()->default_value("localhost"),
+    "ip address of server");
   try {
+    auto &&config = app.configuration();
+    uint16_t port = config["rpc_port"].as<uint16_t>();
+    const char *ip = config["ip_address"].as<std::string>().c_str();
     return app.run_deprecated(args, argv, [&] {
       smf::LOG_INFO("setting up exit hooks");
       engine().at_exit([&] { return clients.stop(); });
-      return clients.start().then([&clients] {
-        smf::LOG_INFO("About to send a distributed set of requests to server");
-        return clients.invoke_on_all(&rpc_client_wrapper::send_request);
-      });
+      return clients.start(ip, port, 400)
+        .then([&clients] {
+          smf::LOG_INFO(
+            "About to send a distributed set of requests to server");
+          return clients.invoke_on_all(&rpc_client_wrapper::send_request);
+        });
     });
   } catch(...) {
     std::cerr << "Fatal exception: " << std::current_exception() << std::endl;

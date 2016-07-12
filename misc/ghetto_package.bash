@@ -1,12 +1,19 @@
 #!/bin/bash
-# set -ex
+#set -ex
 program_name="$1"
 if [[ $program_name == "" ]]; then
     echo "usage: ./ghetto_package program_name ";
     exit 1;
 fi
+black_list=("\/lib64\/libpthread.so.0" "\/lib64\/libresolv.so.2" "\/lib64\/libc.so.6")
 libs=$(ldd "$program_name" | awk '{print $3}' | sed  '/^$/d');
-output_dir=$(mktemp -d --suffix "$program_name")
+for b in ${black_list[@]}; do
+    libs=$(echo "${libs}" | sed s/"${b}"//g | sed  '/^$/d')
+done
+
+echo "LIBRARIES: $libs"
+
+output_dir="/tmp/${program_name}_$(git log --oneline -n1 | awk '{print $1}')"
 
 mkdir -p $output_dir/lib
 mkdir -p $output_dir/bin

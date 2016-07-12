@@ -19,7 +19,7 @@ int main(int args, char **argv, char **env) {
   std::cerr << "About to start the app" << std::endl;
   distributed<smf::rpc_server_stats> stats;
   distributed<smf::rpc_server> rpc;
-  smf::rpc_server_stats_printer stats_printer(stats);
+  smf::rpc_server_stats_printer stats_printer(std::ref(stats));
   app_template app;
   // TODO(agallego) -
   // add options for printer frequency, etc
@@ -35,6 +35,11 @@ int main(int args, char **argv, char **env) {
     uint16_t port = config["rpc_port"].as<uint16_t>();
     smf::LOG_INFO("starting stats");
     return stats.start()
+      .then([&stats_printer] {
+        smf::LOG_INFO("Starting stats");
+        stats_printer.start();
+        return make_ready_future<>();
+      })
       .then([&rpc, &stats, port] {
         return rpc.start(std::ref(stats), port)
           .then([&rpc] {
