@@ -13,9 +13,16 @@
 
 namespace smf {
 
+enum RPCFLAGS : uint32_t {
+  RPCFLAGS_NONE = 0,
+  RPCFLAGS_PRINT_HISTOGRAM_ON_EXIT = 1
+};
+
 class rpc_server {
   public:
-  rpc_server(distributed<rpc_server_stats> &stats, uint16_t port);
+  rpc_server(distributed<rpc_server_stats> &stats,
+             uint16_t port,
+             uint32_t flags);
 
   void start();
   future<> stop();
@@ -52,6 +59,7 @@ class rpc_server {
   std::vector<std::unique_ptr<rpc_incoming_filter>> in_filters_;
   std::vector<std::unique_ptr<rpc_outgoing_filter>> out_filters_;
   std::unique_ptr<histogram> hist_ = std::make_unique<histogram>();
+  uint32_t flags_;
 };
 
 } /* namespace memcache */

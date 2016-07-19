@@ -19,6 +19,7 @@
     - libubsan
     - libasan
     - lksctp-tools-devel
+    - lz4-devel
 
 - name: Sync soure from git
   git:

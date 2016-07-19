@@ -41,7 +41,8 @@ int main(int args, char **argv, char **env) {
         return make_ready_future<>();
       })
       .then([&rpc, &stats, port] {
-        return rpc.start(std::ref(stats), port)
+        uint32_t flags = smf::RPCFLAGS::RPCFLAGS_PRINT_HISTOGRAM_ON_EXIT;
+        return rpc.start(std::ref(stats), port, flags)
           .then([&rpc] {
             smf::LOG_INFO("Registering smf_gen::fbs::rpc::storage_service");
             return rpc.invoke_on_all(

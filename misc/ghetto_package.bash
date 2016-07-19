@@ -5,7 +5,7 @@ if [[ $program_name == "" ]]; then
     echo "usage: ./ghetto_package program_name ";
     exit 1;
 fi
-black_list=("\/lib64\/libpthread.so.0" "\/lib64\/libresolv.so.2" "\/lib64\/libc.so.6")
+black_list=("\/lib64\/libpthread.so.0" "\/lib64\/libresolv.so.2" "\/lib64\/libc.so.6" "\/lib64\/libdl.so.2")
 libs=$(ldd "$program_name" | awk '{print $3}' | sed  '/^$/d');
 for b in ${black_list[@]}; do
     libs=$(echo "${libs}" | sed s/"${b}"//g | sed  '/^$/d')

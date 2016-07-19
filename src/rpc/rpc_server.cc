@@ -3,8 +3,10 @@
 #include "rpc/rpc_envelope.h"
 namespace smf {
 
-rpc_server::rpc_server(distributed<rpc_server_stats> &stats, uint16_t port)
-  : stats_(stats), port_(port) {}
+rpc_server::rpc_server(distributed<rpc_server_stats> &stats,
+                       uint16_t port,
+                       uint32_t flags)
+  : stats_(stats), port_(port), flags_(flags) {}
 
 void rpc_server::start() {
   LOG_INFO("Starging server on: {} ", port_);
@@ -14,8 +16,6 @@ void rpc_server::start() {
   keep_doing([this] {
     return listener_->accept().then(
       [this](connected_socket fd, socket_address addr) mutable {
-        stats_.local().total_connections++;
-        stats_.local().active_connections++;
         auto conn =
           make_lw_shared<rpc_server_connection>(std::move(fd), addr, stats_);
         return handle_client_connection(conn);
@@ -25,14 +25,17 @@ void rpc_server::start() {
 }
 
 future<> rpc_server::stop() {
-  try {
-    sstring s = "histogram_shard_" + to_sstring(engine().cpu_id()) + ".csv";
-    FILE *fp = fopen(s.c_str(), "w");
-    if(fp) {
-      hist_->print(fp);
-      fclose(fp);
+  if((flags_ & RPCFLAGS::RPCFLAGS_PRINT_HISTOGRAM_ON_EXIT)
+     == RPCFLAGS::RPCFLAGS_PRINT_HISTOGRAM_ON_EXIT) {
+    try {
+      sstring s = "histogram_shard_" + to_sstring(engine().cpu_id()) + ".csv";
+      FILE *fp = fopen(s.c_str(), "w");
+      if(fp) {
+        hist_->print(fp);
+        fclose(fp);
+      }
+    } catch(...) {
     }
-  } catch(...) {
   }
   return make_ready_future<>();
 }
@@ -50,7 +53,6 @@ future<> rpc_server::handle_client_connection(
       return rpc_recv_context::parse(conn->istream)
         .then([this, conn, m = std::move(metric)](auto recv_ctx) mutable {
           if(!recv_ctx) {
-            stats_.local().bad_requests++;
             conn->set_error("Could not parse the request");
             return make_ready_future<>();
           }
@@ -60,6 +62,7 @@ future<> rpc_server::handle_client_connection(
                 if(conn->has_error()) {
                   LOG_ERROR("There was an error with the connection: {}",
                             conn->get_error());
+                  stats_.local().bad_requests++;
                   stats_.local().active_connections--;
                   return conn->ostream.close();
                 }
@@ -74,7 +77,6 @@ future<> rpc_server::handle_client_connection(
 future<> rpc_server::dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
                                   rpc_recv_context &&ctx) {
   if(ctx.request_id() == 0) {
-    stats_.local().bad_requests++;
     conn->set_error("Missing request_id. Invalid request");
     return make_ready_future<>();
   }

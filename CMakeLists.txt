@@ -87,6 +87,7 @@ target_link_libraries(smfrpc
   ${SEASTAR_LDFLAGS}
   smftracing
   )
+add_dependencies(smfrpc rpc_serialization smf_gen_demo_types)
 
 # generator
 add_executable (smf_gen ${SMF_GEN_SOURCES})
