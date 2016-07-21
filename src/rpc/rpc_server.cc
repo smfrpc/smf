@@ -49,15 +49,21 @@ future<> rpc_server::handle_client_connection(
       // TODO(agallego) -
       // Add connection limits and pass to
       // parse_rpc_recv_context() fn to prevent OOM erros
-      auto metric = hist_->auto_measure();
+
+
+      /// FIXME(agallego)
+      /// YOU ARE PAYING FOR THE PENALTY TO WAIT ON THE SOCKET. NOT TRUE - proxy
+      auto metric = hist_->auto_measure(); // THIS IS INCORRECT
       return rpc_recv_context::parse(conn->istream)
         .then([this, conn, m = std::move(metric)](auto recv_ctx) mutable {
           if(!recv_ctx) {
+            m->set_trace(false);
             conn->set_error("Could not parse the request");
             return make_ready_future<>();
           }
           return this->dispatch_rpc(conn, std::move(recv_ctx.value()))
             .finally([this, conn, metric = std::move(m)] {
+              metric->set_trace(!conn->has_error());
               return conn->ostream.flush().finally([this, conn] {
                 if(conn->has_error()) {
                   LOG_ERROR("There was an error with the connection: {}",

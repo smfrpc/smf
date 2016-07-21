@@ -50,14 +50,16 @@ struct histogram_measure {
     : h(o.h),
       begin_t(std::move(o.begin_t)) {}
 
+  void set_trace(bool b) { trace_ = b; }
   ~histogram_measure() {
-    if(h) {
+    if(h && trace_) {
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
                         std::chrono::high_resolution_clock::now() - begin_t)
                         .count();
       h->record(duration);
     }
   }
+  bool trace_ = true;
   histogram *h;
   std::chrono::high_resolution_clock::time_point begin_t;
 };

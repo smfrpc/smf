@@ -44,12 +44,18 @@ class rpc_client_wrapper {
         } else {
           smf::LOG_INFO("================================");
           smf::LOG_INFO("Thread ID: {}", std::this_thread::get_id());
-          client_->get_histogram()->stdout_print();
+          sstring s = "histogram_client_shard_" + to_sstring(engine().cpu_id()) + ".txt";
+          FILE *fp = fopen(s.c_str(), "w");
+          if(fp) {
+            client_->get_histogram()->print(fp);
+            fclose(fp);
+          }
           return make_ready_future<>();
         }
       });
   }
 
+  future<> connect() { return client_->connect(); }
   future<> stop() { return make_ready_future<>(); }
 
   private:
@@ -74,6 +80,10 @@ int main(int args, char **argv, char **env) {
       smf::LOG_INFO("setting up exit hooks");
       engine().at_exit([&] { return clients.stop(); });
       return clients.start(ip, port, 400)
+        .then([&clients] {
+          smf::LOG_INFO("Creating connections");
+          return clients.invoke_on_all(&rpc_client_wrapper::connect);
+        })
         .then([&clients] {
           smf::LOG_INFO(
             "About to send a distributed set of requests to server");

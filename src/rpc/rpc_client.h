@@ -58,14 +58,13 @@ class rpc_client {
   template <typename T>
   future<rpc_recv_ctx_t<T>> send(temporary_buffer<char> buf,
                                  bool oneway = false) {
-    return this->connect().then([
-      this,
-      b = std::move(buf),
-      oneway,
-      mesure = is_histogram_enabled() ? hist_->auto_measure() : nullptr
-    ]() mutable { return this->chain_send<T>(std::move(b), oneway); });
+    assert(conn_ != nullptr); // call connect() first
+    return this->chain_send<T>(std::move(buf), oneway)
+      .then([mesure = is_histogram_enabled() ? hist_->auto_measure() : nullptr](
+        auto t) { return std::move(t); });
   }
 
+  future<> connect();
   virtual future<> stop();
   virtual ~rpc_client();
   virtual void enable_histogram_metrics(bool enable = true) final;
@@ -78,8 +77,6 @@ class rpc_client {
   }
 
   private:
-  future<> connect();
-
   template <typename T>
   future<rpc_recv_ctx_t<T>> chain_send(temporary_buffer<char> buf,
                                        bool oneway) {
