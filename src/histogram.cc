@@ -39,21 +39,15 @@ void histogram::operator+=(const histogram &o) { ::hdr_add(hist_, o.get()); }
 std::unique_ptr<struct histogram_measure> histogram::auto_measure() {
   return std::make_unique<struct histogram_measure>(this);
 }
-void histogram::stdout_print() const {
-  ::hdr_percentiles_print(hist_,
-                          stdout,   // File to write to
-                          5,        // Granularity of printed values
-                          1.0,      // Multiplier for results
-                          CLASSIC); // Format CLASSIC/CSV supported.
-}
+void histogram::stdout_print() const { print(stdout); }
 
 void histogram::print(FILE *fp) const {
   assert(fp != nullptr);
   ::hdr_percentiles_print(hist_,
-                          fp,   // File to write to
-                          5,    // Granularity of printed values
-                          1.0,  // Multiplier for results
-                          CSV); // Format CLASSIC/CSV supported.
+                          fp,       // File to write to
+                          5,        // Granularity of printed values
+                          1.0,      // Multiplier for results
+                          CLASSIC); // Format CLASSIC/CSV supported.
 }
 
 histogram::~histogram() {

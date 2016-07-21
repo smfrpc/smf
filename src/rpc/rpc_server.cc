@@ -28,7 +28,7 @@ future<> rpc_server::stop() {
   if((flags_ & RPCFLAGS::RPCFLAGS_PRINT_HISTOGRAM_ON_EXIT)
      == RPCFLAGS::RPCFLAGS_PRINT_HISTOGRAM_ON_EXIT) {
     try {
-      sstring s = "histogram_shard_" + to_sstring(engine().cpu_id()) + ".csv";
+      sstring s = "histogram_shard_" + to_sstring(engine().cpu_id()) + ".txt";
       FILE *fp = fopen(s.c_str(), "w");
       if(fp) {
         hist_->print(fp);
