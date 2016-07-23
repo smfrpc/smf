@@ -1,15 +1,16 @@
 cmake_minimum_required(VERSION 3.0)
 set(SMURF_VERSION "0.0.1")
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
-set(FLATBUFFERS_FLATC_EXECUTABLE ${PROJECT_SOURCE_DIR}/src/third_party/bin/flatc)
+set(FLATBUFFERS_FLATC_EXECUTABLE
+  ${PROJECT_SOURCE_DIR}/src/third_party/bin/flatc)
 set(FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS --gen-name-strings --gen-object-api)
-INCLUDE(CMake/BuildFlatBuffers.cmake)
-INCLUDE(CMake/Seastar.cmake)
-INCLUDE(CMake/ccache.cmake)
-INCLUDE(CMake/base_flags.cmake)
-INCLUDE(CMake/join_function.cmake)
-INCLUDE(CMake/rpc_lib_sources.cmake)
-INCLUDE(CMake/smf_gen_sources.cmake)
+#set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -v" )
+include(CMake/BuildFlatBuffers.cmake)
+include(CMake/Seastar.cmake)
+include(CMake/ccache.cmake)
+include(CMake/base_flags.cmake)
+include(CMake/join_function.cmake)
+include(CMake/rpc_lib_sources.cmake)
 
 message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 enable_testing()
@@ -48,34 +49,13 @@ build_flatbuffers(
   #binary_schemas_dir
   "${PROJECT_SOURCE_DIR}/src/flatbuffers"
   #copy_text_schemas_dir
-  "${PROJECT_SOURCE_DIR}/src/flatbuffers"
-  )
-# Compile the Types for the RPC tests - kinda recursive - sigh
-build_flatbuffers(
-  #flatbuffers_schemas
-  "${PROJECT_SOURCE_DIR}/src/rpc/smf_gen/demo_service.fbs"
-  #schema_include_dirs
-  "${PROJECT_SOURCE_DIR}/src/rpc/smf_gen"
-  #custom_target_name
-  smf_gen_demo_types
-  #additional_dependencies
   ""
-  #generated_includes_dir
-  "${PROJECT_SOURCE_DIR}/src/rpc/smf_gen"
-  #binary_schemas_dir
-  "${PROJECT_SOURCE_DIR}/src/rpc/smf_gen"
-  #copy_text_schemas_dir
-  "${PROJECT_SOURCE_DIR}/src/rpc/smf_gen"
   )
-
 set(CXX_FLAG_LIST
   ${SEASTAR_CFLAGS}
   ${BASE_FLAGS}
   )
-#set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -v" )
 join("${CXX_FLAG_LIST}" " " CMAKE_CXX_FLAGS)
-
-
 add_library(smftracing STATIC
   ${PROJECT_SOURCE_DIR}/src/histogram.cc
   )
@@ -87,19 +67,12 @@ target_link_libraries(smfrpc
   ${SEASTAR_LDFLAGS}
   smftracing
   )
-add_dependencies(smfrpc rpc_serialization smf_gen_demo_types)
-
-# generator
-add_executable (smf_gen ${SMF_GEN_SOURCES})
-target_link_libraries (smf_gen ${BASE_FLAG} ${SMF_GEN_LIBS})
-# template server
-add_executable (rpc_template_server ${PROJECT_SOURCE_DIR}/src/rpc/templates/server.cc)
-target_link_libraries (rpc_template_server smfrpc)
-# template client
-add_executable (rpc_template_client ${PROJECT_SOURCE_DIR}/src/rpc/templates/client.cc)
-target_link_libraries (rpc_template_client smfrpc)
+add_dependencies(smfrpc rpc_serialization)
 
 
+# add programs that rely on these common ifaces
+add_subdirectory(${PROJECT_SOURCE_DIR}/src/rpc/smf_gen)
+add_subdirectory(${PROJECT_SOURCE_DIR}/src/rpc/templates)
+add_subdirectory(${PROJECT_SOURCE_DIR}/src/raft)
 
-# run all the tests
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/test)

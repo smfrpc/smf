@@ -53,11 +53,21 @@ rpc_envelope::rpc_envelope(rpc_envelope &&o) noexcept
     user_buf_(std::move(o.user_buf_)) {}
 
 void rpc_envelope::add_dynamic_header(const char *header, const char *value) {
+  assert(header != nullptr);
+  assert(value != nullptr);
+  add_dynamic_header(header, (const uint8_t *)value, strlen(value));
+}
+
+void rpc_envelope::add_dynamic_header(const char *header,
+                                      const uint8_t *value,
+                                      const size_t &value_len) {
   auto k = fbb_->CreateString(header);
-  auto v = fbb_->CreateString(value);
+  auto v = fbb_->CreateVector(value, value_len);
   auto h = fbs::rpc::CreateDynamicHeader(*fbb_.get(), k, v);
   headers_.push_back(std::move(h));
 }
+
+
 void rpc_envelope::set_oneway(bool oneway) { oneway_ = oneway; }
 bool rpc_envelope::is_oneway() const { return oneway_; }
 bool rpc_envelope::is_finished() const { return finished_; }

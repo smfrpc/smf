@@ -19,7 +19,7 @@ class smf_service {
 
   std::unique_ptr<const smf_method> method(int i) const {
     return std::unique_ptr<const smf_method>(
-      new smf_method(service_->calls.vec[i], service_id()));
+      new smf_method(service_->calls.vec[i], name(), service_id()));
   };
 
   private:

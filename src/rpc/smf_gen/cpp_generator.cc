@@ -158,8 +158,8 @@ void print_header_service_method(smf_printer *printer,
   printer->print("virtual future<smf::rpc_envelope>\n");
   printer->print(vars, "$MethodName$(smf::rpc_recv_context rec) {\n");
   printer->indent();
-  printer->print(vars,
-                 "/*Input type: $InType$*/\n/*Output type: $OutType$*/\n");
+  printer->print(vars, "// Input type:  $InType$\n");
+  printer->print(vars, "// Output type: $OutType$\n");
   printer->print("smf::rpc_envelope e(nullptr);\n");
   printer->print(
     "// Helpful for clients to set the status.\n"
@@ -235,6 +235,7 @@ void print_header_client_method(smf_printer *printer,
   vars["MethodName"] = proper_postfix_token(method->name(), "Send");
   vars["MethodID"] = std::to_string(method->method_id());
   vars["ServiceID"] = std::to_string(method->service_id());
+  vars["ServiceName"] = method->service_name();
   vars["InType"] = method->input_type_name();
   vars["OutType"] = method->output_type_name();
 
@@ -242,8 +243,9 @@ void print_header_client_method(smf_printer *printer,
   printer->print(vars, "$MethodName$(smf::rpc_envelope req) {\n");
   printer->indent();
   printer->print(vars, "// RequestID: $ServiceID$ ^ $MethodID$\n");
-  printer->print(vars, "// ServiceID: $ServiceID$ == crc32(ServiceName)\n");
-  printer->print(vars, "// MethodID:  $MethodID$ == crc32(MethodName)\n");
+  printer->print(vars,
+                 "// ServiceID: $ServiceID$ == crc32(\"$ServiceName$\")\n");
+  printer->print(vars, "// MethodID:  $MethodID$ == crc32(\"$MethodName$\")\n");
   printer->print(vars, "req.set_request_id($ServiceID$, $MethodID$);\n");
   printer->print(vars, "return send<$OutType$>(req.to_temp_buf(),false);\n");
   printer->outdent();

@@ -10,6 +10,9 @@ enum Flags:uint (bit_flags) {
   /// check the compressed payload if enabled. After decompression we can verify
   /// the payload with the flatbuffers Verifyer
   VERIFY_PAYLOAD,
+
+  /// uses flatbuffers schema verification
+  VERIFY_SCHEMA,
   /// \brief the payload is compressed using -lsnappy
   SNAPPY
 }
@@ -31,7 +34,9 @@ table DynamicHeader {
   /// alows for binary search lookup
   /// use with CreateVectorOfSortedTables<> instead of the CreateVector
   key: string (key);
-  value: string;
+  /// allows full embedding of other flatbuffers structs, such as tracing
+  /// extra modules, sampling, etc
+  value: [ubyte];
 }
 
 /// \brief: Payload needs to be a table because internally

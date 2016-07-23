@@ -62,6 +62,12 @@ class rpc_envelope {
   ///
   void add_dynamic_header(const char *header, const char *value);
 
+  /// brief add a key=value pair. the value is always binary up to the user how
+  /// to represent
+  void add_dynamic_header(const char *header,
+                          const uint8_t *value,
+                          const size_t &value_len);
+
   /// \brief if the user doesn't want to get a callback, or receive data
   /// back from the server after the requeset. That is use TCP as the
   /// best effort delivery. No need for application acknowledgement
