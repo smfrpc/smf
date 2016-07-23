@@ -96,7 +96,7 @@ std::string get_header_includes(smf_file *file) {
 
     static const char *headers_strs[] = {
       "experimental/optional", "rpc/rpc_service.h", "rpc/rpc_client.h",
-      "rpc/rpc_recv_context.h", "log.h"};
+      "rpc/rpc_recv_typed_context.h", "log.h"};
 
     std::vector<std::string> headers(headers_strs, array_end(headers_strs));
     print_includes(printer.get(), headers);
@@ -129,6 +129,8 @@ void print_header_service_index(smf_printer *printer,
     auto method = service->method(i);
     std::map<std::string, std::string> vars;
     vars["MethodName"] = method->name();
+    vars["InType"] = method->input_type_name();
+    vars["OutType"] = method->output_type_name();
     vars["MethodId"] = std::to_string(method->method_id());
     printer->print("handles.emplace_back(\n");
     printer->indent();
@@ -136,7 +138,9 @@ void print_header_service_index(smf_printer *printer,
     printer->print(
       "[this](smf::rpc_recv_context c) -> future<smf::rpc_envelope> {\n");
     printer->indent();
-    printer->print(vars, "return $MethodName$(std::move(c));\n");
+    printer->print(vars, "return "
+                         "$MethodName$(smf::rpc_recv_typed_context<$InType$>("
+                         "std::move(c)));\n");
     printer->outdent();
     printer->outdent();
     printer->print("});\n");
@@ -156,9 +160,9 @@ void print_header_service_method(smf_printer *printer,
   vars["InType"] = method->input_type_name();
   vars["OutType"] = method->output_type_name();
   printer->print("virtual future<smf::rpc_envelope>\n");
-  printer->print(vars, "$MethodName$(smf::rpc_recv_context rec) {\n");
+  printer->print(
+    vars, "$MethodName$(smf::rpc_recv_typed_context<$InType$> &&rec) {\n");
   printer->indent();
-  printer->print(vars, "// Input type:  $InType$\n");
   printer->print(vars, "// Output type: $OutType$\n");
   printer->print("smf::rpc_envelope e(nullptr);\n");
   printer->print(
@@ -239,7 +243,7 @@ void print_header_client_method(smf_printer *printer,
   vars["InType"] = method->input_type_name();
   vars["OutType"] = method->output_type_name();
 
-  printer->print(vars, "future<smf::rpc_recv_ctx_t<$OutType$>>\n");
+  printer->print(vars, "future<smf::rpc_recv_typed_context<$OutType$>>\n");
   printer->print(vars, "$MethodName$(smf::rpc_envelope req) {\n");
   printer->indent();
   printer->print(vars, "// RequestID: $ServiceID$ ^ $MethodID$\n");
