@@ -5,6 +5,7 @@
 // seastar
 #include <net/api.hh>
 // smf
+#include "rpc/rpc_connection.h"
 #include "rpc/rpc_server_stats.h"
 
 namespace smf {
@@ -54,15 +55,13 @@ struct rpc_server_connection_options {
   bool nodelay;
   exp::optional<net::tcp_keepalive_params> keepalive;
 };
-class rpc_server_connection {
+class rpc_server_connection : public rpc_connection {
   public:
   rpc_server_connection(connected_socket sock,
                         socket_address address,
                         distributed<rpc_server_stats> &stats,
                         rpc_server_connection_options opts = {})
-    : socket(std::move(sock))
-    , istream(socket.input())  // has no alternate ctor
-    , ostream(socket.output()) // has no alternate ctor
+    : rpc_connection(std::move(sock))
     , addr_(address)
     , stats_(stats)
     , opts_(opts) {
@@ -77,22 +76,12 @@ class rpc_server_connection {
   }
   ~rpc_server_connection() { stats_.local().active_connections--; }
 
-  connected_socket socket;
-  input_stream<char> istream;
-  output_stream<char> ostream;
 
-  bool has_error() const { return has_error_; }
-  void set_error(const char *e) {
-    has_error_ = true;
-    error_ = sstring(e);
-  }
-  sstring get_error() const { return error_; }
 
   private:
   socket_address addr_;
   distributed<rpc_server_stats> &stats_;
   rpc_server_connection_options opts_;
-  bool has_error_{false};
-  sstring error_;
+
 };
 }

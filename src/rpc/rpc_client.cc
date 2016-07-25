@@ -37,7 +37,7 @@ future<> rpc_client::connect() {
     .net()
     .connect(make_ipv4_address(server_addr_), local, seastar::transport::TCP)
     .then([this](connected_socket fd) mutable {
-      conn_ = new rpc_client_connection(std::move(fd));
+      conn_ = new rpc_connection(std::move(fd));
     });
 }
 } // namespace

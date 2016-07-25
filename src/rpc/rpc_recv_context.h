@@ -7,6 +7,8 @@
 #include "log.h"
 #include "hashing_utils.h"
 #include "flatbuffers/rpc_generated.h"
+#include "rpc/rpc_connection.h"
+#include "rpc/rpc_connection_limits.h"
 
 
 namespace smf {
@@ -20,7 +22,8 @@ struct rpc_recv_context {
   /// size of the header, so we parse sizeof(Header). We with this information
   /// we parse the body of the request
   ///
-  static future<exp::optional<rpc_recv_context>> parse(input_stream<char> &in);
+  static future<exp::optional<rpc_recv_context>>
+  parse(rpc_connection *conn, rpc_connection_limits *limits = nullptr);
 
   /// \brief default ctor
   /// moves in a hdr and body payload after verification. usually passed

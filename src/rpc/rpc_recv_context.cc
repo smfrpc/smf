@@ -31,17 +31,14 @@ uint32_t rpc_recv_context::request_id() const { return payload->meta(); }
 uint32_t rpc_recv_context::status() const { return payload->meta(); }
 
 future<optional<rpc_recv_context>>
-rpc_recv_context::parse(input_stream<char> &in) {
+rpc_recv_context::parse(rpc_connection *conn, rpc_connection_limits *limits) {
   using ret_type = optional<rpc_recv_context>;
-
   static constexpr size_t kRPCHeaderSize = sizeof(fbs::rpc::Header);
-  return in.read_exactly(kRPCHeaderSize)
-    .then([&in](temporary_buffer<char> header) {
-      // validate the header
+
+  return conn->istream.read_exactly(kRPCHeaderSize)
+    .then([conn](temporary_buffer<char> header) {
       if(kRPCHeaderSize != header.size()) {
-        if(in.eof()) {
-          LOG_ERROR("Input stream failed to read. input_stream::eof");
-        } else {
+        if(conn->is_valid()) {
           LOG_ERROR("Invalid header size `{}`. skipping req", header.size());
         }
         return make_ready_future<ret_type>(nullopt);
@@ -62,7 +59,7 @@ rpc_recv_context::parse(input_stream<char> &in) {
 
       // FIXME(agallego) - validate w/ a seastar::gate / semaphore
       //
-      return in.read_exactly(hdr->size())
+      return conn->istream.read_exactly(hdr->size())
         .then([header_buf =
                  std::move(header)](temporary_buffer<char> body) mutable {
           fbs::rpc::Header *hdr = (fbs::rpc::Header *)header_buf.get_write();

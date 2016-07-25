@@ -9,6 +9,7 @@
 #include "rpc/rpc_handle_router.h"
 #include "rpc/rpc_incoming_filter.h"
 #include "rpc/rpc_outgoing_filter.h"
+#include "rpc/rpc_connection_limits.h"
 #include "histogram.h"
 
 namespace smf {
@@ -60,6 +61,7 @@ class rpc_server {
   std::vector<std::unique_ptr<rpc_outgoing_filter>> out_filters_;
   std::unique_ptr<histogram> hist_ = std::make_unique<histogram>();
   uint32_t flags_;
+  rpc_connection_limits limits_{};
 };
 
 } /* namespace memcache */

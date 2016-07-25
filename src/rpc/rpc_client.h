@@ -6,7 +6,7 @@
 // smf
 #include "rpc/rpc_recv_typed_context.h"
 #include "rpc/rpc_envelope.h"
-#include "rpc/rpc_client_connection.h"
+#include "rpc/rpc_connection.h"
 #include "log.h"
 #include "histogram.h"
 
@@ -63,16 +63,14 @@ class rpc_client {
     if(oneway) {
       return make_ready_future<retval_t>();
     }
-    return rpc_recv_context::parse(conn_->istream)
-      .then([this](auto ctx) {
-        return make_ready_future<retval_t>(std::move(ctx));
-      });
+    return rpc_recv_context::parse(conn_).then(
+      [this](auto ctx) { return make_ready_future<retval_t>(std::move(ctx)); });
   }
 
 
   private:
   ipv4_addr server_addr_;
-  rpc_client_connection *conn_ = nullptr;
+  rpc_connection *conn_ = nullptr;
   std::unique_ptr<histogram> hist_;
 };
 }
