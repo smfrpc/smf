@@ -17,7 +17,7 @@ namespace bpo = boost::program_options;
 class rpc_client_wrapper {
   public:
   rpc_client_wrapper(const char *ip, uint16_t port, size_t req_num)
-    : num_of_req_(req_num) {
+    : num_of_req_(req_num), num_of_req_left_(req_num) {
     smf::LOG_INFO("setting up the client");
     client_ = make_lw_shared<smf_gen::fbs::rpc::SmurfStorageClient>(
       ipv4_addr{ip, port});
@@ -28,6 +28,9 @@ class rpc_client_wrapper {
   }
 
   future<> send_request() {
+    if(num_of_req_ == num_of_req_left_) {
+      begin_t_ = std::chrono::high_resolution_clock::now();
+    }
     smf::rpc_envelope env(builder_.GetBufferPointer(), builder_.GetSize());
     // builder_.Clear(); // reuse it
     return client_->GetSend(std::move(env))
@@ -37,10 +40,18 @@ class rpc_client_wrapper {
         }
       })
       .then([this]() mutable {
-        if(this->num_of_req_-- > 0) {
+        if(this->num_of_req_left_-- > 0) {
           return this->send_request();
         } else {
-          smf::LOG_INFO("================================");
+          auto end_t = std::chrono::high_resolution_clock::now();
+          uint64_t duration_milli =
+            std::chrono::duration_cast<std::chrono::milliseconds>(end_t
+                                                                  - begin_t_)
+              .count();
+          auto qps =
+            double(num_of_req_) / std::max(duration_milli, uint64_t(1));
+          smf::LOG_INFO("Test took: {}ms", duration_milli);
+          smf::LOG_INFO("Queries per millisecond: {}/ms", qps);
           smf::LOG_INFO("Thread ID: {}", std::this_thread::get_id());
           sstring s =
             "histogram_client_shard_" + to_sstring(engine().cpu_id()) + ".txt";
@@ -60,7 +71,9 @@ class rpc_client_wrapper {
   private:
   lw_shared_ptr<smf_gen::fbs::rpc::SmurfStorageClient> client_;
   flatbuffers::FlatBufferBuilder builder_;
-  size_t num_of_req_;
+  const size_t num_of_req_;
+  size_t num_of_req_left_;
+  std::chrono::high_resolution_clock::time_point begin_t_;
 };
 
 int main(int args, char **argv, char **env) {
