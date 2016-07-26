@@ -68,7 +68,11 @@ future<> rpc_server::handle_client_connection(
                 }
               });
             }); // end finally()
-        });     //  parse_rpc_recv_context.then()
+        })      //  parse_rpc_recv_context.then()
+        .handle_exception([this, conn](std::exception_ptr eptr) {
+          conn->set_error("Exception parsing request ");
+          return conn->ostream.close();
+        });
     });
 }
 

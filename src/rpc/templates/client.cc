@@ -62,6 +62,9 @@ class rpc_client_wrapper {
           }
           return make_ready_future<>();
         }
+      })
+      .handle_exception([this](std::exception_ptr eptr) {
+        smf::LOG_ERROR("Exception sending request to remote");
       });
   }
 
