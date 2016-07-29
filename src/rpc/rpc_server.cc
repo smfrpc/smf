@@ -25,8 +25,10 @@ void rpc_server::start() {
 }
 
 future<> rpc_server::stop() {
-  LOG_INFO("Stopping rpc server, aborting_accept()");
-  listener_->abort_accept();
+  // TODO(agallego) - do we need to abort_accept()
+  // seastar does this
+  // LOG_INFO("Stopping rpc server, aborting_accept()");
+  // listener_->abort_accept();
   LOG_INFO("Saving rpd_distpach histogram");
   if((flags_ & RPCFLAGS::RPCFLAGS_PRINT_HISTOGRAM_ON_EXIT)
      == RPCFLAGS::RPCFLAGS_PRINT_HISTOGRAM_ON_EXIT) {
@@ -42,7 +44,7 @@ future<> rpc_server::stop() {
     }
   }
   LOG_INFO("Closing reply_gate");
-  return limits_.reply_gate.close();
+  return limits_->reply_gate.close();
 }
 
 future<> rpc_server::handle_client_connection(
@@ -50,21 +52,25 @@ future<> rpc_server::handle_client_connection(
   return do_until(
     [conn] { return !conn->is_valid(); },
     [this, conn]() mutable {
-      return rpc_recv_context::parse(conn.get(), &limits_)
+      return rpc_recv_context::parse(conn.get(), limits_.get())
         .then([this, conn](auto recv_ctx) mutable {
           if(!recv_ctx) {
             conn->set_error("Could not parse the request");
             return make_ready_future<>();
           }
           auto metric = hist_->auto_measure();
+          auto payload_size = recv_ctx.value().body_buf.size();
           return this->dispatch_rpc(conn, std::move(recv_ctx.value()))
-            .finally([this, conn, metric = std::move(metric)] {
+            .finally([this, conn, metric = std::move(metric), payload_size] {
+              limits_->release_resources(payload_size);
               return conn->ostream.flush().finally([this, conn] {
                 if(conn->has_error()) {
                   LOG_ERROR("There was an error with the connection: {}",
                             conn->get_error());
                   stats_.local().bad_requests++;
                   stats_.local().active_connections--;
+                  LOG_INFO("Closing connection for client: {}",
+                           conn->remote_address);
                   return conn->ostream.close();
                 } else {
                   stats_.local().completed_requests++;
@@ -96,7 +102,7 @@ future<> rpc_server::dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
 
   try {
     return seastar::with_gate(
-      limits_.reply_gate, [this, ctx = std::move(ctx), conn]() mutable {
+      limits_->reply_gate, [this, ctx = std::move(ctx), conn]() mutable {
         // TODO(agallego) - missing incoming filters and outgoing filters
         return routes_.handle(std::move(ctx))
           .then([this, conn](rpc_envelope e) mutable {

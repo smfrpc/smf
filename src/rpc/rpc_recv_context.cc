@@ -30,6 +30,7 @@ rpc_recv_context::~rpc_recv_context() {}
 uint32_t rpc_recv_context::request_id() const { return payload->meta(); }
 uint32_t rpc_recv_context::status() const { return payload->meta(); }
 
+
 future<optional<rpc_recv_context>>
 rpc_recv_context::parse(rpc_connection *conn, rpc_connection_limits *limits) {
   using ret_type = optional<rpc_recv_context>;
@@ -50,13 +51,13 @@ rpc_recv_context::parse(rpc_connection *conn, rpc_connection_limits *limits) {
         return make_ready_future<ret_type>(nullopt);
       }
 
-      auto limits_fn = [limits, &conn](size_t payload_size) {
+      auto limits_fn = [limits, conn](size_t payload_size) {
         if(limits == nullptr) {
           return conn->istream.read_exactly(payload_size);
         } else {
           return limits->wait_for_resources(
                          limits->estimate_request_size(payload_size))
-            .then([payload_size, &conn]() {
+            .then([payload_size, conn]() {
               return conn->istream.read_exactly(payload_size);
             });
         }

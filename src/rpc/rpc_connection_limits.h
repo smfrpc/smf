@@ -23,7 +23,8 @@ struct rpc_connection_limits {
                                       1000000))
     : basic_request_size(basic_req_size)
     , bloat_factor(bloat_mult)
-    , max_memory(max_mem) {}
+    , max_memory(max_mem)
+    , resources_available(max_mem) {}
 
   /// Minimum request footprint in memory
   const size_t basic_request_size;
@@ -45,7 +46,7 @@ struct rpc_connection_limits {
 
   ~rpc_connection_limits() {}
 
-  semaphore resources_available{max_memory};
+  semaphore resources_available;
 
   // TODO(agallego) - rename to connection drain accept()
   seastar::gate reply_gate;

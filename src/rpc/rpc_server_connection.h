@@ -62,7 +62,7 @@ class rpc_server_connection : public rpc_connection {
                         distributed<rpc_server_stats> &stats,
                         rpc_server_connection_options opts = {})
     : rpc_connection(std::move(sock))
-    , addr_(address)
+    , remote_address(address)
     , stats_(stats)
     , opts_(opts) {
 
@@ -77,11 +77,10 @@ class rpc_server_connection : public rpc_connection {
   ~rpc_server_connection() { stats_.local().active_connections--; }
 
 
+  const socket_address remote_address;
 
   private:
-  socket_address addr_;
   distributed<rpc_server_stats> &stats_;
   rpc_server_connection_options opts_;
-
 };
 }

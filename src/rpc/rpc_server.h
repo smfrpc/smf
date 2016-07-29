@@ -61,7 +61,8 @@ class rpc_server {
   std::vector<std::unique_ptr<rpc_outgoing_filter>> out_filters_;
   std::unique_ptr<histogram> hist_ = std::make_unique<histogram>();
   uint32_t flags_;
-  rpc_connection_limits limits_{};
+  std::unique_ptr<rpc_connection_limits> limits_ =
+    std::make_unique<rpc_connection_limits>();
 };
 
 } /* namespace memcache */
