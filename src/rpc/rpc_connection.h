@@ -15,14 +15,16 @@ class rpc_connection {
   input_stream<char> istream;
   output_stream<char> ostream;
 
-  void set_invalid() { valid_ = false; }
-  bool is_valid() { return !istream.eof() && !has_error() && valid_; }
+
+  void disable() { enabled_ = false; }
+  bool is_enabled() const { return enabled_; }
+  bool is_valid() { return !istream.eof() && !has_error() && enabled_; }
   bool has_error() const { return error_.operator bool(); }
   void set_error(const char *e) { error_ = sstring(e); }
   sstring get_error() const { return error_.value(); }
 
   private:
   std::experimental::optional<sstring> error_;
-  bool valid_{true};
+  bool enabled_{true};
 };
 }

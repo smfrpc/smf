@@ -106,7 +106,7 @@ future<> rpc_server::dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
       });
   } catch(seastar::gate_closed_exception &) { /* ignore */
     LOG_INFO("Cannot dispatch rpc. Server is shutting down...");
-    conn->set_invalid();
+    conn->disable();
     return make_ready_future<>();
   }
 }

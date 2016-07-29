@@ -36,7 +36,7 @@ rpc_recv_context::parse(rpc_connection *conn, rpc_connection_limits *limits) {
   static constexpr size_t kRPCHeaderSize = sizeof(fbs::rpc::Header);
 
   return conn->istream.read_exactly(kRPCHeaderSize)
-    .then([conn](temporary_buffer<char> header) {
+    .then([conn, limits](temporary_buffer<char> header) {
       if(kRPCHeaderSize != header.size()) {
         if(conn->is_valid()) {
           LOG_ERROR("Invalid header size `{}`. skipping req", header.size());
@@ -45,21 +45,24 @@ rpc_recv_context::parse(rpc_connection *conn, rpc_connection_limits *limits) {
       }
       fbs::rpc::Header *hdr = (fbs::rpc::Header *)header.get_write();
 
-      // TODO(agallego) - add resource limits like seastar rpc
-      // if(max_request_size_ > 0 && hdr->size() > max_request_size_) {
-      //   log.error("Request size `{}` exceeded max request size of {}",
-      //             hdr->size(), max_request_size_);
-      //   return make_ready_future<>();
-      // }
-
       if(hdr->size() == 0) {
         LOG_ERROR("Emty body to parse. skipping");
         return make_ready_future<ret_type>(nullopt);
       }
 
-      // FIXME(agallego) - validate w/ a seastar::gate / semaphore
-      //
-      return conn->istream.read_exactly(hdr->size())
+      auto limits_fn = [limits, &conn](size_t payload_size) {
+        if(limits == nullptr) {
+          return conn->istream.read_exactly(payload_size);
+        } else {
+          return limits->wait_for_resources(
+                         limits->estimate_request_size(payload_size))
+            .then([payload_size, &conn]() {
+              return conn->istream.read_exactly(payload_size);
+            });
+        }
+      };
+
+      return limits_fn(hdr->size())
         .then([header_buf =
                  std::move(header)](temporary_buffer<char> body) mutable {
           fbs::rpc::Header *hdr = (fbs::rpc::Header *)header_buf.get_write();
