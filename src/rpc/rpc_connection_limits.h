@@ -36,7 +36,18 @@ struct rpc_connection_limits {
     return (basic_request_size + serialized_size) * bloat_factor;
   }
 
+  future<> wait_for_resources(size_t memory_consumed) {
+    return resources_available.wait(memory_consumed);
+  }
+  void release_resources(size_t memory_consumed) {
+    resources_available.signal(memory_consumed);
+  }
+
+  ~rpc_connection_limits() {}
+
   semaphore resources_available{max_memory};
+
+  // TODO(agallego) - rename to connection drain accept()
   seastar::gate reply_gate;
 };
 }
