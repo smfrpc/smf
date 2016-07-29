@@ -25,6 +25,9 @@ void rpc_server::start() {
 }
 
 future<> rpc_server::stop() {
+  LOG_INFO("Stopping rpc server, aborting_accept()");
+  listener_->abort_accept();
+  LOG_INFO("Saving rpd_distpach histogram");
   if((flags_ & RPCFLAGS::RPCFLAGS_PRINT_HISTOGRAM_ON_EXIT)
      == RPCFLAGS::RPCFLAGS_PRINT_HISTOGRAM_ON_EXIT) {
     try {
@@ -38,7 +41,8 @@ future<> rpc_server::stop() {
     } catch(...) {
     }
   }
-  return make_ready_future<>();
+  LOG_INFO("Closing reply_gate");
+  return limits_.reply_gate.close();
 }
 
 future<> rpc_server::handle_client_connection(
@@ -90,11 +94,20 @@ future<> rpc_server::dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
   }
   stats_.local().in_bytes += ctx.header_buf.size() + ctx.body_buf.size();
 
-  // TODO(agallego) - missing incoming filters and outgoing filters
-  return routes_.handle(std::move(ctx))
-    .then([this, conn](rpc_envelope e) mutable {
-      stats_.local().out_bytes += e.size();
-      return smf::rpc_envelope::send(conn->ostream, e.to_temp_buf());
-    });
+  try {
+    return seastar::with_gate(
+      limits_.reply_gate, [this, ctx = std::move(ctx), conn]() mutable {
+        // TODO(agallego) - missing incoming filters and outgoing filters
+        return routes_.handle(std::move(ctx))
+          .then([this, conn](rpc_envelope e) mutable {
+            stats_.local().out_bytes += e.size();
+            return smf::rpc_envelope::send(conn->ostream, e.to_temp_buf());
+          });
+      });
+  } catch(seastar::gate_closed_exception &) { /* ignore */
+    LOG_INFO("Cannot dispatch rpc. Server is shutting down...");
+    conn->set_invalid();
+    return make_ready_future<>();
+  }
 }
 } // end namespace
