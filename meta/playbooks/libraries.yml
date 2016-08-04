@@ -6,6 +6,6 @@
     - seastar
     - flatbuffers
     - kafka
-    - cityhash
+    - xxhash
     - smf_gen_libs
     - hdrhistogram

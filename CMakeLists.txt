@@ -11,6 +11,7 @@ include(CMake/ccache.cmake)
 include(CMake/base_flags.cmake)
 include(CMake/join_function.cmake)
 include(CMake/rpc_lib_sources.cmake)
+include(CMake/xxhash.cmake)
 
 message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 enable_testing()
@@ -66,6 +67,7 @@ add_library(smfrpc STATIC ${RPC_LIB_SOURCES})
 target_link_libraries(smfrpc
   ${SEASTAR_LDFLAGS}
   smftracing
+  xxhash_static
   )
 add_dependencies(smfrpc rpc_serialization)
 

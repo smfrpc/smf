@@ -1,0 +1,12 @@
+---
+
+- name: Sync soure from git
+  git:
+    repo='https://github.com/Cyan4973/xxHash.git'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/xxhash'
+    update=yes
+    recursive=yes
+    version='228d727'
+    force=yes

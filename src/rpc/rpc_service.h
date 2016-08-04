@@ -27,7 +27,7 @@ struct rpc_service_method_handle {
 
 struct rpc_service {
   virtual const char *service_name() const = 0;
-  /// \brief crc32 of service_name or CityHash32(service_name())
+  /// \brief crc32(service_name())
   virtual uint32_t service_id() const = 0;
   virtual std::vector<rpc_service_method_handle> methods() = 0;
 };
