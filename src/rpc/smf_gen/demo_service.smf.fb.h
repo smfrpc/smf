@@ -25,8 +25,7 @@ class SmurfStorage: public smf::rpc_service {
     return 1969906889;
   }
   virtual std::vector<smf::rpc_service_method_handle> methods() override final {
-    using h = smf::rpc_service_method_handle;
-    std::vector<h> handles;
+    std::vector<smf::rpc_service_method_handle> handles;
     handles.emplace_back(
       "Get", 2552873045,
       [this](smf::rpc_recv_context c) -> future<smf::rpc_envelope> {
