@@ -9,7 +9,7 @@ enum Flags:uint (bit_flags) {
   /// \brief MUST BE THE FIRST ONE so that we can crc32
   /// check the compressed payload if enabled. After decompression we can verify
   /// the payload with the flatbuffers Verifyer
-  VERIFY_PAYLOAD,
+  CHECKSUM,
 
   /// uses flatbuffers schema verification
   VERIFY_SCHEMA,
@@ -24,7 +24,9 @@ enum Flags:uint (bit_flags) {
 struct Header {
   size: uint;
   flags: Flags = 0;
-  crc32: uint;
+  /// \brief at the moment we use xxhash_64 bit version
+  /// and truncate it with static_cast<uint32_t>(xxhash)
+  checksum: uint;
 }
 
 /// \brief used for extra headers, ala HTTP

@@ -1,6 +1,11 @@
 #include "rpc/smf_gen/cpp_generator.h"
 #include "rpc/smf_gen/smf_file.h"
 #include <glog/logging.h>
+#include <iostream>
+
+DEFINE_bool(print_smf_gen_to_stderr,
+            false,
+            "prints to stderr the outputs of the generated header");
 
 namespace smf_gen {
 bool generate(const flatbuffers::Parser &parser, const std::string &file_name) {
@@ -20,7 +25,10 @@ bool generate(const flatbuffers::Parser &parser, const std::string &file_name) {
     get_header_prologue(&fbfile) + get_header_includes(&fbfile)
     + get_header_services(&fbfile) + get_header_epilogue(&fbfile);
 
-  DLOG(INFO) << "Finished generating code: \n" << header_code;
+
+  if(FLAGS_print_smf_gen_to_stderr) {
+    std::cerr << "Finished generating code: \n" << header_code;
+  }
 
   return flatbuffers::SaveFile((file_name + ".smf.fb.h").c_str(), header_code,
                                false);

@@ -101,8 +101,8 @@ void rpc_envelope::init(const uint8_t *buf_to_copy, size_t len) {
 void rpc_envelope::post_process_buffer() {
   // assumes that the builder is .Finish()
   using fbs::rpc::Flags;
-  auto crc = crc_32((const char *)fbb_->GetBufferPointer(), fbb_->GetSize());
-  header_ = fbs::rpc::Header(fbb_->GetSize(), Flags::Flags_VERIFY_PAYLOAD, crc);
+  auto crc = xxhash((const char *)fbb_->GetBufferPointer(), fbb_->GetSize());
+  header_ = fbs::rpc::Header(fbb_->GetSize(), Flags::Flags_CHECKSUM, crc);
   finished_ = true;
 }
 } // end namespace

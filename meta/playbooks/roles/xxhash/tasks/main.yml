@@ -10,3 +10,7 @@
     recursive=yes
     version='228d727'
     force=yes
+
+- copy:
+    dest='{{third_party_dir}}/include/'
+    src='{{goobly_cache_dir}}/xxhash/xxhash.h'

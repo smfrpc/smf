@@ -16,7 +16,7 @@ TEST(HeaderBufferTest, build_read_header) {
   Header *hdr2 = (Header *)(buf);
   ASSERT_EQ(hdr.size(), hdr2->size());
   ASSERT_EQ(hdr.flags(), hdr2->flags());
-  ASSERT_EQ(hdr.crc32(), hdr2->crc32());
+  ASSERT_EQ(hdr.checksum(), hdr2->checksum());
 }
 
 int main(int argc, char **argv) {

@@ -71,13 +71,12 @@ rpc_recv_context::parse(rpc_connection *conn, rpc_connection_limits *limits) {
           /// HAS TO BE FIRST. This is the last thing that happens on the sender
           /// side. So if the content is compressed, it happens BEFORE it's crc
           /// checked
-          if((hdr->flags() & Flags::Flags_VERIFY_PAYLOAD)
-             == Flags::Flags_VERIFY_PAYLOAD) {
-            uint32_t bodycrc32 = crc_32(body.get(), body.size());
-            if(bodycrc32 != hdr->crc32()) {
+          if((hdr->flags() & Flags::Flags_CHECKSUM) == Flags::Flags_CHECKSUM) {
+            const uint32_t xx = xxhash(body.get(), body.size());
+            if(xx != hdr->checksum()) {
               LOG_ERROR(
-                "Payload checksum `{}` does not match header checksum `{}`",
-                bodycrc32, hdr->crc32());
+                "Payload checksum `{}` does not match header checksum `{}`", xx,
+                hdr->checksum());
               return make_ready_future<ret_type>(nullopt);
             }
           }

@@ -165,7 +165,7 @@ compatibility w/ other languages such as Python, Ruby, Java which is a major
 goal for even building this proof of concept, without having to manually
 replicate the struct alignment and bit shifting to construct a header and a
 payload in the right format. At it’s core, the header is a tuple of:
-`(payload size, bit flags, crc32)`
+`(payload size, bit flags, checksum)`
 The payload, just ships around a byte array. There are 2
 extra fields in the payload.
 
@@ -189,7 +189,7 @@ called the “envelope format” Frame Format [full flatbuffers]():
 
 ```cpp
 enum Flags:uint (bit_flags) {
-    VERIFY_CRC32,
+    CHECKSUM,
     VERIFY_FLATBUFFERS,
     COMPRESS_SNAPPY
 }
@@ -198,7 +198,7 @@ enum Flags:uint (bit_flags) {
 struct Header {
     size: uint;
     flags: Flags = 0; // bit flags. i.e.: 2,4,8,16…
-    crc32: uint;
+    checksum: uint;
 };
 
 table Payload {
