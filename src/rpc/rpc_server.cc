@@ -29,7 +29,7 @@ future<> rpc_server::stop() {
   // seastar does this
   // LOG_INFO("Stopping rpc server, aborting_accept()");
   // listener_->abort_accept();
-  LOG_INFO("Saving rpd_distpach histogram");
+  LOG_INFO("Saving rpc_distpach histogram");
   if((flags_ & RPCFLAGS::RPCFLAGS_PRINT_HISTOGRAM_ON_EXIT)
      == RPCFLAGS::RPCFLAGS_PRINT_HISTOGRAM_ON_EXIT) {
     try {
