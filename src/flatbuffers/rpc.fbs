@@ -2,17 +2,16 @@ namespace smf.fbs.rpc;
 
 /// \brief: headers that are stored in an int
 /// so they need to be inclusive. That is, you can turn on
-/// many flags at the same time, i.e.: enable crc32 checks and
+/// many flags at the same time, i.e.: enable checksum and
 /// have the payload be zlib compressed.
 ///
 enum Flags:uint (bit_flags) {
-  /// \brief MUST BE THE FIRST ONE so that we can crc32
-  /// check the compressed payload if enabled. After decompression we can verify
-  /// the payload with the flatbuffers Verifyer
+  /// \brief check the compressed payload if enabled.
   CHECKSUM,
 
   /// uses flatbuffers schema verification
   VERIFY_SCHEMA,
+
   /// \brief the payload is compressed using -lsnappy
   SNAPPY
 }

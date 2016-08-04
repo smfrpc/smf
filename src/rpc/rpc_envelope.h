@@ -96,7 +96,7 @@ class rpc_envelope {
   void init(const uint8_t *buf_to_copy, size_t len);
 
   /// \brief sets the finished_=true as the main contribution
-  /// after guaranteeing that the payload has been crc32'ed
+  /// after guaranteeing that the payload has been checksum'med
   /// length sepcify and other connection specific headers
   ///
   void post_process_buffer();
