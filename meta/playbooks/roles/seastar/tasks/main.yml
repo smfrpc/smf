@@ -20,6 +20,8 @@
     - libasan
     - lksctp-tools-devel
     - lz4-devel
+    - protobuf-devel
+    - protobuf-compiler
 
 - name: Sync soure from git
   git:
