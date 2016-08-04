@@ -122,8 +122,7 @@ void print_header_service_index(smf_printer *printer,
   printer->print("virtual std::vector<smf::rpc_service_method_handle> "
                  "methods() override final {\n");
   printer->indent();
-  printer->print("using h = smf::rpc_service_method_handle;\n"
-                 "std::vector<h> handles;\n");
+  printer->print("std::vector<smf::rpc_service_method_handle> handles;\n");
 
   for(int i = 0; i < service->method_count(); ++i) {
     auto method = service->method(i);
