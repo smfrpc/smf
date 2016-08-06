@@ -9,7 +9,8 @@ rpc_server::rpc_server(distributed<rpc_server_stats> &stats,
   : stats_(stats), port_(port), flags_(flags) {}
 
 void rpc_server::start() {
-  LOG_INFO("Starging server on: {} ", port_);
+  LOG_INFO("Starging server. port: {}, flags:{}, limits:{} ", port_, flags_,
+           *limits_.get());
   listen_options lo;
   lo.reuse_address = true;
   listener_ = engine().listen(make_ipv4_address({port_}), lo);

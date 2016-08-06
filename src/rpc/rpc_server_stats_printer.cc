@@ -11,11 +11,8 @@ rpc_server_stats_printer::rpc_server_stats_printer(
 void rpc_server_stats_printer::start() {
   timer_.set_callback([this] {
     ++timer_callback_counter_;
-    aggregate_stats().then([this](rpc_server_stats stats) {
-      std::stringstream ss;
-      ss << stats;
-      LOG_INFO("{}", ss.str());
-    });
+    aggregate_stats().then(
+      [this](rpc_server_stats stats) { LOG_INFO("{}", stats); });
   });
   timer_.arm_periodic(period_);
 }

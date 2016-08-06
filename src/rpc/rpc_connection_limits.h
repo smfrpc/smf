@@ -1,4 +1,5 @@
 #pragma once
+#include <ostream>
 // seastar
 #include <core/distributed.hh>
 #include <core/gate.hh>
@@ -20,11 +21,7 @@ struct rpc_connection_limits {
     size_t bloat_mult = 1.57, // same as folly::vector
     /// The defaults are the ones from scylladb as of 8e124b3a
     size_t max_mem = std::max<size_t>(0.08 * memory::stats().total_memory(),
-                                      1000000))
-    : basic_request_size(basic_req_size)
-    , bloat_factor(bloat_mult)
-    , max_memory(max_mem)
-    , resources_available(max_mem) {}
+                                      1000000));
 
   /// Minimum request footprint in memory
   const size_t basic_request_size;
@@ -32,23 +29,15 @@ struct rpc_connection_limits {
   /// memory used by request
   const size_t bloat_factor;
   const size_t max_memory;
-
-  size_t estimate_request_size(size_t serialized_size) {
-    return (basic_request_size + serialized_size) * bloat_factor;
-  }
-
-  future<> wait_for_resources(size_t memory_consumed) {
-    return resources_available.wait(memory_consumed);
-  }
-  void release_resources(size_t memory_consumed) {
-    resources_available.signal(memory_consumed);
-  }
-
-  ~rpc_connection_limits() {}
-
   semaphore resources_available;
-
   // TODO(agallego) - rename to connection drain accept()
   seastar::gate reply_gate;
+
+
+  size_t estimate_request_size(size_t serialized_size);
+  future<> wait_for_resources(size_t memory_consumed);
+  void release_resources(size_t memory_consumed);
+  ~rpc_connection_limits();
 };
-}
+std::ostream &operator<<(std::ostream &o, const rpc_connection_limits &l);
+} // smf
