@@ -23,9 +23,9 @@ void rpc_connection_limits::release_resources(size_t memory_consumed) {
 rpc_connection_limits::~rpc_connection_limits() {}
 
 std::ostream &operator<<(std::ostream &o, const rpc_connection_limits &l) {
-  o << "{'basic_request_size':" << l.basic_request_size
+  o << "{'basic_req_size':" << l.basic_request_size
     << ",'bloat_factor': " << l.bloat_factor << ",'max_mem':" << l.max_memory
-    << ",'resources_available':" << l.resources_available.current() << "}";
+    << ",'res_avail':" << l.resources_available.current() << "}";
   return o;
 }
 } // smf
