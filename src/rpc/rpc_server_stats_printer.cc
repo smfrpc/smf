@@ -1,5 +1,4 @@
 #include "rpc/rpc_server_stats_printer.h"
-#include <sstream>
 #include "log.h"
 
 namespace smf {
