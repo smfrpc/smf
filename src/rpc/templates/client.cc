@@ -25,15 +25,15 @@ class rpc_client_wrapper {
     auto req = smf_gen::fbs::rpc::CreateRequest(builder_,
                                                 builder_.CreateString("hello"));
     builder_.Finish(req);
+    envelope_ = std::make_unique<smf::rpc_envelope>(builder_.GetBufferPointer(),
+                                                    builder_.GetSize());
   }
 
   future<> send_request() {
     if(num_of_req_ == num_of_req_left_) {
       begin_t_ = std::chrono::high_resolution_clock::now();
     }
-    smf::rpc_envelope env(builder_.GetBufferPointer(), builder_.GetSize());
-    // builder_.Clear(); // reuse it
-    return client_->GetSend(std::move(env))
+    return client_->Get(envelope_.get())
       .then([](auto reply) mutable {
         if(!reply) {
           smf::LOG_INFO("Well.... the server had an OoOps!");
@@ -77,6 +77,7 @@ class rpc_client_wrapper {
   const size_t num_of_req_;
   size_t num_of_req_left_;
   std::chrono::high_resolution_clock::time_point begin_t_;
+  std::unique_ptr<smf::rpc_envelope> envelope_;
 };
 
 int main(int args, char **argv, char **env) {

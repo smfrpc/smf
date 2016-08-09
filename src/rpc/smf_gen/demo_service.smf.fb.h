@@ -50,12 +50,13 @@ class SmurfStorageClient: public smf::rpc_client {
   :smf::rpc_client(std::move(server_addr)) {}
 
   future<smf::rpc_recv_typed_context<Response>>
-  GetSend(smf::rpc_envelope req) {
+  Get(smf::rpc_envelope *e) {
+    assert(e != nullptr);
     // RequestID: 1969906889 ^ 2552873045
     // ServiceID: 1969906889 == crc32("SmurfStorage")
-    // MethodID:  2552873045 == crc32("GetSend")
-    req.set_request_id(1969906889, 2552873045);
-    return send<Response>(req.to_temp_buf(),false);
+    // MethodID:  2552873045 == crc32("Get")
+    e->set_request_id(1969906889, 2552873045);
+    return send<Response>(e->to_temp_buf(),false);
   }
 }; // end of rpc client: SmurfStorageClient
 

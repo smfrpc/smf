@@ -235,7 +235,7 @@ std::string proper_postfix_token(std::string s, std::string postfix) {
 void print_header_client_method(smf_printer *printer,
                                 const smf_method *method) {
   std::map<std::string, std::string> vars;
-  vars["MethodName"] = proper_postfix_token(method->name(), "Send");
+  vars["MethodName"] = method->name();
   vars["MethodID"] = std::to_string(method->method_id());
   vars["ServiceID"] = std::to_string(method->service_id());
   vars["ServiceName"] = method->service_name();
@@ -243,14 +243,15 @@ void print_header_client_method(smf_printer *printer,
   vars["OutType"] = method->output_type_name();
 
   printer->print(vars, "future<smf::rpc_recv_typed_context<$OutType$>>\n");
-  printer->print(vars, "$MethodName$(smf::rpc_envelope req) {\n");
+  printer->print(vars, "$MethodName$(smf::rpc_envelope *e) {\n");
   printer->indent();
+  printer->print("assert(e != nullptr);\n");
   printer->print(vars, "// RequestID: $ServiceID$ ^ $MethodID$\n");
   printer->print(vars,
                  "// ServiceID: $ServiceID$ == crc32(\"$ServiceName$\")\n");
   printer->print(vars, "// MethodID:  $MethodID$ == crc32(\"$MethodName$\")\n");
-  printer->print(vars, "req.set_request_id($ServiceID$, $MethodID$);\n");
-  printer->print(vars, "return send<$OutType$>(req.to_temp_buf(),false);\n");
+  printer->print(vars, "e->set_request_id($ServiceID$, $MethodID$);\n");
+  printer->print(vars, "return send<$OutType$>(e->to_temp_buf(),false);\n");
   printer->outdent();
   printer->print("}\n");
 }
