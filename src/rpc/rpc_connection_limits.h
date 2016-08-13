@@ -34,10 +34,23 @@ struct rpc_connection_limits {
   seastar::gate reply_gate;
 
 
+  future<> wait_for_payload_resources(size_t payload_size) {
+    return wait_for_resources(estimate_request_size(payload_size));
+  }
+  void release_payload_resources(size_t payload_size) {
+    release_resources(estimate_request_size(payload_size));
+  }
+
+  ~rpc_connection_limits();
+
+  /// \brief - estimates payload + bloat factor
+  /// WARNING:
+  /// If you use manually, be careful not to leak resources
+  /// Please try to use wait_for_payload_resources()
+  /// and release_payload_resources()
   size_t estimate_request_size(size_t serialized_size);
   future<> wait_for_resources(size_t memory_consumed);
   void release_resources(size_t memory_consumed);
-  ~rpc_connection_limits();
 };
 std::ostream &operator<<(std::ostream &o, const rpc_connection_limits &l);
 } // smf

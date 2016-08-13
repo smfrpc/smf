@@ -65,4 +65,4 @@ class rpc_server {
     std::make_unique<rpc_connection_limits>();
 };
 
-} /* namespace memcache */
+} // namespace smf

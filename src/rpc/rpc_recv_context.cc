@@ -55,8 +55,7 @@ rpc_recv_context::parse(rpc_connection *conn, rpc_connection_limits *limits) {
         if(limits == nullptr) {
           return conn->istream.read_exactly(payload_size);
         } else {
-          return limits->wait_for_resources(
-                         limits->estimate_request_size(payload_size))
+          return limits->wait_for_payload_resources(payload_size)
             .then([payload_size, conn]() {
               return conn->istream.read_exactly(payload_size);
             });
@@ -66,8 +65,13 @@ rpc_recv_context::parse(rpc_connection *conn, rpc_connection_limits *limits) {
       return limits_fn(hdr->size())
         .then([header_buf =
                  std::move(header)](temporary_buffer<char> body) mutable {
-          fbs::rpc::Header *hdr = (fbs::rpc::Header *)header_buf.get_write();
           using namespace fbs::rpc;
+          Header *hdr = (Header *)header_buf.get_write();
+          if(hdr->size() != body.size()) {
+            LOG_ERROR("Read incorrect number of bytes.");
+            return make_ready_future<ret_type>(nullopt);
+          }
+
           /// HAS TO BE FIRST. This is the last thing that happens on the sender
           /// side. So if the content is compressed, it happens BEFORE it's crc
           /// checked

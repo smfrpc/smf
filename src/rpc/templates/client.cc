@@ -16,10 +16,9 @@ namespace bpo = boost::program_options;
 
 class rpc_client_wrapper {
   public:
-  rpc_client_wrapper(const char *ip, uint16_t port, size_t req_num)
-    : num_of_req_(req_num), num_of_req_left_(req_num) {
-    smf::LOG_INFO("setting up the client");
-    client_ = make_lw_shared<smf_gen::fbs::rpc::SmurfStorageClient>(
+  rpc_client_wrapper(const char *ip, uint16_t port) {
+    smf::LOG_INFO("Setting up the client. Remove server: {}:{}", ip, port);
+    client_ = std::make_unique<smf_gen::fbs::rpc::SmurfStorageClient>(
       ipv4_addr{ip, port});
     client_->enable_histogram_metrics();
     auto req = smf_gen::fbs::rpc::CreateRequest(builder_,
@@ -30,58 +29,52 @@ class rpc_client_wrapper {
   }
 
   future<> send_request() {
-    if(num_of_req_ == num_of_req_left_) {
-      begin_t_ = std::chrono::high_resolution_clock::now();
-    }
     return client_->Get(envelope_.get())
-      .then([](auto reply) mutable {
-        if(!reply) {
-          smf::LOG_INFO("Well.... the server had an OoOps!");
-        }
-      })
-      .then([this]() mutable {
-        if(this->num_of_req_left_-- > 0) {
-          return this->send_request();
-        } else {
-          auto end_t = std::chrono::high_resolution_clock::now();
-          uint64_t duration_milli =
-            std::chrono::duration_cast<std::chrono::milliseconds>(end_t
-                                                                  - begin_t_)
-              .count();
-          auto qps =
-            double(num_of_req_) / std::max(duration_milli, uint64_t(1));
-          smf::LOG_INFO("Test took: {}ms", duration_milli);
-          smf::LOG_INFO("Queries per millisecond: {}/ms", qps);
-          smf::LOG_INFO("Thread ID: {}", std::this_thread::get_id());
-          sstring s =
-            "histogram_client_shard_" + to_sstring(engine().cpu_id()) + ".txt";
-          FILE *fp = fopen(s.c_str(), "w");
-          if(fp) {
-            client_->get_histogram()->print(fp);
-            fclose(fp);
-          }
-          return make_ready_future<>();
-        }
-      })
-      .handle_exception([this](std::exception_ptr eptr) {
-        smf::LOG_ERROR("Exception sending request to remote");
-      });
+      .then([](auto r /* ignore reply*/) { return make_ready_future<>(); });
   }
 
+  future<uint64_t> do_req(const size_t num_of_req) {
+    using namespace std::chrono;
+    smf::LOG_INFO("Creating connections");
+    auto begin = high_resolution_clock::now();
+    return connect()
+      .then([this, num_of_req] {
+        smf::LOG_INFO("About to send `{}` requests to server", num_of_req);
+        return do_for_each(boost::counting_iterator<size_t>(0),
+                           boost::counting_iterator<size_t>(num_of_req),
+                           [this](size_t reqno) { return send_request(); });
+      })
+      .then([begin, num_of_req] {
+        auto end_t = high_resolution_clock::now();
+        uint64_t duration_milli =
+          duration_cast<milliseconds>(end_t - begin).count();
+        auto qps = double(num_of_req) / std::max(duration_milli, uint64_t(1));
+        smf::LOG_INFO("Test took: {}ms", duration_milli);
+        smf::LOG_INFO("Queries per millisecond: {}/ms", qps);
+        return make_ready_future<uint64_t>(duration_milli);
+      }); // connect
+  }
   future<> connect() { return client_->connect(); }
-  future<> stop() { return make_ready_future<>(); }
+  future<> stop() {
+    sstring s =
+      "rpc_client_histogram_shard_" + to_sstring(engine().cpu_id()) + ".txt";
+    FILE *fp = fopen(s.c_str(), "w");
+    if(fp) {
+      client_->get_histogram()->print(fp);
+      fclose(fp);
+    }
+    return make_ready_future<>();
+  }
 
   private:
-  lw_shared_ptr<smf_gen::fbs::rpc::SmurfStorageClient> client_;
+  std::unique_ptr<smf_gen::fbs::rpc::SmurfStorageClient> client_;
   flatbuffers::FlatBufferBuilder builder_;
-  const size_t num_of_req_;
-  size_t num_of_req_left_;
-  std::chrono::high_resolution_clock::time_point begin_t_;
+
   std::unique_ptr<smf::rpc_envelope> envelope_;
 };
 
 int main(int args, char **argv, char **env) {
-  std::cerr << "About to start the client" << std::endl;
+  smf::LOG_INFO("About to start the client");
   distributed<rpc_client_wrapper> clients;
   app_template app;
   app.add_options()("req_num", bpo::value<size_t>()->default_value(400),
@@ -90,25 +83,30 @@ int main(int args, char **argv, char **env) {
     "ip_address", bpo::value<std::string>()->default_value("127.0.0.1"),
     "ip address of server");
   try {
-    return app.run_deprecated(args, argv, [&] {
+    return app.run(args, argv, [&app, &clients]() -> future<int> {
+
       auto &&config = app.configuration();
-      uint16_t port = config["rpc_port"].as<uint16_t>();
-      size_t req_num = config["req_num"].as<size_t>();
+      const uint16_t port = config["rpc_port"].as<uint16_t>();
+      const size_t req_num = config["req_num"].as<size_t>();
       const char *ip = config["ip_address"].as<std::string>().c_str();
       smf::LOG_INFO("setting up exit hooks");
-      engine().at_exit([&] { return clients.stop(); });
-      return clients.start(ip, port, req_num)
-        .then([&clients] {
-          smf::LOG_INFO("Creating connections");
-          return clients.invoke_on_all(&rpc_client_wrapper::connect);
+      engine().at_exit([&clients] { return clients.stop(); });
+      return clients.start(ip, port)
+        .then([&clients, req_num] {
+          return clients.map_reduce(adder<uint64_t>(),
+                                    &rpc_client_wrapper::do_req, req_num)
+            .then([](auto ms) {
+              smf::LOG_INFO("Total time for all requests: {}ms", ms);
+              return make_ready_future<>();
+            });
         })
         .then([&clients] {
-          smf::LOG_INFO(
-            "About to send a distributed set of requests to server");
-          return clients.invoke_on_all(&rpc_client_wrapper::send_request);
+          smf::LOG_INFO("Shutting down clients");
+          return clients.stop().then([] { return make_ready_future<int>(0); });
+
         });
     });
-  } catch(...) {
-    std::cerr << "Fatal exception: " << std::current_exception() << std::endl;
+  } catch(const std::exception &e) {
+    std::cerr << "Fatal exception: " << e.what() << std::endl;
   }
 }

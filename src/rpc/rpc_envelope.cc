@@ -7,6 +7,9 @@
 #include "log.h"
 
 namespace smf {
+
+constexpr static size_t kHeaderSize = sizeof(fbs::rpc::Header);
+
 future<> rpc_envelope::send(output_stream<char> &out,
                             temporary_buffer<char> buf) {
   return out.write(std::move(buf))
@@ -17,20 +20,16 @@ future<> rpc_envelope::send(output_stream<char> &out,
 }
 
 temporary_buffer<char> rpc_envelope::to_temp_buf() {
-  size_t hdr_size = sizeof(fbs::rpc::Header);
   this->finish();
-  temporary_buffer<char> buf(hdr_size + fbb_->GetSize());
-  std::copy((char *)&header_, (char *)&header_ + hdr_size, buf.get_write());
+  temporary_buffer<char> buf(size());
+  std::copy((char *)&header_, (char *)&header_ + kHeaderSize, buf.get_write());
   std::copy((char *)fbb_->GetBufferPointer(),
             (char *)fbb_->GetBufferPointer() + fbb_->GetSize(),
-            buf.get_write() + hdr_size);
+            buf.get_write() + kHeaderSize);
   return std::move(buf);
 }
 
-size_t rpc_envelope::size() {
-  static size_t hdr_size = sizeof(fbs::rpc::Header);
-  return hdr_size + fbb_->GetSize();
-}
+size_t rpc_envelope::size() { return kHeaderSize + fbb_->GetSize(); }
 
 rpc_envelope::rpc_envelope(const flatbuffers::FlatBufferBuilder &fbb) {
   init(fbb.GetBufferPointer(), fbb.GetSize());

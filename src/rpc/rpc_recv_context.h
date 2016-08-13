@@ -23,7 +23,7 @@ struct rpc_recv_context {
   /// we parse the body of the request
   ///
   static future<exp::optional<rpc_recv_context>>
-  parse(rpc_connection *conn, rpc_connection_limits *limits = nullptr);
+  parse(rpc_connection *conn, rpc_connection_limits *limits);
 
   /// \brief default ctor
   /// moves in a hdr and body payload after verification. usually passed

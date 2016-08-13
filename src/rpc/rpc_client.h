@@ -63,8 +63,10 @@ class rpc_client {
     if(oneway) {
       return make_ready_future<retval_t>();
     }
-    return rpc_recv_context::parse(conn_).then(
-      [this](auto ctx) { return make_ready_future<retval_t>(std::move(ctx)); });
+    return rpc_recv_context::parse(conn_, nullptr)
+      .then([this](auto ctx) {
+        return make_ready_future<retval_t>(std::move(ctx));
+      });
   }
 
 

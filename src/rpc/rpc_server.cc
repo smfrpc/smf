@@ -19,7 +19,8 @@ void rpc_server::start() {
       [this](connected_socket fd, socket_address addr) mutable {
         auto conn =
           make_lw_shared<rpc_server_connection>(std::move(fd), addr, stats_);
-        return handle_client_connection(conn);
+        // DO NOT return the future. Need to execute in parallel
+        handle_client_connection(conn);
       });
   })
     .or_terminate(); // end keep_doing
@@ -63,7 +64,7 @@ future<> rpc_server::handle_client_connection(
           auto payload_size = recv_ctx.value().body_buf.size();
           return this->dispatch_rpc(conn, std::move(recv_ctx.value()))
             .finally([this, conn, metric = std::move(metric), payload_size] {
-              limits_->release_resources(payload_size);
+              limits_->release_payload_resources(payload_size);
               return conn->ostream.flush().finally([this, conn] {
                 if(conn->has_error()) {
                   LOG_ERROR("There was an error with the connection: {}",

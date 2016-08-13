@@ -15,26 +15,25 @@ namespace smf {
 class histogram {
   public:
   histogram();
-  histogram(const histogram &o) noexcept;
+  histogram(const histogram &o) = delete;
+  histogram(const struct hdr_histogram *copy) noexcept;
   histogram(histogram &&o) noexcept;
 
+  void operator+=(const histogram &o);
   void record(const uint64_t &v);
   void record_multiple_times(const uint64_t &v, const uint32_t &times);
   void record_corrected(const uint64_t &v, const uint64_t &interval);
   size_t memory_size();
   const struct hdr_histogram *get() const;
-  void operator+=(const histogram &o);
-  histogram &operator=(const histogram &);
+
   std::unique_ptr<struct histogram_measure> auto_measure();
 
-  /// BLOCKING CALLS
-  /// BAD FOR SEASTAR.
-  void stdout_print() const;
   void print(FILE *fp) const;
 
   ~histogram();
 
   private:
+  void init();
   struct hdr_histogram *hist_ = nullptr;
 };
 

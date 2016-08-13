@@ -4,21 +4,19 @@
 #include "histogram.h"
 
 namespace smf {
-histogram::histogram() {
-  ::hdr_init(1,                   // Minimum value
-             INT64_C(3600000000), // Maximum value
-             3,                   // Number of significant figures
-             &hist_);             // Pointer to initialise
-}
+histogram::histogram() { init(); }
 histogram::histogram(histogram &&o) noexcept : hist_(std::move(o.hist_)) {}
-
-histogram::histogram(const histogram &o) noexcept {
+histogram::histogram(const struct hdr_histogram *copy) noexcept {
+  init();
+  ::hdr_add(hist_, copy);
+}
+void histogram::init() {
   ::hdr_init(1,                   // Minimum value
              INT64_C(3600000000), // Maximum value
              3,                   // Number of significant figures
              &hist_);             // Pointer to initialise
-  *this += o;                     // add the other histogram
 }
+
 void histogram::record(const uint64_t &v) { ::hdr_record_value(hist_, v); }
 
 void histogram::record_multiple_times(const uint64_t &v,
@@ -39,7 +37,6 @@ void histogram::operator+=(const histogram &o) { ::hdr_add(hist_, o.get()); }
 std::unique_ptr<struct histogram_measure> histogram::auto_measure() {
   return std::make_unique<struct histogram_measure>(this);
 }
-void histogram::stdout_print() const { print(stdout); }
 
 void histogram::print(FILE *fp) const {
   assert(fp != nullptr);

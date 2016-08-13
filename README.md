@@ -10,7 +10,7 @@ using seastar-project.org for multiple projects. direction to be defined
 # debugging - set core_pattern
 
 ```
- root$ echo 'core.%e.%p.%h.%t' > /proc/sys/kernel/core_pattern
+ root$ echo 'core_dump.%e.%s.%c.%p.%u.%g.%t.%P.%I' > /proc/sys/kernel/core_pattern
 ```
 # getting started
 ```bash

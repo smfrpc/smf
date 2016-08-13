@@ -77,6 +77,9 @@ class rpc_server_connection : public rpc_connection {
   ~rpc_server_connection() { stats_.local().active_connections--; }
 
 
+  size_t served_requests{};
+
+
   const socket_address remote_address;
 
   private:
