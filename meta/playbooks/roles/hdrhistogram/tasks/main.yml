@@ -1,5 +1,12 @@
 ---
 
+- name: install analysis deps
+  become: yes
+  dnf:
+    name='{{item}}'
+  with_items:
+    - gnuplot
+
 - name: Sync soure from git
   git:
     repo='https://github.com/HdrHistogram/HdrHistogram_c.git'

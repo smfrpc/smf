@@ -26,6 +26,7 @@ int main(int args, char **argv, char **env) {
   app.add_options()("rpc_port", bpo::value<uint16_t>()->default_value(11225),
                     "rpc port");
   return app.run_deprecated(args, argv, [&] {
+    smf::log.set_level(seastar::log_level::debug);
     smf::LOG_INFO("Setting up at_exit hooks");
     engine().at_exit([&] { return rpc.stop(); });
     engine().at_exit([&] { return stats.stop(); });

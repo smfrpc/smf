@@ -4,6 +4,14 @@
 #include "flatbuffers/rpc_generated.h"
 
 
+namespace std {
+ostream &operator<<(ostream &o, const smf::fbs::rpc::Header &h) {
+  o << "fbs::rpc::Header {size:" << h.size() << ", flags:" << h.flags()
+    << ", checksum:" << h.checksum() << "}";
+  return o;
+}
+}
+
 namespace smf {
 using namespace std::experimental;
 rpc_recv_context::rpc_recv_context(temporary_buffer<char> hdr,
@@ -40,11 +48,12 @@ rpc_recv_context::parse(rpc_connection *conn, rpc_connection_limits *limits) {
     .then([conn, limits](temporary_buffer<char> header) {
       if(kRPCHeaderSize != header.size()) {
         if(conn->is_valid()) {
-          LOG_ERROR("Invalid header size `{}`. skipping req", header.size());
+          LOG_ERROR("Invalid header size `{}`, expected `{}`, skipping req",
+                    header.size(), kRPCHeaderSize);
         }
         return make_ready_future<ret_type>(nullopt);
       }
-      fbs::rpc::Header *hdr = (fbs::rpc::Header *)header.get_write();
+      auto hdr = reinterpret_cast<const fbs::rpc::Header *>(header.get());
 
       if(hdr->size() == 0) {
         LOG_ERROR("Emty body to parse. skipping");
@@ -66,9 +75,12 @@ rpc_recv_context::parse(rpc_connection *conn, rpc_connection_limits *limits) {
         .then([header_buf =
                  std::move(header)](temporary_buffer<char> body) mutable {
           using namespace fbs::rpc;
-          Header *hdr = (Header *)header_buf.get_write();
+          auto hdr = reinterpret_cast<const Header *>(header_buf.get());
+
           if(hdr->size() != body.size()) {
-            LOG_ERROR("Read incorrect number of bytes.");
+            LOG_ERROR(
+              "Read incorrect number of bytes `{}`, expected header: `{}`",
+              body.size(), *hdr);
             return make_ready_future<ret_type>(nullopt);
           }
 

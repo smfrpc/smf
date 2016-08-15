@@ -12,11 +12,7 @@ constexpr static size_t kHeaderSize = sizeof(fbs::rpc::Header);
 
 future<> rpc_envelope::send(output_stream<char> &out,
                             temporary_buffer<char> buf) {
-  return out.write(std::move(buf))
-    .then([&out] { return out.flush(); })
-    .handle_exception([](std::exception_ptr e) {
-      LOG_ERROR("Error writing temporary_buffer to output_stream<char>");
-    });
+  return out.write(std::move(buf)).then([&out] { return out.flush(); });
 }
 
 temporary_buffer<char> rpc_envelope::to_temp_buf() {

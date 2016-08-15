@@ -23,6 +23,15 @@
     - protobuf-devel
     - protobuf-compiler
 
+
+- name: programs for posix ethernet tunning and IRQ balance
+  become: yes
+  dnf:
+    name='{{item}}'
+  with_items:
+    - hwloc
+
+
 - name: Sync soure from git
   git:
     repo='https://github.com/scylladb/seastar.git'

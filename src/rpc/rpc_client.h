@@ -7,8 +7,30 @@
 #include "rpc/rpc_recv_typed_context.h"
 #include "rpc/rpc_envelope.h"
 #include "rpc/rpc_connection.h"
-#include "log.h"
 #include "histogram.h"
+
+
+namespace smf {
+
+template <typename T>
+future<rpc_recv_typed_context<T>> chain_recv(rpc_connection *conn,
+                                             bool oneway) {
+  using retval_t = rpc_recv_typed_context<T>;
+  if(oneway) {
+    return make_ready_future<retval_t>();
+  }
+  return rpc_recv_context::parse(conn, nullptr)
+    .then([](auto ctx) { return make_ready_future<retval_t>(std::move(ctx)); });
+}
+
+template <typename T>
+future<rpc_recv_typed_context<T>>
+chain_send(rpc_connection *conn, temporary_buffer<char> buf, bool oneway) {
+  return smf::rpc_envelope::send(conn->ostream, std::move(buf))
+    .then([conn, oneway]() { return smf::chain_recv<T>(conn, oneway); });
+}
+
+} // namespace smf
 
 namespace smf {
 /// \brief class intented for communicating with a remote host
@@ -32,7 +54,7 @@ class rpc_client {
   future<rpc_recv_typed_context<T>> send(temporary_buffer<char> buf,
                                          bool oneway = false) {
     assert(conn_ != nullptr); // call connect() first
-    return this->chain_send<T>(std::move(buf), oneway)
+    return smf::chain_send<T>(conn_, std::move(buf), oneway)
       .then([mesure = is_histogram_enabled() ? hist_->auto_measure() : nullptr](
         auto t) { return std::move(t); });
   }
@@ -50,29 +72,10 @@ class rpc_client {
   }
 
   private:
-  template <typename T>
-  future<rpc_recv_typed_context<T>> chain_send(temporary_buffer<char> buf,
-                                               bool oneway) {
-    return smf::rpc_envelope::send(conn_->ostream, std::move(buf))
-      .then([this, oneway] { return this->chain_recv<T>(oneway); });
-  }
-
-  template <typename T>
-  future<rpc_recv_typed_context<T>> chain_recv(bool oneway) {
-    using retval_t = rpc_recv_typed_context<T>;
-    if(oneway) {
-      return make_ready_future<retval_t>();
-    }
-    return rpc_recv_context::parse(conn_, nullptr)
-      .then([this](auto ctx) {
-        return make_ready_future<retval_t>(std::move(ctx));
-      });
-  }
-
-
-  private:
   ipv4_addr server_addr_;
   rpc_connection *conn_ = nullptr;
   std::unique_ptr<histogram> hist_;
 };
-}
+
+
+} // namespace smf
