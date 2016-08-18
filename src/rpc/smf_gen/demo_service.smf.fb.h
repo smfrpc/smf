@@ -2,8 +2,8 @@
 // Any local changes WILL BE LOST.
 // source: /home/agallego/workspace/smurf/src/rpc/smf_gen/demo_service
 #pragma once
-#ifndef SMF_DEMO_SERVICE__INCLUDED
-#define SMF_DEMO_SERVICE__INCLUDED
+#ifndef SMF_DEMO_SERVICE_INCLUDED
+#define SMF_DEMO_SERVICE_INCLUDED
 
 #include "demo_service_generated.h"
 
@@ -29,7 +29,8 @@ class SmurfStorage: public smf::rpc_service {
     handles.emplace_back(
       "Get", 2552873045,
       [this](smf::rpc_recv_context c) -> future<smf::rpc_envelope> {
-        return Get(smf::rpc_recv_typed_context<Request>(std::move(c)));
+        using t = smf::rpc_recv_typed_context<Request>;
+        return Get(t(std::move(c)));
     });
     return handles;
   }
@@ -65,4 +66,4 @@ class SmurfStorageClient: public smf::rpc_client {
 }  // namespace smf_gen
 
 
-#endif  // SMF_DEMO_SERVICE__INCLUDED
+#endif  // SMF_DEMO_SERVICE_INCLUDED

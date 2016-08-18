@@ -42,7 +42,7 @@ template <class T, size_t N> T *array_end(T(&array)[N]) { return array + N; }
 
 void print_includes(smf_printer *printer,
                     const std::vector<std::string> &headers) {
-  LOG(INFO) << "print_includes";
+  VLOG(1) << "print_includes";
   std::map<std::string, std::string> vars;
   vars["l"] = FLAGS_use_system_headers ? '<' : '"';
   vars["r"] = FLAGS_use_system_headers ? '>' : '"';
@@ -59,7 +59,7 @@ void print_includes(smf_printer *printer,
 }
 
 std::string get_header_prologue(smf_file *file) {
-  LOG(INFO) << "get_header_prologue";
+  VLOG(1) << "get_header_prologue";
   std::string output;
   {
     // Scope the output stream so it closes and finalizes output to the string.
@@ -77,8 +77,8 @@ std::string get_header_prologue(smf_file *file) {
     printer->print(vars, "// Any local changes WILL BE LOST.\n");
     printer->print(vars, "// source: $filename$\n");
     printer->print(vars, "#pragma once\n");
-    printer->print(vars, "#ifndef SMF_$filename_identifier$__INCLUDED\n");
-    printer->print(vars, "#define SMF_$filename_identifier$__INCLUDED\n");
+    printer->print(vars, "#ifndef SMF_$filename_identifier$_INCLUDED\n");
+    printer->print(vars, "#define SMF_$filename_identifier$_INCLUDED\n");
     printer->print(vars, "\n");
     printer->print(vars, "#include \"$filename_base$$message_header_ext$\"\n");
     printer->print(vars, "\n");
@@ -87,7 +87,7 @@ std::string get_header_prologue(smf_file *file) {
 }
 
 std::string get_header_includes(smf_file *file) {
-  LOG(INFO) << "get_header_includes";
+  VLOG(1) << "get_header_includes";
   std::string output;
   {
     // Scope the output stream so it closes and finalizes output to the string.
@@ -117,7 +117,8 @@ std::string get_header_includes(smf_file *file) {
 
 void print_header_service_index(smf_printer *printer,
                                 const smf_service *service) {
-  LOG(INFO) << "print_header_service_index";
+  VLOG(1) << "print_header_service_index for service: " << service->name();
+
 
   printer->print("virtual std::vector<smf::rpc_service_method_handle> "
                  "methods() override final {\n");
@@ -137,9 +138,8 @@ void print_header_service_index(smf_printer *printer,
     printer->print(
       "[this](smf::rpc_recv_context c) -> future<smf::rpc_envelope> {\n");
     printer->indent();
-    printer->print(vars, "return "
-                         "$MethodName$(smf::rpc_recv_typed_context<$InType$>("
-                         "std::move(c)));\n");
+    printer->print(vars, "using t = smf::rpc_recv_typed_context<$InType$>;\n");
+    printer->print(vars, "return $MethodName$(t(std::move(c)));\n");
     printer->outdent();
     printer->outdent();
     printer->print("});\n");
@@ -151,7 +151,7 @@ void print_header_service_index(smf_printer *printer,
 
 void print_header_service_method(smf_printer *printer,
                                  const smf_method *method) {
-  LOG(INFO) << "print_header_service_method";
+  VLOG(1) << "print_header_service_method: " << method->name();
 
   std::map<std::string, std::string> vars;
   vars["MethodName"] = method->name();
@@ -174,29 +174,27 @@ void print_header_service_method(smf_printer *printer,
   printer->print("}\n");
 }
 
-void print_header_service(smf_printer *printer,
-                          const smf_service *service,
-                          std::map<std::string, std::string> *vars) {
+void print_header_service(smf_printer *printer, const smf_service *service) {
 
-  LOG(INFO) << "print_header_service";
+  VLOG(1) << "print_header_service: " << service->name();
+  std::map<std::string, std::string> vars{};
+  vars["Service"] = service->name();
+  vars["ServiceID"] = std::to_string(service->service_id());
 
-  (*vars)["Service"] = service->name();
-  (*vars)["ServiceID"] = std::to_string(service->service_id());
-
-  printer->print(*vars, "class $Service$: public smf::rpc_service {\n"
-                        " public:\n");
+  printer->print(vars, "class $Service$: public smf::rpc_service {\n");
+  printer->print(" public:\n");
   printer->indent();
 
   // print the overrides for smurf
   printer->print("virtual const char *service_name() const override final {\n");
   printer->indent();
-  printer->print(*vars, "return \"$Service$\";\n");
+  printer->print(vars, "return \"$Service$\";\n");
   printer->outdent();
   printer->print("}\n");
 
   printer->print("virtual uint32_t service_id() const override final {\n");
   printer->indent();
-  printer->print(*vars, "return $ServiceID$;\n");
+  printer->print(vars, "return $ServiceID$;\n");
   printer->outdent();
   printer->print("}\n");
 
@@ -207,7 +205,7 @@ void print_header_service(smf_printer *printer,
   }
 
   printer->outdent();
-  printer->print(*vars, "}; // end of service: $Service$\n");
+  printer->print(vars, "}; // end of service: $Service$\n");
 }
 
 bool is_camel_case(const std::string &s) {
@@ -255,22 +253,21 @@ void print_header_client_method(smf_printer *printer,
   printer->outdent();
   printer->print("}\n");
 }
-void print_header_client(smf_printer *printer,
-                         const smf_service *service,
-                         std::map<std::string, std::string> *vars) {
+void print_header_client(smf_printer *printer, const smf_service *service) {
   // print the client rpc code
-  LOG(INFO) << "print_header_client";
-  (*vars)["ClientName"] = proper_postfix_token(service->name(), "client");
-  (*vars)["ServiceID"] = std::to_string(service->service_id());
+  VLOG(1) << "print_header_client for service: " << service->name();
+  std::map<std::string, std::string> vars{};
+  vars["ClientName"] = proper_postfix_token(service->name(), "client");
+  vars["ServiceID"] = std::to_string(service->service_id());
 
-  printer->print(*vars, "class $ClientName$: public smf::rpc_client {\n"
-                        " public:\n");
+  printer->print(vars, "class $ClientName$: public smf::rpc_client {\n"
+                       " public:\n");
   printer->indent();
 
   // print ctor
-  printer->print(*vars, "$ClientName$(ipv4_addr "
-                        "server_addr)\n:smf::rpc_client(std::move(server_addr))"
-                        " {}\n");
+  printer->print(vars, "$ClientName$(ipv4_addr "
+                       "server_addr)\n:smf::rpc_client(std::move(server_addr))"
+                       " {}\n");
 
   printer->outdent();
   printer->print("\n");
@@ -281,12 +278,12 @@ void print_header_client(smf_printer *printer,
   }
 
   printer->outdent();
-  printer->print(*vars, "}; // end of rpc client: $ClientName$\n");
+  printer->print(vars, "}; // end of rpc client: $ClientName$\n");
 }
 
 std::string get_header_services(smf_file *file) {
 
-  LOG(INFO) << "get_header_services";
+  VLOG(1) << "get_header_services";
 
   std::string output;
   {
@@ -306,12 +303,12 @@ std::string get_header_services(smf_file *file) {
     }
 
     for(int i = 0; i < file->service_count(); ++i) {
-      print_header_service(printer.get(), file->service(i).get(), &vars);
+      print_header_service(printer.get(), file->service(i).get());
       printer->print("\n");
     }
 
     for(int i = 0; i < file->service_count(); ++i) {
-      print_header_client(printer.get(), file->service(i).get(), &vars);
+      print_header_client(printer.get(), file->service(i).get());
       printer->print("\n");
     }
 
@@ -324,7 +321,7 @@ std::string get_header_services(smf_file *file) {
 
 std::string get_header_epilogue(smf_file *file) {
 
-  LOG(INFO) << "get_header_epilogue";
+  VLOG(1) << "get_header_epilogue";
 
   std::string output;
   {
@@ -347,7 +344,7 @@ std::string get_header_epilogue(smf_file *file) {
     }
 
     printer->print(vars, "\n");
-    printer->print(vars, "#endif  // SMF_$filename_identifier$__INCLUDED\n");
+    printer->print(vars, "#endif  // SMF_$filename_identifier$_INCLUDED\n");
   }
   return output;
 }

@@ -20,8 +20,8 @@ int main(int argc, char **argv, char **env) {
     exit(1);
   }
 
-  LOG(INFO) << "Parsing. Filename: " << FLAGS_filename
-            << ", Include dirs: " << FLAGS_include_dirs;
+  VLOG(1) << "Parsing file: " << FLAGS_filename
+          << ", Include dirs: " << FLAGS_include_dirs;
 
   // generate code!
   flatbuffers::IDLOptions opts;
@@ -30,7 +30,7 @@ int main(int argc, char **argv, char **env) {
   LOG_IF(FATAL, !flatbuffers::LoadFile(FLAGS_filename.c_str(), true, &contents))
     << "Could not LOAD file: " << FLAGS_filename;
 
-  LOG(INFO) << "File loaded.";
+  VLOG(1) << FLAGS_filename << " loaded.";
 
   std::vector<const char *> include_directories;
   auto local_include_directory = flatbuffers::StripFileName(FLAGS_filename);
@@ -41,7 +41,7 @@ int main(int argc, char **argv, char **env) {
                               FLAGS_filename.c_str()))
     << "Could not PARSE file: " << parser.error_;
 
-  LOG(INFO) << "File parsed. Generating";
+  VLOG(1) << "File `" << FLAGS_filename << "` parsed. Generating";
 
   smf_gen::generate(parser, flatbuffers::StripExtension(FLAGS_filename));
 }
