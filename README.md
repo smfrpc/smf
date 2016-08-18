@@ -7,6 +7,11 @@
 
 using seastar-project.org for multiple projects. direction to be defined
 
+# asciinema
+
+[![asciicast](https://asciinema.org/a/1u2j8vg20813jxmgbky7liwxr.png)](https://asciinema.org/a/1u2j8vg20813jxmgbky7liwxr?autoplay=1&loop=1&speed=2)
+
+
 # debugging - set core_pattern
 
 These are the core pattern directives
