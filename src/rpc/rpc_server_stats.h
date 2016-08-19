@@ -7,14 +7,14 @@ namespace smf {
 
 class rpc_server_stats {
   public:
-  size_t active_connections{};
-  size_t total_connections{};
-  size_t in_bytes{};
-  size_t out_bytes{};
-  size_t bad_requests{};
-  size_t no_route_requests{};
-  size_t completed_requests{};
-  size_t too_large_requests{};
+  uint64_t active_connections{};
+  uint64_t total_connections{};
+  uint64_t in_bytes{};
+  uint64_t out_bytes{};
+  uint64_t bad_requests{};
+  uint64_t no_route_requests{};
+  uint64_t completed_requests{};
+  uint64_t too_large_requests{};
   // you need this so you can invoke
   // on a distributed<type> obj_ a map reduce
   // i.e.:
