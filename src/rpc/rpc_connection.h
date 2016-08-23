@@ -15,6 +15,7 @@ class rpc_connection {
   input_stream<char> istream;
   output_stream<char> ostream;
 
+  uint32_t istream_active_parser{0};
 
   void disable() { enabled_ = false; }
   bool is_enabled() const { return enabled_; }
