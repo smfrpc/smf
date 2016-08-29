@@ -52,6 +52,9 @@ class rpc_server {
   future<> dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
                         rpc_recv_context &&ctx);
 
+  future<rpc_recv_context> apply_incoming_filters(rpc_recv_context &&ctx);
+  future<rpc_envelope> apply_outgoing_filters(rpc_envelope &&e);
+
   private:
   lw_shared_ptr<server_socket> listener_;
   distributed<rpc_server_stats> &stats_;

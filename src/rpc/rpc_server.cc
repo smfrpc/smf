@@ -88,6 +88,36 @@ future<> rpc_server::handle_client_connection(
     });
 }
 
+/// brief - applies a function future<T> apply(T &&t); to all the filters
+/// useful for incoming and outgoing filters. Taking a pair of iterators to
+/// unique ptrs. see incoming_filter.h and outgoing_filter.h
+/// for details
+///
+template <typename Iterator, typename Arg, typename... Ret>
+future<Ret...> move_filter_apply(Iterator begin, Iterator end, Arg arg) {
+  if(begin == end) {
+    return make_ready_future<Ret...>(std::move(arg));
+  }
+  return (*begin)
+    ->apply(std::move(arg))
+    .then([begin = begin++, end](auto a) mutable {
+      return move_filter_apply<Iterator, Arg, Ret...>(begin, end, std::move(a));
+    });
+}
+
+future<rpc_recv_context>
+rpc_server::apply_incoming_filters(rpc_recv_context &&ctx) {
+  using it_t = decltype(std::begin(in_filters_));
+  return move_filter_apply<it_t, rpc_recv_context, rpc_recv_context>(
+    in_filters_.begin(), in_filters_.end(), std::move(ctx));
+}
+
+future<rpc_envelope> rpc_server::apply_outgoing_filters(rpc_envelope &&e) {
+  using it_t = decltype(std::begin(out_filters_));
+  return move_filter_apply<it_t, rpc_envelope, rpc_envelope>(
+    out_filters_.begin(), out_filters_.end(), std::move(e));
+}
+
 future<> rpc_server::dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
                                   rpc_recv_context &&ctx) {
   if(ctx.request_id() == 0) {
@@ -103,16 +133,26 @@ future<> rpc_server::dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
   stats_.local().in_bytes += ctx.header_buf.size() + ctx.body_buf.size();
 
   try {
+    /// the request follow [filters] -> handle -> [filters]
+    /// the only way for the handle not to receive the information is if
+    /// the filters invalidate the request - they have full mutable access
+    /// to it, or they throw an exception if they wish to interrupt the entire
+    /// connection
     return seastar::with_gate(
       limits_->reply_gate, [this, ctx = std::move(ctx), conn]() mutable {
-        // TODO(agallego) - missing incoming filters and outgoing filters
-        return routes_.handle(std::move(ctx))
-          .then([this, conn](rpc_envelope e) mutable {
+        return apply_incoming_filters(std::move(ctx))
+          .then([this](rpc_recv_context &&c) {
+            return routes_.handle(std::move(c));
+          })
+          .then([this](rpc_envelope &&e) {
+            return apply_outgoing_filters(std::move(e));
+          })
+          .then([this, conn](rpc_envelope &&e) {
             stats_.local().out_bytes += e.size();
             return smf::rpc_envelope::send(conn->ostream, e.to_temp_buf());
           });
       });
-  } catch(seastar::gate_closed_exception &) { /* ignore */
+  } catch(seastar::gate_closed_exception &) {
     LOG_INFO("Cannot dispatch rpc. Server is shutting down...");
     conn->disable();
     return make_ready_future<>();
