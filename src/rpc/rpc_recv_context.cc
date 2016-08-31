@@ -2,7 +2,7 @@
 #include "log.h"
 #include "hashing_utils.h"
 #include "flatbuffers/rpc_generated.h"
-
+#include <zstd.h>
 
 namespace std {
 ostream &operator<<(ostream &o, const smf::fbs::rpc::Header &h) {
@@ -70,11 +70,9 @@ process_payload(rpc_connection *conn,
         return make_ready_future<ret_type>(nullopt);
       }
 
-      /// HAS TO BE FIRST. This is the last thing that happens on the
-      /// sender
-      /// side. So if the content is compressed, it happens BEFORE it's
-      /// crc
-      /// checked
+      /// MUST be first. This is the last thing that happens on the
+      /// sender side. So if the content is compressed, it happens before it's
+      /// crc checked
       if((hdr->flags() & Flags::Flags_CHECKSUM) == Flags::Flags_CHECKSUM) {
         const uint32_t xx = xxhash(body.get(), body.size());
         if(xx != hdr->checksum()) {
@@ -84,8 +82,20 @@ process_payload(rpc_connection *conn,
         }
       }
 
-      if((hdr->flags() & Flags::Flags_SNAPPY) == Flags::Flags_SNAPPY) {
-        LOG_ERROR("Snappy compression not supported yet");
+      if((hdr->flags() & Flags::Flags_ZSTD) == Flags::Flags_ZSTD) {
+        auto zstd_size = ZSTD_getDecompressedSize(
+          static_cast<const void *>(body.get()), body.size());
+        temporary_buffer<char> decompressed_body(zstd_size);
+        auto size_decompressed = ZSTD_decompress(
+          static_cast<void *>(decompressed_body.get_write()), zstd_size,
+          static_cast<const void *>(body.get()), body.size());
+
+        if(ZSTD_isError(size_decompressed)) {
+          LOG_ERROR("zstd decompression failed");
+          return make_ready_future<ret_type>(nullopt);
+        }
+        decompressed_body.trim(size_decompressed);
+        body = std::move(decompressed_body);
       }
 
       return make_ready_future<ret_type>(

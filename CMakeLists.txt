@@ -33,6 +33,7 @@ include_directories(
 set(FLATBUFFERS_FILES
   ${PROJECT_SOURCE_DIR}/src/flatbuffers/rpc.fbs
   ${PROJECT_SOURCE_DIR}/src/flatbuffers/raft.fbs
+  ${PROJECT_SOURCE_DIR}/src/flatbuffers/chain_replication.fbs
   )
 
 # build the RPC Types
@@ -68,6 +69,7 @@ target_link_libraries(smfrpc
   ${SEASTAR_LDFLAGS}
   smftracing
   xxhash_static
+  zstd.a
   )
 add_dependencies(smfrpc rpc_serialization)
 
@@ -76,5 +78,5 @@ add_dependencies(smfrpc rpc_serialization)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/rpc/smf_gen)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/rpc/templates)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/raft)
-
-add_subdirectory (${PROJECT_SOURCE_DIR}/src/test)
+add_subdirectory(${PROJECT_SOURCE_DIR}/src/cr)
+add_subdirectory(${PROJECT_SOURCE_DIR}/src/test)

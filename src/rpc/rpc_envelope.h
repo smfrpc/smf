@@ -35,6 +35,13 @@ class rpc_envelope {
   ///
   rpc_envelope(const char *buf_to_copy, size_t len);
 
+  /// \brief copy the sstring to internal data structures.
+  /// \args buf_to_copy - is a ref to the sstring to send to remote
+  /// convenience method for not having to manually cast between seastar &
+  /// flatbuffers
+  ///
+  rpc_envelope(const sstring &buf_to_copy);
+
   /// \brief copy the byte array to internal data structures.
   /// \args buf_to_copy - is a pointer to the byte array to send to remote
   /// \args len - length of the buf_to_copy. Note that ther is no validation
@@ -79,6 +86,13 @@ class rpc_envelope {
   ///
   bool is_oneway() const;
 
+  /// \brief get if dynamic compression is on
+  bool get_dynamic_compression() const;
+  /// \brief set the dynamic compression. default: true
+  void set_dynamic_compression(bool);
+  /// \brief set the minimum size of the compression. default: 1000
+  void set_dynamic_compression_min_size(uint32_t);
+
   /// \brief returns if the data is finished, useful if you acknowledge that
   /// you might be working w/ unfinished builders/requests
   /// \return - true iff buffer is done building
@@ -101,7 +115,6 @@ class rpc_envelope {
   ///
   void post_process_buffer();
 
-
   private:
   // must be first
   std::unique_ptr<flatbuffers::FlatBufferBuilder> fbb_ =
@@ -109,6 +122,9 @@ class rpc_envelope {
   uint32_t meta_ = 0;
   bool oneway_ = false;
   bool finished_ = false;
+  bool dynamic_compression_ = true;
+  // compression same as facebook::proxygen::gzip filter
+  uint32_t dynamic_compression_min_size_ = 1000;
   fbs::rpc::Header header_{0, fbs::rpc::Flags::Flags_NONE, 0};
   std::vector<flatbuffers::Offset<fbs::rpc::DynamicHeader>> headers_{};
   flatbuffers::Offset<flatbuffers::Vector<unsigned char>> user_buf_;

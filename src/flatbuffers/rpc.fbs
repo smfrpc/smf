@@ -12,8 +12,8 @@ enum Flags:uint (bit_flags) {
   /// uses flatbuffers schema verification
   VERIFY_SCHEMA,
 
-  /// \brief the payload is compressed using -lsnappy
-  SNAPPY
+  /// \brief the payload is compressed using zstandrad 1.0
+  ZSTD
 }
 
 /// \brief: header parsed by rpc engine
