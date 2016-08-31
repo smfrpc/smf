@@ -94,14 +94,17 @@ future<> rpc_server::handle_client_connection(
 /// for details
 ///
 template <typename Iterator, typename Arg, typename... Ret>
-future<Ret...> move_filter_apply(Iterator begin, Iterator end, Arg arg) {
+future<Ret...>
+move_filter_apply(const Iterator &b, const Iterator &end, Arg &&arg) {
+  auto begin = b;
   if(begin == end) {
-    return make_ready_future<Ret...>(std::move(arg));
+    return make_ready_future<Ret...>(std::forward<Arg>(arg));
   }
   return (*begin)
-    ->apply(std::move(arg))
-    .then([begin = begin++, end](auto a) mutable {
-      return move_filter_apply<Iterator, Arg, Ret...>(begin, end, std::move(a));
+    ->apply(std::forward<Arg>(arg))
+    .then([begin = begin++, end](Arg && a) mutable {
+      return move_filter_apply<Iterator, Arg, Ret...>(begin, end,
+                                                      std::forward<Arg>(a));
     });
 }
 

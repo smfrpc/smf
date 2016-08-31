@@ -1,0 +1,65 @@
+namespace smf.chains;
+
+enum tx_operation:short {
+  begin,
+  data,
+  commit,
+  abort,
+  /// this is an optimization for a full transaction that is small
+  /// i.e.: one put. it is equivalent as (begin | data | commit)
+  full
+}
+
+/// This is the datastructure that gets persisted on disk.
+/// Please be tender while extending
+table tx_fragment {
+  /// what should we do with this trasaction fragment
+  op: tx_operation;
+  /// transaction id
+  id: uint;
+  time: ulong;
+  key: [ubyte];
+  value: [ubyte];
+}
+
+/// brief - stores `puts` transactionally
+table tx_put {
+  topic: string;
+  partition: uint;
+  chain: [uint];
+  txs: [tx_fragment];
+}
+
+/// brief - the transaction gaurantees are per 'put'
+/// not for the entire multiput
+/// at the moment, it only supports one tx_put transactionally
+enum tx_multiput_guarantee: short {
+  /// the guarantees here is per tx_put object
+  tx,
+  /// the guarantees here is for the entire multiput which
+  /// requires a quite expensive multi chain protocol & is not yet
+  /// implemented
+  batch
+}
+table tx_multiput {
+  guarantee: tx_multiput_guarantee = tx;
+  puts: [tx_put];
+}
+table tx_put_reply {}
+
+
+table tx_fetch {
+  topic: string;
+  offset: ulong;
+  max_bytes: uint;
+}
+table tx_fetch_request {
+}
+
+table tx_fetch_reply {
+  puts: [tx_put];
+}
+rpc_service chain_replication {
+  put(tx_multiput): tx_put_reply;
+  fetch(tx_fetch_request): tx_fetch_reply;
+}

@@ -13,6 +13,36 @@
 
 namespace bpo = boost::program_options;
 
+static const char *kPayloadSonet43ElizabethBarretBowen =
+  "How do I love thee? Let me count the ways."
+  "I love thee to the depth and breadth and height"
+  "My soul can reach, when feeling out of sight"
+  "For the ends of being and ideal grace."
+  "I love thee to the level of every day's"
+  "Most quiet need, by sun and candle-light."
+  "I love thee freely, as men strive for right."
+  "I love thee purely, as they turn from praise."
+  "I love thee with the passion put to use"
+  "In my old griefs, and with my childhood's faith."
+  "I love thee with a love I seemed to lose"
+  "With my lost saints. I love thee with the breath,"
+  "Smiles, tears, of all my life; and, if God choose,"
+  "I shall but love thee better after death."
+  "How do I love thee? Let me count the ways."
+  "I love thee to the depth and breadth and height"
+  "My soul can reach, when feeling out of sight"
+  "For the ends of being and ideal grace."
+  "I love thee to the level of every day's"
+  "Most quiet need, by sun and candle-light."
+  "I love thee freely, as men strive for right."
+  "I love thee purely, as they turn from praise."
+  "I love thee with the passion put to use"
+  "In my old griefs, and with my childhood's faith."
+  "I love thee with a love I seemed to lose"
+  "With my lost saints. I love thee with the breath,"
+  "Smiles, tears, of all my life; and, if God choose,"
+  "I shall but love thee better after death.";
+
 // really just has it's own
 // flatbuffers + rpc client - simple
 struct requestor_channel {
@@ -20,10 +50,13 @@ struct requestor_channel {
     : client(new smf_gen::fbs::rpc::SmurfStorageClient(ipv4_addr{ip, port})) {
     client->enable_histogram_metrics();
     flatbuffers::FlatBufferBuilder fbb;
-    auto req = smf_gen::fbs::rpc::CreateRequest(fbb, "");
+    auto req = smf_gen::fbs::rpc::CreateRequest(
+      fbb, fbb.CreateString(kPayloadSonet43ElizabethBarretBowen));
     fbb.Finish(req);
     envelope = std::make_unique<smf::rpc_envelope>(fbb.GetBufferPointer(),
                                                    fbb.GetSize());
+    // enable compression every time
+    envelope->set_dynamic_compression_min_size(1000);
   }
 
   requestor_channel(const requestor_channel &) = delete;
