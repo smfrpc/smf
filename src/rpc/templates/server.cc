@@ -11,7 +11,15 @@
 // templates
 #include "rpc/smf_gen/demo_service.smf.fb.h"
 
-class storage_service : public smf_gen::fbs::rpc::SmurfStorage {};
+class storage_service : public smf_gen::fbs::rpc::SmurfStorage {
+  virtual future<smf::rpc_envelope>
+  Get(smf::rpc_recv_typed_context<smf_gen::fbs::rpc::Request> &&rec) override {
+    // smf::LOG_INFO("got payload {}", (char *)rec.get()->name()->data());
+    smf::rpc_envelope e(nullptr);
+    e.set_status(200);
+    return make_ready_future<smf::rpc_envelope>(std::move(e));
+  }
+};
 
 namespace bpo = boost::program_options;
 
