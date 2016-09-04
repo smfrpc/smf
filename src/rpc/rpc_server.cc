@@ -89,19 +89,6 @@ future<> rpc_server::handle_client_connection(
     });
 }
 
-future<rpc_recv_context>
-rpc_server::apply_incoming_filters(rpc_recv_context &&ctx) {
-  using it_t = decltype(std::begin(in_filters_));
-  return rpc_filter_apply<it_t, rpc_recv_context, rpc_recv_context>(
-    in_filters_.begin(), in_filters_.end(), std::move(ctx));
-}
-
-future<rpc_envelope> rpc_server::apply_outgoing_filters(rpc_envelope &&e) {
-  using it_t = decltype(std::begin(out_filters_));
-  return rpc_filter_apply<it_t, rpc_envelope, rpc_envelope>(
-    out_filters_.begin(), out_filters_.end(), std::move(e));
-}
-
 future<> rpc_server::dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
                                   rpc_recv_context &&ctx) {
   if(ctx.request_id() == 0) {
@@ -124,12 +111,12 @@ future<> rpc_server::dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
     /// connection
     return seastar::with_gate(
       limits_->reply_gate, [this, ctx = std::move(ctx), conn]() mutable {
-        return apply_incoming_filters(std::move(ctx))
+        return rpc_filter_apply(in_filters_, std::move(ctx))
           .then([this](rpc_recv_context &&c) {
             return routes_.handle(std::move(c));
           })
           .then([this](rpc_envelope &&e) {
-            return apply_outgoing_filters(std::move(e));
+            return rpc_filter_apply(out_filters_, std::move(e));
           })
           .then([this, conn](rpc_envelope &&e) {
             stats_.local().out_bytes += e.size();
