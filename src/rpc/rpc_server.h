@@ -7,8 +7,7 @@
 // smf
 #include "rpc/rpc_server_connection.h"
 #include "rpc/rpc_handle_router.h"
-#include "rpc/rpc_incoming_filter.h"
-#include "rpc/rpc_outgoing_filter.h"
+#include "rpc/rpc_filter.h"
 #include "rpc/rpc_connection_limits.h"
 #include "histogram.h"
 
@@ -34,17 +33,14 @@ class rpc_server {
                   "smf::rpc_service");
     routes_.register_service(std::make_unique<T>());
   }
-  template <typename T> void register_incoming_filter() {
-    static_assert(std::is_base_of<rpc_incoming_filter, T>::value,
-                  "can only be called with a derived class of "
-                  "smf::rpc_incoming_filter");
-    in_filters_.push_back(std::make_unique<T>());
+  using incoming_filter = rpc_filter<rpc_recv_context>;
+  void register_incoming_filter(incoming_filter fn) {
+    in_filters_.push_back(fn);
   }
-  template <typename T> void register_outgoing_filter() {
-    static_assert(std::is_base_of<rpc_outgoing_filter, T>::value,
-                  "can only be called with a derived class of "
-                  "smf::rpc_outgoing_filter");
-    out_filters_.push_back(std::make_unique<T>());
+
+  using outgoing_filter = rpc_filter<rpc_envelope>;
+  void register_outgoing_filter(outgoing_filter fn) {
+    out_filters_.push_back(fn);
   }
 
   private:
@@ -60,8 +56,12 @@ class rpc_server {
   distributed<rpc_server_stats> &stats_;
   const uint16_t port_;
   rpc_handle_router routes_;
-  std::vector<std::unique_ptr<rpc_incoming_filter>> in_filters_;
-  std::vector<std::unique_ptr<rpc_outgoing_filter>> out_filters_;
+
+  using in_filter_t = std::function<future<rpc_recv_context>(rpc_recv_context)>;
+  std::vector<in_filter_t> in_filters_;
+  using out_filter_t = std::function<future<rpc_envelope>(rpc_envelope)>;
+  std::vector<out_filter_t> out_filters_;
+
   std::unique_ptr<histogram> hist_ = std::make_unique<histogram>();
   uint32_t flags_;
   std::unique_ptr<rpc_connection_limits> limits_ =
