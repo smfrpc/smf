@@ -1,7 +1,6 @@
 #include "rpc/rpc_server.h"
 #include "log.h"
 #include "rpc/rpc_envelope.h"
-//#include "rpc/rpc_filter.h"
 
 namespace smf {
 
