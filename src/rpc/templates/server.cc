@@ -7,6 +7,7 @@
 #include "rpc/rpc_server.h"
 #include "rpc/rpc_server_stats_printer.h"
 #include "rpc/rpc_handle_router.h"
+#include "rpc/rpc_filter.h"
 
 // templates
 #include "rpc/smf_gen/demo_service.smf.fb.h"
@@ -17,6 +18,13 @@ class storage_service : public smf_gen::fbs::rpc::SmurfStorage {
     // smf::LOG_INFO("got payload {}", (char *)rec.get()->name()->data());
     smf::rpc_envelope e(nullptr);
     e.set_status(200);
+    return make_ready_future<smf::rpc_envelope>(std::move(e));
+  }
+};
+
+struct out_filter_fn : public smf::rpc_filter<smf::rpc_envelope> {
+  future<smf::rpc_envelope> operator()(smf::rpc_envelope &&e) {
+    smf::LOG_INFO("out_filter_fn STRUCT. passed outgoing filter");
     return make_ready_future<smf::rpc_envelope>(std::move(e));
   }
 };
@@ -57,6 +65,19 @@ int main(int args, char **argv, char **env) {
             return rpc.invoke_on_all(
               &smf::rpc_server::register_service<storage_service>);
           });
+      })
+      .then([&rpc] {
+        /// example using a struct template
+        return rpc.invoke_on_all<out_filter_fn>(
+          &smf::rpc_server::register_outgoing_filter, out_filter_fn());
+      })
+      .then([&rpc] {
+        return rpc.invoke_on_all(&smf::rpc_server::register_outgoing_filter,
+                                 [](smf::rpc_envelope &&e) {
+                                   smf::LOG_INFO("LAMBDA: outgoing filter");
+                                   return make_ready_future<smf::rpc_envelope>(
+                                     std::move(e));
+                                 });
       })
       .then([&rpc] {
         smf::LOG_INFO("Invoking rpc start on all cores");
