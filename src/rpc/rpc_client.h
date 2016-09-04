@@ -7,6 +7,7 @@
 #include "rpc/rpc_recv_typed_context.h"
 #include "rpc/rpc_envelope.h"
 #include "rpc/rpc_connection.h"
+#include "rpc/rpc_filter.h"
 #include "histogram.h"
 
 
@@ -71,10 +72,26 @@ class rpc_client {
     return nullptr;
   }
 
+
+  using incoming_filter = rpc_filter<rpc_recv_context>;
+  void register_incoming_filter(incoming_filter fn) {
+    in_filters_.push_back(fn);
+  }
+
+  using outgoing_filter = rpc_filter<rpc_envelope>;
+  void register_outgoing_filter(outgoing_filter fn) {
+    out_filters_.push_back(fn);
+  }
+
+
   private:
   ipv4_addr server_addr_;
   rpc_connection *conn_ = nullptr;
   std::unique_ptr<histogram> hist_;
+  using in_filter_t = std::function<future<rpc_recv_context>(rpc_recv_context)>;
+  std::vector<in_filter_t> in_filters_;
+  using out_filter_t = std::function<future<rpc_envelope>(rpc_envelope)>;
+  std::vector<out_filter_t> out_filters_;
 };
 
 
