@@ -33,13 +33,11 @@ class rpc_server {
                   "smf::rpc_service");
     routes_.register_service(std::make_unique<T>());
   }
-  using incoming_filter = rpc_filter<rpc_recv_context>;
-  void register_incoming_filter(incoming_filter fn) {
+  template <typename Function> void register_incoming_filter(Function fn) {
     in_filters_.push_back(fn);
   }
 
-  using outgoing_filter = rpc_filter<rpc_envelope>;
-  void register_outgoing_filter(outgoing_filter fn) {
+  template <typename Function> void register_outgoing_filter(Function fn) {
     out_filters_.push_back(fn);
   }
 
