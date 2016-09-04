@@ -27,4 +27,11 @@ rpc_filter_apply(const Iterator &b, const Iterator &end, Arg &&arg) {
     });
 }
 
+template <class Container, typename Arg>
+future<Arg> rpc_filter_apply(Container &c, Arg &&arg) {
+  return rpc_filter_apply<typename Container::iterator, Arg, Arg>(
+    c.begin(), c.end(), std::forward<Arg>(arg));
+}
+
+
 } // namespace smf
