@@ -10,29 +10,6 @@
 #include "rpc/rpc_filter.h"
 #include "histogram.h"
 
-
-namespace smf {
-
-template <typename T>
-future<rpc_recv_typed_context<T>> chain_recv(rpc_connection *conn,
-                                             bool oneway) {
-  using retval_t = rpc_recv_typed_context<T>;
-  if(oneway) {
-    return make_ready_future<retval_t>();
-  }
-  return rpc_recv_context::parse(conn, nullptr)
-    .then([](auto ctx) { return make_ready_future<retval_t>(std::move(ctx)); });
-}
-
-template <typename T>
-future<rpc_recv_typed_context<T>>
-chain_send(rpc_connection *conn, temporary_buffer<char> buf, bool oneway) {
-  return smf::rpc_envelope::send(conn->ostream, std::move(buf))
-    .then([conn, oneway]() { return smf::chain_recv<T>(conn, oneway); });
-}
-
-} // namespace smf
-
 namespace smf {
 /// \brief class intented for communicating with a remote host
 ///        this class is relatively cheap outside of the socket cost
@@ -52,13 +29,42 @@ class rpc_client {
   ///        this is useful for void functions
   ///
   template <typename T>
-  future<rpc_recv_typed_context<T>> send(temporary_buffer<char> buf,
-                                         bool oneway = false) {
+  future<rpc_recv_typed_context<T>> send(rpc_envelope e, bool oneway = false) {
+    using ret_type = rpc_recv_typed_context<T>;
     assert(conn_ != nullptr); // call connect() first
-    return smf::chain_send<T>(conn_, std::move(buf), oneway)
-      .then([mesure = is_histogram_enabled() ? hist_->auto_measure() : nullptr](
-        auto t) { return std::move(t); });
+    e.finish();               // make sure that the buff is ready
+    auto measure = is_histogram_enabled() ? hist_->auto_measure() : nullptr;
+    return rpc_filter_apply(out_filters_, std::move(e))
+      .then([this, oneway](rpc_envelope &&e) {
+        return chain_send(std::move(e), oneway);
+      })
+      .then([this](auto opt_ctx) {
+        if(!opt_ctx) {
+          return make_ready_future<ret_type>(std::move(opt_ctx));
+        }
+        return rpc_filter_apply(in_filters_, std::move(opt_ctx.value()))
+          .then([](auto ctx) {
+            return make_ready_future<ret_type>(
+              std::experimental::optional<decltype(ctx)>(std::move(ctx)));
+          });
+      })
+      .then([measure = std::move(measure)](auto opt_ctx) {
+        return make_ready_future<ret_type>(std::move(opt_ctx));
+      });
   }
+
+  future<std::experimental::optional<rpc_recv_context>>
+  chain_send(rpc_envelope e, bool oneway) {
+    return smf::rpc_envelope::send(conn_->ostream, std::move(e))
+      .then([this, oneway]() {
+        if(oneway) {
+          using t = std::experimental::optional<rpc_recv_context>;
+          return make_ready_future<t>(std::experimental::nullopt);
+        }
+        return smf::rpc_recv_context::parse(conn_, nullptr);
+      });
+  }
+
 
   future<> connect();
   virtual future<> stop();
@@ -73,13 +79,11 @@ class rpc_client {
   }
 
 
-  using incoming_filter = rpc_filter<rpc_recv_context>;
-  void register_incoming_filter(incoming_filter fn) {
+  template <typename Function> void register_incoming_filter(Function fn) {
     in_filters_.push_back(fn);
   }
 
-  using outgoing_filter = rpc_filter<rpc_envelope>;
-  void register_outgoing_filter(outgoing_filter fn) {
+  template <typename Function> void register_outgoing_filter(Function fn) {
     out_filters_.push_back(fn);
   }
 

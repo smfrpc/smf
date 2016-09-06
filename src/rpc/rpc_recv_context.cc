@@ -2,7 +2,6 @@
 #include "log.h"
 #include "hashing_utils.h"
 #include "flatbuffers/rpc_generated.h"
-#include <zstd.h>
 
 namespace std {
 ostream &operator<<(ostream &o, const smf::fbs::rpc::Header &h) {
@@ -14,13 +13,12 @@ ostream &operator<<(ostream &o, const smf::fbs::rpc::Header &h) {
 
 namespace smf {
 using namespace std::experimental;
-rpc_recv_context::rpc_recv_context(temporary_buffer<char> hdr,
-                                   temporary_buffer<char> body)
+rpc_recv_context::rpc_recv_context(temporary_buffer<char> &&hdr,
+                                   temporary_buffer<char> &&body)
   : header_buf(std::move(hdr)), body_buf(std::move(body)) {
-
   assert(header_buf.size() == sizeof(fbs::rpc::Header));
-
   header = reinterpret_cast<fbs::rpc::Header *>(header_buf.get_write());
+  assert(header->size() == body_buf.size());
   payload = flatbuffers::GetMutableRoot<fbs::rpc::Payload>(
     static_cast<void *>(body_buf.get_write()));
 }
@@ -63,16 +61,11 @@ process_payload(rpc_connection *conn,
              std::move(header)](temporary_buffer<char> body) mutable {
       using namespace fbs::rpc;
       auto hdr = reinterpret_cast<const Header *>(header_buf.get());
-
       if(hdr->size() != body.size()) {
         LOG_ERROR("Read incorrect number of bytes `{}`, expected header: `{}`",
                   body.size(), *hdr);
         return make_ready_future<ret_type>(nullopt);
       }
-
-      /// MUST be first. This is the last thing that happens on the
-      /// sender side. So if the content is compressed, it happens before it's
-      /// crc checked
       if((hdr->flags() & Flags::Flags_CHECKSUM) == Flags::Flags_CHECKSUM) {
         const uint32_t xx = xxhash(body.get(), body.size());
         if(xx != hdr->checksum()) {
@@ -81,25 +74,9 @@ process_payload(rpc_connection *conn,
           return make_ready_future<ret_type>(nullopt);
         }
       }
-
-      if((hdr->flags() & Flags::Flags_ZSTD) == Flags::Flags_ZSTD) {
-        auto zstd_size = ZSTD_getDecompressedSize(
-          static_cast<const void *>(body.get()), body.size());
-        temporary_buffer<char> decompressed_body(zstd_size);
-        auto size_decompressed = ZSTD_decompress(
-          static_cast<void *>(decompressed_body.get_write()), zstd_size,
-          static_cast<const void *>(body.get()), body.size());
-
-        if(ZSTD_isError(size_decompressed)) {
-          LOG_ERROR("zstd decompression failed");
-          return make_ready_future<ret_type>(nullopt);
-        }
-        decompressed_body.trim(size_decompressed);
-        body = std::move(decompressed_body);
-      }
-
+      rpc_recv_context ctx(std::move(header_buf), std::move(body));
       return make_ready_future<ret_type>(
-        rpc_recv_context(std::move(header_buf), std::move(body)));
+        optional<rpc_recv_context>(std::move(ctx)));
     });
 }
 

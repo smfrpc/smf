@@ -28,7 +28,7 @@ struct rpc_recv_context {
   /// \brief default ctor
   /// moves in a hdr and body payload after verification. usually passed
   // in via the parse() function above
-  rpc_recv_context(temporary_buffer<char> hdr, temporary_buffer<char> body);
+  rpc_recv_context(temporary_buffer<char> &&hdr, temporary_buffer<char> &&body);
   rpc_recv_context(rpc_recv_context &&o) noexcept;
   rpc_recv_context(const rpc_recv_context &o) = delete;
   ~rpc_recv_context();

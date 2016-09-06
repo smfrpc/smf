@@ -67,23 +67,11 @@ table Payload {
   ///
   meta: uint;
 
-  /// Known Headers
-  /// x-routing: consistent-hash
-  ///     sends the consistent hashing based on the source addr to the
-  ///     destination core - useful for locality
-  ///
-  /// x-routing: broadcast
-  ///     spawns a seastar::map_reduce style on a method - useful for shutdown
-  ///
-  /// x-routing: round-robin
-  ///     sends the request to the seastar::smp_send(count % smp_cores)
-  ///
-  /// x-verify-schema: 1
-  ///    \code
-  ///    `Verifier(buf, len, 64 /* max depth */, 1000000, /* max tables */)`
-  ///    \endcode
-  ///    of flatbuffers to verify if the contents of the payload are valid.
-  ///
+  /// cookies are a state that is shared between client and server.
+  /// server can send arbitrary state back to the client for subsequent posts
+  /// cookie: [ubyte];
+
+  /// Headers for forward compat.
   dynamic_headers: [DynamicHeader];
   body: [ubyte];
 }

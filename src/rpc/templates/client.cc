@@ -7,7 +7,7 @@
 #include <core/app-template.hh>
 // smf
 #include "log.h"
-
+#include "rpc/filters/zstd_filter.h"
 // templates
 #include "rpc/smf_gen/demo_service.smf.fb.h"
 
@@ -47,27 +47,25 @@ static const char *kPayloadSonet43ElizabethBarretBowen =
 // flatbuffers + rpc client - simple
 struct requestor_channel {
   requestor_channel(const char *ip, uint16_t port)
-    : client(new smf_gen::fbs::rpc::SmurfStorageClient(ipv4_addr{ip, port})) {
+    : client(new smf_gen::fbs::rpc::SmurfStorageClient(ipv4_addr{ip, port}))
+    , fbb(new flatbuffers::FlatBufferBuilder()) {
     client->enable_histogram_metrics();
-    flatbuffers::FlatBufferBuilder fbb;
     auto req = smf_gen::fbs::rpc::CreateRequest(
-      fbb, fbb.CreateString(kPayloadSonet43ElizabethBarretBowen));
-    fbb.Finish(req);
-    envelope = std::make_unique<smf::rpc_envelope>(fbb.GetBufferPointer(),
-                                                   fbb.GetSize());
-    // enable compression every time
-    envelope->set_dynamic_compression_min_size(1000);
+      *fbb.get(), fbb->CreateString(kPayloadSonet43ElizabethBarretBowen));
+    fbb->Finish(req);
+    client->register_outgoing_filter(smf::zstd_compression_filter(1000));
   }
 
   requestor_channel(const requestor_channel &) = delete;
 
   requestor_channel(requestor_channel &&o)
-    : client(std::move(o.client)), envelope(std::move(o.envelope)) {}
+    : client(std::move(o.client)), fbb(std::move(o.fbb)) {}
 
 
   future<> connect() { return client->connect(); }
   future<> send_request(size_t reqs) {
-    return client->Get(envelope.get())
+    smf::rpc_envelope e(fbb->GetBufferPointer(), fbb->GetSize());
+    return client->Get(std::move(e))
       .then([this, reqs](auto r /* ignore reply*/) {
         if(reqs > 1) {
           return this->send_request(reqs - 1);
@@ -77,7 +75,7 @@ struct requestor_channel {
       });
   }
   std::unique_ptr<smf_gen::fbs::rpc::SmurfStorageClient> client;
-  std::unique_ptr<smf::rpc_envelope> envelope;
+  std::unique_ptr<flatbuffers::FlatBufferBuilder> fbb;
 };
 
 

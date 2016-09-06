@@ -62,29 +62,33 @@ future<> rpc_server::handle_client_connection(
             return make_ready_future<>();
           }
           auto metric = hist_->auto_measure();
-          auto payload_size = recv_ctx.value().body_buf.size();
-          return this->dispatch_rpc(conn, std::move(recv_ctx.value()))
-            .finally([this, conn, metric = std::move(metric), payload_size] {
-              limits_->release_payload_resources(payload_size);
-              return conn->ostream.flush().finally([this, conn] {
-                if(conn->has_error()) {
-                  LOG_ERROR("There was an error with the connection: {}",
-                            conn->get_error());
-                  stats_.local().bad_requests++;
-                  stats_.local().active_connections--;
-                  LOG_INFO("Closing connection for client: {}",
-                           conn->remote_address);
-                  return conn->ostream.close();
-                } else {
-                  stats_.local().completed_requests++;
-                  return make_ready_future<>();
-                }
-              });
-            }); // end finally()
-        })      //  parse_rpc_recv_context.then()
-        .handle_exception([this, conn](std::exception_ptr eptr) {
-          conn->set_error("Exception parsing request ");
-          return conn->ostream.close();
+          return smf::rpc_filter_apply(in_filters_, std::move(recv_ctx.value()))
+            .then([this, conn, metric = std::move(metric)](auto ctx) mutable {
+              auto payload_size = ctx.body_buf.size();
+              return this->dispatch_rpc(conn, std::move(ctx))
+                .finally(
+                  [this, conn, metric = std::move(metric), payload_size] {
+                    limits_->release_payload_resources(payload_size);
+                    return conn->ostream.flush().finally([this, conn] {
+                      if(conn->has_error()) {
+                        LOG_ERROR("There was an error with the connection: {}",
+                                  conn->get_error());
+                        stats_.local().bad_requests++;
+                        stats_.local().active_connections--;
+                        LOG_INFO("Closing connection for client: {}",
+                                 conn->remote_address);
+                        return conn->ostream.close();
+                      } else {
+                        stats_.local().completed_requests++;
+                        return make_ready_future<>();
+                      }
+                    });
+                  }); // end finally()
+            })        //  parse_rpc_recv_context.then()
+            .handle_exception([this, conn](std::exception_ptr eptr) {
+              conn->set_error("Exception parsing request ");
+              return conn->ostream.close();
+            });
         });
     });
 }
@@ -111,16 +115,14 @@ future<> rpc_server::dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
     /// connection
     return seastar::with_gate(
       limits_->reply_gate, [this, ctx = std::move(ctx), conn]() mutable {
-        return rpc_filter_apply(in_filters_, std::move(ctx))
-          .then([this](rpc_recv_context &&c) {
-            return routes_.handle(std::move(c));
-          })
+        return routes_.handle(std::move(ctx))
           .then([this](rpc_envelope &&e) {
             return rpc_filter_apply(out_filters_, std::move(e));
           })
           .then([this, conn](rpc_envelope &&e) {
-            stats_.local().out_bytes += e.size();
-            return smf::rpc_envelope::send(conn->ostream, e.to_temp_buf());
+            stats_.local().out_bytes +=
+              e.payload_size() + rpc_envelope::kHeaderSize;
+            return smf::rpc_envelope::send(conn->ostream, std::move(e));
           });
       });
   } catch(seastar::gate_closed_exception &) {

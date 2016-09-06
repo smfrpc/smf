@@ -22,13 +22,6 @@ class storage_service : public smf_gen::fbs::rpc::SmurfStorage {
   }
 };
 
-struct out_filter_fn : public smf::rpc_filter<smf::rpc_envelope> {
-  future<smf::rpc_envelope> operator()(smf::rpc_envelope &&e) {
-    smf::LOG_INFO("out_filter_fn STRUCT. passed outgoing filter");
-    return make_ready_future<smf::rpc_envelope>(std::move(e));
-  }
-};
-
 namespace bpo = boost::program_options;
 
 int main(int args, char **argv, char **env) {
@@ -68,16 +61,8 @@ int main(int args, char **argv, char **env) {
       })
       .then([&rpc] {
         /// example using a struct template
-        return rpc.invoke_on_all<out_filter_fn>(
-          &smf::rpc_server::register_outgoing_filter, out_filter_fn());
-      })
-      .then([&rpc] {
-        return rpc.invoke_on_all(&smf::rpc_server::register_outgoing_filter,
-                                 [](smf::rpc_envelope &&e) {
-                                   smf::LOG_INFO("LAMBDA: outgoing filter");
-                                   return make_ready_future<smf::rpc_envelope>(
-                                     std::move(e));
-                                 });
+        return rpc.invoke_on_all(&smf::rpc_server::register_incoming_filter,
+                                 smf::zstd_decompression_filter());
       })
       .then([&rpc] {
         smf::LOG_INFO("Invoking rpc start on all cores");

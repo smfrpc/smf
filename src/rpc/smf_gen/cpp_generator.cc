@@ -240,16 +240,16 @@ void print_header_client_method(smf_printer *printer,
   vars["InType"] = method->input_type_name();
   vars["OutType"] = method->output_type_name();
 
-  printer->print(vars, "future<smf::rpc_recv_typed_context<$OutType$>>\n");
-  printer->print(vars, "$MethodName$(smf::rpc_envelope *e) {\n");
-  printer->indent();
-  printer->print("assert(e != nullptr);\n");
-  printer->print(vars, "// RequestID: $ServiceID$ ^ $MethodID$\n");
+  printer->print(vars, "/// RequestID: $ServiceID$ ^ $MethodID$\n");
   printer->print(vars,
-                 "// ServiceID: $ServiceID$ == crc32(\"$ServiceName$\")\n");
-  printer->print(vars, "// MethodID:  $MethodID$ == crc32(\"$MethodName$\")\n");
-  printer->print(vars, "e->set_request_id($ServiceID$, $MethodID$);\n");
-  printer->print(vars, "return send<$OutType$>(e->to_temp_buf(),false);\n");
+                 "/// ServiceID: $ServiceID$ == crc32(\"$ServiceName$\")\n");
+  printer->print(vars,
+                 "/// MethodID:  $MethodID$ == crc32(\"$MethodName$\")\n");
+  printer->print(vars, "future<smf::rpc_recv_typed_context<$OutType$>>\n");
+  printer->print(vars, "$MethodName$(smf::rpc_envelope e) {\n");
+  printer->indent();
+  printer->print(vars, "e.set_request_id($ServiceID$, $MethodID$);\n");
+  printer->print(vars, "return send<$OutType$>(std::move(e),false);\n");
   printer->outdent();
   printer->print("}\n");
 }

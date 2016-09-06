@@ -10,6 +10,7 @@
 #include "rpc/rpc_filter.h"
 #include "rpc/rpc_connection_limits.h"
 #include "histogram.h"
+#include "rpc/filters/zstd_filter.h"
 
 namespace smf {
 

@@ -15,7 +15,9 @@ namespace smf {
 ///
 class rpc_envelope {
   public:
-  static future<> send(output_stream<char> &out, temporary_buffer<char> req);
+  constexpr static size_t kHeaderSize = sizeof(fbs::rpc::Header);
+  static future<> send(output_stream<char> &out, rpc_envelope req);
+
 
   /// \brief convenience method. copy the byte array of the flatbuffer builder
   /// \args buf_to_copy - is a pointer to the flatbuffers after the user called
@@ -55,12 +57,12 @@ class rpc_envelope {
   /// \brief move ctor
   rpc_envelope(rpc_envelope &&o) noexcept;
 
-  /// \brief approx size unreliable unless finished() is called
-  size_t size();
+  /// \brief returns the size of the payload excluding headers
+  size_t payload_size() { return fbb_->GetSize(); }
 
-  /// \brief convenience method for transofrming thi into tmpbuf
-  ///
-  temporary_buffer<char> to_temp_buf();
+  /// \brief returns an immutable pointer to the buffer
+  const uint8_t *payload() { return fbb_->GetBufferPointer(); }
+
 
   /// \brief add a key=value pair ala HTTP/1.1 so that the decoding
   /// end has meta information about the request. For example, specify the
@@ -75,24 +77,6 @@ class rpc_envelope {
                           const uint8_t *value,
                           const size_t &value_len);
 
-  /// \brief if the user doesn't want to get a callback, or receive data
-  /// back from the server after the requeset. That is use TCP as the
-  /// best effort delivery. No need for application acknowledgement
-  ///
-  void set_oneway(bool oneway);
-
-  /// \brief used to test if no need for ack
-  /// \return true iff no need for ack
-  ///
-  bool is_oneway() const;
-
-  /// \brief get if dynamic compression is on
-  bool get_dynamic_compression() const;
-  /// \brief set the dynamic compression. default: true
-  void set_dynamic_compression(bool);
-  /// \brief set the minimum size of the compression. default: 1000
-  void set_dynamic_compression_min_size(uint32_t);
-
   /// \brief returns if the data is finished, useful if you acknowledge that
   /// you might be working w/ unfinished builders/requests
   /// \return - true iff buffer is done building
@@ -105,27 +89,25 @@ class rpc_envelope {
   /// over the write by the rpc_client
   void finish();
 
+  fbs::rpc::Header header{0, fbs::rpc::Flags::Flags_NONE, 0};
+
+
+  void set_compressed_payload(temporary_buffer<char> buf);
+
+  temporary_buffer<char> get_compressed_payload() {
+    return std::move(compressed_buffer_);
+  }
+
   private:
   ///\brief shared initialization
   void init(const uint8_t *buf_to_copy, size_t len);
 
-  /// \brief sets the finished_=true as the main contribution
-  /// after guaranteeing that the payload has been checksum'med
-  /// length sepcify and other connection specific headers
-  ///
-  void post_process_buffer();
-
   private:
-  // must be first
   std::unique_ptr<flatbuffers::FlatBufferBuilder> fbb_ =
     std::make_unique<flatbuffers::FlatBufferBuilder>();
+  temporary_buffer<char> compressed_buffer_;
   uint32_t meta_ = 0;
-  bool oneway_ = false;
   bool finished_ = false;
-  bool dynamic_compression_ = true;
-  // compression same as facebook::proxygen::gzip filter
-  uint32_t dynamic_compression_min_size_ = 1000;
-  fbs::rpc::Header header_{0, fbs::rpc::Flags::Flags_NONE, 0};
   std::vector<flatbuffers::Offset<fbs::rpc::DynamicHeader>> headers_{};
   flatbuffers::Offset<flatbuffers::Vector<unsigned char>> user_buf_;
 };

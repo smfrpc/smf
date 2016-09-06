@@ -24,7 +24,7 @@ template <typename T> struct rpc_recv_typed_context {
   ///     if(obj){}
   /// \endcode
   /// simply forward the bool operator to the option
-  operator bool() const { return ctx && ctx != std::experimental::nullopt; }
+  operator bool() const { return ctx.operator bool(); }
   opt_recv_ctx_t ctx;
 };
 }
