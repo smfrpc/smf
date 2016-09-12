@@ -19,8 +19,10 @@ future<> rpc_envelope::send(output_stream<char> &out, rpc_envelope e) {
         auto p = std::move(e.get_compressed_payload());
         return out.write(std::move(p));
       } else {
-        return out.write(reinterpret_cast<const char *>(e.payload()),
-                         e.payload_size());
+        temporary_buffer<char> body(e.payload_size());
+        const char *p = reinterpret_cast<const char *>(e.payload());
+        std::copy(p, p + e.payload_size(), body.get_write());
+        return out.write(std::move(body));
       }
     })
     .then([&out] { return out.flush(); });
