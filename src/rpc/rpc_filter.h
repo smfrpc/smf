@@ -8,10 +8,8 @@ namespace smf {
 template <typename T> struct rpc_filter { future<T> operator()(T t); };
 
 
-/// brief - applies a function future<T> apply(T &&t); to all the filters
-/// useful for incoming and outgoing filters. Taking a pair of iterators to
-/// unique ptrs. see incoming_filter.h and outgoing_filter.h
-/// for details
+/// brief - applies a functor `future<T> operator()(T t)` to all the filters
+/// useful for incoming and outgoing filters. Taking a pair of iterators
 ///
 template <typename Iterator, typename Arg, typename... Ret>
 future<Ret...>
