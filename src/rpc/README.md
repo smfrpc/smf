@@ -1,4 +1,4 @@
-# smurf
+# smf
 
 A mighty RPC.
 
@@ -27,7 +27,7 @@ table Response {
 }
 
 
-rpc_service SmurfStorage {
+rpc_service SmfStorage {
   Get(Request):Response;
 }
 
@@ -56,10 +56,10 @@ namespace smf_gen {
 namespace fbs {
 namespace rpc {
 
-class SmurfStorage: public smf::rpc_service {
+class SmfStorage: public smf::rpc_service {
  public:
   virtual const char *service_name() const override final {
-    return "SmurfStorage";
+    return "SmfStorage";
   }
   virtual uint32_t service_id() const override final {
     return 1969906889;
@@ -84,11 +84,11 @@ class SmurfStorage: public smf::rpc_service {
     e.set_status(200);
     return make_ready_future<smf::rpc_envelope>(std::move(e));
   }
-}; // end of service: SmurfStorage
+}; // end of service: SmfStorage
 
-class SmurfStorageClient: public smf::rpc_client {
+class SmfStorageClient: public smf::rpc_client {
  public:
-  SmurfStorageClient(ipv4_addr server_addr)
+  SmfStorageClient(ipv4_addr server_addr)
   :smf::rpc_client(std::move(server_addr)) {}
 
   future<smf::rpc_recv_ctx_t<Response>>
@@ -99,7 +99,7 @@ class SmurfStorageClient: public smf::rpc_client {
     req.set_request_id(1969906889, 3312871568);
     return send<Response>(req.to_temp_buf(),false);
   }
-}; // end of rpc client: SmurfStorageClient
+}; // end of rpc client: SmfStorageClient
 
 }  // namespace rpc
 }  // namespace fbs

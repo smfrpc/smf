@@ -1,11 +1,19 @@
-# smurf
+# smf
 
-* RPC mechanism using flatbuffers & seastar.
-* Code generation for services.
+It is pronounced `smurf`
 
-# tl;dr
+**tl;dr**:
 
-using seastar-project.org for multiple projects. direction to be defined
+It has multiple projects inside, each of which can be it's own project.
+
+* RPC mechanism using flatbuffers & seastar - DONE
+* Code generation for flatbuffers which uses our own protocol (tcp+seastar) &
+format (flatbuffers). - DONE
+* Raft consensus protocol (WIP)
+* Chain-replication protocol  (WIP)
+
+Using these protocols Raft (for chain management) & chain-replication, I'm
+hoping to build a very fast 'safe' log broker.
 
 # asciinema
 

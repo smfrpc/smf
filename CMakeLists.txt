@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-set(SMURF_VERSION "0.0.1")
+set(SMF_VERSION "0.0.1")
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 set(FLATBUFFERS_FLATC_EXECUTABLE
   ${PROJECT_SOURCE_DIR}/src/third_party/bin/flatc)

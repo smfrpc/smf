@@ -27,7 +27,7 @@ namespace smf_gen.fbs.rpc;
 table Request { name: string; }
 table Response { name: string; }
 
-rpc_service SmurfStorage {
+rpc_service SmfStorage {
     Get(Request):Response;
 }
 ```
@@ -38,17 +38,16 @@ see full generated code here):
 
 ```cpp
 
-class SmurfStorage: public smf::rpc_service { …
+class SmfStorageStorage: public smf::rpc_service { …
     virtual future<smf::rpc_envelope> Get(smf::rpc_recv_context rec); };
-
-class SmurfStorageClient: public smf::rpc_client { …
+Smfs SmfStorageStorageClient: public smf::rpc_client { …
     future<smf::rpc_recv_ctx_t<Response>> GetSend(smf::rpc_envelope req); };
 
 ```
 
 # High level design
 
-The high level design for smurf (this rpc system) is inspired by
+The high level design for smf (this rpc system) is inspired by
 facebook::wangle libraries with a usability improvement over regular RPC, i.e.:
 just the method call by having hooks/callbacks at different stages of the
 request lifecycle. The idea is that you can have hooks to deny or approve a
@@ -117,8 +116,7 @@ Given these 2 interfaces, we can come up with a request id.
 This is how the requests are
 tracked. Consistent requests_ids after multiple generations
 
-```cpp
-rpc_service SmurfStorage {
+```cpSmf_service SmfStorageStorage {
     Put(Request):Response; // new method Put() added before the old method
     Get(Request):Response;
 }

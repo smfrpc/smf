@@ -12,7 +12,7 @@
 // templates
 #include "rpc/smf_gen/demo_service.smf.fb.h"
 
-class storage_service : public smf_gen::fbs::rpc::SmurfStorage {
+class storage_service : public smf_gen::fbs::rpc::SmfStorage {
   virtual future<smf::rpc_envelope>
   Get(smf::rpc_recv_typed_context<smf_gen::fbs::rpc::Request> &&rec) override {
     // smf::LOG_INFO("got payload {}", (char *)rec.get()->name()->data());

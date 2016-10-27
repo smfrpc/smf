@@ -1,8 +1,8 @@
-Contributing to Smurf
+Contributing to smf
 =======================
 
 # Sending Patches
-Smurf follows a patch submission similar to Linux. Send patches to smurf-dev,
+smf follows a patch submission similar to Linux. Send patches to smf-dev,
 with a [DCO](http://elinux.org/Developer_Certificate_Of_Origin) signed off message. Use git send-email to send your patch.
 
 Example:
@@ -19,7 +19,7 @@ git commit -s -m "core: some descriptive commit message"
 2. then send an email to the google group
 
 ```
-git send-email <revision>..<final_revision> --to smurf-dev@googlegroups.com
+git send-email <revision>..<final_revision> --to smf-dev@googlegroups.com
 ```
 
 NOTE: for sending replies to patches, use --in-reply-to with the message ID of

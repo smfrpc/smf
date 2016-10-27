@@ -1,4 +1,4 @@
-# How to apply patches from smurf-dev@googlegroups.com?
+# How to apply patches from smf-dev@googlegroups.com?
 
 The gist of it is that you need to integrate it with an editor so you can do
 
@@ -21,7 +21,7 @@ set imap_pass = '.....password
 set from='...@gmail.com'
 set realname='Alexander Gallego'
 set folder = '~/.mail/'
-set spoolfile = 'imaps://imap.gmail.com/smurf-dev'
+set spoolfile = 'imaps://imap.gmail.com/smf-dev'
 set postponed="imaps://imap.gmail.com/[Gmail]/Drafts"
 set header_cache = "~/.mutt/cache/headers"
 set message_cachedir = "~/.mutt/cache/bodies"

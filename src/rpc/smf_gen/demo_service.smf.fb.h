@@ -16,13 +16,13 @@ namespace smf_gen {
 namespace fbs {
 namespace rpc {
 
-class SmurfStorage: public smf::rpc_service {
+class SmfStorage: public smf::rpc_service {
  public:
   virtual const char *service_name() const override final {
-    return "SmurfStorage";
+    return "SmfStorage";
   }
   virtual uint32_t service_id() const override final {
-    return 1969906889;
+    return 212494116;
   }
   virtual std::vector<smf::rpc_service_method_handle> methods() override final {
     std::vector<smf::rpc_service_method_handle> handles;
@@ -43,22 +43,22 @@ class SmurfStorage: public smf::rpc_service {
     e.set_status(501); // Not implemented
     return make_ready_future<smf::rpc_envelope>(std::move(e));
   }
-}; // end of service: SmurfStorage
+}; // end of service: SmfStorage
 
-class SmurfStorageClient: public smf::rpc_client {
+class SmfStorageClient: public smf::rpc_client {
  public:
-  SmurfStorageClient(ipv4_addr server_addr)
+  SmfStorageClient(ipv4_addr server_addr)
   :smf::rpc_client(std::move(server_addr)) {}
 
-  /// RequestID: 1969906889 ^ 2552873045
-  /// ServiceID: 1969906889 == crc32("SmurfStorage")
+  /// RequestID: 212494116 ^ 2552873045
+  /// ServiceID: 212494116 == crc32("SmfStorage")
   /// MethodID:  2552873045 == crc32("Get")
   future<smf::rpc_recv_typed_context<Response>>
   Get(smf::rpc_envelope e) {
-    e.set_request_id(1969906889, 2552873045);
+    e.set_request_id(212494116, 2552873045);
     return send<Response>(std::move(e),false);
   }
-}; // end of rpc client: SmurfStorageClient
+}; // end of rpc client: SmfStorageClient
 
 }  // namespace rpc
 }  // namespace fbs

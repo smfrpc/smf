@@ -47,7 +47,7 @@ static const char *kPayloadSonet43ElizabethBarretBowen =
 // flatbuffers + rpc client - simple
 struct requestor_channel {
   requestor_channel(const char *ip, uint16_t port)
-    : client(new smf_gen::fbs::rpc::SmurfStorageClient(ipv4_addr{ip, port}))
+    : client(new smf_gen::fbs::rpc::SmfStorageClient(ipv4_addr{ip, port}))
     , fbb(new flatbuffers::FlatBufferBuilder()) {
     client->enable_histogram_metrics();
     auto req = smf_gen::fbs::rpc::CreateRequest(
@@ -74,7 +74,7 @@ struct requestor_channel {
         }
       });
   }
-  std::unique_ptr<smf_gen::fbs::rpc::SmurfStorageClient> client;
+  std::unique_ptr<smf_gen::fbs::rpc::SmfStorageClient> client;
   std::unique_ptr<flatbuffers::FlatBufferBuilder> fbb;
 };
 

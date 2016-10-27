@@ -9,6 +9,6 @@ table Response {
 }
 
 
-rpc_service SmurfStorage {
+rpc_service SmfStorage {
   Get(Request):Response;
 }

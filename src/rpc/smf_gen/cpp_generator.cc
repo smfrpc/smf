@@ -185,7 +185,7 @@ void print_header_service(smf_printer *printer, const smf_service *service) {
   printer->print(" public:\n");
   printer->indent();
 
-  // print the overrides for smurf
+  // print the overrides for smf
   printer->print("virtual const char *service_name() const override final {\n");
   printer->indent();
   printer->print(vars, "return \"$Service$\";\n");

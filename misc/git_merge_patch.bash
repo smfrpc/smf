@@ -20,4 +20,4 @@ cd $git_root
 
 git am $patch_file
 git push origin master
-git send-email HEAD^..HEAD --compose --subject "$subject_line" --to smurf-dev@googlegroups.com
+git send-email HEAD^..HEAD --compose --subject "$subject_line" --to smf-dev@googlegroups.com
