@@ -3,7 +3,6 @@ add_custom_command (
   COMMAND smf_gen --logtostderr --filename ${PROJECT_SOURCE_DIR}/src/flatbuffers/raft.fbs
   DEPENDS smf_gen
   )
-add_executable (raft
-  ${PROJECT_SOURCE_DIR}/src/raft/main.cc
+add_library (raft STATIC
   ${PROJECT_SOURCE_DIR}/src/flatbuffers/raft.smf.fb.h)
 target_link_libraries (raft smfrpc)

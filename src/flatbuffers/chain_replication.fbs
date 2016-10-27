@@ -45,7 +45,8 @@ table tx_multiput {
   guarantee: tx_multiput_guarantee = tx;
   puts: [tx_put];
 }
-table tx_put_reply {}
+table tx_mput_reply {}
+table tx_sput_reply {}
 
 
 table tx_fetch {
@@ -60,6 +61,7 @@ table tx_fetch_reply {
   puts: [tx_put];
 }
 rpc_service chain_replication {
-  put(tx_multiput): tx_put_reply;
+  mput(tx_multiput): tx_mput_reply;
+  sput(tx_put): tx_sput_reply;
   fetch(tx_fetch_request): tx_fetch_reply;
 }

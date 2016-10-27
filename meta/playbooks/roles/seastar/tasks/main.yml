@@ -22,6 +22,7 @@
     - lz4-devel
     - protobuf-devel
     - protobuf-compiler
+    - libunwind-devel
 
 
 - name: programs for posix ethernet tunning and IRQ balance
@@ -41,7 +42,7 @@
     update=yes
     recursive=yes
     force=yes
-    version='1262ce7'
+    version='HEAD'
 
 - command: ./configure.py --enable-dpdk
   args:

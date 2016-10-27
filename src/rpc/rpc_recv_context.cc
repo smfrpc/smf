@@ -67,7 +67,7 @@ process_payload(rpc_connection *conn,
         return make_ready_future<ret_type>(nullopt);
       }
       if((hdr->flags() & Flags::Flags_CHECKSUM) == Flags::Flags_CHECKSUM) {
-        const uint32_t xx = xxhash(body.get(), body.size());
+        const uint32_t xx = xxhash_32(body.get(), body.size());
         if(xx != hdr->checksum()) {
           LOG_ERROR("Payload checksum `{}` does not match header checksum `{}`",
                     xx, hdr->checksum());
