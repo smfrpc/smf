@@ -88,8 +88,27 @@ class rpc_client {
   }
 
 
+  bool is_semaphore_empty() { return limit_.current() == 1; }
+
+  public:
+  const ipv4_addr server_addr;
+
+  protected:
+  /// \brief - semaphore for `safe_` codegen calls
+  ///
+  /// seastar ONLY allows for one receiving context per call
+  /// so the recv call has to parse the response payload before
+  /// moving to the next one. - used by the codegen for `safe_##method_name()'
+  /// calls
+  /// Note that this should only be used by `safe_` calls, it is otherwise
+  /// mus slower and not in line w/ the seastar model. This was added here
+  /// for usability. This increases the latency, on a highly contended core
+  /// the future<> scheduler may yield
+  /// (or if the scheduler has executed enough ready_future<>'s)
+  ///
+  semaphore limit_{1};
+
   private:
-  ipv4_addr server_addr_;
   rpc_connection *conn_ = nullptr;
   std::unique_ptr<histogram> hist_;
   using in_filter_t = std::function<future<rpc_recv_context>(rpc_recv_context)>;

@@ -58,6 +58,14 @@ class SmfStorageClient: public smf::rpc_client {
     e.set_request_id(212494116, 2552873045);
     return send<Response>(std::move(e),false);
   }
+  future<smf::rpc_recv_typed_context<Response>>
+  SafeGet(smf::rpc_envelope e) {
+    return limit_.wait(1).then([this, e=std::move(e)]() mutable {
+      return this->Get(std::move(e)).finally([this](){
+        limit_.signal(1);
+      });
+    });
+  }
 }; // end of rpc client: SmfStorageClient
 
 }  // namespace rpc

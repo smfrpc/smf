@@ -7,8 +7,7 @@
 
 namespace smf {
 using namespace std::experimental;
-rpc_client::rpc_client(ipv4_addr server_addr)
-  : server_addr_(std::move(server_addr)) {}
+rpc_client::rpc_client(ipv4_addr addr) : server_addr(std::move(addr)) {}
 
 future<> rpc_client::stop() { return make_ready_future(); }
 rpc_client::~rpc_client() {
@@ -35,7 +34,7 @@ future<> rpc_client::connect() {
     socket_address(::sockaddr_in{AF_INET, INADDR_ANY, {0}});
   return engine()
     .net()
-    .connect(make_ipv4_address(server_addr_), local, seastar::transport::TCP)
+    .connect(make_ipv4_address(server_addr), local, seastar::transport::TCP)
     .then([this](connected_socket fd) mutable {
       conn_ = new rpc_connection(std::move(fd));
     });

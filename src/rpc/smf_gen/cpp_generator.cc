@@ -253,6 +253,36 @@ void print_header_client_method(smf_printer *printer,
   printer->outdent();
   printer->print("}\n");
 }
+
+void print_safe_header_client_method(smf_printer *printer,
+                                     const smf_method *method) {
+  std::map<std::string, std::string> vars;
+  vars["MethodName"] = method->name();
+  vars["SafeMethodPrefix"] = std::islower(method->name()[0]) ? "safe_" : "Safe";
+  vars["MethodID"] = std::to_string(method->method_id());
+  vars["ServiceID"] = std::to_string(method->service_id());
+  vars["ServiceName"] = method->service_name();
+  vars["InType"] = method->input_type_name();
+  vars["OutType"] = method->output_type_name();
+
+  printer->print(vars, "future<smf::rpc_recv_typed_context<$OutType$>>\n");
+  printer->print(vars,
+                 "$SafeMethodPrefix$$MethodName$(smf::rpc_envelope e) {\n");
+  printer->indent();
+  printer->print(
+    "return limit_.wait(1).then([this, e=std::move(e)]() mutable {\n");
+  printer->indent();
+  printer->print(vars,
+                 "return this->$MethodName$(std::move(e)).finally([this](){\n");
+  printer->indent();
+  printer->print("limit_.signal(1);\n");
+  printer->outdent();
+  printer->print("});\n");
+  printer->outdent();
+  printer->print("});\n");
+  printer->outdent();
+  printer->print("}\n");
+}
 void print_header_client(smf_printer *printer, const smf_service *service) {
   // print the client rpc code
   VLOG(1) << "print_header_client for service: " << service->name();
@@ -275,6 +305,7 @@ void print_header_client(smf_printer *printer, const smf_service *service) {
 
   for(int i = 0; i < service->method_count(); ++i) {
     print_header_client_method(printer, service->method(i).get());
+    print_safe_header_client_method(printer, service->method(i).get());
   }
 
   printer->outdent();
