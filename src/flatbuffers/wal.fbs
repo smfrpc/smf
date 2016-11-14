@@ -1,0 +1,14 @@
+namespace smf.fbs.wal;
+
+enum wal_entry_flags:uint (bit_flags) {
+  partial_fragment,
+  full_frament,
+  /// \brief the payload is compressed using zstandrad 1.0
+  zstd
+}
+
+struct wal_header {
+  flags: wal_entry_flags = 0;
+  size: uint;
+  checksum: uint;
+}

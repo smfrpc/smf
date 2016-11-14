@@ -3,7 +3,7 @@
 #include <core/app-template.hh>
 // smf
 #include "rpc/rpc_server.h"
-#include "cr/chain_replication_service.h"
+#include "chain_replication/chain_replication_service.h"
 #include "rpc/rpc_server_stats_printer.h"
 #include "log.h"
 // smfb

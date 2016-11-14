@@ -5,7 +5,6 @@
   roles:
     - seastar
     - flatbuffers
-    - kafka
     - xxhash
     - smf_gen_libs
     - hdrhistogram
