@@ -34,6 +34,7 @@ set(FLATBUFFERS_FILES
   ${PROJECT_SOURCE_DIR}/src/flatbuffers/rpc.fbs
   ${PROJECT_SOURCE_DIR}/src/flatbuffers/raft.fbs
   ${PROJECT_SOURCE_DIR}/src/flatbuffers/chain_replication.fbs
+  ${PROJECT_SOURCE_DIR}/src/flatbuffers/wal.fbs
   )
 
 # build the RPC Types
@@ -78,6 +79,7 @@ add_dependencies(smfrpc rpc_serialization)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/rpc/smf_gen)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/rpc/templates)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/raft)
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/cr)
+add_subdirectory(${PROJECT_SOURCE_DIR}/src/chain_replication)
+add_subdirectory(${PROJECT_SOURCE_DIR}/src/filesystem)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/smfb)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/test)

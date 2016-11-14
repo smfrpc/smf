@@ -1,4 +1,4 @@
-#include "cr/chain_replication_utils.h"
+#include "chain_replication/chain_replication_utils.h"
 #include "hashing_utils.h"
 namespace smf {
 namespace chains {
