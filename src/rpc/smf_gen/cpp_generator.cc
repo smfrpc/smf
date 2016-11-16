@@ -167,7 +167,7 @@ void print_header_service_method(smf_printer *printer,
   printer->print(
     "// Helpful for clients to set the status.\n"
     "// Typically follows HTTP style. Not imposed by smf whatsoever.\n");
-  printer->print("e.set_status(501); // Not implemented\n");
+  printer->print("e.set_status(HTTP_STATUS_NOT_IMPLEMENTED); // 501\n");
   printer->print(
     "return make_ready_future<smf::rpc_envelope>(std::move(e));\n");
   printer->outdent();
