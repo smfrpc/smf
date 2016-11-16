@@ -81,7 +81,7 @@ class SmfStorage: public smf::rpc_service {
     smf::rpc_envelope e(nullptr);
     // Helpful for clients to set the status.
     // Typically follows HTTP style. Not imposed by smf whatsoever.
-    e.set_status(200);
+    e.set_status(HTTP_STATUS_OK); // 200
     return make_ready_future<smf::rpc_envelope>(std::move(e));
   }
 }; // end of service: SmfStorage
