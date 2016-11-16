@@ -2,6 +2,9 @@
 
 It is pronounced `smurf`
 
+Mailing List: https://groups.google.com/forum/#!forum/smf-dev
+
+
 **tl;dr**:
 
 It has multiple projects inside. **Note: Tested on fedora 23, other OSes might need manual tweaking of dependencies.**
