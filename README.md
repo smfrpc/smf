@@ -4,13 +4,14 @@ It is pronounced `smurf`
 
 **tl;dr**:
 
-It has multiple projects inside, each of which can be it's own project.
+It has multiple projects inside. **Note: Tested on fedora 23, other OSes might need manual tweaking of dependencies.**
 
 * RPC mechanism using flatbuffers & seastar - DONE
 * Code generation for flatbuffers which uses our own protocol (tcp+seastar) &
 format (flatbuffers). - DONE
-* Raft consensus protocol (WIP)
-* Chain-replication protocol  (WIP)
+* Raft consensus protocol (WIP: 30% )
+* Chain-replication protocol  (WIP: 60%)
+* WAL (Write Ahead Log) - (WIP: 80%)
 
 Using these protocols Raft (for chain management) & chain-replication, I'm
 hoping to build a very fast 'safe' log broker.
