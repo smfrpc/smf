@@ -1,12 +1,13 @@
 #include "cr/chain_replication_service.h"
 #include "hashing_utils.h"
+#include "status_codes.h"
 #include "cr/chain_replication_utils.h"
 namespace smf {
 namespace chains {
 future<smf::rpc_envelope> chain_replication_service::mput(
   smf::rpc_recv_typed_context<tx_multiput> &&puts) {
   smf::rpc_envelope e(nullptr);
-  e.set_status(501); // Not implemented
+  e.set_status(HTTP_STATUS_NOT_IMPLEMENTED); // 501
   return make_ready_future<smf::rpc_envelope>(std::move(e));
 }
 
@@ -14,7 +15,7 @@ future<smf::rpc_envelope>
 chain_replication_service::sput(smf::rpc_recv_typed_context<tx_put> &&put) {
   if(!put) {
     smf::rpc_envelope e(nullptr);
-    e.set_status(501); // Not implemented
+    e.set_status(HTTP_STATUS_NOT_IMPLEMENTED); // 501
     return make_ready_future<smf::rpc_envelope>(std::move(e));
   }
   auto core_to_handle = put_to_lcore(put.get());
@@ -25,12 +26,12 @@ chain_replication_service::sput(smf::rpc_recv_typed_context<tx_put> &&put) {
     // .handle_exception([](std::exception_ptr eptr) {
     //   LOG_ERROR("Error saving smf::chains::sput()");
     //   smf::rpc_envelope e(nullptr);
-    //   e.set_status(500);
+    //   e.set_status(HTTP_STATUS_INTERNAL_SERVICE_ERROR); // 500
     //   return make_ready_future<smf::rpc_envelope>(std::move(e));
     // })
     .then([] {
       smf::rpc_envelope e(nullptr);
-      e.set_status(200);
+      e.set_status(HTTP_STATUS_OK); // 200
       return make_ready_future<smf::rpc_envelope>(std::move(e));
     });
 }
@@ -38,7 +39,7 @@ chain_replication_service::sput(smf::rpc_recv_typed_context<tx_put> &&put) {
 future<smf::rpc_envelope> chain_replication_service::fetch(
   smf::rpc_recv_typed_context<tx_fetch_request> &&rec) {
   smf::rpc_envelope e(nullptr);
-  e.set_status(501); // Not implemented
+  e.set_status(HTTP_STATUS_NOT_IMPLEMENTED); // 501
   return make_ready_future<smf::rpc_envelope>(std::move(e));
 }
 } // end namespace chains
