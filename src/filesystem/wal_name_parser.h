@@ -4,6 +4,8 @@
 #include <core/sstring.hh>
 
 namespace smf {
+
+// TODO(agallego) - this needs unit tests
 struct wal_name_parser {
   wal_name_parser(sstring _prefix = "smf") : prefix(_prefix) {
     for(char c : prefix) {

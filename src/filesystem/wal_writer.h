@@ -15,7 +15,7 @@ class wal_writer {
 
   future<> open();
   future<> append(temporary_buffer<char> &&buf);
-
+  future<> close();
   const sstring directory;
 
   private:
