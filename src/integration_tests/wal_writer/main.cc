@@ -6,9 +6,9 @@
 #include "filesystem/wal_writer.h"
 
 
-temporary_buffer<char> gen_payload(size_t size = 12) {
-  temporary_buffer<char> buf(size);
-  std::fill(buf.get_write(), buf.get_write() + buf.size(), '$');
+temporary_buffer<char> gen_payload(sstring str) {
+  temporary_buffer<char> buf(str.size());
+  std::copy(str.begin(), str.end(), buf.get_write());
   return std::move(buf);
 }
 
@@ -24,8 +24,10 @@ int main(int args, char **argv, char **env) {
       smf::LOG_INFO("setting up exit hooks");
       engine().at_exit([writer] { return writer->close(); });
       return writer->open().then([writer]() mutable {
-        smf::LOG_INFO("Writing payload");
-        return writer->append(gen_payload())
+        auto buf = gen_payload("Hello world!");
+        sstring tmp(buf.get(), buf.size());
+        smf::LOG_INFO("Writing payload: {}", tmp);
+        return writer->append(std::move(buf))
           .then([] { return make_ready_future<int>(0); });
       });
     }); // app.run

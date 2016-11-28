@@ -25,10 +25,8 @@ wal_writer_node::wal_writer_node(sstring prefix,
   , min_compression_size(_min_compression_size)
   , epoch_(epoch) {
   if(file_size < min_entry_size()) {
-    auto s =
-      fmt::format("file size `{}` cannot be smaller than min_entry_size `{}`",
-                  file_size, min_entry_size());
-    throw std::runtime_error(s.c_str());
+    LOG_THROW("file size `{}` cannot be smaller than min_entry_size `{}`",
+              file_size, min_entry_size());
   }
   opts_.buffer_size = file_size;
   opts_.preallocation_size = file_size;
@@ -36,7 +34,7 @@ wal_writer_node::wal_writer_node(sstring prefix,
 
 future<> wal_writer_node::open() {
   const auto name = wal_file_name(prefix_name, epoch_);
-  LOG_DEBUG("Creating new WAL file {}", name);
+  LOG_INFO("Creating new WAL file {}", name);
   // the file should fail if it exists. It should not exist on disk, as
   // we'll truncate them
   return open_file_dma(name, open_flags::rw | open_flags::create
@@ -49,6 +47,8 @@ future<> wal_writer_node::open() {
 
 
 temporary_buffer<char> header_as_buffer(fbs::wal::wal_header h) {
+  LOG_INFO("header_as_buffer");
+
   temporary_buffer<char> header(kWalHeaderSize);
   std::copy((char *)&h, (char *)&h + kWalHeaderSize, header.get_write());
   return std::move(header);
@@ -56,6 +56,7 @@ temporary_buffer<char> header_as_buffer(fbs::wal::wal_header h) {
 
 future<> wal_writer_node::do_append_with_header(fbs::wal::wal_header h,
                                                 temporary_buffer<char> &&buf) {
+  LOG_INFO("do_append_with_header");
   current_size_ += kWalHeaderSize;
   return fstream_.write(header_as_buffer(h))
     .then([this, buf = std::move(buf)]() mutable {
@@ -67,6 +68,7 @@ future<> wal_writer_node::do_append_with_header(fbs::wal::wal_header h,
 
 future<> wal_writer_node::do_append(temporary_buffer<char> &&buf,
                                     fbs::wal::wal_entry_flags flags) {
+  LOG_INFO("do_append");
   fbs::wal::wal_header hdr;
   hdr.mutate_flags(flags);
   auto const write_size = buf.size();
@@ -94,10 +96,9 @@ future<> wal_writer_node::do_append(temporary_buffer<char> &&buf,
     hdr.mutate_checksum(xxhash_64(buf.get(), buf.size()));
     return do_append_with_header(hdr, std::move(compressed_buf));
   }
-  LOG_ERROR("Error compressing zstd buffer. defaulting to uncompressed. "
+  LOG_THROW("Error compressing zstd buffer. defaulting to uncompressed. "
             "Code: {}, Desciption: {}",
             zstd_err, ZSTD_getErrorName(zstd_err));
-  throw std::runtime_error("Appending buffer to WAL failed to compressed");
 }
 
 future<> wal_writer_node::append(temporary_buffer<char> &&buf) {
