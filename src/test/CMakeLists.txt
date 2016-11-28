@@ -1,4 +1,5 @@
 set(TEST_ROOT ${PROJECT_SOURCE_DIR}/src/test)
+set(TEST_RUNNER ${PROJECT_SOURCE_DIR}/src/test_runner.py)
 set(FAST_TESTS "")
 set(SLOW_TESTS "")
 
@@ -13,7 +14,8 @@ function (register_fast_test NAME DIR)
     ${NAME} PARENT_SCOPE)
   add_test (
     NAME ${NAME}_runner
-    COMMAND ${TEST_ROOT}/run_test.sh $<TARGET_FILE:${NAME}> ${DIR}
+    COMMAND "${TEST_RUNNER}" --test_type unit --binary $<TARGET_FILE:${NAME}> --directory ${DIR}
+    #WORKING_DIRECTORY ${DIR}
     )
 endfunction ()
 

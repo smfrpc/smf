@@ -23,6 +23,8 @@ def generate_options():
                         help='binary program to run')
     parser.add_argument('--directory', type=str,
                         help='source directory of binary. needed for metadata')
+    parser.add_argument('--test_type', type=str, default="unit",
+                        help='either integration or unit. ie: --test_type unit')
     return parser
 
 
@@ -39,8 +41,11 @@ def test_environ():
     e = os.environ
     git_root = get_git_root()
     e["GIT_ROOT"] = git_root
+    ld_path = ""
+    if e.has_key("LD_LIBRARY_PATH"):
+        ld_path = e["LD_LIBRARY_PATH"]
     libs = "{}/src/third_party/lib:{}/src/third_party/lib64:{}".format(
-        git_root,git_root, e["LD_LIBRARY_PATH"])
+        git_root,git_root, ld_path)
     e["LD_LIBRARY_PATH"]=libs
     e["GLOG_logtostderr"]='1'
     e["GLOG_v"]='1'
@@ -55,9 +60,8 @@ def test_environ():
 
 
 def bash_command(cmd, environ):
-    exe = "'exec {}'".format(cmd)
-    log.info("Executing: %s\n", exe)
-    return subprocess.call(['/bin/bash', '-c', exe], env=environ)
+    logger.info("TEST: %s\n", cmd)
+    return subprocess.call(cmd, shell=True, env=environ)
 
 
 def load_test_config(directory):
@@ -69,10 +73,10 @@ def load_test_config(directory):
 
 
 def exec_test(binary, source_dir):
-    os.chdir(source_dir)
+    #os.chdir(source_dir)
     test_env = test_environ()
 
-    cfg = load_test_config(options.directory)
+    cfg = load_test_config(source_dir)
     if cfg is None:
         return bash_command(binary, test_env)
 
@@ -82,20 +86,25 @@ def exec_test(binary, source_dir):
         os.chdir(path)
         test_env["HOME"]=dirpath
 
-    cmd = ' '.join([options.binary] + cfg["args"])
+    cmd = ' '.join([binary] + cfg["args"])
     logger.info("Executing test: %s" % cmd)
     return bash_command(cmd, test_env)
 
 def main():
     parser = generate_options()
     options, program_options = parser.parse_known_args()
-
+    logger.info("Options: %s" % options)
     if not options.binary:
         parser.print_help()
         raise Exception("Missing binary")
     if not options.directory:
         parser.print_help()
         raise Exception("Missing source directory")
+    if not options.test_type:
+        if (options.test_type is not "unit" or
+            options.test_type is not "integration"):
+            parser.print_help()
+            raise Exception("Missing test_type ")
 
     exec_test(options.binary, options.directory)
 

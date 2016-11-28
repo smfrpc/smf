@@ -1,4 +1,5 @@
 set(IT_ROOT ${PROJECT_SOURCE_DIR}/src/integration_tests)
+set(TEST_RUNNER ${PROJECT_SOURCE_DIR}/src/test_runner.py)
 set(IT_TESTS "")
 function (register_test NAME DIR)
   set(IT_TESTS
@@ -6,8 +7,7 @@ function (register_test NAME DIR)
     ${NAME} PARENT_SCOPE)
   add_test (
     NAME ${NAME}_integration_test
-    COMMAND ${IT_ROOT}/it_test.py --binary $<TARGET_FILE:${NAME}> --directory ${DIR}
-    WORKING_DIRECTORY ${DIR}
+    COMMAND ${TEST_RUNNER} --type integration --binary $<TARGET_FILE:${NAME}> --directory ${DIR}
     )
 endfunction ()
 
