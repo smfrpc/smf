@@ -59,10 +59,16 @@ def test_environ():
     return e
 
 
-def bash_command(cmd, environ):
-    logger.info("TEST: %s\n", cmd)
-    return subprocess.call(cmd, shell=True, env=environ)
+def execute(cmd, environ):
+    popen = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                             universal_newlines=True)
+    for stdout_line in iter(popen.stdout.readline, ""):
+        sys.stdout.write(stdout_line)
 
+    popen.stdout.close()
+    return_code = popen.wait()
+    if return_code:
+        raise subprocess.CalledProcessError(return_code, cmd)
 
 def load_test_config(directory):
     test_cfg = directory + "/test.json"
@@ -78,7 +84,7 @@ def exec_test(binary, source_dir):
 
     cfg = load_test_config(source_dir)
     if cfg is None:
-        return bash_command(binary, test_env)
+        return execute(binary, test_env)
 
     if cfg.has_key("tmp_home"):
         dirpath = tempfile.mkdtemp()
@@ -88,12 +94,12 @@ def exec_test(binary, source_dir):
 
     cmd = ' '.join([binary] + cfg["args"])
     logger.info("Executing test: %s" % cmd)
-    return bash_command(cmd, test_env)
+    return execute(cmd, test_env)
 
 def main():
     parser = generate_options()
     options, program_options = parser.parse_known_args()
-    logger.info("Options: %s" % options)
+
     if not options.binary:
         parser.print_help()
         raise Exception("Missing binary")
