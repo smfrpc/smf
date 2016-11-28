@@ -36,6 +36,7 @@ wal_writer_node::wal_writer_node(sstring prefix,
 
 future<> wal_writer_node::open() {
   const auto name = wal_file_name(prefix_name, epoch_);
+  LOG_DEBUG("Creating new WAL file {}", name);
   // the file should fail if it exists. It should not exist on disk, as
   // we'll truncate them
   return open_file_dma(name, open_flags::rw | open_flags::create

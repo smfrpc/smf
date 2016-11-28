@@ -1,6 +1,6 @@
 ---
 
-- name: Install all dev system tools
+- name: libraries for the rpc generator programs
   become: yes
   dnf: name='{{item}}'
   with_items:

@@ -9,3 +9,4 @@
     - smf_gen_libs
     - hdrhistogram
     - zstd
+    - smf_extra_libs

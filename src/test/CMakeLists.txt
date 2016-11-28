@@ -32,6 +32,11 @@ add_executable (simple_flatbuffers_tests ${TEST_ROOT}/flatbuffers/simple.cc)
 target_link_libraries(simple_flatbuffers_tests -lgtest smfrpc)
 register_fast_test (simple_flatbuffers_tests ${TEST_ROOT}/flatbuffers)
 
+
+add_executable(wal_name_re ${TEST_ROOT}/wal_name_parser_tests/wal_name_re.cc)
+target_link_libraries(wal_name_re -lgtest smf_filesystem)
+register_fast_test (wal_name_re ${TEST_ROOT}/wal_name_parser_tests)
+
 # TODO(agallego) - add slow tests too if a flag is passed
 # -DALL_TESTS will enable slow and fast tests
 # define a new variable called set(ALL_TESTS) and add both

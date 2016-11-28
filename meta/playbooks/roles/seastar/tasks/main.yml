@@ -42,9 +42,13 @@
     update=yes
     recursive=yes
     force=yes
-    version='HEAD'
+    version='7790e'
 
-- command: ./configure.py --enable-dpdk
+# TODO(agallego): at HEAD as of Nov 27 2016, seastar's dpdk has
+# compilation issues. - enable later with old command - debug later
+# - command: ./configure.py --enable-dpdk
+#
+- command: ./configure.py
   args:
     chdir: '{{goobly_cache_dir}}/seastar'
     creates: '{{goobly_cache_dir}}/seastar/build.ninja'

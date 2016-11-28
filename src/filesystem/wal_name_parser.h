@@ -1,11 +1,11 @@
 #pragma once
 // third party
-#include <boost/regex.hpp>
+#include <re2/re2.h>
 #include <core/sstring.hh>
 
 namespace smf {
+static const re2::RE2 kFileNameRE("[a-zA-Z\\d]+_\\d+_[\\dT:-]+\\.wal");
 
-// TODO(agallego) - this needs unit tests
 struct wal_name_parser {
   wal_name_parser(sstring _prefix = "smf") : prefix(_prefix) {
     for(char c : prefix) {
@@ -13,14 +13,11 @@ struct wal_name_parser {
         throw std::runtime_error(
           "wal_name_parser cannot include a prefix with special chars");
     }
-    sstring tmp = prefix + "_\\d+_[\\dT:-]+\\.wal";
-    file_re = boost::regex(tmp.c_str());
   }
   const sstring prefix;
-  boost::regex file_re;
 
   bool operator()(const sstring &filename) {
-    return boost::regex_match(filename.c_str(), file_re);
+    return re2::RE2::FullMatch(filename.c_str(), kFileNameRE);
   }
 };
 

@@ -10,4 +10,5 @@ target_link_libraries (smf_filesystem
   boost_regex
   xxhash_static
   zstd.a
+  re2
   )
