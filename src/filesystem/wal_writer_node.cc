@@ -58,10 +58,15 @@ future<> wal_writer_node::do_append_with_header(fbs::wal::wal_header h,
                                                 temporary_buffer<char> &&buf) {
   LOG_INFO("do_append_with_header");
   current_size_ += kWalHeaderSize;
-  return fstream_.write(header_as_buffer(h))
+  auto hdr_buf = header_as_buffer(h);
+  return fstream_.write(hdr_buf.get(), hdr_buf.size())
     .then([this, buf = std::move(buf)]() mutable {
       current_size_ += buf.size();
-      return fstream_.write(std::move(buf));
+      // TODO(agallego) - push fix upstream
+      // buffers need to be aligned on the filesystem
+      // so it's better if you let the underlying system copy
+      // them - pending my fix to merge upstream
+      return fstream_.write(buf.get(), buf.size());
     });
 }
 
