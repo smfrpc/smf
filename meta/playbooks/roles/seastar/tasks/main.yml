@@ -23,6 +23,7 @@
     - protobuf-devel
     - protobuf-compiler
     - libunwind-devel
+    - systemtap-sdt-devel
 
 
 - name: programs for posix ethernet tunning and IRQ balance
