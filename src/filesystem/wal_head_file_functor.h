@@ -1,9 +1,6 @@
 #pragma once
 #include "filesystem/wal_name_parser.h"
 
-// deleteme
-#include "log.h"
-
 namespace smf {
 
 /// \brief used from a subscriber to find the last file on the file system
@@ -28,13 +25,9 @@ struct wal_head_file_functor {
 
   future<> visit(directory_entry de) {
     if(de.type && de.type == directory_entry_type::regular) {
-
-      LOG_INFO("deleteme: found file: {}", de.name);
-
       // operator >(const T&) is not defined, but operator <(const T&) is
       if(name_parser(de.name) && last_file < de.name) {
         last_file = de.name;
-        LOG_INFO("deleteme Parsing directory, found a match {}", last_file);
       }
     }
     return make_ready_future<>();

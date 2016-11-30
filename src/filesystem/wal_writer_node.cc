@@ -34,7 +34,7 @@ wal_writer_node::wal_writer_node(sstring prefix,
 
 future<> wal_writer_node::open() {
   const auto name = wal_file_name(prefix_name, epoch_);
-  LOG_INFO("Creating new WAL file {}", name);
+  LOG_DEBUG("Creating new WAL file {}", name);
   // the file should fail if it exists. It should not exist on disk, as
   // we'll truncate them
   return open_file_dma(name, open_flags::rw | open_flags::create
@@ -46,26 +46,16 @@ future<> wal_writer_node::open() {
 }
 
 
-temporary_buffer<char> header_as_buffer(fbs::wal::wal_header h) {
-  LOG_INFO("header_as_buffer");
-
-  temporary_buffer<char> header(kWalHeaderSize);
-  std::copy((char *)&h, (char *)&h + kWalHeaderSize, header.get_write());
-  return std::move(header);
-}
-
 future<> wal_writer_node::do_append_with_header(fbs::wal::wal_header h,
                                                 temporary_buffer<char> &&buf) {
-  LOG_INFO("do_append_with_header");
+  // TODO: https://groups.google.com/forum/?hl=en#!topic/seastar-dev/SY-VG9xPVaY
+  // buffers need to be aligned on the filesystem
+  // so it's better if you let the underlying system copy
+  // them - pending my fix to merge upstream
   current_size_ += kWalHeaderSize;
-  auto hdr_buf = header_as_buffer(h);
-  return fstream_.write(hdr_buf.get(), hdr_buf.size())
+  return fstream_.write((const char *)&h, kWalHeaderSize)
     .then([this, buf = std::move(buf)]() mutable {
       current_size_ += buf.size();
-      // TODO(agallego) - push fix upstream
-      // buffers need to be aligned on the filesystem
-      // so it's better if you let the underlying system copy
-      // them - pending my fix to merge upstream
       return fstream_.write(buf.get(), buf.size());
     });
 }
@@ -73,7 +63,6 @@ future<> wal_writer_node::do_append_with_header(fbs::wal::wal_header h,
 
 future<> wal_writer_node::do_append(temporary_buffer<char> &&buf,
                                     fbs::wal::wal_entry_flags flags) {
-  LOG_INFO("do_append");
   fbs::wal::wal_header hdr;
   hdr.mutate_flags(flags);
   auto const write_size = buf.size();

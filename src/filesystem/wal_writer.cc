@@ -21,13 +21,13 @@ future<> wal_writer::open() {
     auto l = make_lw_shared<wal_head_file_functor>(std::move(f));
     return l->close().then([l, this]() mutable {
       if(l->last_file.empty()) {
-        LOG_INFO("last file is empty");
+        LOG_DEBUG("Empty dir. Creating first WAL");
         auto id = to_sstring(engine().cpu_id());
         current_ =
           std::make_unique<wal_writer_node>(l->name_parser.prefix + id);
         return current_->open();
       }
-      LOG_INFO("last file NOT empty");
+      LOG_DEBUG("Reading last file epoch");
       return open_file_dma(l->last_file, open_flags::ro)
         .then([this, prefix = l->name_parser.prefix](file last) {
           auto lastf = make_lw_shared<file>(std::move(last));

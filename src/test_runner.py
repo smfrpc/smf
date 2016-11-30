@@ -60,14 +60,17 @@ def test_environ():
 
 
 def execute(cmd, environ):
+    logger.info("Executing test: %s" % cmd)
     popen = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                             # buffer one line at a time
+                             bufsize=1,
+                             shell=True,
                              universal_newlines=True)
     for stdout_line in iter(popen.stdout.readline, ""):
         sys.stdout.write(stdout_line)
-
     popen.stdout.close()
     return_code = popen.wait()
-    if return_code:
+    if return_code and return_code != 0:
         raise subprocess.CalledProcessError(return_code, cmd)
 
 def load_test_config(directory):
@@ -79,21 +82,18 @@ def load_test_config(directory):
 
 
 def exec_test(binary, source_dir):
-    #os.chdir(source_dir)
     test_env = test_environ()
-
     cfg = load_test_config(source_dir)
     if cfg is None:
         return execute(binary, test_env)
-
     if cfg.has_key("tmp_home"):
         dirpath = tempfile.mkdtemp()
         logger.info("Executing test in tmp dir %s" % dirpath)
-        os.chdir(path)
+        os.chdir(dirpath)
         test_env["HOME"]=dirpath
-
-    cmd = ' '.join([binary] + cfg["args"])
-    logger.info("Executing test: %s" % cmd)
+    cmd = binary
+    if cfg.has_key("args"):
+        cmd = ' '.join([cmd] + cfg["args"])
     return execute(cmd, test_env)
 
 def main():
