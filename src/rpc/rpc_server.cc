@@ -1,13 +1,15 @@
 #include "rpc/rpc_server.h"
 #include "log.h"
 #include "rpc/rpc_envelope.h"
-
+#include "histogram_seastar_utils.h"
 namespace smf {
 
 rpc_server::rpc_server(distributed<rpc_server_stats> &stats,
                        uint16_t port,
                        uint32_t flags)
   : stats_(stats), port_(port), flags_(flags) {}
+
+rpc_server::~rpc_server() {}
 
 void rpc_server::start() {
   LOG_INFO("Starging server. port: {}, flags:{}, limits:{} ", port_, flags_,
@@ -32,20 +34,7 @@ future<> rpc_server::stop() {
   // seastar does this
   // LOG_INFO("Stopping rpc server, aborting_accept()");
   // listener_->abort_accept();
-  LOG_INFO("Saving rpc_distpach histogram");
-  if((flags_ & RPCFLAGS::RPCFLAGS_PRINT_HISTOGRAM_ON_EXIT)
-     == RPCFLAGS::RPCFLAGS_PRINT_HISTOGRAM_ON_EXIT) {
-    try {
-      sstring s = "rpc_dispatch_histogram_shard_"
-                  + to_sstring(engine().cpu_id()) + ".txt";
-      FILE *fp = fopen(s.c_str(), "w");
-      if(fp) {
-        hist_->print(fp);
-        fclose(fp);
-      }
-    } catch(...) {
-    }
-  }
+
   LOG_INFO("Closing reply_gate");
   return limits_->reply_gate.close();
 }

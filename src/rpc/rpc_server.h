@@ -16,7 +16,8 @@ namespace smf {
 
 enum RPCFLAGS : uint32_t {
   RPCFLAGS_NONE = 0,
-  RPCFLAGS_PRINT_HISTOGRAM_ON_EXIT = 1
+  // TODO(agallego) - drop load
+  RPCFLAGS_LOAD_SHEDDING_ON = 1
 };
 
 class rpc_server {
@@ -24,9 +25,15 @@ class rpc_server {
   rpc_server(distributed<rpc_server_stats> &stats,
              uint16_t port,
              uint32_t flags);
+  ~rpc_server();
 
   void start();
   future<> stop();
+
+  future<smf::histogram> copy_histogram() {
+    smf::histogram h(hist_->get());
+    return make_ready_future<smf::histogram>(std::move(h));
+  }
 
   template <typename T> void register_service() {
     static_assert(std::is_base_of<rpc_service, T>::value,

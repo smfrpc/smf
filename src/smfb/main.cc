@@ -30,7 +30,7 @@ int main(int argc, char **argv, char **env) {
         return make_ready_future<>();
       })
       .then([&rpc, &stats, port] {
-        uint32_t flags = smf::RPCFLAGS::RPCFLAGS_PRINT_HISTOGRAM_ON_EXIT;
+        uint32_t flags = smf::RPCFLAGS::RPCFLAGS_LOAD_SHEDDING_ON;
         return rpc.start(std::ref(stats), port, flags)
           .then([&rpc] {
             smf::LOG_INFO("Registering smf::chains::chain_replication_service");

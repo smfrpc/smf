@@ -46,6 +46,7 @@
     version='7790e'
 
 # TODO(agallego): at HEAD as of Nov 27 2016, seastar's dpdk has
+# https://github.com/scylladb/seastar/issues/217
 # compilation issues. - enable later with old command - debug later
 # - command: ./configure.py --enable-dpdk
 #

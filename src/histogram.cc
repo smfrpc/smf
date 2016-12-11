@@ -4,53 +4,57 @@
 #include "histogram.h"
 
 namespace smf {
-histogram::histogram() { init(); }
+histogram::histogram() {}
 histogram::histogram(histogram &&o) noexcept : hist_(std::move(o.hist_)) {}
 histogram::histogram(const struct hdr_histogram *copy) noexcept {
-  init();
-  ::hdr_add(hist_, copy);
-}
-void histogram::init() {
-  ::hdr_init(1,                   // Minimum value
-             INT64_C(3600000000), // Maximum value
-             3,                   // Number of significant figures
-             &hist_);             // Pointer to initialise
+  ::hdr_add(hist_->hist, copy);
 }
 
-void histogram::record(const uint64_t &v) { ::hdr_record_value(hist_, v); }
+histogram &histogram::operator+=(const histogram &o) noexcept {
+  ::hdr_add(hist_->hist, o.get());
+  return *this;
+}
+
+histogram &histogram::operator=(histogram &&o) noexcept {
+  hist_ = std::move(o.hist_);
+  return *this;
+}
+
+histogram &histogram::operator=(const histogram &o) noexcept {
+  *this += o;
+  return *this;
+}
+void histogram::record(const uint64_t &v) {
+  ::hdr_record_value(hist_->hist, v);
+}
 
 void histogram::record_multiple_times(const uint64_t &v,
                                       const uint32_t &times) {
-  ::hdr_record_values(hist_, v, times);
+  ::hdr_record_values(hist_->hist, v, times);
 }
 
 void histogram::record_corrected(const uint64_t &v, const uint64_t &interval) {
-  ::hdr_record_corrected_value(hist_, v, interval);
+  ::hdr_record_corrected_value(hist_->hist, v, interval);
 }
 
-size_t histogram::memory_size() { return ::hdr_get_memory_size(hist_); }
+size_t histogram::memory_size() { return ::hdr_get_memory_size(hist_->hist); }
 
-const struct hdr_histogram *histogram::get() const { return hist_; }
-
-void histogram::operator+=(const histogram &o) { ::hdr_add(hist_, o.get()); }
+const struct hdr_histogram *histogram::get() const { return hist_->hist; }
 
 std::unique_ptr<struct histogram_measure> histogram::auto_measure() {
   return std::make_unique<struct histogram_measure>(this);
 }
 
-void histogram::print(FILE *fp) const {
+int histogram::print(FILE *fp) const {
   assert(fp != nullptr);
-  ::hdr_percentiles_print(hist_,
-                          fp,       // File to write to
-                          5,        // Granularity of printed values
-                          1.0,      // Multiplier for results
-                          CLASSIC); // Format CLASSIC/CSV supported.
+  return ::hdr_percentiles_print(hist_->hist,
+                                 fp,       // File to write to
+                                 5,        // Granularity of printed values
+                                 1.0,      // Multiplier for results
+                                 CLASSIC); // Format CLASSIC/CSV supported.
 }
 
-histogram::~histogram() {
-  if(hist_) {
-    free(hist_);
-    hist_ = nullptr;
-  }
-}
+histogram::~histogram() {}
+
+
 } // end namespace

@@ -77,7 +77,6 @@ add_dependencies(smfrpc rpc_serialization)
 
 # add programs that rely on these common ifaces
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/rpc/smf_gen)
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/rpc/templates)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/raft)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/chain_replication)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/filesystem)

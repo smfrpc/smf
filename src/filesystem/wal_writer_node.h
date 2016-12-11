@@ -8,7 +8,17 @@
 #include "flatbuffers/wal_generated.h"
 
 namespace smf {
+//(TODO) missing stats & histograms
 
+/// \brief - given a prefix and an epoch (monotinically increasing counter)
+/// wal_writer_node will continue writing records in file_size multiples
+/// which by default is 64MB. It will compress the buffers that are bigger
+/// than min_compression_size
+///
+/// Note: the file closes happen concurrently, they simply get scheduled,
+/// however, the fstream_.close() is called after the file has been flushed
+/// to disk, so even during crash we are safe
+///
 class wal_writer_node {
   public:
   wal_writer_node(sstring prefix,
@@ -44,6 +54,7 @@ class wal_writer_node {
   future<> do_append(temporary_buffer<char> &&, fbs::wal::wal_entry_flags);
   future<> do_append_with_header(fbs::wal::wal_header h,
                                  temporary_buffer<char> &&buf);
+
   private:
   uint64_t epoch_;
   output_stream<char> fstream_;

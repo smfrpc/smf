@@ -16,7 +16,10 @@ void rpc_server_stats_printer::start() {
   timer_.arm_periodic(period_);
 }
 
-future<> rpc_server_stats_printer::stop() { return make_ready_future<>(); }
+future<> rpc_server_stats_printer::stop() {
+  timer_.cancel();
+  return make_ready_future<>();
+}
 
 future<rpc_server_stats> rpc_server_stats_printer::aggregate_stats() {
   // rpc_server_stats needs to support the + operator,

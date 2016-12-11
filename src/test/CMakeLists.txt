@@ -37,11 +37,22 @@ add_executable(wal_name_re ${TEST_ROOT}/wal_name_parser_tests/wal_name_re.cc)
 target_link_libraries(wal_name_re -lgtest smf_filesystem)
 register_fast_test (wal_name_re ${TEST_ROOT}/wal_name_parser_tests)
 
-# TODO(agallego) - add slow tests too if a flag is passed
-# -DALL_TESTS will enable slow and fast tests
-# define a new variable called set(ALL_TESTS) and add both
-# slow and fast tests there
-#
+add_executable(wal_epoch_extractor
+  ${TEST_ROOT}/wal_epoch_extractor/wal_epoch_extractor_test.cc)
+target_link_libraries(wal_epoch_extractor -lgtest smf_filesystem)
+register_fast_test (wal_epoch_extractor ${TEST_ROOT}/wal_epoch_extractor)
+
+
+add_executable(file_size_utils ${TEST_ROOT}/file_size_utils/main.cc)
+target_link_libraries(file_size_utils -lgtest)
+register_fast_test (file_size_utils ${TEST_ROOT}/file_size_utils)
+
+add_executable(human_bytes_printing_utils
+  ${TEST_ROOT}/human_bytes_printing_utils/main.cc)
+target_link_libraries(human_bytes_printing_utils -lgtest)
+register_fast_test (human_bytes_printing_utils
+  ${TEST_ROOT}/human_bytes_printing_utils)
+
 add_custom_target (check
   COMMAND ctest --output-on-failure
   DEPENDS ${ALL_TESTS})

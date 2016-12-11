@@ -16,6 +16,15 @@ add_executable(wal_writer ${IT_ROOT}/wal_writer/main.cc)
 target_link_libraries(wal_writer smf_filesystem)
 register_integration_test(wal_writer ${IT_ROOT}/wal_writer)
 
+add_executable(histograms ${IT_ROOT}/histograms/main.cc)
+target_link_libraries(histograms smf_filesystem)
+register_integration_test(histograms ${IT_ROOT}/histograms)
+
+add_executable(rpc ${IT_ROOT}/rpc/main.cc)
+target_link_libraries(rpc smfrpc)
+register_integration_test(rpc ${IT_ROOT}/rpc)
+
+
 add_custom_target(integration
   COMMAND ctest --output-on-failure
   DEPENDS ${IT_TESTS})

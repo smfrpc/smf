@@ -1,5 +1,6 @@
 #include "rpc/rpc_connection_limits.h"
 #include <fmt/format.h>
+#include "human_bytes_printing_utils.h"
 namespace smf {
 rpc_connection_limits::rpc_connection_limits(size_t basic_req_size,
                                              size_t bloat_mult,
@@ -29,9 +30,15 @@ void rpc_connection_limits::release_resources(size_t memory_consumed) {
 rpc_connection_limits::~rpc_connection_limits() {}
 
 std::ostream &operator<<(std::ostream &o, const rpc_connection_limits &l) {
-  o << "{'basic_req_size':" << l.basic_request_size
-    << ",'bloat_factor': " << l.bloat_factor << ",'max_mem':" << l.max_memory
-    << ",'res_avail':" << l.resources_available.current() << "}";
+  o << "{'basic_req_size':";
+  human_bytes<uint64_t>(o, l.basic_request_size);
+  o << ",'bloat_factor': ";
+  human_bytes<uint64_t>(o, l.bloat_factor);
+  o << ",'max_mem':";
+  human_bytes<uint64_t>(o, l.max_memory);
+  o << ",'res_avail':";
+  human_bytes<uint64_t>(o, l.resources_available.current());
+  o << "}";
   return o;
 }
 } // smf

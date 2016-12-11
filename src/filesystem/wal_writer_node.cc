@@ -3,7 +3,6 @@
 #include <core/reactor.hh>
 #include <core/file.hh>
 #include <core/fstream.hh>
-#include <fmt/format.h>
 #include <zstd.h>
 
 // smf
@@ -103,7 +102,7 @@ future<> wal_writer_node::append(temporary_buffer<char> &&buf) {
   }
   if(space_left() < min_entry_size()) {
     temporary_buffer<char> zero(space_left());
-    std::fill(zero.get_write(), zero.get_write() + zero.size(), 0);
+    std::memset(zero.get_write(), 0, zero.size());
     return fstream_.write(std::move(zero))
       .then([this, buf = std::move(buf)]() mutable {
         return rotate_fstream().then([this, buf = std::move(buf)]() mutable {
@@ -136,11 +135,13 @@ wal_writer_node::~wal_writer_node() {
 }
 future<> wal_writer_node::rotate_fstream() {
   return fstream_.flush().then([this] {
-    return fstream_.close().then([this] {
-      epoch_ += max_size;
-      current_size_ = 0;
-      return open();
-    });
+    // Schedule the future<> close().
+    // Let the I/O scheduler close it concurrently
+    //
+    fstream_.close();
+    epoch_ += max_size;
+    current_size_ = 0;
+    return open();
   });
 }
 
