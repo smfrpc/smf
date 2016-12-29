@@ -10,8 +10,6 @@ class priority_manager {
   priority_manager()
     : commitlog_priority_(
         engine().register_one_priority_class("commitlog", 100))
-    , sys_exit_priority_(
-        engine().register_one_priority_class("system_about_to_exit", 100))
     , brissa_query_priority_(
         engine().register_one_priority_class("brissa_query", 100))
     , compaction_priority_(
@@ -24,7 +22,6 @@ class priority_manager {
   const ::io_priority_class &commitlog_priority() {
     return commitlog_priority_;
   }
-  const ::io_priority_class &sys_exit_priority() { return sys_exit_priority_; }
   const ::io_priority_class &brissa_query_priority() {
     return brissa_query_priority_;
   }
@@ -47,7 +44,6 @@ class priority_manager {
   private:
   // high
   ::io_priority_class commitlog_priority_;
-  ::io_priority_class sys_exit_priority_;
   ::io_priority_class brissa_query_priority_;
   ::io_priority_class compaction_priority_;
   // low

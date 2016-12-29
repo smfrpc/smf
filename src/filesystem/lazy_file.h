@@ -1,67 +1,78 @@
 #pragma once
+#include <cmath>
+#include <vector>
 // third party
-#include <core/file.hh>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/intrusive/options.hpp>
+#include <boost/intrusive/set.hpp>
+#include <boost/intrusive/unordered_set.hpp>
+#include <core/file.hh>
+// smf
+#include "priority_manager.h"
 
 namespace smf {
 
-struct file_chunk : intrusive::hook<> {
-  file_chunk(uint32_t _page_no, temporary_buffer<char> _data)
+struct lazy_file_chunk : public boost::intrusive::set_base_hook<>,
+                         public boost::intrusive::unordered_set_base_hook<> {
+  lazy_file_chunk(uint32_t _page_no, temporary_buffer<char> _data)
     : page_no(_page_no), data(std::move(_data)) {}
   const uint32_t page_no;
   temporary_buffer<char> data;
 };
 
-/// TODO(agallego) add a semaphore for memory limits of this cache
+struct lazy_file_chunk_intrusive_key {
+  typedef uint32_t type;
+  const type &operator()(const lazy_file_chunk &v) const { return v.page_no; }
+};
+
+
+/// FIXME(agallego) add a semaphore for memory limits of this cache
 /// so that you don't blow up all of memory.
 ///
 class lazy_file {
   public:
-  lazy_file(file f, size_t size)
-    : file_(std::move(f))
-    , file_size(size)
-    , pages(std::ceil(file_size / file_.disk_read_dma_alignment())) {}
+  // Define omap like ordered and unordered classes
+  using intrusive_chunk_key =
+    boost::intrusive::key_of_value<smf::lazy_file_chunk_intrusive_key>;
+  using intrusive_chunk_map =
+    boost::intrusive::set<lazy_file_chunk, intrusive_chunk_key>;
+
+  static_assert(std::is_same<intrusive_chunk_map::key_type, uint32_t>::value,
+                "bad key for intrusive map");
+
+  public:
+  lazy_file(file &&f, size_t size)
+    : file_size(size)
+    , file_(std::move(f))
+    , pages_(std::ceil(file_size / file_.disk_read_dma_alignment())) {}
 
   const size_t file_size;
   inline const uint32_t number_of_pages() const { return pages_.size(); }
-  future<temporary_buffer<char>> read(uint64_t offset, uint64_t size);
+
+  /// \brief - return buffer for offset with size
+  future<temporary_buffer<char>>
+  read(uint64_t offset,
+       uint64_t size,
+       const io_priority_class &pc =
+         priority_manager::thread_local_instance().streaming_read_priority());
+
 
   private:
-  inline const uint32_t ofset_to_page(uint64_t offset) const {
-    assert(offset < file_size);
-    auto ret = std::floor(offset / number_of_pages());
-  }
+  future<temporary_buffer<char>> read_from_cache(uint64_t offset,
+                                                 uint64_t size);
+  future<> fetch_pages(uint64_t offset,
+                       uint64_t number_of_pages,
+                       const io_priority_class &pc);
 
   private:
+  file file_;
   // used for holding the memory references
-  std::vector<file_chunk> allocated_pages_;
+  std::vector<lazy_file_chunk> allocated_pages_;
   // used for indexing
-  boost::intrusive_list<file_chunk> sorted_files_;
+  intrusive_chunk_map sorted_chunks_;
   // used for set belonging testing
   boost::dynamic_bitset<> pages_;
 };
 
-
-lazy_file::future<temporary_buffer<char>> read(uint64_t offset, uint64_t size) {
-  // test if in pages_
-  auto page = offset / pages.size();
-
-
-  if(pages[page] & 1) {
-    // return read with data
-    return make_ready_future<>();
-  } else {
-    // open the page & cache it
-    // insert it into the intrusive list
-    // sort the intrusive list
-    auto aligned_begin = offset & (file.disk_read_dma_alignment() - 1);
-    auto aligned_end = file.disk_read_dma_alignment();
-    auto buf = file::dma_read_bulk(aligned_begin, aligned_end);
-    pages_[aligned_begin / pages_.size()] = 1;
-    // etc
-    std::sort(sorted_files_);
-    return read(offset, size);
-  }
-}
 
 } // namespace smf

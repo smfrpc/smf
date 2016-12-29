@@ -4,10 +4,10 @@ git_root=$(git rev-parse --show-toplevel)
 build_dir=$git_root/build_debug
 mkdir -p $build_dir
 cd $build_dir
-if [[ ! -e $build_dir/Makefile ]]; then
-    cmake -DCMAKE_BUILD_TYPE=Debug \
-          -DCMAKE_ALL_TESTS=False $git_root
-fi
+
+cmake -DCMAKE_BUILD_TYPE=Debug \
+      -DCMAKE_ALL_TESTS=False $git_root
+
 nprocs=$(grep -c ^processor /proc/cpuinfo)
 make -j$nprocs
 ctest -V -j$nprocs

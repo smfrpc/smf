@@ -2,6 +2,7 @@ add_library (smf_filesystem STATIC
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_writer_node.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_writer.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal.cc
+  ${PROJECT_SOURCE_DIR}/src/filesystem/lazy_file.cc
   )
 # add_dependencies(smf_filesystem
 #   ${PROJECT_SOURCE_DIR}/src/flatbuffers/wal_generated.fb.h)

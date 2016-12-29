@@ -13,7 +13,7 @@ temporary_buffer<char> gen_payload(sstring str) {
 }
 
 int main(int args, char **argv, char **env) {
-  smf::LOG_INFO("About to start the client");
+  smf::DLOG_INFO("About to start the client");
   app_template app;
   // TODO(make distributed wal_writer)
   // add flags
@@ -21,12 +21,12 @@ int main(int args, char **argv, char **env) {
     return app.run(args, argv, [&app]() -> future<int> {
       smf::log.set_level(seastar::log_level::debug);
       auto writer = make_lw_shared<smf::wal_writer>(".");
-      smf::LOG_INFO("setting up exit hooks");
+      smf::DLOG_INFO("setting up exit hooks");
       engine().at_exit([writer] { return writer->close(); });
       return writer->open().then([writer]() mutable {
         auto buf = gen_payload("Hello world!");
         sstring tmp(buf.get(), buf.size());
-        smf::LOG_INFO("Writing payload: {}", tmp);
+        smf::DLOG_INFO("Writing payload: {}", tmp);
         return writer->append(std::move(buf))
           .then([] { return make_ready_future<int>(0); });
       });

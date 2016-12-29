@@ -7,6 +7,7 @@ namespace log_detail {
 // A small helper for throw_if_null().
 template <typename T>
 T *throw_if_null(const char *file, int line, const char *names, T *t);
+inline void noop(...) { /*silences compiler errors*/ }
 } // namespace log_detail
 } // namespace smf
 
@@ -33,12 +34,30 @@ static seastar::logger log("smf");
   } while(0)
 #define THROW_IFNULL(val)                            \
   smf::log_detail::throw_if_null(__FILE__, __LINE__, \
-                                 "'" #val "' Must be non NULL", (val));
-#ifdef NDEBUG
-#define DTHROW_IFNULL(val) THROW_NOTNULL(val)
+                                 "'" #val "' Must be non NULL", (val))
+
+
+#ifndef NDEBUG
+#define DTHROW_IFNULL(val)                           \
+  smf::log_detail::throw_if_null(__FILE__, __LINE__, \
+                                 "'" #val "' Must be non NULL", (val))
+#define DLOG_INFO(format, args...) \
+  log.info("{}:{}] " format, __FILENAME__, __LINE__, ##args)
+#define DLOG_ERROR(format, args...) \
+  log.error("{}:{}] " format, __FILENAME__, __LINE__, ##args)
+#define DLOG_WARN(format, args...) \
+  log.warn("{}:{}] " format, __FILENAME__, __LINE__, ##args)
+#define DLOG_DEBUG(format, args...) \
+  log.debug("{}:{}] " format, __FILENAME__, __LINE__, ##args)
+#define DLOG_TRACE(format, args...) \
+  log.trace("{}:{}] " format, __FILENAME__, __LINE__, ##args)
 #else
-#define LOG_NOOP ((void)0)
-#define DTHROW_IFNULL(val) (val)
+#define DTHROW_IFNULL(x) true ? x : throw /*make compiler happy*/
+#define DLOG_INFO(format, args...) log_detail::noop(format, ##args)
+#define DLOG_ERROR(...) log_detail::noop(format, ##args)
+#define DLOG_WARN(...) log_detail::noop(format, ##args)
+#define DLOG_DEBUG(...) log_detail::noop(format, ##args)
+#define DLOG_TRACE(...) log_detail::noop(format, ##args)
 #endif
 
 } // namespace smf
