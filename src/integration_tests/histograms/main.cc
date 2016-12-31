@@ -1,9 +1,9 @@
 // seastar
-#include <core/distributed.hh>
 #include <core/app-template.hh>
+#include <core/distributed.hh>
 // smf
-#include "log.h"
 #include "histogram_seastar_utils.h"
+#include "log.h"
 
 
 int main(int args, char **argv, char **env) {
@@ -14,7 +14,7 @@ int main(int args, char **argv, char **env) {
       smf::log.set_level(seastar::log_level::debug);
       smf::histogram h;
       for(auto i = 0u; i < 1000; i++) {
-        h.record(i*i);
+        h.record(i * i);
       }
       smf::LOG_INFO("Writing histogram");
       return smf::histogram_seastar_utils::write_histogram("hist.testing.txt",

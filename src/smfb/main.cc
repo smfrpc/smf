@@ -2,10 +2,11 @@
 // seastar
 #include <core/app-template.hh>
 // smf
-#include "rpc/rpc_server.h"
 #include "chain_replication/chain_replication_service.h"
-#include "rpc/rpc_server_stats_printer.h"
+#include "filesystem/wal.h"
 #include "log.h"
+#include "rpc/rpc_server.h"
+#include "rpc/rpc_server_stats_printer.h"
 // smfb
 #include "smfb/smfb_command_line_options.h"
 
@@ -31,13 +32,12 @@ int main(int argc, char **argv, char **env) {
       })
       .then([&rpc, &stats, port] {
         uint32_t flags = smf::RPCFLAGS::RPCFLAGS_LOAD_SHEDDING_ON;
-        return rpc.start(std::ref(stats), port, flags)
-          .then([&rpc] {
-            smf::LOG_INFO("Registering smf::chains::chain_replication_service");
-            return rpc.invoke_on_all(
-              &smf::rpc_server::
-                register_service<smf::chains::chain_replication_service>);
-          });
+        return rpc.start(std::ref(stats), port, flags).then([&rpc] {
+          smf::LOG_INFO("Registering smf::chains::chain_replication_service");
+          return rpc.invoke_on_all(
+            &smf::rpc_server::
+              register_service<smf::chains::chain_replication_service>);
+        });
       })
       .then([&rpc] {
         /// example using a struct template

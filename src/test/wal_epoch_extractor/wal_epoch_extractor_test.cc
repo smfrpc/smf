@@ -1,13 +1,11 @@
-#include <gtest/gtest.h>
 #include "filesystem/wal_name_extractor_utils.h"
+#include <gtest/gtest.h>
 
 using namespace smf;
 
 TEST(wal_epoch_extractor, basic) {
-  ASSERT_EQ(extract_epoch("smf0_1234_2016-11-20T23:25:15.wal"), uint64_t(1234));
-  ASSERT_EQ(extract_epoch("smf0_999999999_2016-11-20T23:25:15.wal"),
-            uint64_t(999999999));
-  ASSERT_EQ(extract_epoch("smf0_1234"), uint64_t(0));
+  ASSERT_EQ(extract_epoch("smf0_1234.wal"), uint64_t(1234));
+  ASSERT_EQ(extract_epoch("smf0_999999999.wal"), uint64_t(999999999));
 }
 
 TEST(wal_epoch_extractor, empty_string) {

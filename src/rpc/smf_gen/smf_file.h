@@ -1,7 +1,7 @@
 #pragma once
 #include <flatbuffers/flatbuffers.h>
-#include <flatbuffers/util.h>
 #include <flatbuffers/idl.h>
+#include <flatbuffers/util.h>
 
 // smf_gen
 #include "rpc/smf_gen/smf_printer.h"

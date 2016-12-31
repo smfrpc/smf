@@ -1,7 +1,7 @@
 #pragma once
-#include <flatbuffers/idl.h>
-#include "rpc/smf_gen/smf_method.h"
 #include "hashing_utils.h"
+#include "rpc/smf_gen/smf_method.h"
+#include <flatbuffers/idl.h>
 
 namespace smf_gen {
 class smf_service {

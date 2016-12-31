@@ -31,8 +31,8 @@ future<rpc_envelope> zstd_compression_filter::operator()(rpc_envelope &&e) {
 }
 
 
-future<rpc_recv_context>
-zstd_decompression_filter::operator()(rpc_recv_context &&ctx) {
+future<rpc_recv_context> zstd_decompression_filter::
+operator()(rpc_recv_context &&ctx) {
   using namespace fbs::rpc;
   if((ctx.header->flags() & Flags::Flags_ZSTD) == Flags::Flags_ZSTD) {
     auto zstd_size = ZSTD_getDecompressedSize(

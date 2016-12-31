@@ -1,7 +1,7 @@
+#include "histogram.h"
 #include <cstdlib>
 #include <hdr/hdr_histogram.h>
 #include <hdr/hdr_histogram_log.h>
-#include "histogram.h"
 
 namespace smf {
 histogram::histogram() {}

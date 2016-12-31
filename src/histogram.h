@@ -1,8 +1,8 @@
 #pragma once
-#include <chrono>
-#include <memory>
 #include <cassert>
+#include <chrono>
 #include <hdr/hdr_histogram.h>
+#include <memory>
 
 /// NOTE: This is not a seastar backed histogram
 /// please link against the histogram_seastar_utils.h
@@ -32,9 +32,9 @@ class histogram {
   histogram();
   histogram(const histogram &o) = delete;
   histogram(const struct hdr_histogram *copy) noexcept;
-  histogram& operator+=(const histogram &o) noexcept;
-  histogram& operator=(histogram &&o) noexcept;
-  histogram& operator=(const histogram &o) noexcept;
+  histogram &operator+=(const histogram &o) noexcept;
+  histogram &operator=(histogram &&o) noexcept;
+  histogram &operator=(const histogram &o) noexcept;
 
   histogram(histogram &&o) noexcept;
   void record(const uint64_t &v);

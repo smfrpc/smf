@@ -3,46 +3,94 @@
 // third party
 #include <core/reactor.hh>
 // smf
-#include "log.h"
-#include "filesystem/wal_writer_utils.h"
-#include "filesystem/wal_writer_node.h"
 #include "filesystem/wal_head_file_functor.h"
-
+#include "filesystem/wal_name_extractor_utils.h"
+#include "filesystem/wal_writer_node.h"
+#include "filesystem/wal_writer_utils.h"
+#include "log.h"
+#include "priority_manager.h"
 
 namespace smf {
+
+wal_writer::wal_writer(sstring _dir, writer_stats *s)
+  : directory(_dir), wstats_(s) {}
+
+wal_writer::wal_writer(wal_writer &&o) noexcept
+  : directory(std::move(o.directory)),
+    wstats_(o.wstats_),
+    writer_(std::move(o.writer_)) {}
+
 
 future<> wal_writer::close() {
   assert(writer_ != nullptr);
   return writer_->close();
 }
 
-future<> wal_writer::open() {
+future<> wal_writer::open_empty_dir(sstring prefix) {
+  auto id = to_sstring(engine().cpu_id());
+  wal_writer_node_opts wo;
+  wo.wstats = wstats_;
+  wo.prefix = prefix + id;
+  writer_ = std::make_unique<wal_writer_node>(wo);
+  return writer_->open();
+}
+
+future<> wal_writer::open_non_empty_dir(sstring last_file, sstring prefix) {
+  auto epoch = extract_epoch(last_file);
+  DLOG_TRACE("epoch extracted: {}, filename:{}", epoch, last_file);
+  return open_file_dma(last_file, open_flags::ro)
+    .then([this, prefix, epoch](file f) {
+      auto last = make_lw_shared<file>(std::move(f));
+      return last->size().then([this, prefix, last, epoch](uint64_t size) {
+        auto id = to_sstring(engine().cpu_id());
+        wal_writer_node_opts wo;
+        wo.wstats = wstats_;
+        wo.prefix = prefix + id;
+        wo.epoch = epoch + size;
+        writer_ = std::make_unique<wal_writer_node>(std::move(wo));
+        return last->close().then([last, this] { return writer_->open(); });
+      });
+    });
+}
+
+future<> wal_writer::do_open() {
   return open_directory(directory).then([this](file f) {
     auto l = make_lw_shared<wal_head_file_max_functor>(std::move(f));
-    return l->close().then([l, this]() mutable {
+    return l->close().then([l, this]() {
       if(l->last_file.empty()) {
-        LOG_DEBUG("Empty dir. Creating first WAL");
-        auto id = to_sstring(engine().cpu_id());
-        writer_ = std::make_unique<wal_writer_node>(l->name_parser.prefix + id);
-        return writer_->open();
+        return open_empty_dir(l->name_parser.prefix);
       }
-      LOG_DEBUG("Reading last file epoch");
-      return open_file_dma(l->last_file, open_flags::ro)
-        .then([this, prefix = l->name_parser.prefix](file last) {
-          auto lastf = make_lw_shared<file>(std::move(last));
-          return lastf->size().then([this, prefix, lastf](uint64_t size) {
-            auto id = to_sstring(engine().cpu_id());
-            writer_ = std::make_unique<wal_writer_node>(prefix + id, size);
-            return lastf->close().then([this] { return writer_->open(); });
-          });
-        });
+      return open_non_empty_dir(l->last_file, l->name_parser.prefix);
     });
   });
 }
 
-future<> wal_writer::append(temporary_buffer<char> &&buf) {
-  return writer_->append(std::move(buf));
+future<> wal_writer::open() {
+  return file_exists(directory).then([this](bool dir_exists) {
+    if(dir_exists) {
+      return do_open();
+    }
+    return make_directory(directory).then([this] { return do_open(); });
+  });
 }
 
+future<uint64_t> wal_writer::append(wal_write_request req) {
+  return writer_->append(std::move(req));
+}
+
+future<> wal_writer::invalidate(uint64_t epoch) {
+  // write invalidation structure to WAL
+  fbs::wal::invalid_wal_entry e{epoch};
+  temporary_buffer<char> data(sizeof(e));
+  std::copy((char *)&e, (char *)&e + sizeof(e), data.get_write());
+
+  wal_write_request req(
+    wal_write_request_flags::wwrf_invalidate_payload, std::move(data),
+    priority_manager::thread_local_instance().commitlog_priority());
+
+  return append(std::move(req)).then([](auto _) {
+    return make_ready_future<>();
+  });
+}
 
 } // namespace smf

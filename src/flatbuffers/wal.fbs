@@ -12,3 +12,7 @@ struct wal_header {
   size: uint;
   checksum: uint;
 }
+
+struct invalid_wal_entry {
+  invalid_entry: ulong;
+}

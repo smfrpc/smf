@@ -1,17 +1,17 @@
 // std
-#include <iostream>
 #include <chrono>
+#include <iostream>
 // seastar
 #include <core/app-template.hh>
 #include <core/distributed.hh>
 // smf
+#include "histogram_seastar_utils.h"
 #include "log.h"
+#include "rpc/filters/zstd_filter.h"
+#include "rpc/rpc_filter.h"
+#include "rpc/rpc_handle_router.h"
 #include "rpc/rpc_server.h"
 #include "rpc/rpc_server_stats_printer.h"
-#include "rpc/rpc_handle_router.h"
-#include "rpc/rpc_filter.h"
-#include "rpc/filters/zstd_filter.h"
-#include "histogram_seastar_utils.h"
 // templates
 #include "rpc/smf_gen/demo_service.smf.fb.h"
 
@@ -66,8 +66,9 @@ struct requestor_channel {
                        boost::counting_iterator<int>(reqs), [this](int) {
                          smf::rpc_envelope e(fbb->GetBufferPointer(),
                                              fbb->GetSize());
-                         return client->Get(std::move(e))
-                           .then([](auto t) { return make_ready_future<>(); });
+                         return client->Get(std::move(e)).then([](auto t) {
+                           return make_ready_future<>();
+                         });
                        });
   }
   std::unique_ptr<smf_gen::fbs::rpc::SmfStorageClient> client;
@@ -200,12 +201,11 @@ int main(int args, char **argv, char **env) {
       })
       .then([&rpc, &stats, port] {
         uint32_t flags = smf::RPCFLAGS::RPCFLAGS_LOAD_SHEDDING_ON;
-        return rpc.start(std::ref(stats), port, flags)
-          .then([&rpc] {
-            smf::DLOG_INFO("Registering smf_gen::fbs::rpc::storage_service");
-            return rpc.invoke_on_all(
-              &smf::rpc_server::register_service<storage_service>);
-          });
+        return rpc.start(std::ref(stats), port, flags).then([&rpc] {
+          smf::DLOG_INFO("Registering smf_gen::fbs::rpc::storage_service");
+          return rpc.invoke_on_all(
+            &smf::rpc_server::register_service<storage_service>);
+        });
       })
       .then([&rpc] {
         /// example using a struct template
@@ -225,8 +225,8 @@ int main(int args, char **argv, char **env) {
         return clients.start(ip, port, req_num, concurrency);
       })
       .then([&clients] {
-        return clients.map_reduce(adder<uint64_t>(),
-                                  &rpc_client_wrapper::send_request)
+        return clients
+          .map_reduce(adder<uint64_t>(), &rpc_client_wrapper::send_request)
           .then([](auto ms) {
             smf::DLOG_INFO("Total time for all requests: {}ms", ms);
             return make_ready_future<>();
@@ -234,8 +234,9 @@ int main(int args, char **argv, char **env) {
       })
       .then([&clients] {
         smf::DLOG_INFO("MapReducing stats");
-        return clients.map_reduce(adder<smf::histogram>(),
-                                  &rpc_client_wrapper::all_histograms)
+        return clients
+          .map_reduce(adder<smf::histogram>(),
+                      &rpc_client_wrapper::all_histograms)
           .then([](smf::histogram h) {
             smf::DLOG_INFO("Writing client histograms");
             return smf::histogram_seastar_utils::write_histogram(
@@ -243,8 +244,8 @@ int main(int args, char **argv, char **env) {
           });
       })
       .then([&] {
-        return rpc.map_reduce(adder<smf::histogram>(),
-                              &smf::rpc_server::copy_histogram)
+        return rpc
+          .map_reduce(adder<smf::histogram>(), &smf::rpc_server::copy_histogram)
           .then([](smf::histogram h) {
             smf::DLOG_INFO("Writing server histograms");
             return smf::histogram_seastar_utils::write_histogram(

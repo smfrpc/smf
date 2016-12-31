@@ -1,10 +1,10 @@
 #pragma once
 // third party
-#include <re2/re2.h>
 #include <core/sstring.hh>
+#include <re2/re2.h>
 
 namespace smf {
-static const re2::RE2 kFileNameRE("[a-zA-Z\\d]+_\\d+_[\\dT:-]+\\.wal");
+static const re2::RE2 kFileNameRE("[a-zA-Z\\d]+_\\d+\\.wal");
 
 struct wal_name_parser {
   wal_name_parser(sstring _prefix = "smf") : prefix(_prefix) {

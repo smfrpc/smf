@@ -1,6 +1,6 @@
 #pragma once
-#include <string>
 #include "rpc/smf_gen/smf_file.h"
+#include <string>
 namespace smf_gen {
 // Return the prologue of the generated header file.
 std::string get_header_prologue(smf_file *file);

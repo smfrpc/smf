@@ -1,6 +1,6 @@
 #pragma once
-#include <flatbuffers/idl.h>
 #include "hashing_utils.h"
+#include <flatbuffers/idl.h>
 
 namespace smf_gen {
 class smf_method {

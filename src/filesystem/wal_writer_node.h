@@ -4,11 +4,21 @@
 // generated
 #include "flatbuffers/wal_generated.h"
 // smf
+#include "filesystem/wal_opts.h"
+#include "filesystem/wal_requests.h"
+#include "filesystem/wal_requests.h"
 #include "filesystem/wal_writer_utils.h"
 #include "flatbuffers/wal_generated.h"
 
 namespace smf {
-//(TODO) missing stats & histograms
+// TODO(agallego) - use the stats internally now that you have them
+struct wal_writer_node_opts {
+  writer_stats *wstats;
+  sstring prefix;
+  uint64_t epoch = 0;
+  const uint64_t min_compression_size = 512;
+  const uint64_t file_size = wal_file_size_aligned();
+};
 
 /// \brief - given a prefix and an epoch (monotinically increasing counter)
 /// wal_writer_node will continue writing records in file_size multiples
@@ -21,17 +31,21 @@ namespace smf {
 ///
 class wal_writer_node {
   public:
-  wal_writer_node(sstring prefix,
-                  uint64_t epoch = 0,
-                  uint64_t min_compression_size = 512,
-                  const uint64_t file_size = wal_file_size_aligned());
-
+  explicit wal_writer_node(wal_writer_node_opts opts);
   /// \brief 0-copy append to buffer
-  future<> append(temporary_buffer<char> &&buf);
-
+  /// \return the starting offset on file for this put
+  ///
+  /// breaks request into largest chunks possible for remaining space
+  /// writing at most opts.file_size on disk at each step.
+  /// once ALL chunks have been written, the original req is deallocatead
+  /// internally, we call temporary_buffer<T>::share(i,j) to create shallow
+  /// copies of the data deferring the deleter() function to deallocate buffer
+  ///
+  /// This is a recursive function
+  ///
+  future<uint64_t> append(wal_write_request req);
   /// \brief flushes the file before closing
   future<> close();
-
   /// \brief opens the file w/ open_flags::rw | open_flags::create |
   ///                          open_flags::truncate | open_flags::exclusive
   /// the file should fail if it exists. It should not exist on disk, as
@@ -40,25 +54,22 @@ class wal_writer_node {
 
   ~wal_writer_node();
 
-  inline uint64_t space_left() const { return current_size_ - max_size; }
+  inline uint64_t space_left() const { return current_size_ - opts_.file_size; }
   inline uint64_t min_entry_size() const {
-    return min_compression_size + sizeof(fbs::wal::wal_header);
+    return opts_.min_compression_size + sizeof(fbs::wal::wal_header);
   }
-  const sstring prefix_name;
-  const uint64_t max_size;
-  const uint64_t min_compression_size;
 
   private:
   future<> rotate_fstream();
   /// \brief 0-copy append to buffer
-  future<> do_append(temporary_buffer<char> &&, fbs::wal::wal_entry_flags);
-  future<> do_append_with_header(fbs::wal::wal_header h,
-                                 temporary_buffer<char> &&buf);
+  future<> do_append(wal_write_request);
+  future<> do_append_with_flags(wal_write_request, fbs::wal::wal_entry_flags);
+  future<> do_append_with_header(fbs::wal::wal_header, wal_write_request);
+  future<> pad_end_of_file();
 
   private:
-  uint64_t epoch_;
+  wal_writer_node_opts opts_;
   output_stream<char> fstream_;
-  file_output_stream_options opts_;
   uint64_t current_size_ = 0;
   bool closed_ = false;
 };

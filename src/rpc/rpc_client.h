@@ -4,11 +4,11 @@
 // seastar
 #include <net/api.hh>
 // smf
-#include "rpc/rpc_recv_typed_context.h"
-#include "rpc/rpc_envelope.h"
-#include "rpc/rpc_connection.h"
-#include "rpc/rpc_filter.h"
 #include "histogram.h"
+#include "rpc/rpc_connection.h"
+#include "rpc/rpc_envelope.h"
+#include "rpc/rpc_filter.h"
+#include "rpc/rpc_recv_typed_context.h"
 
 namespace smf {
 /// \brief class intented for communicating with a remote host

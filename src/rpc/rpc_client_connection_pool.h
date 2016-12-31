@@ -9,7 +9,6 @@ template <class T> class rpc_client_connection_pool {
   struct connection_pool_entry {
     uint32_t hits{0};
     std::unique_ptr<T> client_;
-
   };
 
   private:

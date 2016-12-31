@@ -1,7 +1,7 @@
 #pragma once
 // seastar
-#include <core/timer.hh>
 #include <core/distributed.hh>
+#include <core/timer.hh>
 // smf
 #include "rpc/rpc_server_stats.h"
 

@@ -1,5 +1,5 @@
-#include <gtest/gtest.h>
 #include "filesystem/file_size_utils.h"
+#include <gtest/gtest.h>
 
 using namespace smf;
 

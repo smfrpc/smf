@@ -1,7 +1,7 @@
 #include "rpc/rpc_server.h"
+#include "histogram_seastar_utils.h"
 #include "log.h"
 #include "rpc/rpc_envelope.h"
-#include "histogram_seastar_utils.h"
 namespace smf {
 
 rpc_server::rpc_server(distributed<rpc_server_stats> &stats,
@@ -25,8 +25,7 @@ void rpc_server::start() {
         // DO NOT return the future. Need to execute in parallel
         handle_client_connection(conn);
       });
-  })
-    .or_terminate(); // end keep_doing
+  }).or_terminate(); // end keep_doing
 }
 
 future<> rpc_server::stop() {
@@ -54,26 +53,26 @@ future<> rpc_server::handle_client_connection(
           return smf::rpc_filter_apply(in_filters_, std::move(recv_ctx.value()))
             .then([this, conn, metric = std::move(metric)](auto ctx) mutable {
               auto payload_size = ctx.body_buf.size();
-              return this->dispatch_rpc(conn, std::move(ctx))
-                .finally(
-                  [this, conn, metric = std::move(metric), payload_size] {
-                    limits_->release_payload_resources(payload_size);
-                    return conn->ostream.flush().finally([this, conn] {
-                      if(conn->has_error()) {
-                        LOG_ERROR("There was an error with the connection: {}",
-                                  conn->get_error());
-                        stats_.local().bad_requests++;
-                        stats_.local().active_connections--;
-                        LOG_INFO("Closing connection for client: {}",
-                                 conn->remote_address);
-                        return conn->ostream.close();
-                      } else {
-                        stats_.local().completed_requests++;
-                        return make_ready_future<>();
-                      }
-                    });
-                  }); // end finally()
-            })        //  parse_rpc_recv_context.then()
+              return this->dispatch_rpc(conn, std::move(ctx)).finally([
+                this, conn, metric = std::move(metric), payload_size
+              ] {
+                limits_->release_payload_resources(payload_size);
+                return conn->ostream.flush().finally([this, conn] {
+                  if(conn->has_error()) {
+                    LOG_ERROR("There was an error with the connection: {}",
+                              conn->get_error());
+                    stats_.local().bad_requests++;
+                    stats_.local().active_connections--;
+                    LOG_INFO("Closing connection for client: {}",
+                             conn->remote_address);
+                    return conn->ostream.close();
+                  } else {
+                    stats_.local().completed_requests++;
+                    return make_ready_future<>();
+                  }
+                });
+              }); // end finally()
+            })    //  parse_rpc_recv_context.then()
             .handle_exception([this, conn](std::exception_ptr eptr) {
               conn->set_error("Exception parsing request ");
               return conn->ostream.close();

@@ -1,6 +1,6 @@
 #include "rpc/rpc_connection_limits.h"
-#include <fmt/format.h>
 #include "human_bytes_printing_utils.h"
+#include <fmt/format.h>
 namespace smf {
 rpc_connection_limits::rpc_connection_limits(size_t basic_req_size,
                                              size_t bloat_mult,

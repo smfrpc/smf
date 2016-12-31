@@ -1,10 +1,10 @@
+#include "rpc/smf_gen/cpp_generator.h"
 #include "rpc/smf_gen/smf_file.h"
 #include "rpc/smf_gen/smf_printer.h"
-#include "rpc/smf_gen/cpp_generator.h"
-#include <map>
-#include <sstream>
 #include <gflags/gflags.h>
 #include <glog/logging.h>
+#include <map>
+#include <sstream>
 
 DEFINE_string(services_namespace, "", "puts the service into a namespace");
 DEFINE_string(search_path, "", "prefix to any smf generator include");
@@ -38,7 +38,7 @@ std::string file_name_identifier(const std::string &filename) {
 }
 } // namespace
 
-template <class T, size_t N> T *array_end(T(&array)[N]) { return array + N; }
+template <class T, size_t N> T *array_end(T (&array)[N]) { return array + N; }
 
 void print_includes(smf_printer *printer,
                     const std::vector<std::string> &headers) {

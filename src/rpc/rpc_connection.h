@@ -1,7 +1,7 @@
 #pragma once
 // seastar
-#include <net/api.hh>
 #include <core/iostream.hh>
+#include <net/api.hh>
 
 namespace smf {
 

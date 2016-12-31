@@ -1,6 +1,9 @@
 #include "filesystem/wal.h"
-#include "log.h"
+// smf
 #include "filesystem/wal_impl_with_cache.h"
+#include "log.h"
+
+
 namespace smf {
 std::unique_ptr<wal> wal::make_wal(wal_type type, wal_opts opts) {
   switch(type) {

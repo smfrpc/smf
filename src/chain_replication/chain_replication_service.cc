@@ -1,6 +1,6 @@
 #include "chain_replication/chain_replication_service.h"
-#include "hashing_utils.h"
 #include "chain_replication/chain_replication_utils.h"
+#include "hashing_utils.h"
 namespace smf {
 namespace chains {
 future<smf::rpc_envelope> chain_replication_service::mput(

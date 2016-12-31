@@ -35,11 +35,10 @@ struct histogram_seastar_utils {
           make_file_output_stream(std::move(seastar_file)));
         return histogram_seastar_utils::print_histogram(std::move(h))
           .then([f](temporary_buffer<char> buf) {
-            return f->write(buf.get(), buf.size())
-              .then([f]() mutable {
-                return f->flush().then(
-                  [f]() mutable { return f->close().finally([f] {}); });
-              });
+            return f->write(buf.get(), buf.size()).then([f]() mutable {
+              return f->flush().then(
+                [f]() mutable { return f->close().finally([f] {}); });
+            });
           });
       });
   }

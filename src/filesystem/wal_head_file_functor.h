@@ -1,13 +1,21 @@
 #pragma once
-#include "filesystem/wal_name_parser.h"
+#include "filesystem/wal_file_walker.h"
+#include "filesystem/wal_name_extractor_utils.h"
 
 namespace smf {
+// TODO(agallego) need testing
 struct wal_head_file_max_comparator {
-  bool operator()(const sstring &a, const sstring &b) { return a < b; }
+  bool operator()(const sstring &current, const sstring &new_file) {
+    auto current_epoch = extract_epoch(current);
+    auto new_epoch = extract_epoch(new_file);
+    return current_epoch <= new_epoch;
+  }
 };
 struct wal_head_file_min_comparator {
-  bool operator()(const sstring &a, const sstring &b) {
-    return a != b && !(a < b);
+  bool operator()(const sstring &current, const sstring &new_file) {
+    auto current_epoch = extract_epoch(current);
+    auto new_epoch = extract_epoch(new_file);
+    return current_epoch >= new_epoch;
   }
 };
 
@@ -24,28 +32,17 @@ struct wal_head_file_min_comparator {
 ///            return make_ready_future<>();
 ///       });
 ///
-template <typename Comparator> struct wal_head_file_functor {
-  wal_head_file_functor(file _f, sstring _prefix = "smf")
-    : f(std::move(_f))
-    , name_parser(std::move(_prefix))
-    , listing(
-        f.list_directory([this](directory_entry de) { return visit(de); })) {}
+template <typename Comparator> struct wal_head_file_functor : wal_file_walker {
+  wal_head_file_functor(file dir, sstring prefix = "smf")
+    : wal_file_walker(std::move(dir), std::move(prefix)) {}
 
-  future<> visit(directory_entry de) {
-    if(de.type && de.type == directory_entry_type::regular) {
-      // operator >(const T&) is not defined, but operator <(const T&) is
-      if(name_parser(de.name) && comparator(last_file, de.name)) {
-        last_file = de.name;
-      }
+  virtual future<> visit(directory_entry de) override final {
+    if(comparator(last_file, de.name)) {
+      last_file = de.name;
     }
     return make_ready_future<>();
   }
-  future<> close() { return listing.done(); }
-
-  file f;
-  wal_name_parser name_parser;
   sstring last_file;
-  subscription<directory_entry> listing;
   Comparator comparator{};
 };
 

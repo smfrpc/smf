@@ -1,6 +1,6 @@
+#include "human_bytes_printing_utils.h"
 #include <gtest/gtest.h>
 #include <sstream>
-#include "human_bytes_printing_utils.h"
 
 using namespace smf;
 

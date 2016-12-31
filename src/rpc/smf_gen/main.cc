@@ -1,9 +1,9 @@
-#include <iostream>
-#include <vector>
-#include <gflags/gflags.h>
-#include <glog/logging.h>
 #include <flatbuffers/flatbuffers.h>
 #include <flatbuffers/util.h>
+#include <gflags/gflags.h>
+#include <glog/logging.h>
+#include <iostream>
+#include <vector>
 
 #include "rpc/smf_gen/idl.h"
 DEFINE_string(filename, "", "filename to parse");

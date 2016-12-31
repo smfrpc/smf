@@ -3,30 +3,30 @@
 #include <core/fstream.hh>
 // generated
 #include "flatbuffers/wal_generated.h"
+// smf
+#include "filesystem/lazy_file.h"
+#include "filesystem/wal_opts.h"
 
 namespace smf {
-// TODO(agallego) - missing stats
-
-
 class wal_reader_node {
   public:
-  wal_reader_node(sstring _filename, const wal_opts *o)
-    : filename(_filename), opts(DTHROW_IFNULL(o)) {}
-
+  // TOOD(agallego)
+  // needs to extract startin offset from filename
+  wal_reader_node(sstring _filename, reader_stats *s);
   /// \brief flushes the file before closing
   future<> close();
   future<> open();
-  future<wal_opts::maybe_buffer> get(uint64_t epoch) {
-        return make_ready_future<wal_opts::maybe_buffer>();
-  }
+  future<wal_opts::maybe_buffer> get(uint64_t epoch);
   ~wal_reader_node();
-
   const sstring filename;
-  const wal_opts *opts;
 
+  uint64_t starting_offset() const { return starting_offset_; }
+  uint64_t file_size() { return io_->file_size; }
 
   private:
-  input_stream<char> ifstream_;
+  reader_stats *rstats_;
+  uint64_t starting_offset_;
+  std::unique_ptr<lazy_file> io_;
 };
 
 } // namespace smf

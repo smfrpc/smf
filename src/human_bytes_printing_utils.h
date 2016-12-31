@@ -1,4 +1,5 @@
 #pragma once
+#include <iomanip>
 #include <ostream>
 namespace smf {
 
