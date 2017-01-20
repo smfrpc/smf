@@ -24,6 +24,9 @@ add_executable(rpc ${IT_ROOT}/rpc/main.cc)
 target_link_libraries(rpc smfrpc)
 register_integration_test(rpc ${IT_ROOT}/rpc)
 
+add_executable(wal ${IT_ROOT}/wal/main.cc)
+target_link_libraries(wal smf_filesystem smfrpc)
+register_integration_test(wal ${IT_ROOT}/wal)
 
 add_custom_target(integration
   COMMAND ctest --output-on-failure

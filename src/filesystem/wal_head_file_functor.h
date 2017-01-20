@@ -3,7 +3,6 @@
 #include "filesystem/wal_name_extractor_utils.h"
 
 namespace smf {
-// TODO(agallego) need testing
 struct wal_head_file_max_comparator {
   bool operator()(const sstring &current, const sstring &new_file) {
     auto current_epoch = extract_epoch(current);

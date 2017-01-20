@@ -36,10 +36,10 @@ class lazy_file {
                 "bad key for intrusive map");
 
   public:
-  lazy_file(file &&f, size_t size)
+  lazy_file(lw_shared_ptr<file> f, size_t size)
     : file_size(size)
     , file_(std::move(f))
-    , pages_(std::ceil(file_size / file_.disk_read_dma_alignment())) {}
+    , pages_(std::ceil(file_size / file_->disk_read_dma_alignment())) {}
 
   const size_t file_size;
   inline const uint32_t number_of_pages() const { return pages_.size(); }
@@ -50,6 +50,10 @@ class lazy_file {
        uint64_t size,
        const io_priority_class &pc = default_priority_class());
 
+  future<> close() {
+    // must hold file until handle closes
+    return file_->close().then([this] { return make_ready_future<>(); });
+  }
 
   private:
   future<temporary_buffer<char>> read_from_cache(uint64_t offset,
@@ -59,7 +63,7 @@ class lazy_file {
                        const io_priority_class &pc);
 
   private:
-  file file_;
+  lw_shared_ptr<file> file_;
   // used for holding the memory references
   std::list<lazy_file_chunk> allocated_pages_;
   // used for indexing

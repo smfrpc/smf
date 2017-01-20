@@ -53,6 +53,12 @@ target_link_libraries(human_bytes_printing_utils -lgtest)
 register_fast_test (human_bytes_printing_utils
   ${TEST_ROOT}/human_bytes_printing_utils)
 
+add_executable(wal_head_file_functor_tests
+  ${TEST_ROOT}/wal_head_file_functor_tests/main.cc)
+target_link_libraries(wal_head_file_functor_tests -lgtest smf_filesystem)
+register_fast_test (wal_head_file_functor_tests
+  ${TEST_ROOT}/wal_head_file_functor_tests)
+
 add_custom_target (check
   COMMAND ctest --output-on-failure
   DEPENDS ${ALL_TESTS})

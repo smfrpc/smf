@@ -3,6 +3,8 @@
 // smf
 #include "filesystem/wal_reader_node.h"
 
+
+// DELETEME( not needed - use the intrusive containers instead)
 namespace smf {
 struct wal_reader_offset_range {
   wal_reader_offset_range(sstring filename, reader_stats *s) {
@@ -24,3 +26,4 @@ struct wal_reader_offset_range {
   std::unique_ptr<wal_reader_node> node;
 };
 } // namespace smf
+// this is not needed.

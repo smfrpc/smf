@@ -3,6 +3,7 @@ add_library (smf_filesystem STATIC
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_writer.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/lazy_file.cc
+  ${PROJECT_SOURCE_DIR}/src/filesystem/wal_reader.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_reader_node.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_impl_with_cache.cc
   )

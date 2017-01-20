@@ -28,15 +28,14 @@ uint64_t wal_write_request_size(const wal_write_request &req) {
 
 
 wal_writer_node::wal_writer_node(wal_writer_node_opts opts) : opts_(opts) {
-  if(opts_.file_size < min_entry_size()) {
-    LOG_THROW("file size `{}` cannot be smaller than min_entry_size `{}`",
-              opts_.file_size, min_entry_size());
-  }
+  LOG_THROW_IF(opts_.file_size < min_entry_size(),
+               "file size `{}` cannot be smaller than min_entry_size `{}`",
+               opts_.file_size, min_entry_size());
 }
 
 future<> wal_writer_node::open() {
   const auto name = wal_file_name(opts_.prefix, opts_.epoch);
-  DLOG_DEBUG("Creating new WAL file {}", name);
+  LOG_TRACE("Creating new WAL file {}", name);
   // the file should fail if it exists. It should not exist on disk, as
   // we'll truncate them
   return open_file_dma(name, open_flags::rw | open_flags::create
@@ -154,10 +153,8 @@ future<> wal_writer_node::close() {
   return fstream_.flush().then([this] { return fstream_.close(); });
 }
 wal_writer_node::~wal_writer_node() {
-  if(!closed_) {
-    const auto name = wal_file_name(opts_.prefix, opts_.epoch);
-    LOG_ERROR("File {} was not closed, possible data loss", name);
-  }
+  LOG_ERROR_IF(!closed_, "File {} was not closed, possible data loss",
+               wal_file_name(opts_.prefix, opts_.epoch));
 }
 future<> wal_writer_node::rotate_fstream() {
   // Schedule the future<> close().

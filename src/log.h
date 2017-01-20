@@ -38,24 +38,50 @@ static seastar::logger log("smf");
 #define THROW_IFNULL(val)                            \
   smf::log_detail::throw_if_null(__FILE__, __LINE__, \
                                  "'" #val "' Must be non NULL", (val))
-
-#define LOG_INFO_IF(condition, format, args...) \
-  log.info("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, ##args)
-#define LOG_ERROR_IF(condition, format, args...) \
-  log.error("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, ##args)
-#define LOG_DEBUG_IF(condition, format, args...) \
-  log.debug("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, ##args)
-#define LOG_WARN_IF(condition, format, args...) \
-  log.warn("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, ##args)
-#define LOG_TRACE_IF(condition, format, args...) \
-  log.trace("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, ##args)
-#define LOG_THROW_IF(condition, format, args...)                  \
-  do {                                                            \
-    auto s = fmt::sprintf("{}:{}] FAIL: '" #condition "'" format, \
-                          __FILENAME__, __LINE__, ##args);        \
-    log.error(s.c_str());                                         \
-    throw std::runtime_error(s.c_str());                          \
-  } while(condition)
+#define LOG_INFO_IF(condition, format, args...)                           \
+  do {                                                                    \
+    if(condition) {                                                       \
+      log.info("{}:{}] (" #condition ") " format, __FILENAME__, __LINE__, \
+               ##args);                                                   \
+    }                                                                     \
+  } while(0)
+#define LOG_ERROR_IF(condition, format, args...)                           \
+  do {                                                                     \
+    if(condition) {                                                        \
+      log.error("{}:{}] (" #condition ") " format, __FILENAME__, __LINE__, \
+                ##args);                                                   \
+    }                                                                      \
+  } while(0)
+#define LOG_DEBUG_IF(condition, format, args...)                           \
+  do {                                                                     \
+    if(condition) {                                                        \
+      log.debug("{}:{}] (" #condition ") " format, __FILENAME__, __LINE__, \
+                ##args);                                                   \
+    }                                                                      \
+  } while(0)
+#define LOG_WARN_IF(condition, format, args...)                           \
+  do {                                                                    \
+    if(condition) {                                                       \
+      log.warn("{}:{}] (" #condition ") " format, __FILENAME__, __LINE__, \
+               ##args);                                                   \
+    }                                                                     \
+  } while(0)
+#define LOG_TRACE_IF(condition, format, args...)                           \
+  do {                                                                     \
+    if(condition) {                                                        \
+      log.trace("{}:{}] (" #condition ") " format, __FILENAME__, __LINE__, \
+                ##args);                                                   \
+    }                                                                      \
+  } while(0)
+#define LOG_THROW_IF(condition, format, args...)                             \
+  do {                                                                       \
+    if(condition) {                                                          \
+      auto s = fmt::sprintf("{}:{}] (" #condition ") " format, __FILENAME__, \
+                            __LINE__, ##args);                               \
+      log.error(s.c_str());                                                  \
+      throw std::runtime_error(s.c_str());                                   \
+    }                                                                        \
+  } while(0)
 
 
 #ifndef NDEBUG
@@ -72,23 +98,51 @@ static seastar::logger log("smf");
   log.debug("{}:{}] " format, __FILENAME__, __LINE__, ##args)
 #define DLOG_TRACE(format, args...) \
   log.trace("{}:{}] " format, __FILENAME__, __LINE__, ##args)
-#define DLOG_INFO_IF(condition, format, args...) \
-  log.info("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, ##args)
-#define DLOG_ERROR_IF(condition, format, args...) \
-  log.error("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, ##args)
-#define DLOG_DEBUG_IF(condition, format, args...) \
-  log.debug("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, ##args)
-#define DLOG_WARN_IF(condition, format, args...) \
-  log.warn("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, ##args)
-#define DLOG_TRACE_IF(condition, format, args...) \
-  log.trace("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, ##args)
-#define DLOG_THROW_IF(condition, format, args...)                 \
-  do {                                                            \
-    auto s = fmt::sprintf("{}:{}] FAIL: '" #condition "'" format, \
-                          __FILENAME__, __LINE__, ##args);        \
-    log.error(s.c_str());                                         \
-    throw std::runtime_error(s.c_str());                          \
-  } while(condition)
+#define DLOG_INFO_IF(condition, format, args...)                         \
+  do {                                                                   \
+    if(condition) {                                                      \
+      log.info("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, \
+               ##args);                                                  \
+    }                                                                    \
+  } while(0)
+#define DLOG_ERROR_IF(condition, format, args...)                         \
+  do {                                                                    \
+    if(condition) {                                                       \
+      log.error("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, \
+                ##args);                                                  \
+    }                                                                     \
+  } while(0)
+#define DLOG_DEBUG_IF(condition, format, args...)                         \
+  do {                                                                    \
+    if(condition) {                                                       \
+      log.debug("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, \
+                ##args);                                                  \
+    }                                                                     \
+  } while(0)
+
+#define DLOG_WARN_IF(condition, format, args...)                         \
+  do {                                                                   \
+    if(condition) {                                                      \
+      log.warn("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, \
+               ##args);                                                  \
+    }                                                                    \
+  } while(0)
+#define DLOG_TRACE_IF(condition, format, args...)                         \
+  do {                                                                    \
+    if(condition) {                                                       \
+      log.trace("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, \
+                ##args);                                                  \
+    }                                                                     \
+  } while(0)
+#define DLOG_THROW_IF(condition, format, args...)                            \
+  do {                                                                       \
+    if(condition) {                                                          \
+      auto s = fmt::sprintf("{}:{}] (" #condition ") " format, __FILENAME__, \
+                            __LINE__, ##args);                               \
+      log.error(s.c_str());                                                  \
+      throw std::runtime_error(s.c_str());                                   \
+    }                                                                        \
+  } while(0)
 
 #else
 #define DTHROW_IFNULL(x) true ? x : throw /*make compiler happy*/

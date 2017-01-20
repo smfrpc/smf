@@ -92,10 +92,9 @@ rpc_recv_context::parse(rpc_connection *conn, rpc_connection_limits *limits) {
   return conn->istream.read_exactly(kRPCHeaderSize)
     .then([conn, limits](temporary_buffer<char> header) {
       if(kRPCHeaderSize != header.size()) {
-        if(conn->is_valid()) {
-          LOG_ERROR("Invalid header size `{}`, expected `{}`, skipping req",
-                    header.size(), kRPCHeaderSize);
-        }
+        LOG_ERROR_IF(conn->is_valid(),
+                     "Invalid header size `{}`, expected `{}`, skipping req",
+                     header.size(), kRPCHeaderSize);
         return make_ready_future<ret_type>(nullopt);
       }
       auto hdr = reinterpret_cast<const fbs::rpc::Header *>(header.get());

@@ -16,13 +16,13 @@ future<> lazy_file::fetch_pages(uint64_t offset,
     [this, &pc, offset](int page_idx) {
       uint64_t next_offset = offset * page_idx;
       uint64_t page =
-        offset_to_page(next_offset, file_.disk_read_dma_alignment());
+        offset_to_page(next_offset, file_->disk_read_dma_alignment());
       if(pages_[page]) {
         return make_ready_future<>();
       } else {
         return file_
-          .dma_read_exactly<char>(next_offset,
-                                  (size_t)file_.disk_read_dma_alignment(), pc)
+          ->dma_read_exactly<char>(next_offset,
+                                   (size_t)file_->disk_read_dma_alignment(), pc)
           .then([this, page](temporary_buffer<char> &&tmpbuf) {
             // set the page
             pages_[page] = 1;
@@ -38,11 +38,11 @@ future<> lazy_file::fetch_pages(uint64_t offset,
 future<temporary_buffer<char>> lazy_file::read_from_cache(uint64_t offset,
                                                           uint64_t size) {
   temporary_buffer<char> ret(size);
-  const uint64_t pages_idx = 1 + (size / file_.disk_read_dma_alignment());
+  const uint64_t pages_idx = 1 + (size / file_->disk_read_dma_alignment());
   for(size_t i = 1, current_bytes = 0; i <= pages_idx; ++i) {
     const uint64_t next_offset = offset * i;
     const uint64_t page =
-      offset_to_page(next_offset, file_.disk_read_dma_alignment());
+      offset_to_page(next_offset, file_->disk_read_dma_alignment());
     assert(pages_[page]);
     const auto &chunk = sorted_chunks_.find(page);
     const auto bytes_to_copy =
@@ -59,7 +59,8 @@ future<temporary_buffer<char>>
 lazy_file::read(uint64_t offset, uint64_t size, const io_priority_class &pc) {
   LOG_THROW_IF(offset + size > file_size, "Invalid range");
   // XXX: insert prefetching & optimization logic for pages here
-  const uint64_t number_of_pages = 1 + (size / file_.disk_read_dma_alignment());
+  const uint64_t number_of_pages =
+    1 + (size / file_->disk_read_dma_alignment());
   return fetch_pages(offset, number_of_pages, pc).then([this, offset, size] {
     return read_from_cache(offset, size);
   });

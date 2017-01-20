@@ -26,26 +26,32 @@ wal_reader::wal_reader(sstring _dir, reader_stats *s)
 wal_reader::wal_reader(wal_reader &&o) noexcept
   : directory(std::move(o.directory)),
     rstats_(o.rstats_),
-    readers_(std::move(o.readers_)) {}
+    allocated_(std::move(o.allocated_)),
+    buckets_(std::move(o.buckets_)),
+    fs_observer_(std::move(o.fs_observer_)) {}
 
 
 wal_reader::~wal_reader() {}
 
-future<> monitor_files(directory_entry entry) {
+future<> wal_reader::monitor_files(directory_entry entry) {
   auto e = extract_epoch(entry.name);
-  if(reader->readers_.find(e) == reader->readers_.end()) {
-    reader->readers_.insert({e, std::make_unique<wal_reader_node>(entry.name)});
+  if(buckets_.find(e) == buckets_.end()) {
+    auto n = std::make_unique<wal_reader_node>(e, entry.name, rstats_);
+    allocated_.emplace_back(std::move(n));
+    buckets_.insert(allocated_.back());
+    return allocated_.back().node->open();
   }
+  return make_ready_future<>();
 }
 
 future<> wal_reader::close() {
-  assert(reader_ != nullptr);
-  return reader_->close();
+  return do_for_each(allocated_.begin(), allocated_.end(),
+                     [this](auto &b) { return b.node->close(); });
 }
 
 future<> wal_reader::open() {
   return open_directory(directory).then([this](file f) {
-    fs_observer = std::make_unique<wal_reader_visitor>(this, std::move(f));
+    fs_observer_ = std::make_unique<wal_reader_visitor>(this, std::move(f));
     // the visiting actually happens on a subscription thread from the filesys
     // api and it calls future<>monitor_files()...
     return make_ready_future<>();
@@ -53,6 +59,13 @@ future<> wal_reader::open() {
 }
 
 future<wal_opts::maybe_buffer> wal_reader::get(wal_read_request r) {
+  auto it = buckets_.lower_bound(r.offset);
+  if(it != buckets_.end()) {
+    if(r.offset >= it->node->starting_epoch
+       && r.offset <= it->node->ending_epoch()) {
+      return it->node->get(std::move(r));
+    }
+  }
   return make_ready_future<wal_opts::maybe_buffer>();
 }
 

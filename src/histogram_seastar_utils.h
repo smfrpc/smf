@@ -17,9 +17,7 @@ struct histogram_seastar_utils {
     // HdrHistogram/GoogleChartsExample/example1.txt is 5K
     temporary_buffer<char> buf(4096 + 2048);
     FILE *fp = fmemopen(static_cast<void *>(buf.get_write()), buf.size(), "w+");
-    if(fp == nullptr) {
-      LOG_THROW("Failed to allocate filestream");
-    }
+    LOG_THROW_IF(fp == nullptr, "Failed to allocate filestream");
     h.print(fp);
     fflush(fp);
     auto len = ftell(fp);
