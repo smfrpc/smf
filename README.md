@@ -5,16 +5,41 @@ It is pronounced `smurf`
 Mailing List: https://groups.google.com/forum/#!forum/smf-dev
 
 
-**tl;dr**:
+# tl;dr:
 
-It has multiple projects inside. **Note: Tested on fedora 23, other OSes might need manual tweaking of dependencies.**
+**Note: Tested on fedora 23, other OSes might need manual tweaking of dependencies.**
 
-* RPC mechanism using flatbuffers & seastar - DONE
-* Code generation for flatbuffers which uses our own protocol (tcp+seastar) &
-format (flatbuffers). - DONE
-* Raft consensus protocol (WIP: 30% )
+## We need your help!
+
+Simply send an email to the [Smurf Mailing List](https://groups.google.com/forum/#!forum/smf-dev)
+to get started. Or take a look at the issue list.
+
+## RPC mechanism using flatbuffers & seastar - DONE
+
+Our rpc mechanism uses a binary protocol (very fast) using
+[flatbuffers](https://google.github.io/flatbuffers/) and
+[seastar](http://www.seastar-project.org/)
+
+See our documentation for more details(todo add link)
+
+The executive summary from a user's perspective it feels like facebook's
+proxygen HTTP Service. It allows for chainable incoming and outgoing filters &
+a main RPC method. It gates the RPC with a memory monitor as to not exhaust
+the memory on the machine. It will do load shedding at maximum memory minus
+constant factor.
+
+## WAL (Write Ahead Log) - DONE
+
+There is a write ahead log writer that is pretty high performance. It uses the
+O_DIRECT capabilities of the seastar filesystem API. It also provides hooks into
+the IO Scheduler of seastar to prioritize requests, specially invalidations.
+
+
+## In the works
+
 * Chain-replication protocol  (WIP: 60%)
-* WAL (Write Ahead Log) - (WIP: 80%)
+* Raft consensus protocol (WIP: 30%)
+* Brissa (content dissemination: 10%)
 
 Using these protocols Raft (for chain management) & chain-replication, I'm
 hoping to build a very fast 'safe' log broker.
@@ -29,19 +54,19 @@ hoping to build a very fast 'safe' log broker.
 These are the core pattern directives
 
 ```
-           %c  core file size soft resource limit of crashing process (since Linux 2.6.24)
-           %d  dump mode—same as value returned by prctl(2) PR_GET_DUMPABLE (since Linux 3.7)
-           %e  executable filename (without path prefix)
-           %E  pathname of executable, with slashes ('/') replaced by exclamation marks ('!') (since Linux 3.0).
-           %g  (numeric) real GID of dumped process
-           %h  hostname (same as nodename returned by uname(2))
-           %i  TID of thread that triggered core dump, as seen in the PID namespace in which the thread resides (since Linux 3.18)
-           %I  TID of thread that triggered core dump, as seen in the initial PID namespace (since Linux 3.18)
-           %p  PID of dumped process, as seen in the PID namespace in which the process resides
-           %P  PID of dumped process, as seen in the initial PID namespace (since Linux 3.12)
-           %s  number of signal causing dump
-           %t  time of dump, expressed as seconds since the Epoch, 1970-01-01 00:00:00 +0000 (UTC)
-           %u  (numeric) real UID of dumped process
+%c  core file size soft resource limit of crashing process (since Linux 2.6.24)
+%d  dump mode—same as value returned by prctl(2) PR_GET_DUMPABLE (since Linux 3.7)
+%e  executable filename (without path prefix)
+%E  pathname of executable, with slashes ('/') replaced by exclamation marks ('!') (since Linux 3.0).
+%g  (numeric) real GID of dumped process
+%h  hostname (same as nodename returned by uname(2))
+%i  TID of thread that triggered core dump, as seen in the PID namespace in which the thread resides (since Linux 3.18)
+%I  TID of thread that triggered core dump, as seen in the initial PID namespace (since Linux 3.18)
+%p  PID of dumped process, as seen in the PID namespace in which the process resides
+%P  PID of dumped process, as seen in the initial PID namespace (since Linux 3.12)
+%s  number of signal causing dump
+%t  time of dump, expressed as seconds since the Epoch, 1970-01-01 00:00:00 +0000 (UTC)
+%u  (numeric) real UID of dumped process
 
 ```
 
@@ -49,7 +74,10 @@ These are the core pattern directives
  # This is what I set my core dump as. A bit verbose, but easy to read
  root$ echo 'core_dump.file_name(%e).signal(%s).size(%c).process_id(%p).uid(%u).gid(%g).time(%t).initial_pid(%P).thread_id(%I)' > /proc/sys/kernel/core_pattern
 ```
-# getting started
+
+# Getting started on Fedora 25
+
+
 ```bash
  root$ cd $ROOT/meta
  root$ source source_ansible_bash
@@ -67,4 +95,5 @@ These are the core pattern directives
 * [File consistency - danluu's blog post](http://danluu.com/file-consistency/)
 
 Yours Truly,
-[@gallegoxx](https://twitter.com/gallegoxx)
+[@emaxerrno](https://twitter.com/emaxerrno)
+[site](alexgallego.org)
