@@ -95,5 +95,5 @@ These are the core pattern directives
 * [File consistency - danluu's blog post](http://danluu.com/file-consistency/)
 
 Yours Truly,
-[@emaxerrno](https://twitter.com/emaxerrno)
-[site](alexgallego.org)
+* [@emaxerrno](https://twitter.com/emaxerrno)
+* [site](http://alexgallego.org)
