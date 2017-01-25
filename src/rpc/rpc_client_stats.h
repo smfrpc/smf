@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 // std
 #include <ostream>
@@ -6,7 +8,7 @@
 
 namespace smf {
 class rpc_client_stats {
-  public:
+ public:
   uint64_t in_bytes{};
   uint64_t out_bytes{};
   uint64_t bad_requests{};
@@ -17,7 +19,9 @@ class rpc_client_stats {
   // obj_.map_reduce(adder<type>, &outer::rpc_client_stats);
   void operator+=(const rpc_client_stats &o);
   rpc_client_stats self();
-  future<> stop();
+  future<>         stop();
 };
+
 std::ostream &operator<<(std::ostream &o, const rpc_client_stats &s);
-}
+
+}  // namespace smf

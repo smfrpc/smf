@@ -13,14 +13,18 @@ include(CMake/xxhash.cmake)
 message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 enable_testing()
 set(CXX_FLAG_LIST
-  ${SEASTAR_CFLAGS}
   ${BASE_FLAGS}
+  ${SEASTAR_CFLAGS}
   )
 join("${CXX_FLAG_LIST}" " " CMAKE_CXX_FLAGS)
 add_library(smftracing STATIC
   ${PROJECT_SOURCE_DIR}/src/histogram.cc
+  ${PROJECT_SOURCE_DIR}/src/histogram_seastar_utils.cc
   )
-target_link_libraries(smftracing hdr_histogram_static)
+target_link_libraries(smftracing
+  hdr_histogram_static
+  ${SEASTAR_LDFLAGS}
+  )
 add_library(smfrpc STATIC ${RPC_LIB_SOURCES})
 target_link_libraries(smfrpc
   ${SEASTAR_LDFLAGS}

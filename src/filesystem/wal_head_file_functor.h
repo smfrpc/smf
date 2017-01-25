@@ -1,4 +1,9 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
+// std
+#include <utility>
+// smf
 #include "filesystem/wal_file_walker.h"
 #include "filesystem/wal_name_extractor_utils.h"
 
@@ -6,14 +11,14 @@ namespace smf {
 struct wal_head_file_max_comparator {
   bool operator()(const sstring &current, const sstring &new_file) {
     auto current_epoch = extract_epoch(current);
-    auto new_epoch = extract_epoch(new_file);
+    auto new_epoch     = extract_epoch(new_file);
     return current_epoch <= new_epoch;
   }
 };
 struct wal_head_file_min_comparator {
   bool operator()(const sstring &current, const sstring &new_file) {
     auto current_epoch = extract_epoch(current);
-    auto new_epoch = extract_epoch(new_file);
+    auto new_epoch     = extract_epoch(new_file);
     return current_epoch >= new_epoch;
   }
 };
@@ -32,16 +37,17 @@ struct wal_head_file_min_comparator {
 ///       });
 ///
 template <typename Comparator> struct wal_head_file_functor : wal_file_walker {
-  wal_head_file_functor(file dir, sstring prefix = "smf")
+  explicit wal_head_file_functor(file dir, sstring prefix = "smf")
     : wal_file_walker(std::move(dir), std::move(prefix)) {}
 
-  virtual future<> visit(directory_entry de) override final {
-    if(comparator(last_file, de.name)) {
+  future<> visit(directory_entry de) final {
+    if (comparator(last_file, de.name)) {
       last_file = de.name;
     }
     return make_ready_future<>();
   }
-  sstring last_file;
+
+  sstring    last_file;
   Comparator comparator{};
 };
 
@@ -50,4 +56,4 @@ using wal_head_file_max_functor =
 
 using wal_head_file_min_functor =
   wal_head_file_functor<wal_head_file_min_comparator>;
-} // namespace smf
+}  // namespace smf

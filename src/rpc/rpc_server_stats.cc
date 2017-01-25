@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #include "rpc/rpc_server_stats.h"
 namespace smf {
 void rpc_server_stats::operator+=(const rpc_server_stats &o) {
@@ -12,7 +14,7 @@ void rpc_server_stats::operator+=(const rpc_server_stats &o) {
 }
 
 rpc_server_stats rpc_server_stats::self() {
-  return *this; // make a copy for map_reduce framework
+  return *this;  // make a copy for map_reduce framework
 }
 
 future<> rpc_server_stats::stop() { return make_ready_future<>(); }
@@ -29,4 +31,4 @@ std::ostream &operator<<(std::ostream &o, const rpc_server_stats &s) {
     << "'too_large_reqs':" << s.too_large_requests << "}";
   return o;
 }
-}
+}  // namespace smf

@@ -2,6 +2,7 @@
 # "-fuse-ld=gold"
 set(BASE_FLAGS
   "-fPIC"
+  "-fconcepts"
   "-Wall"
   "-Werror"
   "-Wextra"

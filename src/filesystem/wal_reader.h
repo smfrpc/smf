@@ -1,4 +1,9 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
+#include <list>
+#include <memory>
+#include <utility>
 // generated
 #include "flatbuffers/wal_generated.h"
 // smf
@@ -11,7 +16,7 @@ namespace smf {
 class wal_reader;
 struct wal_reader_visitor : wal_file_walker {
   wal_reader_visitor(wal_reader *r, file dir, sstring prefix = "smf");
-  virtual future<> visit(directory_entry wal_file_entry) override final;
+  future<> visit(directory_entry wal_file_entry) final;
   wal_reader *reader;
 };
 
@@ -20,10 +25,11 @@ struct wal_reader_visitor : wal_file_walker {
 ///
 /// - in design
 class wal_reader {
-  private:
+ private:
   struct reader_bucket : public boost::intrusive::set_base_hook<>,
                          public boost::intrusive::unordered_set_base_hook<> {
-    reader_bucket(std::unique_ptr<wal_reader_node> n) : node(std::move(n)) {}
+    explicit reader_bucket(std::unique_ptr<wal_reader_node> n)
+      : node(std::move(n)) {}
     std::unique_ptr<wal_reader_node> node;
   };
   struct reader_bucket_key {
@@ -37,7 +43,7 @@ class wal_reader {
   static_assert(std::is_same<intrusive_map::key_type, uint64_t>::value,
                 "bad key for intrusive map");
 
-  public:
+ public:
   wal_reader(sstring _dir, reader_stats *s);
   wal_reader(wal_reader &&o) noexcept;
   ~wal_reader();
@@ -48,14 +54,14 @@ class wal_reader {
 
   const sstring directory;
 
-  private:
+ private:
   friend wal_reader_visitor;
   future<> monitor_files(directory_entry wal_file_entry);
 
-  reader_stats *rstats_;
-  std::list<reader_bucket> allocated_;
-  intrusive_map buckets_;
+  reader_stats *                      rstats_;
+  std::list<reader_bucket>            allocated_;
+  intrusive_map                       buckets_;
   std::unique_ptr<wal_reader_visitor> fs_observer_;
 };
 
-} // namespace smf
+}  // namespace smf

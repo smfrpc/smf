@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 // smf
 #include "rpc/rpc_envelope.h"
@@ -9,7 +11,7 @@ namespace smf {
 /// multiple services can use this class to handle the routing for them
 ///
 class rpc_handle_router {
-  public:
+ public:
   void register_service(std::unique_ptr<rpc_service> s);
   future<> stop();
   /// \brief, MUST BE FAST - blocks the thread
@@ -32,8 +34,8 @@ class rpc_handle_router {
   /// \brief multiple rpc_services can register w/ this  handle router
   void register_rpc_service(rpc_service *s);
 
-  private:
+ private:
   std::unordered_map<uint32_t, rpc_service_method_handle> dispatch_{};
   std::vector<std::unique_ptr<rpc_service>> services_{};
 };
-}
+}  // namespace smf

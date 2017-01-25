@@ -1,7 +1,9 @@
-#include "rpc/smf_gen/cpp_generator.h"
-#include "rpc/smf_gen/smf_file.h"
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #include <glog/logging.h>
 #include <iostream>
+#include "rpc/smf_gen/cpp_generator.h"
+#include "rpc/smf_gen/smf_file.h"
 
 DEFINE_bool(print_smf_gen_to_stderr,
             false,
@@ -9,14 +11,13 @@ DEFINE_bool(print_smf_gen_to_stderr,
 
 namespace smf_gen {
 bool generate(const flatbuffers::Parser &parser, const std::string &file_name) {
-
   int nservices = 0;
-  for(auto it = parser.services_.vec.begin(); it != parser.services_.vec.end();
-      ++it) {
-    if(!(*it)->generated)
+  for (auto it = parser.services_.vec.begin(); it != parser.services_.vec.end();
+       ++it) {
+    if (!(*it)->generated)
       nservices++;
   }
-  if(!nservices)
+  if (!nservices)
     return true;
 
   smf_file fbfile(parser, file_name);
@@ -26,7 +27,7 @@ bool generate(const flatbuffers::Parser &parser, const std::string &file_name) {
     + get_header_services(&fbfile) + get_header_epilogue(&fbfile);
 
 
-  if(FLAGS_print_smf_gen_to_stderr) {
+  if (FLAGS_print_smf_gen_to_stderr) {
     std::cerr << "Finished generating code: \n" << header_code;
   }
 
@@ -34,4 +35,4 @@ bool generate(const flatbuffers::Parser &parser, const std::string &file_name) {
                                false);
 }
 
-} // namespace flatbuffers
+}  // namespace smf_gen

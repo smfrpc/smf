@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 #include <chrono>
 // third party
@@ -14,10 +16,10 @@ inline uint64_t millis() {
 // 8601 format, without the timezone information.
 inline sstring timeInMillisAsIso8601(uint64_t ms) {
   // Using non-reentrant version as localtime_r is not portable.
-  time_t seconds = static_cast<time_t>(ms / 1000);
-  const struct tm *const time_struct = localtime(&seconds); // NOLINT
-  if(time_struct == NULL) {
-    return ""; // Invalid ms value
+  time_t                 seconds     = static_cast<time_t>(ms / 1000);
+  const struct tm *const time_struct = localtime(&seconds);  // NOLINT
+  if (time_struct == NULL) {
+    return "";  // Invalid ms value
   }
   // YYYY-MM-DDThh:mm:ss
   return to_sstring(time_struct->tm_year + 1900) + "-"
@@ -27,4 +29,4 @@ inline sstring timeInMillisAsIso8601(uint64_t ms) {
          + to_sstring(time_struct->tm_min) + ":"
          + to_sstring(time_struct->tm_sec);
 }
-}
+}  // namespace smf

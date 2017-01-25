@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 // std
 #include <chrono>
@@ -5,6 +7,7 @@
 // seastar
 #include <net/api.hh>
 // smf
+#include "log.h"
 #include "rpc/rpc_connection.h"
 #include "rpc/rpc_server_stats.h"
 
@@ -50,37 +53,35 @@ inline net::keepalive_params default_linux_tcp_keepalive() {
 }
 
 struct rpc_server_connection_options {
-
   rpc_server_connection_options() : nodelay(true), keepalive(exp::nullopt) {}
-  bool nodelay;
+  bool                                     nodelay;
   exp::optional<net::tcp_keepalive_params> keepalive;
 };
 class rpc_server_connection : public rpc_connection {
-  public:
-  rpc_server_connection(connected_socket sock,
-                        socket_address address,
-                        distributed<rpc_server_stats> &stats,
-                        rpc_server_connection_options opts = {})
+ public:
+  rpc_server_connection(connected_socket               sock,
+                        socket_address                 address,
+                        distributed<rpc_server_stats> *stats,
+                        rpc_server_connection_options  opts = {})
     : rpc_connection(std::move(sock))
     , remote_address(address)
-    , stats_(stats)
+    , stats_(THROW_IFNULL(stats))
     , opts_(opts) {
-
     socket.set_nodelay(opts_.nodelay);
-    if(opts_.keepalive) {
+    if (opts_.keepalive) {
       socket.set_keepalive(true);
       socket.set_keepalive_parameters(opts_.keepalive.value());
     }
-    stats_.local().active_connections++;
-    stats_.local().total_connections++;
+    stats_->local().active_connections++;
+    stats_->local().total_connections++;
   }
-  ~rpc_server_connection() { stats_.local().active_connections--; }
+  ~rpc_server_connection() { stats_->local().active_connections--; }
 
 
   const socket_address remote_address;
 
-  private:
-  distributed<rpc_server_stats> &stats_;
-  rpc_server_connection_options opts_;
+ private:
+  distributed<rpc_server_stats> *stats_;
+  rpc_server_connection_options  opts_;
 };
-}
+}  // namespace smf

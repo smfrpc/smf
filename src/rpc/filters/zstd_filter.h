@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 // smf
 #include "rpc/rpc_envelope.h"
@@ -7,7 +9,7 @@
 namespace smf {
 
 struct zstd_compression_filter : rpc_filter<rpc_envelope> {
-  zstd_compression_filter(uint32_t _min_compression_size)
+  explicit zstd_compression_filter(uint32_t _min_compression_size)
     : min_compression_size(_min_compression_size) {}
 
   future<rpc_envelope> operator()(rpc_envelope &&e);
@@ -20,4 +22,4 @@ struct zstd_decompression_filter : rpc_filter<rpc_envelope> {
 };
 
 
-} // namespace smf
+}  // namespace smf

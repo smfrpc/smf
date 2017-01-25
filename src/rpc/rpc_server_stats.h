@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 // std
 #include <ostream>
@@ -6,7 +8,7 @@
 namespace smf {
 
 class rpc_server_stats {
-  public:
+ public:
   uint64_t active_connections{};
   uint64_t total_connections{};
   uint64_t in_bytes{};
@@ -21,7 +23,7 @@ class rpc_server_stats {
   // obj_.map_reduce(adder<type>, &outer::rpc_server_stats);
   void operator+=(const rpc_server_stats &o);
   rpc_server_stats self();
-  future<> stop();
+  future<>         stop();
 };
 std::ostream &operator<<(std::ostream &o, const rpc_server_stats &s);
-}
+}  // namespace smf

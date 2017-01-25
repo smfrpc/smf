@@ -1,49 +1,60 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #include "rpc/rpc_envelope.h"
+#include <algorithm>
 #include <cstring>
+#include <utility>
 // smf
 #include "log.h"
 #include "rpc/rpc_utils.h"
 
 namespace smf {
-future<> rpc_envelope::send(output_stream<char> &out, rpc_envelope e) {
+
+future<> rpc_envelope::send(output_stream<char> *out, rpc_envelope e) {
   e.finish();
   temporary_buffer<char> header(kHeaderSize);
   // copy the remaining header bytes
-  std::copy((char *)&e.header, (char *)&e.header + kHeaderSize,
+  std::copy(reinterpret_cast<char *>(&e.header),
+            reinterpret_cast<char *>(&e.header) + kHeaderSize,
             header.get_write());
   // needs to be moved so we can do zero copy output buffer
-  return out.write(std::move(header))
-    .then([&out, e = std::move(e)]() mutable {
-      if((e.header.flags() & fbs::rpc::Flags::Flags_ZSTD)
-         == fbs::rpc::Flags::Flags_ZSTD) {
+  return out->write(std::move(header))
+    .then([out, e = std::move(e)]() mutable {
+      if ((e.header.flags() & fbs::rpc::Flags::Flags_ZSTD)
+          == fbs::rpc::Flags::Flags_ZSTD) {
         auto p = std::move(e.get_compressed_payload());
-        return out.write(std::move(p));
+        return out->write(std::move(p));
       } else {
         temporary_buffer<char> body(e.payload_size());
-        const char *p = reinterpret_cast<const char *>(e.payload());
+        const char *           p = reinterpret_cast<const char *>(e.payload());
         std::copy(p, p + e.payload_size(), body.get_write());
-        return out.write(std::move(body));
+        return out->write(std::move(body));
       }
     })
-    .then([&out] { return out.flush(); });
+    .then([out] { return out->flush(); });
 }
 
 rpc_envelope::rpc_envelope(const flatbuffers::FlatBufferBuilder &fbb) {
   init(fbb.GetBufferPointer(), fbb.GetSize());
 }
+
 rpc_envelope::rpc_envelope(const char *buf_to_copy) {
-  init((uint8_t *)buf_to_copy,
+  init(reinterpret_cast<const uint8_t *>(buf_to_copy),
        buf_to_copy == nullptr ? 0 : std::strlen(buf_to_copy));
 }
+
 rpc_envelope::rpc_envelope(const char *buf_to_copy, size_t len) {
   static_assert(sizeof(char) == sizeof(uint8_t), "char is not 8 bits");
-  init((uint8_t *)buf_to_copy, len);
+  init(reinterpret_cast<const uint8_t *>(buf_to_copy), len);
 }
+
 rpc_envelope::rpc_envelope(const uint8_t *buf_to_copy, size_t len) {
   init(buf_to_copy, len);
 }
+
 rpc_envelope::rpc_envelope(const sstring &buf_to_copy) {
-  init((uint8_t *)buf_to_copy.data(), buf_to_copy.size());
+  init(reinterpret_cast<const uint8_t *>(buf_to_copy.data()),
+       buf_to_copy.size());
 }
 
 rpc_envelope::rpc_envelope(rpc_envelope &&o) noexcept
@@ -62,9 +73,9 @@ void rpc_envelope::add_dynamic_header(const char *header, const char *value) {
   add_dynamic_header(header, (const uint8_t *)value, strlen(value));
 }
 
-void rpc_envelope::add_dynamic_header(const char *header,
+void rpc_envelope::add_dynamic_header(const char *   header,
                                       const uint8_t *value,
-                                      const size_t &value_len) {
+                                      const size_t & value_len) {
   auto k = fbb_->CreateString(header);
   auto v = fbb_->CreateVector(value, value_len);
   auto h = fbs::rpc::CreateDynamicHeader(*fbb_.get(), k, v);
@@ -73,13 +84,16 @@ void rpc_envelope::add_dynamic_header(const char *header,
 
 
 bool rpc_envelope::is_finished() const { return finished_; }
+
 void rpc_envelope::set_request_id(const uint32_t &service,
-                                  const uint32_t method) {
+                                  const uint32_t  method) {
   meta_ = service ^ method;
 }
+
 void rpc_envelope::set_status(const uint32_t &status) { meta_ = status; }
+
 void rpc_envelope::finish() {
-  if(!finished_) {
+  if (!finished_) {
     // Warning: The headers MUST be VectorOfSortedTables()*
     // This will break binary search if not true
     //
@@ -93,7 +107,7 @@ void rpc_envelope::finish() {
   }
 }
 void rpc_envelope::init(const uint8_t *buf_to_copy, size_t len) {
-  if(buf_to_copy != nullptr && len > 0) {
+  if (buf_to_copy != nullptr && len > 0) {
     user_buf_ = std::move(fbb_->CreateVector(buf_to_copy, len));
   }
 }
@@ -107,4 +121,4 @@ void rpc_envelope::set_compressed_payload(temporary_buffer<char> buf) {
 }
 
 
-} // end namespace
+}  // namespace smf

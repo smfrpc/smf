@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 // std
 #include <algorithm>
@@ -21,13 +23,13 @@ enum RPCFLAGS : uint32_t {
 };
 
 class rpc_server {
-  public:
-  rpc_server(distributed<rpc_server_stats> &stats,
-             uint16_t port,
-             uint32_t flags);
+ public:
+  rpc_server(distributed<rpc_server_stats> *stats,
+             uint16_t                       port,
+             uint32_t                       flags);
   ~rpc_server();
 
-  void start();
+  void     start();
   future<> stop();
 
   future<smf::histogram> copy_histogram() {
@@ -49,16 +51,16 @@ class rpc_server {
     out_filters_.push_back(fn);
   }
 
-  private:
+ private:
   future<> handle_client_connection(lw_shared_ptr<rpc_server_connection> conn);
   future<> dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
-                        rpc_recv_context &&ctx);
+                        rpc_recv_context &&                  ctx);
 
-  private:
-  lw_shared_ptr<server_socket> listener_;
-  distributed<rpc_server_stats> &stats_;
-  const uint16_t port_;
-  rpc_handle_router routes_;
+ private:
+  lw_shared_ptr<server_socket>   listener_;
+  distributed<rpc_server_stats> *stats_;
+  const uint16_t                 port_;
+  rpc_handle_router              routes_;
 
   using in_filter_t = std::function<future<rpc_recv_context>(rpc_recv_context)>;
   std::vector<in_filter_t> in_filters_;
@@ -66,9 +68,10 @@ class rpc_server {
   std::vector<out_filter_t> out_filters_;
 
   std::unique_ptr<histogram> hist_ = std::make_unique<histogram>();
-  uint32_t flags_;
+  uint32_t                   flags_;
+
   std::unique_ptr<rpc_connection_limits> limits_ =
     std::make_unique<rpc_connection_limits>();
 };
 
-} // namespace smf
+}  // namespace smf

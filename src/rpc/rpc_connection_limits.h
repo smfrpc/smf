@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 #include <ostream>
 // seastar
@@ -18,7 +20,7 @@ namespace smf {
 struct rpc_connection_limits {
   rpc_connection_limits(
     size_t basic_req_size = 1024,
-    size_t bloat_mult = 1.57, // same as folly::vector
+    size_t bloat_mult     = 1.57,  // same as folly::vector
     /// The defaults are the ones from scylladb as of 8e124b3a
     size_t max_mem = std::max<size_t>(0.08 * memory::stats().total_memory(),
                                       1000000));
@@ -29,7 +31,7 @@ struct rpc_connection_limits {
   /// memory used by request
   const size_t bloat_factor;
   const size_t max_memory;
-  semaphore resources_available;
+  semaphore    resources_available;
   // TODO(agallego) - rename to connection drain accept()
   seastar::gate reply_gate;
 
@@ -53,4 +55,5 @@ struct rpc_connection_limits {
   void release_resources(size_t memory_consumed);
 };
 std::ostream &operator<<(std::ostream &o, const rpc_connection_limits &l);
-} // smf
+
+}  // namespace smf

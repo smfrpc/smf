@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 // third party
 #include <core/sstring.hh>
@@ -7,9 +9,9 @@ namespace smf {
 static const re2::RE2 kFileNameRE("[a-zA-Z\\d]+_\\d+\\.wal");
 
 struct wal_name_parser {
-  wal_name_parser(sstring _prefix = "smf") : prefix(_prefix) {
-    for(char c : prefix) {
-      if(c == '\\' || c == '(' || c == ')' || c == '[' || c == ']')
+  explicit wal_name_parser(sstring _prefix = "smf") : prefix(_prefix) {
+    for (char c : prefix) {
+      if (c == '\\' || c == '(' || c == ')' || c == '[' || c == ']')
         throw std::runtime_error(
           "wal_name_parser cannot include a prefix with special chars");
     }
@@ -22,4 +24,4 @@ struct wal_name_parser {
 };
 
 
-} // namespace smf
+}  // namespace smf

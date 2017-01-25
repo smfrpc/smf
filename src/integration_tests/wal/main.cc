@@ -1,3 +1,5 @@
+// Copyright (c) 2017 Alexander Gallego. All rights reserved.
+//
 #include <set>
 // seastar
 #include <core/app-template.hh>
@@ -11,7 +13,7 @@
 #include "log.h"
 
 
-const static char *kPayload = "hello";
+static const char *kPayload = "hello";
 
 smf::wal_write_request gen_payload(sstring str) {
   temporary_buffer<char> buf(str.size());
@@ -38,7 +40,7 @@ struct reducible_append {
 
 int main(int args, char **argv, char **env) {
   smf::DLOG_INFO("About to start the client");
-  app_template app;
+  app_template                    app;
   distributed<smf::shardable_wal> w;
   try {
     return app.run(args, argv, [&]() mutable -> future<int> {
@@ -71,7 +73,6 @@ int main(int args, char **argv, char **env) {
                     ra.v.insert(i);
                     return std::move(ra);
                   });
-
                 });
               })
             .then([&w](reducible_append &&ra) {
@@ -89,7 +90,7 @@ int main(int args, char **argv, char **env) {
         })
         .then([] { return make_ready_future<int>(0); });
     });
-  } catch(const std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << "Fatal exception: " << e.what() << std::endl;
   }
 }

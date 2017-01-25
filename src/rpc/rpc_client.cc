@@ -1,4 +1,8 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #include "rpc/rpc_client.h"
+#include <memory>
+#include <utility>
 // seastar
 #include <core/reactor.hh>
 #include <net/api.hh>
@@ -6,19 +10,19 @@
 #include "log.h"
 
 namespace smf {
-using namespace std::experimental;
+
 rpc_client::rpc_client(ipv4_addr addr) : server_addr(std::move(addr)) {}
 
 future<> rpc_client::stop() { return make_ready_future(); }
 rpc_client::~rpc_client() {
-  if(conn_) {
+  if (conn_) {
     delete conn_;
   }
 }
 
 void rpc_client::enable_histogram_metrics(bool enable) {
-  if(enable) {
-    if(!hist_) {
+  if (enable) {
+    if (!hist_) {
       hist_ = std::make_unique<histogram>();
     }
   } else {
@@ -27,7 +31,7 @@ void rpc_client::enable_histogram_metrics(bool enable) {
 }
 
 future<> rpc_client::connect() {
-  if(conn_ != nullptr) {
+  if (conn_ != nullptr) {
     return make_ready_future<>();
   }
   socket_address local =
@@ -39,4 +43,4 @@ future<> rpc_client::connect() {
       conn_ = new rpc_connection(std::move(fd));
     });
 }
-} // namespace
+}  // namespace smf

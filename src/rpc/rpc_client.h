@@ -1,6 +1,11 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 // std
 #include <experimental/optional>
+#include <memory>
+#include <utility>
+#include <vector>
 // seastar
 #include <net/api.hh>
 // smf
@@ -20,8 +25,8 @@ namespace smf {
 /// parse the contents of the server response on recv() callback
 ///
 class rpc_client {
-  public:
-  rpc_client(ipv4_addr server_addr);
+ public:
+  explicit rpc_client(ipv4_addr server_addr);
   rpc_client(const rpc_client &) = delete;
   /// \brief actually does the send to the remote location
   /// \param req - the bytes to send
@@ -31,18 +36,18 @@ class rpc_client {
   template <typename T>
   future<rpc_recv_typed_context<T>> send(rpc_envelope e, bool oneway = false) {
     using ret_type = rpc_recv_typed_context<T>;
-    assert(conn_ != nullptr); // call connect() first
-    e.finish();               // make sure that the buff is ready
+    assert(conn_ != nullptr);  // call connect() first
+    e.finish();                // make sure that the buff is ready
     auto measure = is_histogram_enabled() ? hist_->auto_measure() : nullptr;
-    return rpc_filter_apply(out_filters_, std::move(e))
+    return rpc_filter_apply(&out_filters_, std::move(e))
       .then([this, oneway](rpc_envelope &&e) {
         return chain_send(std::move(e), oneway);
       })
       .then([this](auto opt_ctx) {
-        if(!opt_ctx) {
+        if (!opt_ctx) {
           return make_ready_future<ret_type>(std::move(opt_ctx));
         }
-        return rpc_filter_apply(in_filters_, std::move(opt_ctx.value()))
+        return rpc_filter_apply(&in_filters_, std::move(opt_ctx.value()))
           .then([](auto ctx) {
             return make_ready_future<ret_type>(
               std::experimental::optional<decltype(ctx)>(std::move(ctx)));
@@ -53,11 +58,11 @@ class rpc_client {
       });
   }
 
-  future<std::experimental::optional<rpc_recv_context>>
-  chain_send(rpc_envelope e, bool oneway) {
-    return smf::rpc_envelope::send(conn_->ostream, std::move(e))
+  future<std::experimental::optional<rpc_recv_context>> chain_send(
+    rpc_envelope e, bool oneway) {
+    return smf::rpc_envelope::send(&conn_->ostream, std::move(e))
       .then([this, oneway]() {
-        if(oneway) {
+        if (oneway) {
           using t = std::experimental::optional<rpc_recv_context>;
           return make_ready_future<t>(std::experimental::nullopt);
         }
@@ -65,19 +70,22 @@ class rpc_client {
       });
   }
 
-
   future<> connect();
+
   virtual future<> stop();
+
   virtual ~rpc_client();
+
   virtual void enable_histogram_metrics(bool enable = true) final;
+
   bool is_histogram_enabled() { return hist_.operator bool(); }
+
   histogram *get_histogram() {
-    if(hist_) {
+    if (hist_) {
       return hist_.get();
     }
     return nullptr;
   }
-
 
   template <typename Function> void register_incoming_filter(Function fn) {
     in_filters_.push_back(fn);
@@ -90,10 +98,10 @@ class rpc_client {
 
   bool is_semaphore_empty() { return limit_.current() == 1; }
 
-  public:
+ public:
   const ipv4_addr server_addr;
 
-  protected:
+ protected:
   /// \brief - semaphore for `safe_` codegen calls
   ///
   /// seastar ONLY allows for one receiving context per call
@@ -108,8 +116,8 @@ class rpc_client {
   ///
   semaphore limit_{1};
 
-  private:
-  rpc_connection *conn_ = nullptr;
+ private:
+  rpc_connection *           conn_ = nullptr;
   std::unique_ptr<histogram> hist_;
   using in_filter_t = std::function<future<rpc_recv_context>(rpc_recv_context)>;
   std::vector<in_filter_t> in_filters_;
@@ -118,4 +126,4 @@ class rpc_client {
 };
 
 
-} // namespace smf
+}  // namespace smf

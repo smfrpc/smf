@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 // std
 #include <chrono>
 #include <iostream>
@@ -72,19 +74,18 @@ struct requestor_channel {
                        });
   }
   std::unique_ptr<smf_gen::fbs::rpc::SmfStorageClient> client;
-  std::unique_ptr<flatbuffers::FlatBufferBuilder> fbb;
+  std::unique_ptr<flatbuffers::FlatBufferBuilder>      fbb;
 };
 
 class rpc_client_wrapper {
-  public:
+ public:
   rpc_client_wrapper(const char *ip,
-                     uint16_t port,
-                     size_t num_of_req,
-                     size_t concurrency)
+                     uint16_t    port,
+                     size_t      num_of_req,
+                     size_t      concurrency)
     : concurrency_(std::min(num_of_req, concurrency))
     , num_of_req_(num_of_req)
     , clients_(concurrency) {
-
     smf::DLOG_INFO(
       "Setting up the client. Remove server: {}:{} , reqs:{}, concurrency:{} ",
       ip, port, num_of_req, concurrency);
@@ -100,8 +101,8 @@ class rpc_client_wrapper {
   }
 
   future<uint64_t> send_request() {
-    using namespace std::chrono;
-    auto begin = high_resolution_clock::now();
+    namespace co = std::chrono;
+    auto begin   = co::high_resolution_clock::now();
     return connect()
       .then([this] {
         return do_with(semaphore(concurrency_), [this](auto &limit) {
@@ -115,22 +116,23 @@ class rpc_client_wrapper {
                                });
                              })
             .then([this, &limit] { return limit.wait(concurrency_); });
-        }); // semaphore
+        });  // semaphore
       })
       .then([begin, this] {
-        auto end_t = high_resolution_clock::now();
+        auto     end_t = co::high_resolution_clock::now();
         uint64_t duration_milli =
-          duration_cast<milliseconds>(end_t - begin).count();
-        auto qps = double(num_of_req_) / std::max(duration_milli, uint64_t(1));
+          co::duration_cast<co::milliseconds>(end_t - begin).count();
+        auto qps = static_cast<double>(num_of_req_)
+                   / static_cast<double>(std::max(duration_milli, uint64_t(1)));
         smf::DLOG_INFO("Test took: {}ms", duration_milli);
         smf::DLOG_INFO("Queries per millisecond: {}/ms", qps);
         return make_ready_future<uint64_t>(duration_milli);
-      }); // connect
+      });  // connect
   }
 
   future<smf::histogram> all_histograms() {
     smf::histogram h;
-    for(auto &ch : clients_) {
+    for (auto &ch : clients_) {
       h += *ch->client->get_histogram();
     }
     return make_ready_future<smf::histogram>(std::move(h));
@@ -139,7 +141,7 @@ class rpc_client_wrapper {
 
   future<> stop() { return make_ready_future<>(); }
 
-  private:
+ private:
   const size_t concurrency_;
   const size_t num_of_req_;
   // You can only have one client per active stream
@@ -155,8 +157,8 @@ class rpc_client_wrapper {
 
 
 class storage_service : public smf_gen::fbs::rpc::SmfStorage {
-  virtual future<smf::rpc_envelope>
-  Get(smf::rpc_recv_typed_context<smf_gen::fbs::rpc::Request> &&rec) override {
+  future<smf::rpc_envelope> Get(
+    smf::rpc_recv_typed_context<smf_gen::fbs::rpc::Request> &&rec) final {
     // smf::DLOG_INFO("Server got payload {}", rec.get()->name()->size());
     smf::rpc_envelope e(nullptr);
     e.set_status(200);
@@ -169,10 +171,10 @@ int main(int args, char **argv, char **env) {
   smf::log.set_level(seastar::log_level::debug);
   smf::DLOG_INFO("About to start the RPC test");
   distributed<smf::rpc_server_stats> stats;
-  distributed<smf::rpc_server> rpc;
-  distributed<rpc_client_wrapper> clients;
-  smf::rpc_server_stats_printer stats_printer(std::ref(stats));
-  app_template app;
+  distributed<smf::rpc_server>       rpc;
+  distributed<rpc_client_wrapper>    clients;
+  smf::rpc_server_stats_printer      stats_printer(&stats);
+  app_template                       app;
   app.add_options()("rpc_port", bpo::value<uint16_t>()->default_value(11225),
                     "rpc port")(
     "req_num", bpo::value<size_t>()->default_value(1000), "number of requests")(
@@ -190,8 +192,8 @@ int main(int args, char **argv, char **env) {
     engine().at_exit([&] { return rpc.stop(); });
     engine().at_exit([&] { return clients.stop(); });
 
-    auto &&config = app.configuration();
-    uint16_t port = config["rpc_port"].as<uint16_t>();
+    auto &&  config = app.configuration();
+    uint16_t port   = config["rpc_port"].as<uint16_t>();
     smf::DLOG_INFO("starting stats");
     return stats.start()
       .then([&stats_printer] {
@@ -201,7 +203,7 @@ int main(int args, char **argv, char **env) {
       })
       .then([&rpc, &stats, port] {
         uint32_t flags = smf::RPCFLAGS::RPCFLAGS_LOAD_SHEDDING_ON;
-        return rpc.start(std::ref(stats), port, flags).then([&rpc] {
+        return rpc.start(&stats, port, flags).then([&rpc] {
           smf::DLOG_INFO("Registering smf_gen::fbs::rpc::storage_service");
           return rpc.invoke_on_all(
             &smf::rpc_server::register_service<storage_service>);
@@ -218,10 +220,10 @@ int main(int args, char **argv, char **env) {
       })
       .then([&clients, &config] {
         smf::DLOG_INFO("About to start the client");
-        const uint16_t port = config["rpc_port"].as<uint16_t>();
-        const size_t req_num = config["req_num"].as<size_t>();
-        const size_t concurrency = config["concurrency"].as<size_t>();
-        const char *ip = config["ip_address"].as<std::string>().c_str();
+        const uint16_t port        = config["rpc_port"].as<uint16_t>();
+        const size_t   req_num     = config["req_num"].as<size_t>();
+        const size_t   concurrency = config["concurrency"].as<size_t>();
+        const char *   ip = config["ip_address"].as<std::string>().c_str();
         return clients.start(ip, port, req_num, concurrency);
       })
       .then([&clients] {

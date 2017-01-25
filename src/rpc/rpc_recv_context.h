@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 // std
 #include <experimental/optional>
@@ -22,8 +24,8 @@ struct rpc_recv_context {
   /// size of the header, so we parse sizeof(Header). We with this information
   /// we parse the body of the request
   ///
-  static future<exp::optional<rpc_recv_context>>
-  parse(rpc_connection *conn, rpc_connection_limits *limits);
+  static future<exp::optional<rpc_recv_context>> parse(
+    rpc_connection *conn, rpc_connection_limits *limits);
 
   /// \brief default ctor
   /// moves in a hdr and body payload after verification. usually passed
@@ -59,4 +61,4 @@ struct rpc_recv_context {
   ///
   fbs::rpc::Payload *payload;
 };
-}
+}  // namespace smf

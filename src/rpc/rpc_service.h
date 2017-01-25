@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 #include "rpc/rpc_envelope.h"
 #include "rpc/rpc_recv_context.h"
@@ -8,8 +10,8 @@ struct rpc_service_method_handle {
   // now it  the default is server_streaming
   enum rpc_type {
     NORMAL_RPC = 0,
-    CLIENT_STREAMING, // request streaming
-    SERVER_STREAMING, // response streaming
+    CLIENT_STREAMING,  // request streaming
+    SERVER_STREAMING,  // response streaming
     BIDI_STREAMING
   };
 
@@ -20,15 +22,15 @@ struct rpc_service_method_handle {
   rpc_service_method_handle(const rpc_service_method_handle &o)
     : method_name(o.method_name), method_id(o.method_id), apply(o.apply) {}
 
-  const char *method_name;
+  const char *   method_name;
   const uint32_t method_id;
-  fn_t apply;
+  fn_t           apply;
 };
 
 struct rpc_service {
   virtual const char *service_name() const = 0;
   /// \brief crc32(service_name())
-  virtual uint32_t service_id() const = 0;
-  virtual std::vector<rpc_service_method_handle> methods() = 0;
+  virtual uint32_t                               service_id() const = 0;
+  virtual std::vector<rpc_service_method_handle> methods()          = 0;
 };
-}
+}  // namespace smf

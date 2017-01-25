@@ -1,5 +1,10 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 // source header
 #include "filesystem/wal_writer.h"
+#include <algorithm>
+#include <memory>
+#include <utility>
 // third party
 #include <core/reactor.hh>
 // smf
@@ -27,11 +32,11 @@ future<> wal_writer::close() {
 }
 
 future<> wal_writer::open_empty_dir(sstring prefix) {
-  auto id = to_sstring(engine().cpu_id());
+  auto                 id = to_sstring(engine().cpu_id());
   wal_writer_node_opts wo;
   wo.wstats = wstats_;
   wo.prefix = prefix + id;
-  writer_ = std::make_unique<wal_writer_node>(wo);
+  writer_   = std::make_unique<wal_writer_node>(wo);
   return writer_->open();
 }
 
@@ -42,12 +47,12 @@ future<> wal_writer::open_non_empty_dir(sstring last_file, sstring prefix) {
     .then([this, prefix, epoch](file f) {
       auto last = make_lw_shared<file>(std::move(f));
       return last->size().then([this, prefix, last, epoch](uint64_t size) {
-        auto id = to_sstring(engine().cpu_id());
+        auto                 id = to_sstring(engine().cpu_id());
         wal_writer_node_opts wo;
         wo.wstats = wstats_;
         wo.prefix = prefix + id;
-        wo.epoch = epoch + size;
-        writer_ = std::make_unique<wal_writer_node>(std::move(wo));
+        wo.epoch  = epoch + size;
+        writer_   = std::make_unique<wal_writer_node>(std::move(wo));
         return last->close().then([last, this] { return writer_->open(); });
       });
     });
@@ -57,7 +62,7 @@ future<> wal_writer::do_open() {
   return open_directory(directory).then([this](file f) {
     auto l = make_lw_shared<wal_head_file_max_functor>(std::move(f));
     return l->close().then([l, this]() {
-      if(l->last_file.empty()) {
+      if (l->last_file.empty()) {
         return open_empty_dir(l->name_parser.prefix);
       }
       return open_non_empty_dir(l->last_file, l->name_parser.prefix);
@@ -67,7 +72,7 @@ future<> wal_writer::do_open() {
 
 future<> wal_writer::open() {
   return file_exists(directory).then([this](bool dir_exists) {
-    if(dir_exists) {
+    if (dir_exists) {
       return do_open();
     }
     return make_directory(directory).then([this] { return do_open(); });
@@ -81,8 +86,9 @@ future<uint64_t> wal_writer::append(wal_write_request req) {
 future<> wal_writer::invalidate(uint64_t epoch) {
   // write invalidation structure to WAL
   fbs::wal::invalid_wal_entry e{epoch};
-  temporary_buffer<char> data(sizeof(e));
-  std::copy((char *)&e, (char *)&e + sizeof(e), data.get_write());
+  temporary_buffer<char>      data(sizeof(e));
+  std::copy(reinterpret_cast<char *>(&e),
+            reinterpret_cast<char *>(&e) + sizeof(e), data.get_write());
 
   wal_write_request req(
     wal_write_request_flags::wwrf_invalidate_payload, std::move(data),
@@ -93,4 +99,4 @@ future<> wal_writer::invalidate(uint64_t epoch) {
   });
 }
 
-} // namespace smf
+}  // namespace smf

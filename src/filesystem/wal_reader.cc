@@ -1,5 +1,8 @@
-// source header
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #include "filesystem/wal_reader.h"
+#include <memory>
+#include <utility>
 // third party
 #include <core/reactor.hh>
 // smf
@@ -17,7 +20,7 @@ future<> wal_reader_visitor::visit(directory_entry wal_file_entry) {
   return reader->monitor_files(std::move(wal_file_entry));
 }
 
-} // namespace smf
+}  // namespace smf
 
 namespace smf {
 wal_reader::wal_reader(sstring _dir, reader_stats *s)
@@ -35,7 +38,7 @@ wal_reader::~wal_reader() {}
 
 future<> wal_reader::monitor_files(directory_entry entry) {
   auto e = extract_epoch(entry.name);
-  if(buckets_.find(e) == buckets_.end()) {
+  if (buckets_.find(e) == buckets_.end()) {
     auto n = std::make_unique<wal_reader_node>(e, entry.name, rstats_);
     allocated_.emplace_back(std::move(n));
     buckets_.insert(allocated_.back());
@@ -60,9 +63,9 @@ future<> wal_reader::open() {
 
 future<wal_opts::maybe_buffer> wal_reader::get(wal_read_request r) {
   auto it = buckets_.lower_bound(r.offset);
-  if(it != buckets_.end()) {
-    if(r.offset >= it->node->starting_epoch
-       && r.offset <= it->node->ending_epoch()) {
+  if (it != buckets_.end()) {
+    if (r.offset >= it->node->starting_epoch
+        && r.offset <= it->node->ending_epoch()) {
       return it->node->get(std::move(r));
     }
   }
@@ -70,4 +73,4 @@ future<wal_opts::maybe_buffer> wal_reader::get(wal_read_request r) {
 }
 
 
-} // namespace smf
+}  // namespace smf

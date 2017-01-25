@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #include <flatbuffers/flatbuffers.h>
 #include <flatbuffers/util.h>
 #include <gflags/gflags.h>
@@ -15,7 +17,7 @@ int main(int argc, char **argv, char **env) {
   google::InstallFailureSignalHandler();
   google::InitGoogleLogging(argv[0]);
 
-  if(FLAGS_filename.empty()) {
+  if (FLAGS_filename.empty()) {
     LOG(ERROR) << "No filename to parse";
     exit(1);
   }
@@ -25,8 +27,8 @@ int main(int argc, char **argv, char **env) {
 
   // generate code!
   flatbuffers::IDLOptions opts;
-  flatbuffers::Parser parser(opts);
-  std::string contents;
+  flatbuffers::Parser     parser(opts);
+  std::string             contents;
   LOG_IF(FATAL, !flatbuffers::LoadFile(FLAGS_filename.c_str(), true, &contents))
     << "Could not LOAD file: " << FLAGS_filename;
 

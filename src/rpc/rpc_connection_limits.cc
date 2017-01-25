@@ -1,7 +1,11 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #include "rpc/rpc_connection_limits.h"
-#include "human_bytes_printing_utils.h"
 #include <fmt/format.h>
+#include "human_bytes_printing_utils.h"
+
 namespace smf {
+
 rpc_connection_limits::rpc_connection_limits(size_t basic_req_size,
                                              size_t bloat_mult,
                                              size_t max_mem)
@@ -15,7 +19,7 @@ size_t rpc_connection_limits::estimate_request_size(size_t serialized_size) {
 }
 
 future<> rpc_connection_limits::wait_for_resources(size_t memory_consumed) {
-  if(memory_consumed > max_memory) {
+  if (memory_consumed > max_memory) {
     auto s = fmt::format(
       "memory to serve request `{}`, exceeds max available memory `{}`",
       memory_consumed, max_memory);
@@ -23,6 +27,7 @@ future<> rpc_connection_limits::wait_for_resources(size_t memory_consumed) {
   }
   return resources_available.wait(memory_consumed);
 }
+
 void rpc_connection_limits::release_resources(size_t memory_consumed) {
   resources_available.signal(memory_consumed);
 }
@@ -41,4 +46,4 @@ std::ostream &operator<<(std::ostream &o, const rpc_connection_limits &l) {
   o << "}";
   return o;
 }
-} // smf
+}  // namespace smf

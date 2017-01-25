@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 
 namespace smf {
@@ -10,4 +12,4 @@ namespace smf {
 #define likely(x) (x)
 #define unlikely(x) (x)
 #endif
-}
+}  // namespace smf

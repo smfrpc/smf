@@ -93,6 +93,7 @@ These are the core pattern directives
 * [Making lockless synchronization fast: performance implications of memory reclamation1](http://doi.ieeecomputersociety.org/10.1109/IPDPS.2006.163)
 * [All files are not created equal: On the complexity of crafting crash-consistent applications](http://research.cs.wisc.edu/wind/Publications/alice-osdi14.pdf)
 * [File consistency - danluu's blog post](http://danluu.com/file-consistency/)
+* [Kafka Exactly Once](https://docs.google.com/document/d/11Jqy_GjUGtdXJK94XGsEIK7CP1SnQGdp2eF0wSw9ra8/edit)
 
 Yours Truly,
 * [@emaxerrno](https://twitter.com/emaxerrno)

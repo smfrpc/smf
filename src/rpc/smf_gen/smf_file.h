@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 #include <flatbuffers/flatbuffers.h>
 #include <flatbuffers/idl.h>
@@ -9,7 +11,7 @@
 
 namespace smf_gen {
 class smf_file {
-  public:
+ public:
   smf_file(const flatbuffers::Parser &parser, const std::string &file_name)
     : parser_(parser), file_name_(file_name) {}
 
@@ -30,7 +32,7 @@ class smf_file {
   }
   int service_count() const {
     return static_cast<int>(parser_.services_.vec.size());
-  };
+  }
   std::unique_ptr<const smf_service> service(int i) const {
     return std::unique_ptr<const smf_service>(
       new smf_service(parser_.services_.vec[i]));
@@ -39,8 +41,8 @@ class smf_file {
     return std::unique_ptr<smf_printer>(new smf_printer(str));
   }
 
-  private:
+ private:
   const flatbuffers::Parser &parser_;
-  const std::string &file_name_;
+  const std::string &        file_name_;
 };
-} // namespace
+}  // namespace smf_gen

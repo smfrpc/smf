@@ -1,19 +1,17 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #include <gtest/gtest.h>
 
 #include "flatbuffers/rpc_generated.h"
 
-using namespace smf;
-using namespace smf::fbs;
-using namespace smf::fbs::rpc;
-using namespace flatbuffers;
-
 
 TEST(HeaderBufferTest, build_read_header) {
-  FlatBufferBuilder fbb;
-  Header hdr(987565, Flags::Flags_ZSTD, 23423);
-  void *buf = (void *)&hdr;
-  std::cout << "sizeof smf::fbs::rpc::Header: " << sizeof(Header) << std::endl;
-  Header *hdr2 = (Header *)(buf);
+  flatbuffers::FlatBufferBuilder fbb;
+  smf::fbs::rpc::Header hdr(987565, smf::fbs::rpc::Flags::Flags_ZSTD, 23423);
+
+  void *                 buf  = reinterpret_cast<void *>(&hdr);
+  smf::fbs::rpc::Header *hdr2 = reinterpret_cast<smf::fbs::rpc::Header *>(buf);
+
   ASSERT_EQ(hdr.size(), hdr2->size());
   ASSERT_EQ(hdr.flags(), hdr2->flags());
   ASSERT_EQ(hdr.checksum(), hdr2->checksum());

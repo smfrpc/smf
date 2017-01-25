@@ -1,9 +1,11 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 // seastar
 #include <core/future.hh>
 #include <core/iostream.hh>
 // smf
-#include "rpc_generated.h"
+#include "flatbuffers/rpc_generated.h"
 // Note: This class has no dependency on seastar so that we can
 // re-use this class w/ the folly::wangle rpc from non-seastar applications
 // don't bring in the seastar dependency
@@ -14,21 +16,22 @@ namespace smf {
 /// compression, etc. Send arbitrary byte arrays to remote host
 ///
 class rpc_envelope {
-  public:
+ public:
   constexpr static size_t kHeaderSize = sizeof(fbs::rpc::Header);
-  static future<> send(output_stream<char> &out, rpc_envelope req);
+
+  static future<> send(output_stream<char> *out, rpc_envelope req);
 
 
   /// \brief convenience method. copy the byte array of the flatbuffer builder
   /// \args buf_to_copy - is a pointer to the flatbuffers after the user called
   /// fbb->finished()
-  rpc_envelope(const flatbuffers::FlatBufferBuilder &fbb);
+  explicit rpc_envelope(const flatbuffers::FlatBufferBuilder &fbb);
 
   /// \brief copy the byte array to internal data structures.
   /// \args buf_to_copy - is a pointer to the byte array to send to remote
   /// convenience method for sending literals. i.e.: rpc_envelope("hello")
   ///
-  rpc_envelope(const char *buf_to_copy);
+  explicit rpc_envelope(const char *buf_to_copy);
 
   /// \brief copy the byte array to internal data structures.
   /// \args buf_to_copy - is a pointer to the byte array to send to remote
@@ -42,7 +45,7 @@ class rpc_envelope {
   /// convenience method for not having to manually cast between seastar &
   /// flatbuffers
   ///
-  rpc_envelope(const sstring &buf_to_copy);
+  explicit rpc_envelope(const sstring &buf_to_copy);
 
   /// \brief copy the byte array to internal data structures.
   /// \args buf_to_copy - is a pointer to the byte array to send to remote
@@ -73,9 +76,9 @@ class rpc_envelope {
 
   /// brief add a key=value pair. the value is always binary up to the user how
   /// to represent
-  void add_dynamic_header(const char *header,
+  void add_dynamic_header(const char *   header,
                           const uint8_t *value,
-                          const size_t &value_len);
+                          const size_t & value_len);
 
   /// \brief returns if the data is finished, useful if you acknowledge that
   /// you might be working w/ unfinished builders/requests
@@ -98,17 +101,19 @@ class rpc_envelope {
     return std::move(compressed_buffer_);
   }
 
-  private:
-  ///\brief shared initialization
+ private:
+  /// \brief shared initialization
   void init(const uint8_t *buf_to_copy, size_t len);
 
-  private:
+ private:
   std::unique_ptr<flatbuffers::FlatBufferBuilder> fbb_ =
     std::make_unique<flatbuffers::FlatBufferBuilder>();
+
   temporary_buffer<char> compressed_buffer_;
-  uint32_t meta_ = 0;
-  bool finished_ = false;
+  uint32_t               meta_     = 0;
+  bool                   finished_ = false;
+
   std::vector<flatbuffers::Offset<fbs::rpc::DynamicHeader>> headers_{};
-  flatbuffers::Offset<flatbuffers::Vector<unsigned char>> user_buf_;
+  flatbuffers::Offset<flatbuffers::Vector<unsigned char>>   user_buf_;
 };
-}
+}  // namespace smf

@@ -161,7 +161,7 @@ int main(int args, char **argv, char **env) {
     smf::LOG_INFO("starting stats");
     return stats.start()
       .then([&rpc, &stats, port] {
-        return rpc.start(std::ref(stats), port)
+        return rpc.start(&stats, port)
           .then([&rpc] {
             smf::LOG_INFO("Registering smf_gen::fbs::rpc::storage_service");
 

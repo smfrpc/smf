@@ -1,9 +1,14 @@
-#include "histogram.h"
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
+#include "./histogram.h"
+// c headers
 #include <cstdlib>
 #include <hdr/hdr_histogram.h>
 #include <hdr/hdr_histogram_log.h>
 
+
 namespace smf {
+
 histogram::histogram() {}
 histogram::histogram(histogram &&o) noexcept : hist_(std::move(o.hist_)) {}
 histogram::histogram(const struct hdr_histogram *copy) noexcept {
@@ -48,13 +53,13 @@ std::unique_ptr<struct histogram_measure> histogram::auto_measure() {
 int histogram::print(FILE *fp) const {
   assert(fp != nullptr);
   return ::hdr_percentiles_print(hist_->hist,
-                                 fp,       // File to write to
-                                 5,        // Granularity of printed values
-                                 1.0,      // Multiplier for results
-                                 CLASSIC); // Format CLASSIC/CSV supported.
+                                 fp,        // File to write to
+                                 5,         // Granularity of printed values
+                                 1.0,       // Multiplier for results
+                                 CLASSIC);  // Format CLASSIC/CSV supported.
 }
 
 histogram::~histogram() {}
 
 
-} // end namespace
+}  // namespace smf

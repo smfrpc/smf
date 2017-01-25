@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 // seastar
 #include <core/app-template.hh>
 #include <core/distributed.hh>
@@ -7,7 +9,6 @@
 #include "log.h"
 #include "priority_manager.h"
 
-using namespace smf;
 
 smf::wal_write_request gen_payload(sstring str) {
   temporary_buffer<char> buf(str.size());
@@ -19,7 +20,7 @@ smf::wal_write_request gen_payload(sstring str) {
 
 int main(int args, char **argv, char **env) {
   smf::DLOG_INFO("About to start the client");
-  app_template app;
+  app_template      app;
   smf::writer_stats wstats;
   // TODO(make distributed wal_writer)
   try {
@@ -41,8 +42,8 @@ int main(int args, char **argv, char **env) {
           });
         });
       });
-    }); // app.run
-  } catch(const std::exception &e) {
+    });  // app.run
+  } catch (const std::exception &e) {
     std::cerr << "Fatal exception: " << e.what() << std::endl;
   }
 }

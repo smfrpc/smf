@@ -1,10 +1,10 @@
-#include "filesystem/wal_name_parser.h"
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #include <gtest/gtest.h>
-
-using namespace smf;
+#include "filesystem/wal_name_parser.h"
 
 TEST(wal_name_parser, basic) {
-  wal_name_parser parser("smf");
+  smf::wal_name_parser parser("smf");
   ASSERT_TRUE(parser("smf0_0.wal"));
 }
 

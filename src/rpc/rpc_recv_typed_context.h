@@ -1,17 +1,19 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 #include "rpc/rpc_recv_context.h"
 namespace smf {
 template <typename T> struct rpc_recv_typed_context {
-  using type = T;
+  using type           = T;
   using opt_recv_ctx_t = std::experimental::optional<rpc_recv_context>;
 
   rpc_recv_typed_context() : ctx(std::experimental::nullopt) {}
-  rpc_recv_typed_context(opt_recv_ctx_t t) : ctx(std::move(t)) {}
+  explicit rpc_recv_typed_context(opt_recv_ctx_t t) : ctx(std::move(t)) {}
   rpc_recv_typed_context(rpc_recv_typed_context<T> &&o) noexcept
     : ctx(std::move(o.ctx)) {}
 
   T *get() {
-    if(ctx) {
+    if (ctx) {
       return flatbuffers::GetMutableRoot<T>(
         ctx.value().payload->mutable_body()->Data());
     }
@@ -27,4 +29,4 @@ template <typename T> struct rpc_recv_typed_context {
   operator bool() const { return ctx.operator bool(); }
   opt_recv_ctx_t ctx;
 };
-}
+}  // namespace smf

@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 #include "flatbuffers/chain_replication.smf.fb.h"
 namespace smf {

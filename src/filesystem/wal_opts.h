@@ -1,12 +1,16 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 // std
 #include <experimental/optional>
 #include <memory>
+#include <utility>
 // seastar
 #include <core/temporary_buffer.hh>
 // smf
 #include "filesystem/wal_writer_utils.h"
 #include "histogram.h"
+
 namespace smf {
 
 struct reader_stats {
@@ -35,9 +39,9 @@ struct reader_stats {
     return *this;
   }
 
-  uint64_t total_reads{0};
-  uint64_t total_bytes{0};
-  uint64_t total_flushes{0};
+  uint64_t                        total_reads{0};
+  uint64_t                        total_bytes{0};
+  uint64_t                        total_flushes{0};
   std::unique_ptr<smf::histogram> hist = std::make_unique<histogram>();
 };
 
@@ -67,9 +71,9 @@ struct writer_stats {
     std::swap(w, *this);
     return *this;
   }
-  uint64_t total_writes{0};
-  uint64_t total_bytes{0};
-  uint64_t total_invalidations{0};
+  uint64_t                        total_writes{0};
+  uint64_t                        total_bytes{0};
+  uint64_t                        total_invalidations{0};
   std::unique_ptr<smf::histogram> hist = std::make_unique<histogram>();
 };
 
@@ -118,11 +122,11 @@ struct wal_opts {
     std::swap(wo, *this);
     return *this;
   }
-  const sstring directory;
+  const sstring  directory;
   const uint64_t cache_size = wal_file_size_aligned() * 2;
-  reader_stats rstats;
-  writer_stats wstats;
-  cache_stats cstats;
+  reader_stats   rstats;
+  writer_stats   wstats;
+  cache_stats    cstats;
 };
 
-} // namespace smf
+}  // namespace smf

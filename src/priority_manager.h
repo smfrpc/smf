@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 // seastar
 #include <core/distributed.hh>
@@ -6,7 +8,7 @@
 /// brief - inspired by the priority manager of scylla
 namespace smf {
 class priority_manager {
-  public:
+ public:
   priority_manager()
     : commitlog_priority_(
         engine().register_one_priority_class("commitlog", 100))
@@ -44,7 +46,7 @@ class priority_manager {
   }
 
 
-  private:
+ private:
   // high
   ::io_priority_class commitlog_priority_;
   ::io_priority_class brissa_query_priority_;
@@ -57,4 +59,4 @@ class priority_manager {
 };
 
 
-} // namespace smf
+}  // namespace smf

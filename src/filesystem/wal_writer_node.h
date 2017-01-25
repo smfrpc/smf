@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 // seastar
 #include <core/fstream.hh>
@@ -6,18 +8,17 @@
 // smf
 #include "filesystem/wal_opts.h"
 #include "filesystem/wal_requests.h"
-#include "filesystem/wal_requests.h"
 #include "filesystem/wal_writer_utils.h"
-#include "flatbuffers/wal_generated.h"
+
 
 namespace smf {
 // TODO(agallego) - use the stats internally now that you have them
 struct wal_writer_node_opts {
-  writer_stats *wstats;
-  sstring prefix;
-  uint64_t epoch = 0;
+  writer_stats * wstats;
+  sstring        prefix;
+  uint64_t       epoch                = 0;
   const uint64_t min_compression_size = 512;
-  const uint64_t file_size = wal_file_size_aligned();
+  const uint64_t file_size            = wal_file_size_aligned();
 };
 
 /// \brief - given a prefix and an epoch (monotinically increasing counter)
@@ -30,7 +31,7 @@ struct wal_writer_node_opts {
 /// to disk, so even during crash we are safe
 ///
 class wal_writer_node {
-  public:
+ public:
   explicit wal_writer_node(wal_writer_node_opts opts);
   /// \brief 0-copy append to buffer
   /// \return the starting offset on file for this put
@@ -59,7 +60,7 @@ class wal_writer_node {
     return opts_.min_compression_size + sizeof(fbs::wal::wal_header);
   }
 
-  private:
+ private:
   future<> rotate_fstream();
   /// \brief 0-copy append to buffer
   future<> do_append(wal_write_request);
@@ -67,11 +68,11 @@ class wal_writer_node {
   future<> do_append_with_header(fbs::wal::wal_header, wal_write_request);
   future<> pad_end_of_file();
 
-  private:
+ private:
   wal_writer_node_opts opts_;
-  output_stream<char> fstream_;
-  uint64_t current_size_ = 0;
-  bool closed_ = false;
+  output_stream<char>  fstream_;
+  uint64_t             current_size_ = 0;
+  bool                 closed_       = false;
 };
 
-} // namespace smf
+}  // namespace smf

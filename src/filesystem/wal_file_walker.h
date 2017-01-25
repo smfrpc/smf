@@ -1,4 +1,9 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
+// std
+#include <utility>
+// third party
 #include <core/file.hh>
 // smf
 #include "filesystem/wal_name_parser.h"
@@ -14,18 +19,20 @@ struct wal_file_walker {
   virtual future<> visit(directory_entry wal_file_entry) = 0;
 
   virtual future<> dir_visit(directory_entry de) final {
-    if(de.type && de.type == directory_entry_type::regular) {
+    if (de.type && de.type == directory_entry_type::regular) {
       // operator >(const T&) is not defined, but operator <(const T&) is
-      if(name_parser(de.name)) {
+      if (name_parser(de.name)) {
         return visit(std::move(de));
       }
     }
     return make_ready_future<>();
   }
-  virtual future<> close() { return listing.done(); }
-  file directory;
-  wal_name_parser name_parser;
+
+  future<> close() { return listing.done(); }
+
+  file                          directory;
+  wal_name_parser               name_parser;
   subscription<directory_entry> listing;
 };
 
-} // namespace smf
+}  // namespace smf

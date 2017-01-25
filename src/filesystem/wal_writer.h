@@ -1,3 +1,5 @@
+// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+//
 #pragma once
 #include <memory>
 // third party
@@ -8,7 +10,7 @@
 
 namespace smf {
 class wal_writer {
-  public:
+ public:
   wal_writer(sstring _directory, writer_stats *s);
   wal_writer(const wal_writer &o) = delete;
   wal_writer(wal_writer &&o) noexcept;
@@ -26,14 +28,14 @@ class wal_writer {
   /// \brief current working directory for wal files
   const sstring directory;
 
-  private:
+ private:
   future<> do_open();
   future<> open_empty_dir(sstring prefix);
   future<> open_non_empty_dir(sstring last_file, sstring prefix);
 
-  private:
-  writer_stats *wstats_;
+ private:
+  writer_stats *                   wstats_;
   std::unique_ptr<wal_writer_node> writer_ = nullptr;
 };
 
-} // namespace smf
+}  // namespace smf
