@@ -44,7 +44,7 @@ register_fast_test (wal_epoch_extractor ${TEST_ROOT}/wal_epoch_extractor)
 
 
 add_executable(file_size_utils ${TEST_ROOT}/file_size_utils/main.cc)
-target_link_libraries(file_size_utils -lgtest)
+target_link_libraries(file_size_utils -lgtest smf_filesystem)
 register_fast_test (file_size_utils ${TEST_ROOT}/file_size_utils)
 
 add_executable(human_bytes_printing_utils

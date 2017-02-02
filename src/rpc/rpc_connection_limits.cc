@@ -3,6 +3,7 @@
 #include "rpc/rpc_connection_limits.h"
 #include <fmt/format.h>
 #include "human_bytes_printing_utils.h"
+#include "log.h"
 
 namespace smf {
 
@@ -19,12 +20,11 @@ size_t rpc_connection_limits::estimate_request_size(size_t serialized_size) {
 }
 
 future<> rpc_connection_limits::wait_for_resources(size_t memory_consumed) {
-  if (memory_consumed > max_memory) {
-    auto s = fmt::format(
-      "memory to serve request `{}`, exceeds max available memory `{}`",
-      memory_consumed, max_memory);
-    throw std::runtime_error(s.c_str());
-  }
+  LOG_THROW_IF(
+    memory_consumed > max_memory,
+    "memory to serve request `{}`, exceeds max available memory `{}`",
+    memory_consumed, max_memory);
+
   return resources_available.wait(memory_consumed);
 }
 
