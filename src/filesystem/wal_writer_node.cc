@@ -29,39 +29,31 @@ uint64_t wal_write_request_size(const wal_write_request &req) {
 }
 
 
-wal_writer_node::wal_writer_node(wal_writer_node_opts opts) : opts_(opts) {
+wal_writer_node::wal_writer_node(wal_writer_node_opts &&opts)
+  : opts_(std::move(opts)) {
   LOG_THROW_IF(opts_.file_size < min_entry_size(),
                "file size `{}` cannot be smaller than min_entry_size `{}`",
                opts_.file_size, min_entry_size());
+  LOG_THROW_IF(opts_.fs_manager == nullptr, "Empty file manager");
 }
 
 future<> wal_writer_node::open() {
   const auto name = wal_file_name(opts_.prefix, opts_.epoch);
   LOG_TRACE("Creating new WAL file {}", name);
-  // the file should fail if it exists. It should not exist on disk, as
-  // we'll truncate them
-  return open_file_dma(
-           name, open_flags::rw | open_flags::create | open_flags::truncate)
-    .then([this](file f) {
-      fstream_ = make_file_output_stream(std::move(f), fstream_opts(opts_));
-      return make_ready_future<>();
-    });
+
+  lease_ = opts_.fs_manager->get_file_lease(name, fstream_opts(opts_));
+  return lease_->open();
 }
 
 // this might not be needed. hehe.
 future<> wal_writer_node::do_append_with_header(fbs::wal::wal_header h,
                                                 wal_write_request    req) {
-  // TODO(agallego):
-  // https://groups.google.com/forum/?hl=en#!topic/seastar-dev/SY-VG9xPVaY
-  // buffers need to be aligned on the filesystem
-  // so it's better if you let the underlying system copy
-  // them - pending my fix to merge upstream
   current_size_ += kWalHeaderSize;
-  return fstream_.write((const char *)&h, kWalHeaderSize).then([
+  return lease_->append((const char *)&h, kWalHeaderSize).then([
     this, req = std::move(req)
   ]() mutable {
     current_size_ += req.data.size();
-    return fstream_.write(req.data.get(), req.data.size());
+    return lease_->append(req.data.get(), req.data.size());
   });
 }
 
@@ -113,7 +105,7 @@ future<> wal_writer_node::pad_end_of_file() {
   // are also page-cache multiples.
   temporary_buffer<char> zero(space_left());
   std::memset(zero.get_write(), 0, zero.size());
-  return fstream_.write(zero.get(), zero.size());
+  return lease_->append(zero.get(), zero.size());
 }
 future<uint64_t> wal_writer_node::append(wal_write_request req) {
   const auto offset = opts_.epoch += current_size_;
@@ -150,9 +142,7 @@ future<> wal_writer_node::do_append(wal_write_request req) {
 }
 
 future<> wal_writer_node::close() {
-  assert(!closed_);
-  closed_ = true;
-  return fstream_.flush().then([this] { return fstream_.close(); });
+  return lease_->close().finally([this] { lease_ = nullptr; });
 }
 wal_writer_node::~wal_writer_node() {
   LOG_ERROR_IF(!closed_, "File {} was not closed, possible data loss",

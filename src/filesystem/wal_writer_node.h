@@ -14,8 +14,11 @@
 namespace smf {
 // TODO(agallego) - use the stats internally now that you have them
 struct wal_writer_node_opts {
-  writer_stats * wstats;
-  sstring        prefix;
+  writer_stats *wstats;
+  sstring       prefix;
+
+  std::unique_ptr<wal_file_manager> fs_manager;
+
   uint64_t       epoch                = 0;
   const uint64_t min_compression_size = 512;
   const uint64_t file_size            = wal_file_size_aligned();
@@ -32,7 +35,7 @@ struct wal_writer_node_opts {
 ///
 class wal_writer_node {
  public:
-  explicit wal_writer_node(wal_writer_node_opts opts);
+  explicit wal_writer_node(wal_writer_node_opts &&opts);
   /// \brief 0-copy append to buffer
   /// \return the starting offset on file for this put
   ///
@@ -70,9 +73,9 @@ class wal_writer_node {
 
  private:
   wal_writer_node_opts opts_;
-  output_stream<char>  fstream_;
   uint64_t             current_size_ = 0;
-  bool                 closed_       = false;
+
+  std::unique_ptr<wal_writer_file_lease> lease_ = nullptr;
 };
 
 }  // namespace smf

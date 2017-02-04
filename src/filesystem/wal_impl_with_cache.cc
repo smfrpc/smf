@@ -26,7 +26,6 @@ future<> wal_impl_with_cache::invalidate(uint64_t epoch) {
     [this, epoch] { return writer_->invalidate(epoch); });
 }
 
-// this nees to change
 future<wal_opts::maybe_buffer> wal_impl_with_cache::get(wal_read_request req) {
   uint64_t offset = req.offset;
   return cache_->get(offset).then([this, req = std::move(req)](auto maybe_buf) {
