@@ -11,7 +11,6 @@ rpc_server_stats_printer::rpc_server_stats_printer(
 
 void rpc_server_stats_printer::start() {
   timer_.set_callback([this] {
-    ++timer_callback_counter_;
     aggregate_stats().then(
       [this](rpc_server_stats stats) { LOG_INFO("{}", stats); });
   });

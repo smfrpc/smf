@@ -66,9 +66,10 @@ int main(int args, char **argv, char **env) {
                                            uint32_t(0), p};
                   return x.get(std::move(rq)).then([i](auto read_result) {
                     assert(read_result);
-                    assert(read_result->size() == std::strlen(kPayload));
+                    auto size = read_result->fragments.front().data.size();
+                    assert(size == std::strlen(kPayload));
                     smf::DLOG_INFO("Got result from a read with size: {}",
-                                   read_result->size());
+                                   size);
                     reducible_append ra;
                     ra.v.insert(i);
                     return std::move(ra);

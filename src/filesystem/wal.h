@@ -16,9 +16,9 @@ namespace smf {
 class wal_iface {
  public:
   /// \brief returns starting offset off a successful write
-  virtual future<uint64_t> append(wal_write_request req)           = 0;
-  virtual future<> invalidate(uint64_t epoch)                      = 0;
-  virtual future<wal_opts::maybe_buffer> get(wal_read_request req) = 0;
+  virtual future<uint64_t> append(wal_write_request req)          = 0;
+  virtual future<> invalidate(uint64_t epoch)                     = 0;
+  virtual future<wal_read_reply::maybe> get(wal_read_request req) = 0;
 
   // \brief filesystem monitoring
   virtual future<> open()  = 0;
@@ -51,7 +51,7 @@ class shardable_wal : public wal_iface {
   inline future<> invalidate(uint64_t epoch) final {
     return w_->invalidate(epoch);
   }
-  inline future<wal_opts::maybe_buffer> get(wal_read_request req) final {
+  inline future<wal_read_reply::maybe> get(wal_read_request req) final {
     return w_->get(std::move(req));
   }
   inline future<> open() final { return w_->open(); }

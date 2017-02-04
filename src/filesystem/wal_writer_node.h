@@ -8,8 +8,8 @@
 // smf
 #include "filesystem/wal_opts.h"
 #include "filesystem/wal_requests.h"
+#include "filesystem/wal_writer_file_lease.h"
 #include "filesystem/wal_writer_utils.h"
-
 
 namespace smf {
 // TODO(agallego) - use the stats internally now that you have them
@@ -32,7 +32,7 @@ struct wal_writer_node_opts {
 ///
 class wal_writer_node {
  public:
-  explicit wal_writer_node(wal_writer_node_opts opts);
+  explicit wal_writer_node(wal_writer_node_opts &&opts);
   /// \brief 0-copy append to buffer
   /// \return the starting offset on file for this put
   ///
@@ -69,10 +69,9 @@ class wal_writer_node {
   future<> pad_end_of_file();
 
  private:
-  wal_writer_node_opts opts_;
-  output_stream<char>  fstream_;
-  uint64_t             current_size_ = 0;
-  bool                 closed_       = false;
+  wal_writer_node_opts                   opts_;
+  uint64_t                               current_size_ = 0;
+  std::unique_ptr<wal_writer_file_lease> lease_        = nullptr;
 };
 
 }  // namespace smf

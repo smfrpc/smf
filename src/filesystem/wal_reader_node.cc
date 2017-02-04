@@ -27,14 +27,15 @@ future<> wal_reader_node::open() {
   });
 }
 
-future<wal_opts::maybe_buffer> wal_reader_node::get(wal_read_request r) {
-  if (r.offset + r.size <= ending_epoch() && r.offset >= starting_epoch) {
-    return io_->read(r.offset, r.size).then([](auto buf) {
+future<wal_read_reply::maybe> wal_reader_node::get(wal_read_request r) {
+  if (r.offset >= starting_epoch) {
+    auto max_read_size = std::min(r.size, ending_epoch() - r.offset);
+    return io_->read(r.offset, max_read_size).then([](auto buf) {
       // TODO(agallego) - add stats
-      return make_ready_future<wal_opts::maybe_buffer>(std::move(buf));
+      return make_ready_future<wal_read_reply::maybe>(std::move(buf));
     });
   }
-  return make_ready_future<wal_opts::maybe_buffer>();
+  return make_ready_future<wal_read_reply::maybe>();
 }
 
 }  // namespace smf

@@ -103,8 +103,6 @@ struct cache_stats {
 // this should probably be a sharded<wal_otps> &
 // like the tcp server no?
 struct wal_opts {
-  using maybe_buffer = std::experimental::optional<temporary_buffer<char>>;
-
   explicit wal_opts(sstring log_directory) : directory(log_directory) {}
   wal_opts(wal_opts &&o) noexcept : directory(std::move(o.directory)),
                                     cache_size(o.cache_size),

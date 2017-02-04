@@ -19,7 +19,7 @@ class wal_impl_with_cache : public wal {
   future<> open() final;
   future<> close() final;
 
-  future<wal_opts::maybe_buffer> get(wal_read_request req) final;
+  future<wal_read_reply::maybe> get(wal_read_request req) final;
 
  private:
   std::unique_ptr<wal_writer>    writer_ = nullptr;

@@ -13,13 +13,15 @@
 
 
 namespace smf {
-wal_reader_visitor::wal_reader_visitor(wal_reader *r, file dir, sstring prefix)
-  : wal_file_walker(std::move(dir), std::move(prefix)), reader(r) {}
 
-future<> wal_reader_visitor::visit(directory_entry wal_file_entry) {
-  return reader->monitor_files(std::move(wal_file_entry));
+wal_reader_visitor::wal_reader_visitor(wal_reader *r, file dir)
+  : wal_file_walker(std::move(dir)), reader(r) {}
+future<> wal_reader_visitor::visit(directory_entry de) {
+  if (is_name_locked(de)) {
+    return make_ready_future<>();
+  }
+  return reader->monitor_files(std::move(de));
 }
-
 }  // namespace smf
 
 namespace smf {
@@ -61,15 +63,21 @@ future<> wal_reader::open() {
   });
 }
 
-future<wal_opts::maybe_buffer> wal_reader::get(wal_read_request r) {
+/// FIXME(agallego) - you need to break it into multiple read requests and
+/// combine them. This does not work for page based requests.
+future<wal_read_reply::maybe> wal_reader::get(wal_read_request r) {
   auto it = buckets_.lower_bound(r.offset);
   if (it != buckets_.end()) {
     if (r.offset >= it->node->starting_epoch
         && r.offset <= it->node->ending_epoch()) {
+      // BUG(agallego) this doesn't make any sense...
+      // first... there is no semantic menaing of the header, so the
+      // header written by the writer is not understood by the reader
+
       return it->node->get(std::move(r));
     }
   }
-  return make_ready_future<wal_opts::maybe_buffer>();
+  return make_ready_future<wal_read_reply::maybe>();
 }
 
 

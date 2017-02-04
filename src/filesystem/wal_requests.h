@@ -1,9 +1,12 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #pragma once
+#include <list>
 #include <utility>
 // third party
 #include <core/fair_queue.hh>
+// generated
+#include "flatbuffers/wal_generated.h"
 
 class io_priority_class;
 
@@ -24,6 +27,33 @@ struct wal_read_request {
   uint32_t flags;
 
   const ::io_priority_class &pc;
+};
+
+
+struct wal_read_reply {
+  using maybe = std::experimental::optional<wal_read_reply>;
+
+  struct fragment {
+    fragment(fbs::wal::wal_header h, temporary_buffer<char> d)
+      : hdr(std::move(h)), data(std::move(d)) {}
+    explicit fragment(temporary_buffer<char> d) : data(std::move(d)) {
+      hdr.mutate_size(data.size());
+      hdr.mutate_flags(fbs::wal::wal_entry_flags::wal_entry_flags_full_frament);
+    }
+
+
+    fbs::wal::wal_header   hdr;
+    temporary_buffer<char> data;
+  };
+
+  wal_read_reply() = default;
+  // forward ctor
+  explicit wal_read_reply(temporary_buffer<char> d)
+    : wal_read_reply(fragment(std::move(d))) {}
+
+  explicit wal_read_reply(fragment &&f) { fragments.push_back(std::move(f)); }
+
+  std::list<wal_read_reply::fragment> fragments{};
 };
 
 enum wal_write_request_flags : uint32_t {

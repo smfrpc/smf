@@ -4,7 +4,10 @@
 // std
 #include <memory>
 #include <utility>
+// third party
+#include <core/reactor.hh>
 // smf
+#include "filesystem/wal_file_name_mender.h"
 #include "filesystem/wal_requests.h"
 
 namespace smf {
@@ -26,19 +29,34 @@ future<> wal_impl_with_cache::invalidate(uint64_t epoch) {
     [this, epoch] { return writer_->invalidate(epoch); });
 }
 
-// this nees to change
-future<wal_opts::maybe_buffer> wal_impl_with_cache::get(wal_read_request req) {
+future<wal_read_reply::maybe> wal_impl_with_cache::get(wal_read_request req) {
   uint64_t offset = req.offset;
   return cache_->get(offset).then([this, req = std::move(req)](auto maybe_buf) {
     if (!maybe_buf) {
       return reader_->get(std::move(req));
     }
-    return make_ready_future<wal_opts::maybe_buffer>(std::move(maybe_buf));
+    return make_ready_future<wal_read_reply::maybe>(std::move(maybe_buf));
   });
 }
 
 future<> wal_impl_with_cache::open() {
-  return writer_->open().then([this] { return reader_->open(); });
+  auto dir = opts.directory;
+  return file_exists(dir)
+    .then([dir](bool exists) {
+      if (exists) {
+        return make_ready_future<>();
+      }
+      return make_directory(dir);
+    })
+    .then([this, dir] {
+      return open_directory(dir).then([this](file f) {
+        auto l = make_lw_shared<wal_file_name_mender>(std::move(f));
+        return l->close().finally([l] {});
+      });
+    })
+    .then([this] {
+      return writer_->open().then([this] { return reader_->open(); });
+    });
 }
 
 future<> wal_impl_with_cache::close() {

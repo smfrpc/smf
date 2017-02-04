@@ -24,7 +24,7 @@ class wal_reader_node {
   future<> close();
   future<> open();
 
-  future<wal_opts::maybe_buffer> get(wal_read_request r);
+  future<wal_read_reply::maybe> get(wal_read_request r);
 
   inline uint64_t file_size() { return io_->file_size; }
   inline uint64_t ending_epoch() const {

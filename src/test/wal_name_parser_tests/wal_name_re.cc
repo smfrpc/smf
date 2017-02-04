@@ -4,8 +4,8 @@
 #include "filesystem/wal_name_parser.h"
 
 TEST(wal_name_parser, basic) {
-  smf::wal_name_parser parser("smf");
-  ASSERT_TRUE(parser("smf0_0.wal"));
+  smf::wal_name_parser parser;
+  ASSERT_TRUE(parser("core:0:locked:smf0_0.wal"));
 }
 
 int main(int argc, char **argv) {

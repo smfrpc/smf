@@ -8,10 +8,6 @@ namespace smf.fbs.rpc;
 enum Flags:uint (bit_flags) {
   /// \brief check the compressed payload if enabled.
   CHECKSUM,
-
-  /// uses flatbuffers schema verification
-  VERIFY_SCHEMA,
-
   /// \brief the payload is compressed using zstandrad 1.0
   ZSTD
 }

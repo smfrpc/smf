@@ -1,0 +1,18 @@
+---
+
+- unarchive:
+    src: "http://lcamtuf.coredump.cx/afl/releases/afl-2.39b.tgz"
+    copy: False
+    dest: '{{goobly_cache_dir}}/'
+    creates: '{{goobly_cache_dir}}/afl-2.39b'
+    remote_src: True
+
+- shell: "git init . && git add . && git commit -am buildsys"
+  args:
+    chdir: '{{goobly_cache_dir}}/afl-2.39b'
+    creates: '{{goobly_cache_dir}}/afl-2.39b/.git'
+
+- shell: "make install -j$((({{ansible_processor_vcpus}}-1))) PREFIX={{third_party_dir}}"
+  args:
+    chdir: '{{goobly_cache_dir}}/afl-2.39b'
+    creates: '{{third_party_dir}}/bin/afl-g++'

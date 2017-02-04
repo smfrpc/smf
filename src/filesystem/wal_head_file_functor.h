@@ -37,16 +37,13 @@ struct wal_head_file_min_comparator {
 ///       });
 ///
 template <typename Comparator> struct wal_head_file_functor : wal_file_walker {
-  explicit wal_head_file_functor(file dir, sstring prefix = "smf")
-    : wal_file_walker(std::move(dir), std::move(prefix)) {}
-
+  explicit wal_head_file_functor(file dir) : wal_file_walker(std::move(dir)) {}
   future<> visit(directory_entry de) final {
     if (comparator(last_file, de.name)) {
       last_file = de.name;
     }
     return make_ready_future<>();
   }
-
   sstring    last_file;
   Comparator comparator{};
 };

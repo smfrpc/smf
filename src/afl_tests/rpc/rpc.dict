@@ -1,0 +1,14 @@
+# Copyright (c) 2017 Alexander Gallego. All rights reserved.
+#
+#
+# AFL dictionary for smf RPC
+# --------------------------
+#
+# Several basic syntax elements and attributes, modeled on rpc.fbs.
+#
+#
+
+header_size="1"
+header_flags="1"
+header_checksum="1"
+payload="\x89\x0d\x0a\x1a\x0a"

@@ -36,7 +36,7 @@ future<> wal_writer::open_empty_dir(sstring prefix) {
   wal_writer_node_opts wo;
   wo.wstats = wstats_;
   wo.prefix = prefix + id;
-  writer_   = std::make_unique<wal_writer_node>(wo);
+  writer_   = std::make_unique<wal_writer_node>(std::move(wo));
   return writer_->open();
 }
 
@@ -63,9 +63,9 @@ future<> wal_writer::do_open() {
     auto l = make_lw_shared<wal_head_file_max_functor>(std::move(f));
     return l->close().then([l, this]() {
       if (l->last_file.empty()) {
-        return open_empty_dir(l->name_parser.prefix);
+        return open_empty_dir("smf");
       }
-      return open_non_empty_dir(l->last_file, l->name_parser.prefix);
+      return open_non_empty_dir(l->last_file, "smf");
     });
   });
 }

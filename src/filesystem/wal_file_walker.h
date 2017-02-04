@@ -10,9 +10,8 @@
 
 namespace smf {
 struct wal_file_walker {
-  wal_file_walker(file d, sstring prefix)
+  wal_file_walker(file d)
     : directory(std::move(d))
-    , name_parser(std::move(prefix))
     , listing(directory.list_directory(
         [this](directory_entry de) { return dir_visit(de); })) {}
 
@@ -29,6 +28,17 @@ struct wal_file_walker {
   }
 
   future<> close() { return listing.done(); }
+
+  sstring name_without_prefix(const directory_entry e) {
+    auto pos = locked_pos(e) + 7;  // might be + 1
+    return sstring(e.name.data() + pos, e.name.size() - pos);
+  }
+  size_t locked_pos(const directory_entry e) const {
+    return e.name.find("locked:");
+  }
+  bool is_name_locked(const directory_entry e) const {
+    return locked_pos(e) == sstring::npos;
+  }
 
   file                          directory;
   wal_name_parser               name_parser;

@@ -6,7 +6,7 @@
 namespace smf {
 
 uint64_t extract_epoch(const sstring &filename) {
-  static const re2::RE2 kFileNameEpochExtractorRE("[a-zA-Z\\d]+_(\\d+)\\.wal");
+  static const re2::RE2 kFileNameEpochExtractorRE("[:a-zA-Z\\d]+_(\\d+)\\.wal");
   uint64_t              retval = 0;
   re2::RE2::FullMatch(filename.c_str(), kFileNameEpochExtractorRE, &retval);
   return retval;

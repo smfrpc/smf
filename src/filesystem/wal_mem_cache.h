@@ -60,13 +60,13 @@ class wal_mem_cache {
     return make_ready_future<uint64_t>(virtual_offset);
   }
 
-  future<wal_opts::maybe_buffer> get(uint64_t offset) {
+  future<wal_read_reply::maybe> get(uint64_t offset) {
     auto it = puts_.find(offset);
     if (it != puts_.end()) {
       temporary_buffer<char> tmp(it->data.get(), it->data.size());
-      return make_ready_future<wal_opts::maybe_buffer>(std::move(tmp));
+      return make_ready_future<wal_read_reply::maybe>(std::move(tmp));
     }
-    return make_ready_future<wal_opts::maybe_buffer>();
+    return make_ready_future<wal_read_reply::maybe>();
   }
 
   /// brief - invalidates

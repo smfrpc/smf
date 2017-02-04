@@ -15,7 +15,7 @@
 namespace smf {
 class wal_reader;
 struct wal_reader_visitor : wal_file_walker {
-  wal_reader_visitor(wal_reader *r, file dir, sstring prefix = "smf");
+  wal_reader_visitor(wal_reader *r, file dir);
   future<> visit(directory_entry wal_file_entry) final;
   wal_reader *reader;
 };
@@ -50,7 +50,7 @@ class wal_reader {
   future<> open();
   future<> close();
   /// brief - returns the next record in the log
-  future<wal_opts::maybe_buffer> get(wal_read_request req);
+  future<wal_read_reply::maybe> get(wal_read_request req);
 
   const sstring directory;
 

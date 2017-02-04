@@ -24,7 +24,6 @@ class rpc_server_stats_printer {
 
  private:
   timer<>                        timer_;
-  uint32_t                       timer_callback_counter_{0};
   distributed<rpc_server_stats> *stats_;
   duration_t                     period_;
 };

@@ -43,14 +43,9 @@
     update=yes
     recursive=yes
     force=yes
-    version='7790e'
+    version='f07f8ed'
 
-# TODO(agallego): at HEAD as of Nov 27 2016, seastar's dpdk has
-# https://github.com/scylladb/seastar/issues/217
-# compilation issues. - enable later with old command - debug later
-# - command: ./configure.py --enable-dpdk
-#
-- command: ./configure.py
+- command: ./configure.py --enable-dpdk
   args:
     chdir: '{{goobly_cache_dir}}/seastar'
     creates: '{{goobly_cache_dir}}/seastar/build.ninja'
