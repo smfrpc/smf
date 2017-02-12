@@ -10,15 +10,15 @@
 namespace smf {
 struct wal_head_file_max_comparator {
   bool operator()(const sstring &current, const sstring &new_file) {
-    auto current_epoch = extract_epoch(current);
-    auto new_epoch     = extract_epoch(new_file);
+    auto current_epoch = wal_name_extractor_utils::extract_epoch(current);
+    auto new_epoch     = wal_name_extractor_utils::extract_epoch(new_file);
     return current_epoch <= new_epoch;
   }
 };
 struct wal_head_file_min_comparator {
   bool operator()(const sstring &current, const sstring &new_file) {
-    auto current_epoch = extract_epoch(current);
-    auto new_epoch     = extract_epoch(new_file);
+    auto current_epoch = wal_name_extractor_utils::extract_epoch(current);
+    auto new_epoch     = wal_name_extractor_utils::extract_epoch(new_file);
     return current_epoch >= new_epoch;
   }
 };

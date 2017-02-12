@@ -8,25 +8,25 @@
 
 TEST(wal_head_file_functor_min, comparator) {
   smf::wal_head_file_min_comparator c;
-  const sstring                     kMin("smf0_0.wal");
+  const sstring                     kMin("1:0:0.wal");
   for (uint32_t i = 1; i < 10; ++i) {
-    ASSERT_FALSE(c(kMin, sstring("smf0_") + to_sstring(i * i) + ".wal"));
+    ASSERT_FALSE(c(kMin, sstring("1:0:0:") + to_sstring(i * i) + ".wal"));
   }
 }
 TEST(wal_head_file_functor_min, nil) {
   smf::wal_head_file_min_comparator c;
-  ASSERT_TRUE(c("smf0_0.wal", ""));
+  ASSERT_TRUE(c("1:0:0.wal", ""));
 }
 TEST(wal_head_file_functor_max, comparator) {
   smf::wal_head_file_max_comparator c;
-  const sstring                     kMin("smf0_0.wal");
+  const sstring                     kMin("1:0:0.wal");
   for (uint32_t i = 1; i < 10; ++i) {
-    ASSERT_TRUE(c(kMin, sstring("smf0_") + to_sstring(i * i) + ".wal"));
+    ASSERT_TRUE(c(kMin, sstring("1:0:") + to_sstring(i * i) + ".wal"));
   }
 }
 TEST(wal_head_file_functor_max, nil) {
   smf::wal_head_file_max_comparator c;
-  ASSERT_TRUE(c("smf0_0.wal", ""));
+  ASSERT_TRUE(c("1:0:0.wal", ""));
 }
 
 

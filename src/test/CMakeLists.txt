@@ -32,11 +32,6 @@ add_executable (simple_flatbuffers_tests ${TEST_ROOT}/flatbuffers/simple.cc)
 target_link_libraries(simple_flatbuffers_tests -lgtest smfrpc)
 register_fast_test (simple_flatbuffers_tests ${TEST_ROOT}/flatbuffers)
 
-
-add_executable(wal_name_re ${TEST_ROOT}/wal_name_parser_tests/wal_name_re.cc)
-target_link_libraries(wal_name_re -lgtest smf_filesystem)
-register_fast_test (wal_name_re ${TEST_ROOT}/wal_name_parser_tests)
-
 add_executable(wal_epoch_extractor
   ${TEST_ROOT}/wal_epoch_extractor/wal_epoch_extractor_test.cc)
 target_link_libraries(wal_epoch_extractor -lgtest smf_filesystem)

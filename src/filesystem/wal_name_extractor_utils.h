@@ -5,9 +5,27 @@
 #include <core/sstring.hh>
 
 namespace smf {
+struct wal_name_extractor_utils {
+  /// \brief extract a uint64_t epoch out of a write ahead log name
+  /// "1234:0:<epoch>...wal"
+  static uint64_t extract_epoch(const sstring &filename);
+  /// \brief extract a uint64_t core out of a write ahead log name
+  /// "<microsec>:<core>:<epoch>.wal" - 1234:0:0.wal -> core 0
+  static uint64_t extract_core(const sstring &filename);
+  /// \brief determines if is a wal_file or not
+  /// "<microsec>:<core>:<epoch>.wal" - 1234:0:0.wal -> core 0
+  static bool is_wal_file_name(const sstring &filename);
 
-/// \brief extract a uint64_t epoch out of a write ahead log name
-/// "smf0_<epoch>...wal"
-uint64_t extract_epoch(const sstring &filename);
+  /// \brief return name of \s without the locked prefix.
+  /// i.e.: without locked:1234:0:0.wal -> 1234:0:0.wal
+  static sstring name_without_prefix(const sstring &s);
+
+  /// \brief return the position in the string that is locked
+  static size_t locked_pos(const sstring &s);
+
+  /// \brief determine if the name of the file is locked via
+  /// i.e.: `locked:smf:0:0.wal`
+  static bool is_name_locked(const sstring &s);
+};
 
 }  // namespace smf

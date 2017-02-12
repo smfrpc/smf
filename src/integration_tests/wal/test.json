@@ -1,4 +1,9 @@
 {
-  "args": ["-c 1", "-m 1G"],
-  "tmp_home": true
+  "args": ["-c 2", "-m 1G"],
+  "tmp_home": true,
+  "repeat_in_same_dir": true,
+  "repeat_times": 2,
+  "copy_files": [
+    "*.wal"
+  ]
 }

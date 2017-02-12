@@ -7,7 +7,7 @@
 namespace smf {
 
 /// \brief changes the filename while it's being written to:
-///   "core:<id>:locked:" + filename
+///   "locked:" + filename
 /// upon successful closing of the stream, it will rename it to the correct
 /// name. It is also open w/ exclusive acess. Any other thread accessing the
 /// file will fail/throw. Caller must ensure that only one filename is
@@ -22,7 +22,7 @@ namespace smf {
 ///
 /// The tradeoff here is that since we change the filename, we rely on the
 /// filesystem manger to "heal" the files. That is during startup,
-/// rename all the files that start w/ core:<id>:locked to remove the prefix.
+/// rename all the files that start w/ locked: to remove the prefix.
 ///
 class wal_writer_file_lease_impl : public virtual wal_writer_file_lease {
  public:
@@ -67,8 +67,7 @@ class wal_writer_file_lease_impl : public virtual wal_writer_file_lease {
   }
 
   static const sstring &lock_prefix() {
-    static thread_local const sstring id = to_sstring(engine().cpu_id());
-    static thread_local const sstring kCorePrefix = "core:" + id + "locked:";
+    static thread_local const sstring kCorePrefix = "locked:";
     return kCorePrefix;
   }
 

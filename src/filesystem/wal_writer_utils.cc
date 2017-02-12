@@ -22,7 +22,7 @@ uint64_t wal_file_size_aligned() {
 }
 
 sstring wal_file_name(const sstring &prefix, uint64_t epoch) {
-  return prefix + "_" + to_sstring(epoch) + ".wal";
+  return prefix + ":" + to_sstring(epoch) + ".wal";
 }
 
 }  // namespace smf

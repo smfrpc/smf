@@ -17,7 +17,7 @@ namespace smf {
 wal_reader_visitor::wal_reader_visitor(wal_reader *r, file dir)
   : wal_file_walker(std::move(dir)), reader(r) {}
 future<> wal_reader_visitor::visit(directory_entry de) {
-  if (is_name_locked(de)) {
+  if (wal_name_extractor_utils::is_name_locked(de.name)) {
     return make_ready_future<>();
   }
   return reader->monitor_files(std::move(de));
@@ -39,7 +39,7 @@ wal_reader::wal_reader(wal_reader &&o) noexcept
 wal_reader::~wal_reader() {}
 
 future<> wal_reader::monitor_files(directory_entry entry) {
-  auto e = extract_epoch(entry.name);
+  auto e = wal_name_extractor_utils::extract_epoch(entry.name);
   if (buckets_.find(e) == buckets_.end()) {
     auto n = std::make_unique<wal_reader_node>(e, entry.name, rstats_);
     allocated_.emplace_back(std::move(n));

@@ -9,6 +9,8 @@ import argparse
 import tempfile
 import os.path
 import json
+import glob
+import shutil
 
 fmt_string='%(levelname)s:%(asctime)s %(filename)s:%(lineno)d] %(message)s'
 logging.basicConfig(format=fmt_string)
@@ -59,7 +61,7 @@ def test_environ():
     return e
 
 
-def execute(cmd, environ):
+def run_subprocess(cmd, environ):
     logger.info("Executing test: %s" % cmd)
     popen = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                              # buffer one line at a time
@@ -73,28 +75,71 @@ def execute(cmd, environ):
     if return_code and return_code != 0:
         raise subprocess.CalledProcessError(return_code, cmd)
 
-def load_test_config(directory):
-    test_cfg = directory + "/test.json"
-    if os.path.isfile(test_cfg) is not True:
-        return None
-    json_data = open(test_cfg).read()
-    return json.loads(json_data)
-
-
-def exec_test(binary, source_dir):
+def set_up_test_environment(cfg):
     test_env = test_environ()
-    cfg = load_test_config(source_dir)
-    if cfg is None:
-        return execute(binary, test_env)
+    dirpath = os.getcwd()
     if cfg.has_key("tmp_home"):
         dirpath = tempfile.mkdtemp()
         logger.info("Executing test in tmp dir %s" % dirpath)
         os.chdir(dirpath)
         test_env["HOME"]=dirpath
+    if cfg.has_key("copy_files"):
+        files_to_copy = cfg["copy_files"]
+        if isinstance(files_to_copy, list):
+            for f in files_to_copy:
+                ff = cfg["source_directory"] + "/" + f
+                for glob_file in glob.glob(ff):
+                    shutil.copy(glob_file, dirpath)
+    cfg["execution_directory"]=dirpath
+    return test_env
+
+
+def clean_test_resources(cfg):
+    if cfg.has_key("execution_directory"):
+        exec_dir = cfg["execution_directory"]
+        if exec_dir.startswith("/tmp/"):
+            if cfg.has_key("remove_test_dir") and \
+               cfg["remove_test_dir"] is False:
+                logger.info("Skipping rm -r tmp dir: %s" % exec_dir)
+            else:
+                logger.info("Removing tmp dir: %s" % exec_dir)
+                shutil.rmtree(exec_dir)
+
+def load_test_configuration(directory):
+    try:
+        test_cfg = directory + "/test.json"
+        if os.path.isfile(test_cfg) is not True: return {}
+        json_data = open(test_cfg).read()
+        ret = json.loads(json_data)
+        ret["source_directory"] = directory
+        return ret
+    except Exception as e:
+        logger.error("Could not load test configuration %s" % e)
+        raise
+
+def get_full_executable(binary, cfg):
     cmd = binary
     if cfg.has_key("args"):
         cmd = ' '.join([cmd] + cfg["args"])
-    return execute(cmd, test_env)
+    return cmd
+
+def execute(cmd, test_env, cfg):
+    run_subprocess(cmd, test_env)
+    logger.info("configuration: %s", cfg)
+    if cfg.has_key("repeat_in_same_dir") and cfg.has_key("repeat_times"):
+        # substract one from the already executed test
+        repeat=int(cfg["repeat_times"]) - 1
+        while repeat > 0:
+            logger.info("Repeating test: %s, %s more time(s)", cmd, repeat)
+            repeat = repeat - 1
+            run_subprocess(cmd, test_env)
+
+def prepare_test(binary, source_dir):
+    cfg = load_test_configuration(source_dir)
+    test_env = set_up_test_environment(cfg)
+    cmd = get_full_executable(binary, cfg)
+    return (cmd, test_env, cfg)
+
 
 def main():
     parser = generate_options()
@@ -112,7 +157,9 @@ def main():
             parser.print_help()
             raise Exception("Missing test_type ")
 
-    exec_test(options.binary, options.directory)
+    (cmd, env, cfg) = prepare_test(options.binary, options.directory)
+    execute(cmd, env, cfg)
+    clean_test_resources(cfg)
 
 if __name__ == '__main__':
     main()
