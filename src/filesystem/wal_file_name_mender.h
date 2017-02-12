@@ -9,7 +9,7 @@
 
 namespace smf {
 struct wal_file_name_mender : wal_file_walker {
-  wal_file_name_mender(file d) : wal_file_walker(std::move(d)) {}
+  explicit wal_file_name_mender(file d) : wal_file_walker(std::move(d)) {}
 
   future<> visit(directory_entry de) final {
     if (wal_name_extractor_utils::is_name_locked(de.name)) {

@@ -10,7 +10,7 @@
 
 namespace smf {
 struct wal_file_walker {
-  wal_file_walker(file d)
+  explicit wal_file_walker(file d)
     : directory(std::move(d))
     , listing(directory.list_directory(
         [this](directory_entry de) { return dir_visit(de); })) {}
