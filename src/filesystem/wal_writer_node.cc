@@ -11,8 +11,8 @@
 #include "filesystem/wal_writer_file_lease_impl.h"
 #include "filesystem/wal_writer_utils.h"
 #include "hashing_utils.h"
-#include "likely.h"
 #include "log.h"
+#include "macros.h"
 
 namespace smf {
 
@@ -84,7 +84,7 @@ future<> wal_writer_node::do_append_with_flags(
     ZSTD_compress(dst, req.data.size(), src, req.data.size(), 3);
 
   auto zstd_err = ZSTD_isError(zstd_compressed_size);
-  if (likely(zstd_err == 0)) {
+  if (SMF_LIKELY(zstd_err == 0)) {
     compressed_buf.trim(zstd_compressed_size);
     flags = (fbs::wal::wal_entry_flags)(
       (uint32_t)flags
@@ -117,7 +117,7 @@ future<uint64_t> wal_writer_node::append(wal_write_request req) {
 
 future<> wal_writer_node::do_append(wal_write_request req) {
   auto const write_size = wal_write_request_size(req);
-  if (likely(write_size < space_left())) {
+  if (SMF_LIKELY(write_size < space_left())) {
     return do_append_with_flags(
       std::move(req), fbs::wal::wal_entry_flags::wal_entry_flags_full_frament);
   }

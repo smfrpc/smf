@@ -11,4 +11,8 @@ cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -G Ninja \
 
 nprocs=$(grep -c ^processor /proc/cpuinfo)
 ninja-build -v
-ctest -V -j$nprocs
+ctest --output-on-failure \
+      --force-new-ctest-process \
+      --schedule-random \
+      --timeout 3 \
+      -j$nprocs "$@"

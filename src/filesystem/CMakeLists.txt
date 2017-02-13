@@ -17,7 +17,6 @@ add_library (smf_filesystem STATIC
 target_link_libraries (smf_filesystem
   ${SEASTAR_LDFLAGS}
   smftracing
-  boost_regex
   xxhash_static
   zstd.a
   re2

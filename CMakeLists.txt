@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.3)
 set(SMF_VERSION "0.0.1")
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
-#set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -v" )
+set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -v" )
 include(CMake/includes.cmake)
 include(CMake/gen_flatbuffers.cmake)
 include(CMake/Seastar.cmake)

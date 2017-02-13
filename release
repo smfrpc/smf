@@ -21,4 +21,4 @@ cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -G Ninja \
 
 
 ninja-build -v
-ctest -V -j$nprocs
+ctest -V -j$nprocs --force-new-ctest-process
