@@ -8,16 +8,15 @@
 #include "log.h"
 
 int main(int args, char **argv, char **env) {
-  smf::LOG_INFO("Starting test for histogram write");
+  smf::LOG_DEBUG("Starting test for histogram write");
   app_template app;
   try {
     return app.run(args, argv, [&app]() -> future<int> {
-      smf::log.set_level(seastar::log_level::debug);
       smf::histogram h;
       for (auto i = 0u; i < 1000; i++) {
         h.record(i * i);
       }
-      smf::LOG_INFO("Writing histogram");
+      smf::LOG_DEBUG("Writing histogram");
       return smf::histogram_seastar_utils::write_histogram("hist.testing.txt",
                                                            std::move(h))
         .then([] { return make_ready_future<int>(0); });

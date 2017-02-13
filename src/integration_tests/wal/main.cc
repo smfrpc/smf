@@ -39,15 +39,15 @@ struct reducible_append {
 };
 
 int main(int args, char **argv, char **env) {
-  smf::DLOG_INFO("About to start the client");
+  smf::DLOG_DEBUG("About to start the client");
   app_template                    app;
   distributed<smf::shardable_wal> w;
   try {
     return app.run(args, argv, [&]() mutable -> future<int> {
-      smf::log.set_level(seastar::log_level::debug);
-      smf::DLOG_INFO("setting up exit hooks");
+      // smf::log.set_level(seastar::log_level::debug);
+      smf::DLOG_DEBUG("setting up exit hooks");
       engine().at_exit([&] { return w.stop(); });
-      smf::DLOG_INFO("about to start the wal.h");
+      smf::DLOG_DEBUG("about to start the wal.h");
 
       return w
         .start(smf::wal_type::wal_type_disk_with_memory_cache,
@@ -68,8 +68,8 @@ int main(int args, char **argv, char **env) {
                     assert(read_result);
                     auto size = read_result->fragments.front().data.size();
                     assert(size == std::strlen(kPayload));
-                    smf::DLOG_INFO("Got result from a read with size: {}",
-                                   size);
+                    smf::DLOG_DEBUG("Got result from a read with size: {}",
+                                    size);
                     reducible_append ra;
                     ra.v.insert(i);
                     return std::move(ra);
@@ -77,13 +77,13 @@ int main(int args, char **argv, char **env) {
                 });
               })
             .then([&w](reducible_append &&ra) {
-              smf::DLOG_INFO("got value: {}",
-                             std::vector<uint64_t>(ra.v.begin(), ra.v.end()));
+              smf::DLOG_DEBUG("got value: {}",
+                              std::vector<uint64_t>(ra.v.begin(), ra.v.end()));
               return do_for_each(ra.v.begin(), ra.v.end(), [&w](uint64_t i) {
-                smf::DLOG_INFO("About to invalidate epoch: {}", i);
+                smf::DLOG_DEBUG("About to invalidate epoch: {}", i);
                 return w.invoke_on_all(&smf::shardable_wal::invalidate, i)
                   .then([i]() {
-                    smf::DLOG_INFO("Invalidated epoch `{}' on all cores", i);
+                    smf::DLOG_DEBUG("Invalidated epoch `{}' on all cores", i);
                     return make_ready_future<>();
                   });
               });

@@ -35,8 +35,6 @@ future<> rpc_server::stop() {
   // seastar does this
   // LOG_INFO("Stopping rpc server, aborting_accept()");
   // listener_->abort_accept();
-
-  LOG_INFO("Closing reply_gate");
   return limits_->reply_gate.close();
 }
 
