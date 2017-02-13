@@ -7,7 +7,7 @@
 #include <core/app-template.hh>
 #include <core/distributed.hh>
 // smf
-#include "histogram_seastar_utils.h"
+#include "histogram/histogram_seastar_utils.h"
 #include "log.h"
 #include "rpc/filters/zstd_filter.h"
 #include "rpc/rpc_filter.h"
@@ -86,7 +86,7 @@ class rpc_client_wrapper {
     : concurrency_(std::min(num_of_req, concurrency))
     , num_of_req_(num_of_req)
     , clients_(concurrency) {
-    smf::DLOG_INFO(
+    DLOG_DEBUG(
       "Setting up the client. Remove server: {}:{} , reqs:{}, concurrency:{} ",
       ip, port, num_of_req, concurrency);
 
@@ -95,7 +95,7 @@ class rpc_client_wrapper {
     });
   }
   future<> connect() {
-    smf::DLOG_INFO("Creating connections");
+    DLOG_DEBUG("Creating connections");
     return do_for_each(clients_.begin(), clients_.end(),
                        [](auto &c) { return c->connect(); });
   }
@@ -124,8 +124,8 @@ class rpc_client_wrapper {
           co::duration_cast<co::milliseconds>(end_t - begin).count();
         auto qps = static_cast<double>(num_of_req_)
                    / static_cast<double>(std::max(duration_milli, uint64_t(1)));
-        smf::DLOG_INFO("Test took: {}ms", duration_milli);
-        smf::DLOG_INFO("Queries per millisecond: {}/ms", qps);
+        DLOG_DEBUG("Test took: {}ms", duration_milli);
+        DLOG_DEBUG("Queries per millisecond: {}/ms", qps);
         return make_ready_future<uint64_t>(duration_milli);
       });  // connect
   }
@@ -159,7 +159,7 @@ class rpc_client_wrapper {
 class storage_service : public smf_gen::fbs::rpc::SmfStorage {
   future<smf::rpc_envelope> Get(
     smf::rpc_recv_typed_context<smf_gen::fbs::rpc::Request> &&rec) final {
-    // smf::DLOG_INFO("Server got payload {}", rec.get()->name()->size());
+    // DLOG_DEBUG("Server got payload {}", rec.get()->name()->size());
     smf::rpc_envelope e(nullptr);
     e.set_status(200);
     return make_ready_future<smf::rpc_envelope>(std::move(e));
@@ -168,8 +168,8 @@ class storage_service : public smf_gen::fbs::rpc::SmfStorage {
 
 
 int main(int args, char **argv, char **env) {
-  smf::log.set_level(seastar::log_level::debug);
-  smf::DLOG_INFO("About to start the RPC test");
+  // SET_LOG_LEVEL(seastar::log_level::debug);
+  DLOG_DEBUG("About to start the RPC test");
   distributed<smf::rpc_server_stats> stats;
   distributed<smf::rpc_server>       rpc;
   distributed<rpc_client_wrapper>    clients;
@@ -185,7 +185,7 @@ int main(int args, char **argv, char **env) {
 
   return app.run(args, argv, [&app, &stats, &rpc, &clients,
                               &stats_printer]() -> future<int> {
-    smf::DLOG_INFO("Setting up at_exit hooks");
+    DLOG_DEBUG("Setting up at_exit hooks");
 
     engine().at_exit([&] { return stats_printer.stop(); });
     engine().at_exit([&] { return stats.stop(); });
@@ -194,17 +194,17 @@ int main(int args, char **argv, char **env) {
 
     auto &&  config = app.configuration();
     uint16_t port   = config["rpc_port"].as<uint16_t>();
-    smf::DLOG_INFO("starting stats");
+    DLOG_DEBUG("starting stats");
     return stats.start()
       .then([&stats_printer] {
-        smf::DLOG_INFO("Starting stats");
+        DLOG_DEBUG("Starting stats");
         stats_printer.start();
         return make_ready_future<>();
       })
       .then([&rpc, &stats, port] {
         uint32_t flags = smf::RPCFLAGS::RPCFLAGS_LOAD_SHEDDING_ON;
         return rpc.start(&stats, port, flags).then([&rpc] {
-          smf::DLOG_INFO("Registering smf_gen::fbs::rpc::storage_service");
+          DLOG_DEBUG("Registering smf_gen::fbs::rpc::storage_service");
           return rpc.invoke_on_all(
             &smf::rpc_server::register_service<storage_service>);
         });
@@ -215,11 +215,11 @@ int main(int args, char **argv, char **env) {
                                  smf::zstd_decompression_filter());
       })
       .then([&rpc] {
-        smf::DLOG_INFO("Invoking rpc start on all cores");
+        DLOG_DEBUG("Invoking rpc start on all cores");
         return rpc.invoke_on_all(&smf::rpc_server::start);
       })
       .then([&clients, &config] {
-        smf::DLOG_INFO("About to start the client");
+        DLOG_DEBUG("About to start the client");
         const uint16_t port        = config["rpc_port"].as<uint16_t>();
         const size_t   req_num     = config["req_num"].as<size_t>();
         const size_t   concurrency = config["concurrency"].as<size_t>();
@@ -230,17 +230,17 @@ int main(int args, char **argv, char **env) {
         return clients
           .map_reduce(adder<uint64_t>(), &rpc_client_wrapper::send_request)
           .then([](auto ms) {
-            smf::DLOG_INFO("Total time for all requests: {}ms", ms);
+            DLOG_DEBUG("Total time for all requests: {}ms", ms);
             return make_ready_future<>();
           });
       })
       .then([&clients] {
-        smf::DLOG_INFO("MapReducing stats");
+        DLOG_DEBUG("MapReducing stats");
         return clients
           .map_reduce(adder<smf::histogram>(),
                       &rpc_client_wrapper::all_histograms)
           .then([](smf::histogram h) {
-            smf::DLOG_INFO("Writing client histograms");
+            DLOG_DEBUG("Writing client histograms");
             return smf::histogram_seastar_utils::write_histogram(
               "clients_hdr.txt", std::move(h));
           });
@@ -249,13 +249,13 @@ int main(int args, char **argv, char **env) {
         return rpc
           .map_reduce(adder<smf::histogram>(), &smf::rpc_server::copy_histogram)
           .then([](smf::histogram h) {
-            smf::DLOG_INFO("Writing server histograms");
+            DLOG_DEBUG("Writing server histograms");
             return smf::histogram_seastar_utils::write_histogram(
               "server_hdr.txt", std::move(h));
           });
       })
       .then([] {
-        smf::DLOG_INFO("Exiting");
+        DLOG_DEBUG("Exiting");
         return make_ready_future<int>(0);
       });
   });

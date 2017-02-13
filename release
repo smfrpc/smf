@@ -15,10 +15,10 @@ $git_root/misc/format_files.sh
 mkdir -p $build_dir
 cd $build_dir
 
-cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -G Ninja \
+cmake -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_ALL_TESTS=True $git_root
 
 
 ninja-build -v
-ctest -V -j$nprocs
+ctest -V -j$nprocs --force-new-ctest-process

@@ -1,7 +1,7 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #include "rpc/rpc_server.h"
-#include "histogram_seastar_utils.h"
+#include "histogram/histogram_seastar_utils.h"
 #include "log.h"
 #include "rpc/rpc_envelope.h"
 namespace smf {
@@ -35,8 +35,6 @@ future<> rpc_server::stop() {
   // seastar does this
   // LOG_INFO("Stopping rpc server, aborting_accept()");
   // listener_->abort_accept();
-
-  LOG_INFO("Closing reply_gate");
   return limits_->reply_gate.close();
 }
 

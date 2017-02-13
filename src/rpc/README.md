@@ -121,10 +121,10 @@ int main(int args, char **argv, char **env) {
   // leak memory
   try {
     return app.run_deprecated(args, argv, [&] {
-      smf::LOG_INFO("setting up exit hooks");
+      LOG_INFO("setting up exit hooks");
       engine().at_exit([&] { return clients.stop(); });
       return clients.start().then([&clients] {
-        smf::LOG_INFO("About to send a distributed set of requests to server");
+        LOG_INFO("About to send a distributed set of requests to server");
         return clients.invoke_on_all(&rpc_client_wrapper::send_request);
       });
     });
@@ -151,19 +151,19 @@ int main(int args, char **argv, char **env) {
   app.add_options()("rpc_port", bpo::value<uint16_t>()->default_value(11225),
                     "rpc port");
   return app.run_deprecated(args, argv, [&] {
-    smf::LOG_INFO("Setting up at_exit hooks");
+    LOG_INFO("Setting up at_exit hooks");
     engine().at_exit([&] { return rpc.stop(); });
     engine().at_exit([&] { return stats.stop(); });
 
 
     auto &&config = app.configuration();
     uint16_t port = config["rpc_port"].as<uint16_t>();
-    smf::LOG_INFO("starting stats");
+    LOG_INFO("starting stats");
     return stats.start()
       .then([&rpc, &stats, port] {
         return rpc.start(&stats, port)
           .then([&rpc] {
-            smf::LOG_INFO("Registering smf_gen::fbs::rpc::storage_service");
+            LOG_INFO("Registering smf_gen::fbs::rpc::storage_service");
 
             // THIS IS THE MOST IMPORTANT LINE:
             // HOWTO REGISTER YOUR FLATBUFFERS SERVICE
@@ -174,7 +174,7 @@ int main(int args, char **argv, char **env) {
           });
       })
       .then([&rpc] {
-        smf::LOG_INFO("Invoking rpc start on all cores");
+        LOG_INFO("Invoking rpc start on all cores");
         return rpc.invoke_on_all(&smf::rpc_server::start);
       });
   });

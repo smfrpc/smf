@@ -9,7 +9,7 @@
 #include <core/temporary_buffer.hh>
 // smf
 #include "filesystem/wal_writer_utils.h"
-#include "histogram.h"
+#include "histogram/histogram.h"
 
 namespace smf {
 

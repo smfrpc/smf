@@ -12,3 +12,11 @@ set(RPC_LIB_SOURCES
   ${PROJECT_SOURCE_DIR}/src/rpc/rpc_utils.cc
   ${PROJECT_SOURCE_DIR}/src/rpc/filters/zstd_filter.cc
   )
+add_library(smfrpc STATIC ${RPC_LIB_SOURCES})
+target_link_libraries(smfrpc
+  ${SEASTAR_LDFLAGS}
+  smftracing
+  xxhash_static
+  zstd.a
+  )
+add_dependencies(smfrpc rpc_serialization)

@@ -5,10 +5,14 @@ build_dir=$git_root/build_debug
 mkdir -p $build_dir
 cd $build_dir
 
-cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -G Ninja \
+cmake -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
       -DCMAKE_BUILD_TYPE=Debug \
       -DCMAKE_ALL_TESTS=False $git_root
 
 nprocs=$(grep -c ^processor /proc/cpuinfo)
 ninja-build -v
-ctest -V -j$nprocs
+ctest --output-on-failure \
+      --force-new-ctest-process \
+      --schedule-random \
+      --timeout 3 \
+      -j$nprocs "$@"

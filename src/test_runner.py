@@ -12,12 +12,13 @@ import json
 import glob
 import shutil
 
-fmt_string='%(levelname)s:%(asctime)s %(filename)s:%(lineno)d] %(message)s'
+fmt_string='TESTRUNNER %(levelname)s:%(asctime)s %(filename)s:%(lineno)d] %(message)s'
 logging.basicConfig(format=fmt_string)
 formatter = logging.Formatter(fmt_string)
 for h in logging.getLogger().handlers: h.setFormatter(formatter)
 logger = logging.getLogger('it.test')
-logger.setLevel(logging.DEBUG)
+# Set to logging.DEBUG to see more info about tests
+logger.setLevel(logging.INFO)
 
 def generate_options():
     parser = argparse.ArgumentParser(description='run smf integration tests')
@@ -40,7 +41,7 @@ def get_git_root():
     return "".join(ret.split())
 
 def test_environ():
-    e = os.environ
+    e = os.environ.copy()
     git_root = get_git_root()
     e["GIT_ROOT"] = git_root
     ld_path = ""
@@ -61,26 +62,38 @@ def test_environ():
     return e
 
 
-def run_subprocess(cmd, environ):
-    logger.info("Executing test: %s" % cmd)
-    popen = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                             # buffer one line at a time
-                             bufsize=1,
-                             shell=True,
-                             universal_newlines=True)
-    for stdout_line in iter(popen.stdout.readline, ""):
-        sys.stdout.write(stdout_line)
-    popen.stdout.close()
-    return_code = popen.wait()
-    if return_code and return_code != 0:
-        raise subprocess.CalledProcessError(return_code, cmd)
+def run_subprocess(cmd, cfg, environ):
+    logger.info("\nTest: {}\nConfig: {}".format(cmd,cfg))
+    # cmake tests gotcha:
+    # both need to be sys.stdout so that ctest --output-on-error
+    # can catch the test output
+    proc =  subprocess.Popen(
+        cmd,
+        stdout=sys.stdout,
+        stderr=sys.stdout,
+        cwd=cfg["execution_directory"],
+        env=environ,
+        shell=True
+    )
+    return_code = 0
+
+    try:
+        return_code = proc.wait()
+        sys.stdout.flush()
+        sys.stderr.flush()
+    except Exception as e:
+        logger.exception("Could not run command: % ", e)
+        proc.terminate()
+        raise
+
+    if return_code != 0: raise subprocess.CalledProcessError(return_code, cmd)
 
 def set_up_test_environment(cfg):
     test_env = test_environ()
     dirpath = os.getcwd()
     if cfg.has_key("tmp_home"):
         dirpath = tempfile.mkdtemp()
-        logger.info("Executing test in tmp dir %s" % dirpath)
+        logger.debug("Executing test in tmp dir %s" % dirpath)
         os.chdir(dirpath)
         test_env["HOME"]=dirpath
     if cfg.has_key("copy_files"):
@@ -102,7 +115,7 @@ def clean_test_resources(cfg):
                cfg["remove_test_dir"] is False:
                 logger.info("Skipping rm -r tmp dir: %s" % exec_dir)
             else:
-                logger.info("Removing tmp dir: %s" % exec_dir)
+                logger.debug("Removing tmp dir: %s" % exec_dir)
                 shutil.rmtree(exec_dir)
 
 def load_test_configuration(directory):
@@ -114,7 +127,7 @@ def load_test_configuration(directory):
         ret["source_directory"] = directory
         return ret
     except Exception as e:
-        logger.error("Could not load test configuration %s" % e)
+        logger.exception("Could not load test configuration %s" % e)
         raise
 
 def get_full_executable(binary, cfg):
@@ -124,15 +137,14 @@ def get_full_executable(binary, cfg):
     return cmd
 
 def execute(cmd, test_env, cfg):
-    run_subprocess(cmd, test_env)
-    logger.info("configuration: %s", cfg)
+    run_subprocess(cmd, cfg, test_env)
     if cfg.has_key("repeat_in_same_dir") and cfg.has_key("repeat_times"):
         # substract one from the already executed test
         repeat=int(cfg["repeat_times"]) - 1
         while repeat > 0:
-            logger.info("Repeating test: %s, %s more time(s)", cmd, repeat)
+            logger.debug("Repeating test: %s, %s more time(s)", cmd, repeat)
             repeat = repeat - 1
-            run_subprocess(cmd, test_env)
+            run_subprocess(cmd, cfg, test_env)
 
 def prepare_test(binary, source_dir):
     cfg = load_test_configuration(source_dir)

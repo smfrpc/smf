@@ -9,7 +9,7 @@
 // seastar
 #include <net/api.hh>
 // smf
-#include "histogram.h"
+#include "histogram/histogram.h"
 #include "rpc/rpc_connection.h"
 #include "rpc/rpc_envelope.h"
 #include "rpc/rpc_filter.h"

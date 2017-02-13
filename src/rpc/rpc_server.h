@@ -7,7 +7,7 @@
 // seastar
 #include <core/distributed.hh>
 // smf
-#include "histogram.h"
+#include "histogram/histogram.h"
 #include "rpc/filters/zstd_filter.h"
 #include "rpc/rpc_connection_limits.h"
 #include "rpc/rpc_filter.h"
