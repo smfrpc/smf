@@ -41,7 +41,7 @@ def get_git_root():
     return "".join(ret.split())
 
 def test_environ():
-    e = os.environ
+    e = os.environ.copy()
     git_root = get_git_root()
     e["GIT_ROOT"] = git_root
     ld_path = ""
