@@ -9,6 +9,7 @@
 #include "filesystem/wal_head_file_functor.h"
 #include "filesystem/wal_name_extractor_utils.h"
 #include "filesystem/wal_reader_node.h"
+#include "hashing/hashing_utils.h"
 #include "platform/log.h"
 
 
@@ -17,10 +18,15 @@ namespace smf {
 wal_reader_visitor::wal_reader_visitor(wal_reader *r, file dir)
   : wal_file_walker(std::move(dir)), reader(r) {}
 future<> wal_reader_visitor::visit(directory_entry de) {
-  if (wal_name_extractor_utils::is_name_locked(de.name)) {
-    return make_ready_future<>();
+  if (!wal_name_extractor_utils::is_name_locked(de.name)) {
+    auto original_core = wal_name_extractor_utils::extract_core(de.name);
+    auto moving_core   = jump_consistent_hash(original_core, smp::count);
+    // only move iff* it matches our core. Every core is doing the same
+    if (engine().cpu_id() == moving_core) {
+      return reader->monitor_files(std::move(de));
+    }
   }
-  return reader->monitor_files(std::move(de));
+  return make_ready_future<>();
 }
 }  // namespace smf
 

@@ -39,17 +39,4 @@ future<> histogram_seastar_utils::write_histogram(sstring   filename,
     });
 }
 
-void histogram_seastar_utils::sync_write_histogram(const sstring &filename,
-                                                   histogram *    h) {
-  try {
-    FILE *fp = fopen(filename.c_str(), "w");
-    if (fp) {
-      h->print(fp);
-      fclose(fp);
-    }
-  } catch (...) {
-  }
-}
-
-
 }  // namespace smf
