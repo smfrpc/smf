@@ -64,13 +64,10 @@ def test_environ():
 
 def run_subprocess(cmd, cfg, environ):
     logger.info("\nTest: {}\nConfig: {}".format(cmd,cfg))
-    # cmake tests gotcha:
-    # both need to be sys.stdout so that ctest --output-on-error
-    # can catch the test output
     proc =  subprocess.Popen(
         cmd,
         stdout=sys.stdout,
-        stderr=sys.stdout,
+        stderr=sys.stderr,
         cwd=cfg["execution_directory"],
         env=environ,
         shell=True
