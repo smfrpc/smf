@@ -5,7 +5,7 @@
 #include <cstring>
 #include <utility>
 // smf
-#include "log.h"
+#include "platform/log.h"
 #include "rpc/rpc_utils.h"
 
 namespace smf {

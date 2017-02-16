@@ -8,7 +8,7 @@
 #include <boost/iterator/counting_iterator.hpp>
 // smf
 #include "filesystem/file_size_utils.h"
-#include "log.h"
+#include "platform/log.h"
 
 namespace smf {
 

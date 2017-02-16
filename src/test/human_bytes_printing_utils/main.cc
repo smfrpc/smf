@@ -2,7 +2,7 @@
 //
 #include <gtest/gtest.h>
 #include <sstream>
-#include "human_bytes_printing_utils.h"
+#include "utils/human_bytes_printing_utils.h"
 
 TEST(human_bytes_printing_utils, basic) {
   std::stringstream ss;

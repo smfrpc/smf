@@ -7,7 +7,7 @@
 // seastar
 #include <net/api.hh>
 // smf
-#include "log.h"
+#include "platform/log.h"
 #include "rpc/rpc_connection.h"
 #include "rpc/rpc_server_stats.h"
 

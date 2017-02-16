@@ -1,7 +1,7 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #include "rpc/rpc_server_stats_printer.h"
-#include "log.h"
+#include "platform/log.h"
 
 namespace smf {
 using duration_t = timer<>::duration;

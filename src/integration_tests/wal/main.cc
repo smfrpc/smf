@@ -8,9 +8,8 @@
 #include "filesystem/wal.h"
 #include "filesystem/wal_opts.h"
 #include "filesystem/wal_requests.h"
-#include "priority_manager.h"
-// log
-#include "log.h"
+#include "seastar_io/priority_manager.h"
+#include "platform/log.h"
 
 
 static const char *kPayload = "hello";

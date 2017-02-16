@@ -5,7 +5,7 @@
 // third party
 #include <zstd.h>
 // smf
-#include "log.h"
+#include "platform/log.h"
 #include "rpc/rpc_recv_context.h"
 #include "rpc/rpc_utils.h"
 

@@ -1,7 +1,7 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #include "rpc/rpc_utils.h"
-#include "hashing_utils.h"
+#include "hashing/hashing_utils.h"
 namespace smf {
 fbs::rpc::Header header_for_payload(const char *    payload,
                                     size_t          payload_size,

@@ -6,7 +6,7 @@
 #include <utility>
 // smf
 #include "filesystem/wal_impl_with_cache.h"
-#include "log.h"
+#include "platform/log.h"
 
 
 namespace smf {

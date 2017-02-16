@@ -1,7 +1,7 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #include "chain_replication/chain_replication_utils.h"
-#include "hashing_utils.h"
+#include "hashing/hashing_utils.h"
 
 namespace smf {
 namespace chains {

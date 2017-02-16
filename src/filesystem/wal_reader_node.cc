@@ -6,7 +6,7 @@
 // third party
 #include <core/reactor.hh>
 // smf
-#include "log.h"
+#include "platform/log.h"
 
 namespace smf {
 wal_reader_node::wal_reader_node(uint64_t      epoch,

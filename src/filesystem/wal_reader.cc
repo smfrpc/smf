@@ -9,7 +9,7 @@
 #include "filesystem/wal_head_file_functor.h"
 #include "filesystem/wal_name_extractor_utils.h"
 #include "filesystem/wal_reader_node.h"
-#include "log.h"
+#include "platform/log.h"
 
 
 namespace smf {

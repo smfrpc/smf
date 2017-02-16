@@ -2,7 +2,7 @@
 //
 #pragma once
 #include "filesystem/wal_writer_file_lease.h"
-#include "log.h"
+#include "platform/log.h"
 
 namespace smf {
 

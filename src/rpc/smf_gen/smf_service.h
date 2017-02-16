@@ -2,7 +2,7 @@
 //
 #pragma once
 #include <flatbuffers/idl.h>
-#include "hashing_utils.h"
+#include "hashing/hashing_utils.h"
 #include "rpc/smf_gen/smf_method.h"
 
 namespace smf_gen {

@@ -98,7 +98,7 @@ std::string get_header_includes(smf_file *file) {
 
     static const char *headers_strs[] = {
       "experimental/optional", "rpc/rpc_service.h", "rpc/rpc_client.h",
-      "rpc/rpc_recv_typed_context.h", "log.h"};
+      "rpc/rpc_recv_typed_context.h", "platform/log.h"};
 
     std::vector<std::string> headers(headers_strs, array_end(headers_strs));
     print_includes(printer.get(), headers);

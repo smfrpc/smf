@@ -5,7 +5,7 @@
 // smf
 #include "filesystem/wal_file_walker.h"
 #include "filesystem/wal_name_extractor_utils.h"
-#include "hashing_utils.h"
+#include "hashing/hashing_utils.h"
 
 namespace smf {
 struct wal_file_name_mender : wal_file_walker {

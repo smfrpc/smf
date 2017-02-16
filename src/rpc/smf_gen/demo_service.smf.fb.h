@@ -10,7 +10,7 @@
 #include "demo_service_generated.h"
 
 #include <experimental/optional>
-#include <log.h>
+#include <platform/log.h>
 #include <rpc/rpc_client.h>
 #include <rpc/rpc_recv_typed_context.h>
 #include <rpc/rpc_service.h>

@@ -12,9 +12,9 @@
 #include "filesystem/wal_name_extractor_utils.h"
 #include "filesystem/wal_writer_node.h"
 #include "filesystem/wal_writer_utils.h"
-#include "log.h"
-#include "priority_manager.h"
-#include "time_utils.h"
+#include "platform/log.h"
+#include "seastar_io/priority_manager.h"
+#include "utils/time_utils.h"
 
 namespace smf {
 

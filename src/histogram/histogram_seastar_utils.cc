@@ -4,8 +4,8 @@
 #include <utility>
 // smf
 #include "histogram/histogram.h"
-#include "log.h"
-#include "priority_manager.h"
+#include "platform/log.h"
+#include "seastar_io/priority_manager.h"
 
 namespace smf {
 

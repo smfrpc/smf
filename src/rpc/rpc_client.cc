@@ -7,7 +7,7 @@
 #include <core/reactor.hh>
 #include <net/api.hh>
 // smf
-#include "log.h"
+#include "platform/log.h"
 
 namespace smf {
 

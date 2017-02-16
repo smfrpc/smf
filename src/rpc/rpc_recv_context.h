@@ -7,8 +7,8 @@
 #include <core/iostream.hh>
 // smf
 #include "flatbuffers/rpc_generated.h"
-#include "hashing_utils.h"
-#include "log.h"
+#include "hashing/hashing_utils.h"
+#include "platform/log.h"
 #include "rpc/rpc_connection.h"
 #include "rpc/rpc_connection_limits.h"
 

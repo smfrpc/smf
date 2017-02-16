@@ -10,7 +10,7 @@
 #include <boost/intrusive/unordered_set.hpp>
 // smf
 #include "filesystem/wal_opts.h"
-#include "log.h"
+#include "platform/log.h"
 
 namespace smf {
 

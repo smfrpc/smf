@@ -10,9 +10,9 @@
 // smf
 #include "filesystem/wal_writer_file_lease_impl.h"
 #include "filesystem/wal_writer_utils.h"
-#include "hashing_utils.h"
-#include "log.h"
-#include "macros.h"
+#include "hashing/hashing_utils.h"
+#include "platform/log.h"
+#include "platform/macros.h"
 
 namespace smf {
 

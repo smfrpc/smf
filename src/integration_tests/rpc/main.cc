@@ -8,7 +8,7 @@
 #include <core/distributed.hh>
 // smf
 #include "histogram/histogram_seastar_utils.h"
-#include "log.h"
+#include "platform/log.h"
 #include "rpc/filters/zstd_filter.h"
 #include "rpc/rpc_filter.h"
 #include "rpc/rpc_handle_router.h"

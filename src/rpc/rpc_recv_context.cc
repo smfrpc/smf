@@ -2,8 +2,8 @@
 //
 #include "rpc/rpc_recv_context.h"
 #include "flatbuffers/rpc_generated.h"
-#include "hashing_utils.h"
-#include "log.h"
+#include "hashing/hashing_utils.h"
+#include "platform/log.h"
 
 namespace std {
 ostream &operator<<(ostream &o, const smf::fbs::rpc::Header &h) {

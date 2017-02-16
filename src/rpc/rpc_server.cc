@@ -2,7 +2,7 @@
 //
 #include "rpc/rpc_server.h"
 #include "histogram/histogram_seastar_utils.h"
-#include "log.h"
+#include "platform/log.h"
 #include "rpc/rpc_envelope.h"
 namespace smf {
 

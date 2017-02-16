@@ -6,8 +6,8 @@
 // smf
 #include "filesystem/wal_requests.h"
 #include "filesystem/wal_writer.h"
-#include "log.h"
-#include "priority_manager.h"
+#include "platform/log.h"
+#include "seastar_io/priority_manager.h"
 
 
 smf::wal_write_request gen_payload(sstring str) {

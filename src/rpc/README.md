@@ -51,7 +51,7 @@ The generated code looks like this:
 #include <rpc/rpc_service.h>
 #include <rpc/rpc_client.h>
 #include <rpc/rpc_recv_context.h>
-#include <log.h>
+#include "platform/log.h"
 namespace smf_gen {
 namespace fbs {
 namespace rpc {
