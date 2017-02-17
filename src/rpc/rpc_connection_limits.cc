@@ -2,8 +2,8 @@
 //
 #include "rpc/rpc_connection_limits.h"
 #include <fmt/format.h>
-#include "utils/human_bytes_printing_utils.h"
 #include "platform/log.h"
+#include "utils/human_bytes_printing_utils.h"
 
 namespace smf {
 

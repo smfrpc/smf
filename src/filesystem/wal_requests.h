@@ -2,11 +2,13 @@
 //
 #pragma once
 #include <list>
+#include <numeric>
 #include <utility>
 // third party
 #include <core/fair_queue.hh>
-// generated
+// smf
 #include "flatbuffers/wal_generated.h"
+#include "platform/macros.h"
 
 class io_priority_class;
 
@@ -16,9 +18,7 @@ enum class wal_type : uint8_t {
   wal_type_memory_only
 };
 enum wal_read_request_flags : uint32_t {
-  wrrf_flags_no_decompression    = 1,
-  wrrf_flags_nearest_offset_up   = 1 << 1,
-  wrrf_flags_nearest_offset_down = 1 << 2,
+  wrrf_flags_no_decompression = 1,
 };
 
 struct wal_read_request {
@@ -32,28 +32,39 @@ struct wal_read_request {
 
 struct wal_read_reply {
   using maybe = std::experimental::optional<wal_read_reply>;
-
+  wal_read_reply() {}
   struct fragment {
-    fragment(fbs::wal::wal_header h, temporary_buffer<char> d)
-      : hdr(std::move(h)), data(std::move(d)) {}
+    fragment(fbs::wal::wal_header h, temporary_buffer<char> &&d)
+      : hdr(std::move(h)), data(std::move(d)) {
+      hdr.mutate_size(data.size());
+    }
     explicit fragment(temporary_buffer<char> d) : data(std::move(d)) {
       hdr.mutate_size(data.size());
       hdr.mutate_flags(fbs::wal::wal_entry_flags::wal_entry_flags_full_frament);
     }
-
-
+    fragment(fragment &&f) noexcept : hdr(std::move(f.hdr)),
+                                      data(std::move(f.data)) {}
     fbs::wal::wal_header   hdr;
     temporary_buffer<char> data;
+    SMF_DISALLOW_COPY_AND_ASSIGN(fragment);
   };
 
-  wal_read_reply() = default;
-  // forward ctor
-  explicit wal_read_reply(temporary_buffer<char> d)
-    : wal_read_reply(fragment(std::move(d))) {}
-
-  explicit wal_read_reply(fragment &&f) { fragments.push_back(std::move(f)); }
-
+  explicit wal_read_reply(fragment f) { fragments.emplace_back(std::move(f)); }
+  wal_read_reply(wal_read_reply &&r) noexcept
+    : fragments(std::move(r.fragments)) {}
+  void merge(wal_read_reply &&r) {
+    fragments.splice(std::end(fragments), std::move(r.fragments));
+  }
+  uint64_t size() {
+    return std::accumulate(fragments.begin(), fragments.end(), uint64_t(0),
+                           [](uint64_t acc, const auto &it) {
+                             return acc + it.data.size()
+                                    + sizeof(fbs::wal::wal_header);
+                           });
+  }
+  inline bool empty() const { return fragments.empty(); }
   std::list<wal_read_reply::fragment> fragments{};
+  SMF_DISALLOW_COPY_AND_ASSIGN(wal_read_reply);
 };
 
 enum wal_write_request_flags : uint32_t {

@@ -21,7 +21,7 @@ future<> wal_reader_node::open() {
   return open_file_dma(filename, open_flags::ro).then([this](file f) {
     auto shared_f = make_lw_shared<file>(std::move(f));
     return shared_f->size().then([shared_f, this](uint64_t size) {
-      io_ = std::make_unique<lazy_file>(shared_f, size);
+      io_ = std::make_unique<wal_clock_pro_cache>(shared_f, size);
       return make_ready_future<>();
     });
   });
@@ -29,9 +29,9 @@ future<> wal_reader_node::open() {
 
 future<wal_read_reply::maybe> wal_reader_node::get(wal_read_request r) {
   if (r.offset >= starting_epoch) {
-    auto max_read_size = std::min(r.size, ending_epoch() - r.offset);
-    return io_->read(r.offset, max_read_size).then([](auto buf) {
-      // TODO(agallego) - add stats
+    r.offset -= starting_epoch;
+    r.size = std::min(r.size, ending_epoch());
+    return io_->read(r).then([](auto buf) {
       return make_ready_future<wal_read_reply::maybe>(std::move(buf));
     });
   }

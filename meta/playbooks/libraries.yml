@@ -10,3 +10,4 @@
     - hdrhistogram
     - zstd
     - smf_extra_libs
+    - roaring_bitmap

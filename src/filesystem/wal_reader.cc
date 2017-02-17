@@ -69,18 +69,31 @@ future<> wal_reader::open() {
   });
 }
 
-/// FIXME(agallego) - you need to break it into multiple read requests and
-/// combine them. This does not work for page based requests.
 future<wal_read_reply::maybe> wal_reader::get(wal_read_request r) {
+  if (r.size == 0 || r.offset == 0) {
+    return make_ready_future<wal_read_reply::maybe>();
+  }
   auto it = buckets_.lower_bound(r.offset);
   if (it != buckets_.end()) {
-    if (r.offset >= it->node->starting_epoch
-        && r.offset <= it->node->ending_epoch()) {
-      // BUG(agallego) this doesn't make any sense...
-      // first... there is no semantic menaing of the header, so the
-      // header written by the writer is not understood by the reader
-
-      return it->node->get(std::move(r));
+    if (r.offset >= it->node->starting_epoch) {
+      return it->node->get(r).then([this, r](auto maybe) mutable {
+        if (maybe) {
+          auto payload_size = maybe->size();
+          if (payload_size >= r.size) {
+            return make_ready_future<wal_read_reply::maybe>(std::move(maybe));
+          }
+          r.offset += maybe->size();
+          r.size -= maybe->size();
+          return this->get(r).then([p = std::move(maybe)](auto next) mutable {
+            auto ret = std::move(p.value());
+            if (next) {
+              ret.merge(std::move(next.value()));
+            }
+            return make_ready_future<wal_read_reply::maybe>(std::move(ret));
+          });
+        }
+        return make_ready_future<wal_read_reply::maybe>();
+      });
     }
   }
   return make_ready_future<wal_read_reply::maybe>();

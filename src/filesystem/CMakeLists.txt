@@ -2,7 +2,7 @@ add_library (smf_filesystem STATIC
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_writer_node.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_writer.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal.cc
-  ${PROJECT_SOURCE_DIR}/src/filesystem/lazy_file.cc
+  ${PROJECT_SOURCE_DIR}/src/filesystem/wal_clock_pro_cache.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_reader.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_reader_node.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_impl_with_cache.cc
@@ -20,4 +20,5 @@ target_link_libraries (smf_filesystem
   xxhash_static
   zstd.a
   re2
+  libroaring.a
   )

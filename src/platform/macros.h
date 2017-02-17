@@ -22,7 +22,7 @@
 
 #define SMF_DISALLOW_IMPLICIT_CONSTRUCTORS(TypeName) \
   TypeName() = delete;                               \
-  FTL_DISALLOW_COPY_AND_ASSIGN(TypeName)
+  SMF_DISALLOW_COPY_AND_ASSIGN(TypeName)
 
 // GCC can be told that a certain branch is not likely to be taken (for
 // instance, a CHECK failure), and use that information in static analysis.

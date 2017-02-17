@@ -1,6 +1,7 @@
 # Seastar doesn't finish linking w/ gold linker
 # "-fuse-ld=gold"
 set(BASE_FLAGS
+  "-std=c++1z"
   "-fdiagnostics-color=auto"
   "-fPIC"
   "-fconcepts"

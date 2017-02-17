@@ -7,7 +7,7 @@
 // generated
 #include "flatbuffers/wal_generated.h"
 // smf
-#include "filesystem/lazy_file.h"
+#include "filesystem/wal_clock_pro_cache.h"
 #include "filesystem/wal_opts.h"
 #include "filesystem/wal_requests.h"
 
@@ -32,8 +32,8 @@ class wal_reader_node {
   }
 
  private:
-  reader_stats *             rstats_;
-  std::unique_ptr<lazy_file> io_;
+  reader_stats *                       rstats_;
+  std::unique_ptr<wal_clock_pro_cache> io_;
 };
 
 }  // namespace smf
