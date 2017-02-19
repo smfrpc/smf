@@ -6,6 +6,8 @@
 #include <core/iostream.hh>
 #include <net/api.hh>
 
+#include "platform/macros.h"
+
 namespace smf {
 
 class rpc_connection {
@@ -28,9 +30,10 @@ class rpc_connection {
 
   sstring get_error() const { return error_.value(); }
 
+  SMF_DISALLOW_COPY_AND_ASSIGN(rpc_connection);
+
  private:
   std::experimental::optional<sstring> error_;
-
-  bool enabled_{true};
+  bool                                 enabled_{true};
 };
 }  // namespace smf

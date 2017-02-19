@@ -75,10 +75,13 @@ enum wal_write_request_flags : uint32_t {
 
 struct wal_write_request {
   wal_write_request(uint32_t                   _flags,
-                    temporary_buffer<char>     _data,
+                    temporary_buffer<char> &&  _data,
                     const ::io_priority_class &_pc)
     : flags(_flags), data(std::move(_data)), pc(_pc) {}
 
+  wal_write_request(wal_write_request &&w) noexcept : flags(w.flags),
+                                                      data(std::move(w.data)),
+                                                      pc(w.pc) {}
 
   wal_write_request share_range(size_t i, size_t j) {
     assert(j <= data.size());
@@ -90,5 +93,6 @@ struct wal_write_request {
   temporary_buffer<char> data;
 
   const ::io_priority_class &pc;
+  SMF_DISALLOW_COPY_AND_ASSIGN(wal_write_request);
 };
 }  // namespace smf

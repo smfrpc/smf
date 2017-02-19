@@ -13,6 +13,7 @@
 #include "rpc/rpc_filter.h"
 #include "rpc/rpc_handle_router.h"
 #include "rpc/rpc_server_connection.h"
+#include "platform/macros.h"
 
 namespace smf {
 
@@ -50,6 +51,8 @@ class rpc_server {
   template <typename Function> void register_outgoing_filter(Function fn) {
     out_filters_.push_back(fn);
   }
+
+  SMF_DISALLOW_COPY_AND_ASSIGN(rpc_server);
 
  private:
   future<> handle_client_connection(lw_shared_ptr<rpc_server_connection> conn);

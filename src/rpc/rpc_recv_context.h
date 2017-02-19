@@ -11,7 +11,7 @@
 #include "platform/log.h"
 #include "rpc/rpc_connection.h"
 #include "rpc/rpc_connection_limits.h"
-
+#include "platform/macros.h"
 
 namespace smf {
 namespace exp = std::experimental;
@@ -32,7 +32,6 @@ struct rpc_recv_context {
   // in via the parse() function above
   rpc_recv_context(temporary_buffer<char> &&hdr, temporary_buffer<char> &&body);
   rpc_recv_context(rpc_recv_context &&o) noexcept;
-  rpc_recv_context(const rpc_recv_context &o) = delete;
   ~rpc_recv_context();
   /// \brief used by the server side to determine the actual RPC
   uint32_t request_id() const;
@@ -60,5 +59,7 @@ struct rpc_recv_context {
   /// This is the main reason we are using flatbuffers - no serialization cost
   ///
   fbs::rpc::Payload *payload;
+
+  SMF_DISALLOW_COPY_AND_ASSIGN(rpc_recv_context);
 };
 }  // namespace smf

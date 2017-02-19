@@ -11,6 +11,7 @@
 // smf
 #include "filesystem/wal_opts.h"
 #include "platform/log.h"
+#include "platform/macros.h"
 
 namespace smf {
 
@@ -23,8 +24,10 @@ class wal_mem_cache {
                    public boost::intrusive::unordered_set_base_hook<> {
     mem_put(uint64_t _offset, temporary_buffer<char> _data)
       : offset(_offset), data(std::move(_data)) {}
+    mem_put(mem_put &&p) noexcept : offset(p.offset), data(std::move(p.data)) {}
     const uint64_t         offset;
     temporary_buffer<char> data;
+    SMF_DISALLOW_COPY_AND_ASSIGN(mem_put);
   };
   struct mem_put_key {
     typedef uint64_t type;

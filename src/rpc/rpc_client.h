@@ -10,6 +10,7 @@
 #include <net/api.hh>
 // smf
 #include "histogram/histogram.h"
+#include "platform/macros.h"
 #include "rpc/rpc_connection.h"
 #include "rpc/rpc_envelope.h"
 #include "rpc/rpc_filter.h"
@@ -27,7 +28,6 @@ namespace smf {
 class rpc_client {
  public:
   explicit rpc_client(ipv4_addr server_addr);
-  rpc_client(const rpc_client &) = delete;
   /// \brief actually does the send to the remote location
   /// \param req - the bytes to send
   /// \param oneway - if oneway, then, no recv request is issued
@@ -95,8 +95,9 @@ class rpc_client {
     out_filters_.push_back(fn);
   }
 
-
   bool is_semaphore_empty() { return limit_.current() == 1; }
+
+  SMF_DISALLOW_COPY_AND_ASSIGN(rpc_client);
 
  public:
   const ipv4_addr server_addr;
