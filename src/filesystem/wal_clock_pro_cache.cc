@@ -52,8 +52,8 @@ wal_clock_pro_cache::clock_pro_get_page(uint32_t                 page,
   if (size() < number_of_pages) {
     ++stats_.total_allocation;
     return fetch_page(page, pc).then([this, page](auto chunk) {
-      mhot_.emplace_back(std::move(chunk));
-      return make_ready_future<ret_type>(mhot_.get_cache_chunk_ptr(page));
+      mcold_.emplace_front(std::move(chunk));
+      return make_ready_future<ret_type>(mcold_.get_cache_chunk_ptr(page));
     });
   }
   // proper clock-pro starts here.
