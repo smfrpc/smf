@@ -22,10 +22,15 @@ enum wal_read_request_flags : uint32_t {
 };
 
 struct wal_read_request {
-  uint64_t offset;
-  uint64_t size;
-  uint32_t flags;
+  wal_read_request(int64_t                    _offset,
+                   int64_t                    _size,
+                   uint32_t                   _flags,
+                   const ::io_priority_class &priority)
+    : offset(_offset), size(_size), flags(_flags), pc(priority) {}
 
+  int64_t                    offset;
+  int64_t                    size;
+  uint32_t                   flags;
   const ::io_priority_class &pc;
 };
 
@@ -38,18 +43,21 @@ struct wal_read_reply {
       : hdr(std::move(h)), data(std::move(d)) {
       hdr.mutate_size(data.size());
     }
-    explicit fragment(temporary_buffer<char> d) : data(std::move(d)) {
+    explicit fragment(temporary_buffer<char> &&d) : data(std::move(d)) {
       hdr.mutate_size(data.size());
       hdr.mutate_flags(fbs::wal::wal_entry_flags::wal_entry_flags_full_frament);
     }
-    fragment(fragment &&f) noexcept : hdr(std::move(f.hdr)),
-                                      data(std::move(f.data)) {}
+
+    fragment(fragment &&f) noexcept : hdr(f.hdr), data(std::move(f.data)) {}
+
     fbs::wal::wal_header   hdr;
     temporary_buffer<char> data;
     SMF_DISALLOW_COPY_AND_ASSIGN(fragment);
   };
 
-  explicit wal_read_reply(fragment f) { fragments.emplace_back(std::move(f)); }
+  explicit wal_read_reply(fragment &&f) {
+    fragments.emplace_back(std::move(f));
+  }
   wal_read_reply(wal_read_reply &&r) noexcept
     : fragments(std::move(r.fragments)) {}
   void merge(wal_read_reply &&r) {
@@ -63,6 +71,12 @@ struct wal_read_reply {
                            });
   }
   inline bool empty() const { return fragments.empty(); }
+  std::list<wal_read_reply::fragment> &&move_fragments() {
+    return std::move(fragments);
+  }
+  void emplace_back(std::list<wal_read_reply::fragment> &&fs) {
+    this->fragments.splice(std::end(fragments), std::move(fs));
+  }
   std::list<wal_read_reply::fragment> fragments{};
   SMF_DISALLOW_COPY_AND_ASSIGN(wal_read_reply);
 };

@@ -12,16 +12,19 @@ namespace smf {
 wal_reader_node::wal_reader_node(uint64_t      epoch,
                                  sstring       _filename,
                                  reader_stats *s)
-  : starting_epoch(epoch), filename(_filename), rstats_(DTHROW_IFNULL(s)) {}
+  // needed signed for comparisons
+  : starting_epoch(static_cast<int64_t>(epoch)),
+    filename(_filename),
+    rstats_(DTHROW_IFNULL(s)) {}
 wal_reader_node::~wal_reader_node() {}
 
 future<> wal_reader_node::close() { return io_->close(); }
 
 future<> wal_reader_node::open() {
-  return open_file_dma(filename, open_flags::ro).then([this](file f) {
-    auto shared_f = make_lw_shared<file>(std::move(f));
-    return shared_f->size().then([shared_f, this](uint64_t size) {
-      io_ = std::make_unique<wal_clock_pro_cache>(shared_f, size);
+  return open_file_dma(filename, open_flags::ro).then([this](file ff) {
+    auto f = make_lw_shared<file>(std::move(ff));
+    return f->size().then([f, this](uint64_t size) {
+      io_ = std::make_unique<wal_clock_pro_cache>(f, size);
       return make_ready_future<>();
     });
   });

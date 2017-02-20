@@ -9,9 +9,9 @@
 #include "flatbuffers/rpc_generated.h"
 #include "hashing/hashing_utils.h"
 #include "platform/log.h"
+#include "platform/macros.h"
 #include "rpc/rpc_connection.h"
 #include "rpc/rpc_connection_limits.h"
-#include "platform/macros.h"
 
 namespace smf {
 namespace exp = std::experimental;

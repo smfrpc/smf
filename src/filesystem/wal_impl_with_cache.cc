@@ -51,7 +51,7 @@ future<> wal_impl_with_cache::open() {
     .then([this, dir] {
       return open_directory(dir).then([this](file f) {
         auto l = make_lw_shared<wal_file_name_mender>(std::move(f));
-        return l->close().finally([l] {});
+        return l->done().finally([l] {});
       });
     })
     .then([this] {

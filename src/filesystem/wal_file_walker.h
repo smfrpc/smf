@@ -25,7 +25,7 @@ struct wal_file_walker {
     return make_ready_future<>();
   }
 
-  future<> close() { return listing.done(); }
+  future<> done() { return listing.done(); }
 
   file                          directory;
   subscription<directory_entry> listing;

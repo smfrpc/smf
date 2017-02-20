@@ -19,8 +19,7 @@ enum Flags:uint (bit_flags) {
 struct Header {
   size: uint;
   flags: Flags = 0;
-  /// \brief at the moment we use xxhash_64 bit version
-  /// and truncate it with static_cast<uint32_t>(xxhash)
+  /// currently we use xxhash32
   checksum: uint;
 }
 

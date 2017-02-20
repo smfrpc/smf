@@ -66,7 +66,6 @@ class wal_writer_node {
   future<> do_append(wal_write_request);
   future<> do_append_with_flags(wal_write_request, fbs::wal::wal_entry_flags);
   future<> do_append_with_header(fbs::wal::wal_header, wal_write_request);
-  future<> pad_end_of_file();
 
  private:
   wal_writer_node_opts                   opts_;

@@ -49,6 +49,8 @@ future<> wal_writer_node::open() {
 // this might not be needed. hehe.
 future<> wal_writer_node::do_append_with_header(fbs::wal::wal_header h,
                                                 wal_write_request    req) {
+  h.mutate_checksum(xxhash_32(req.data.get(), req.data.size()));
+  h.mutate_size(req.data.size());
   current_size_ += kWalHeaderSize;
   return lease_->append((const char *)&h, kWalHeaderSize).then([
     this, req = std::move(req)
@@ -58,19 +60,21 @@ future<> wal_writer_node::do_append_with_header(fbs::wal::wal_header h,
   });
 }
 
+static void add_binary_flags(fbs::wal::wal_header *    o,
+                             fbs::wal::wal_entry_flags f) {
+  auto b = static_cast<uint32_t>(o->flags()) | static_cast<uint32_t>(f);
+  o->mutate_flags(static_cast<fbs::wal::wal_entry_flags>(b));
+}
 
 future<> wal_writer_node::do_append_with_flags(
   wal_write_request req, fbs::wal::wal_entry_flags flags) {
   fbs::wal::wal_header hdr;
-  hdr.mutate_flags(flags);
+  add_binary_flags(&hdr, flags);
   auto const write_size = wal_write_request_size(req);
   assert(write_size <= space_left());
-
   if (write_size <= opts_.min_compression_size
       || (req.flags & wal_write_request_flags::wwrf_no_compression)
            == wal_write_request_flags::wwrf_no_compression) {
-    hdr.mutate_size(req.data.size());
-    hdr.mutate_checksum(xxhash_64(req.data.get(), req.data.size()));
     return do_append_with_header(hdr, std::move(req));
   }
 
@@ -86,12 +90,7 @@ future<> wal_writer_node::do_append_with_flags(
   auto zstd_err = ZSTD_isError(zstd_compressed_size);
   if (SMF_LIKELY(zstd_err == 0)) {
     compressed_buf.trim(zstd_compressed_size);
-    flags = (fbs::wal::wal_entry_flags)(
-      (uint32_t)flags
-      | (uint32_t)fbs::wal::wal_entry_flags::wal_entry_flags_zstd);
-    hdr.mutate_flags(flags);
-    hdr.mutate_size(zstd_compressed_size);
-    hdr.mutate_checksum(xxhash_64(compressed_buf.get(), zstd_compressed_size));
+    add_binary_flags(&hdr, fbs::wal::wal_entry_flags::wal_entry_flags_zstd);
     wal_write_request compressed_req(req.flags, std::move(compressed_buf),
                                      req.pc);
     return do_append_with_header(hdr, std::move(compressed_req));
@@ -101,13 +100,6 @@ future<> wal_writer_node::do_append_with_flags(
             zstd_err, ZSTD_getErrorName(zstd_err));
 }
 
-future<> wal_writer_node::pad_end_of_file() {
-  // This is important so that when a user cat's together files, they
-  // are also page-cache multiples.
-  temporary_buffer<char> zero(space_left());
-  std::memset(zero.get_write(), 0, zero.size());
-  return lease_->append(zero.get(), zero.size());
-}
 future<uint64_t> wal_writer_node::append(wal_write_request req) {
   const auto offset = opts_.epoch += current_size_;
   return do_append(std::move(req)).then([offset] {
@@ -122,10 +114,8 @@ future<> wal_writer_node::do_append(wal_write_request req) {
       std::move(req), fbs::wal::wal_entry_flags::wal_entry_flags_full_frament);
   }
   if (space_left() < min_entry_size()) {
-    return pad_end_of_file().then([this, req = std::move(req)]() mutable {
-      return rotate_fstream().then([this, req = std::move(req)]() mutable {
-        return do_append(std::move(req));
-      });
+    return rotate_fstream().then([this, req = std::move(req)]() mutable {
+      return do_append(std::move(req));
     });
   }
   // enough space, bigger than min_entry
@@ -147,6 +137,7 @@ future<> wal_writer_node::close() {
 }
 wal_writer_node::~wal_writer_node() {}
 future<> wal_writer_node::rotate_fstream() {
+  LOG_INFO("rotating fstream");
   // Schedule the future<> close().
   // Let the I/O scheduler close it concurrently
   auto ptr = lease_.release();

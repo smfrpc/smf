@@ -61,8 +61,10 @@ int main(int args, char **argv, char **env) {
                 return x.append(gen_payload(kPayload)).then([&x](uint64_t i) {
                   auto &p = smf::priority_manager::thread_local_instance()
                               .default_priority();
-                  smf::wal_read_request rq{i, (uint64_t)std::strlen(kPayload),
-                                           uint32_t(0), p};
+                  smf::wal_read_request rq{
+                    static_cast<int64_t>(i),
+                    static_cast<int64_t>(std::strlen(kPayload)), uint32_t(0),
+                    p};
                   return x.get(std::move(rq)).then([i](auto read_result) {
                     assert(read_result);
                     auto size = read_result->fragments.front().data.size();

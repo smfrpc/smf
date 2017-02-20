@@ -17,8 +17,8 @@ class wal_reader_node {
   wal_reader_node(uint64_t epoch, sstring filename, reader_stats *stats);
   ~wal_reader_node();
 
-  const uint64_t starting_epoch;
-  const sstring  filename;
+  const int64_t starting_epoch;
+  const sstring filename;
 
   /// \brief flushes the file before closing
   future<> close();
@@ -26,8 +26,8 @@ class wal_reader_node {
 
   future<wal_read_reply::maybe> get(wal_read_request r);
 
-  inline uint64_t file_size() { return io_->file_size; }
-  inline uint64_t ending_epoch() const {
+  inline int64_t file_size() { return io_->file_size; }
+  inline int64_t ending_epoch() const {
     return starting_epoch + io_->file_size;
   }
 

@@ -64,16 +64,15 @@ def test_environ():
 
 def run_subprocess(cmd, cfg, environ):
     logger.info("\nTest: {}\nConfig: {}".format(cmd,cfg))
+    os.chdir(cfg["execution_directory"]);
     proc =  subprocess.Popen(
         cmd,
         stdout=sys.stdout,
         stderr=sys.stderr,
-        cwd=cfg["execution_directory"],
         env=environ,
         shell=True
     )
     return_code = 0
-
     try:
         return_code = proc.wait()
         sys.stdout.flush()

@@ -28,6 +28,10 @@ add_executable(wal ${IT_ROOT}/wal/main.cc)
 target_link_libraries(wal smf_filesystem smfrpc)
 register_integration_test(wal ${IT_ROOT}/wal)
 
+add_executable(clock_pro ${IT_ROOT}/wal_clock_pro_cache/main.cc)
+target_link_libraries(clock_pro smf_filesystem)
+register_integration_test(clock_pro ${IT_ROOT}/wal_writer)
+
 add_custom_target(integration
   COMMAND ctest --output-on-failure
   DEPENDS ${IT_TESTS})

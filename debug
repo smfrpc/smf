@@ -14,5 +14,5 @@ ninja-build -v
 ctest --output-on-failure \
       --force-new-ctest-process \
       --schedule-random \
-      --timeout 3 \
+      --timeout 10 \
       -j$nprocs "$@"

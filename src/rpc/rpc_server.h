@@ -8,12 +8,12 @@
 #include <core/distributed.hh>
 // smf
 #include "histogram/histogram.h"
+#include "platform/macros.h"
 #include "rpc/filters/zstd_filter.h"
 #include "rpc/rpc_connection_limits.h"
 #include "rpc/rpc_filter.h"
 #include "rpc/rpc_handle_router.h"
 #include "rpc/rpc_server_connection.h"
-#include "platform/macros.h"
 
 namespace smf {
 
