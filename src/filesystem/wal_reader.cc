@@ -47,6 +47,7 @@ wal_reader::~wal_reader() {}
 future<> wal_reader::monitor_files(directory_entry entry) {
   auto e = wal_name_extractor_utils::extract_epoch(entry.name);
   if (buckets_.find(e) == buckets_.end()) {
+    LOG_INFO("Got new file: {}", entry.name);
     auto n = std::make_unique<wal_reader_node>(e, entry.name, rstats_);
     allocated_.emplace_back(std::move(n));
     buckets_.insert(allocated_.back());
@@ -56,8 +57,10 @@ future<> wal_reader::monitor_files(directory_entry entry) {
 }
 
 future<> wal_reader::close() {
+  // return fs_observer_->done().then([this] {
   return do_for_each(allocated_.begin(), allocated_.end(),
                      [this](auto &b) { return b.node->close(); });
+  //});
 }
 
 future<> wal_reader::open() {
@@ -65,38 +68,61 @@ future<> wal_reader::open() {
     fs_observer_ = std::make_unique<wal_reader_visitor>(this, std::move(f));
     // the visiting actually happens on a subscription thread from the filesys
     // api and it calls future<>monitor_files()...
-    return make_ready_future<>();
+    return fs_observer_->done();
   });
 }
 
 future<wal_read_reply::maybe> wal_reader::get(wal_read_request r) {
-  if (r.size == 0 || r.offset == 0) {
+  if (r.size == 0) {
     return make_ready_future<wal_read_reply::maybe>();
   }
-  auto it = buckets_.lower_bound(r.offset);
-  if (it != buckets_.end()) {
-    if (r.offset >= it->node->starting_epoch) {
-      return it->node->get(r).then([this, r](auto maybe) mutable {
-        if (maybe) {
-          auto payload_size = maybe->size();
-          if (payload_size >= r.size) {
-            return make_ready_future<wal_read_reply::maybe>(std::move(maybe));
-          }
-          r.offset += maybe->size();
-          r.size -= maybe->size();
-          return this->get(r).then([p = std::move(maybe)](auto next) mutable {
-            auto ret = std::move(p.value());
-            if (next) {
-              ret.merge(std::move(next.value()));
-            }
-            return make_ready_future<wal_read_reply::maybe>(std::move(ret));
-          });
-        }
-        return make_ready_future<wal_read_reply::maybe>();
-      });
-    }
-  }
-  return make_ready_future<wal_read_reply::maybe>();
+  auto ret = make_lw_shared<wal_read_reply>();
+  auto req = make_lw_shared<wal_read_request>(r);
+  return repeat([this, req, ret] {
+           auto it = buckets_.lower_bound(req->offset);
+           if (it == buckets_.end()) {
+             return make_ready_future<stop_iteration>(stop_iteration::yes);
+           }
+           if (req->offset < it->node->starting_epoch
+               || req->offset >= it->node->ending_epoch()) {
+             // skip some missing files / indexes
+             req->offset += it->node->ending_epoch();
+             req->size -= it->node->ending_epoch();
+             return make_ready_future<stop_iteration>(stop_iteration::no);
+           }
+           const auto end_epoch = it->node->ending_epoch();
+           return it->node->get(*req.get())
+             .then([this, ret, end_epoch, req](auto maybe) mutable {
+               req->offset += end_epoch;
+               req->size -= end_epoch;
+               if (maybe) {
+                 ret->emplace_back(maybe->move_fragments());
+               }
+               if (req->size <= 0) {
+                 return stop_iteration::yes;
+               }
+               return stop_iteration::no;
+             })
+             .handle_exception([req](std::exception_ptr eptr) {
+               try {
+                 if (eptr) {
+                   std::rethrow_exception(eptr);
+                 }
+               } catch (const std::exception &e) {
+                 LOG_ERROR("Caught exception: {}. Offset:{}, size:{}", e.what(),
+                           req->offset, req->size);
+               }
+               return stop_iteration::yes;
+             });
+         })
+    .then([ret] {
+      if (!ret->fragments.empty()) {
+        wal_read_reply r;
+        r.emplace_back(ret->move_fragments());
+        return make_ready_future<wal_read_reply::maybe>(std::move(r));
+      }
+      return make_ready_future<wal_read_reply::maybe>();
+    });
 }
 
 

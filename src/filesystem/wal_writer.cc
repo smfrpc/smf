@@ -62,7 +62,7 @@ future<> wal_writer::open_non_empty_dir(sstring last_file, sstring prefix) {
 future<> wal_writer::do_open() {
   return open_directory(directory).then([this](file f) {
     auto l = make_lw_shared<wal_head_file_max_functor>(std::move(f));
-    return l->close().then([l, this]() {
+    return l->done().then([l, this]() {
       sstring run_prefix = to_sstring(time_now_micros()) + ":";
       if (l->last_file.empty()) {
         return open_empty_dir(run_prefix);

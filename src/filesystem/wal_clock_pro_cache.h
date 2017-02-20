@@ -8,6 +8,7 @@
 #include <boost/intrusive/options.hpp>
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive/unordered_set.hpp>
+#include <core/aligned_buffer.hh>
 #include <core/file.hh>
 // smf
 #include "filesystem/wal_requests.h"
@@ -121,18 +122,22 @@ class wal_clock_pro_cache {
   /// Insertsions:      O( 1 )
   /// Deletions:        O( 1 )
   ///
+  using bufptr_t = std::unique_ptr<char[], free_deleter>;
   struct cache_chunk : public boost::intrusive::set_base_hook<>,
                        public boost::intrusive::unordered_set_base_hook<> {
-    cache_chunk(uint32_t page_no, temporary_buffer<char> _data) noexcept
+    cache_chunk(uint32_t page_no, uint32_t data_size, bufptr_t _data) noexcept
       : page(page_no),
+        buf_size(data_size),
         data(std::move(_data)) {}
     cache_chunk(cache_chunk &&c) noexcept : page(c.page),
+                                            buf_size(c.buf_size),
                                             data(std::move(c.data)),
                                             ref(c.ref) {}
-    const cache_chunk *    self() const { return this; }
-    const uint32_t         page;
-    temporary_buffer<char> data;
-    bool                   ref{false};
+    const cache_chunk *self() const { return this; }
+    const uint32_t     page;
+    const uint32_t     buf_size;
+    bufptr_t           data;
+    bool               ref{false};
     SMF_DISALLOW_COPY_AND_ASSIGN(cache_chunk);
   };
 
@@ -154,7 +159,8 @@ class wal_clock_pro_cache {
 
 
   struct clock_list {
-    clock_list() noexcept {}
+    clock_list() {}
+    ~clock_list() { lookup.clear(); }
     using list_iter = std::list<cache_chunk>::iterator;
     intrusive_map          lookup{};      // log(n) look up of allocation
     std::list<cache_chunk> allocated{};   // memory pages
@@ -209,7 +215,7 @@ class wal_clock_pro_cache {
     /// cold-non-resident list
     std::experimental::optional<cache_chunk> hand_cold() {
       std::experimental::optional<cache_chunk> ret;
-      if (size() == 0) {
+      if (allocated.empty()) {
         return ret;
       }
       if (clock_hand == allocated.end()) {
@@ -267,13 +273,13 @@ class wal_clock_pro_cache {
   wal_clock_pro_cache(lw_shared_ptr<file> f,
                       // size of the `f` file from the fstat() call
                       // need this to figure out how many pages to allocate
-                      size_t size,
+                      int64_t size,
                       // max_pages_in_memory = 0, allows us to make a decision
                       // impl defined. right now, it chooses the max of 10% of
                       // the file or 10 pages. each page is 4096 bytes
                       uint32_t max_pages_in_memory = 0);
 
-  const size_t               file_size;
+  const int64_t              file_size;
   const uint32_t             number_of_pages;
   wal_clock_pro_cache::stats get_stats() const { return stats_; }
   /// \brief - return buffer for offset with size
@@ -284,15 +290,23 @@ class wal_clock_pro_cache {
   size_t size() const;
 
  private:
-  /// \brief given the request `r`, fill `out` w/ `data`
-  //
-  bool fill(wal_read_reply *        out,
-            const wal_read_request &r,
-            const cache_chunk *     data);
+  /// \brief - returns a temporary buffer of size. similar to
+  /// isotream.read_exactly()
+  /// different than a wal_read_request for arguments since it returns **one**
+  /// temp buffer
+  ///
+  future<temporary_buffer<char>> read_exactly(int64_t                  offset,
+                                              int64_t                  size,
+                                              const io_priority_class &pc);
+  /// \brief actual reader func
+  /// recursive
+  future<lw_shared_ptr<wal_read_reply>> do_read(wal_read_request r);
 
   /// \breif fetch exactly one page from disk w/ dma_alignment() so that
   /// we don't pay the penalty of fetching 2 pages and discarding one
-  future<cache_chunk> fetch_page(uint32_t page, const io_priority_class &pc);
+  future<cache_chunk> fetch_page(const uint32_t &         page,
+                                 const io_priority_class &pc);
+
   /// \brief perform the clock-pro caching and eviction techniques
   /// and then return a ptr to the page
   /// intrusive containers::iterators are not default no-throw move

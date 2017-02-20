@@ -33,14 +33,14 @@ class wal_reader {
     std::unique_ptr<wal_reader_node> node;
   };
   struct reader_bucket_key {
-    typedef uint64_t type;
+    typedef int64_t type;
     const type &operator()(const reader_bucket &v) const {
       return v.node->starting_epoch;
     }
   };
   using intrusive_key = boost::intrusive::key_of_value<reader_bucket_key>;
   using intrusive_map = boost::intrusive::set<reader_bucket, intrusive_key>;
-  static_assert(std::is_same<intrusive_map::key_type, uint64_t>::value,
+  static_assert(std::is_same<intrusive_map::key_type, int64_t>::value,
                 "bad key for intrusive map");
 
  public:
