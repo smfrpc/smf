@@ -4,6 +4,8 @@
 #include <fmt/format.h>
 #include <util/log.hh>
 
+#include "platform/macros.h"
+
 namespace smf {
 namespace log_detail {
 // A small helper for throw_if_null().
@@ -76,7 +78,7 @@ static seastar::logger _smf_log("smf");
   } while (0)
 #define LOG_THROW_IF(condition, format, args...)                             \
   do {                                                                       \
-    if (condition) {                                                         \
+    if (SMF_UNLIKELY(condition)) {                                           \
       auto s = fmt::sprintf("{}:{}] (" #condition ") " format, __FILENAME__, \
                             __LINE__, ##args);                               \
       _smf_log.error(s.c_str());                                             \
@@ -137,7 +139,7 @@ static seastar::logger _smf_log("smf");
   } while (0)
 #define DLOG_THROW_IF(condition, format, args...)                            \
   do {                                                                       \
-    if (condition) {                                                         \
+    if (SMF_UNLIKELY(condition)) {                                           \
       auto s = fmt::sprintf("{}:{}] (" #condition ") " format, __FILENAME__, \
                             __LINE__, ##args);                               \
       _smf_log.error(s.c_str());                                             \
@@ -172,7 +174,7 @@ namespace log_detail {
 // A small helper for CHECK_NOTNULL().
 template <typename T>
 T *throw_if_null(const char *file, int line, const char *names, T *t) {
-  if (t == NULL) {
+  if (SMF_UNLIKELY(t == NULL)) {
     auto s = fmt::sprintf("{}:{}] check_not_null({})", file, line, names);
     _smf_log.error(s.c_str());
     throw std::runtime_error(s.c_str());

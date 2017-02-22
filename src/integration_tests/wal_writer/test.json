@@ -1,4 +1,4 @@
 {
-  "args": ["-c 1", "-m 1G"],
+  "args": ["-c 2", "-m 1G"],
   "tmp_home": true
 }

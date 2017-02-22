@@ -33,6 +33,8 @@ wal_clock_pro_cache::wal_clock_pro_cache(lw_shared_ptr<file> f,
     const auto min_default = std::min<uint32_t>(10, number_of_pages);
     max_resident_pages_    = std::max<uint32_t>(min_default, percent);
   }
+  using cache_t = smf::clock_pro_cache<uint64_t, page_data>;
+  cache_        = std::make_unique<cache_t>(max_pages_in_memory);
 }
 
 future<> wal_clock_pro_cache::close() {
@@ -40,82 +42,40 @@ future<> wal_clock_pro_cache::close() {
   return f->close().finally([f] {});
 }
 
-size_t wal_clock_pro_cache::size() const {
-  // in c++11 and avobe, size on list is constant, not linear
-  return mhot_.size() + mcold_.size();
-}
-
 /// intrusive containers::iterators are not default no-throw move
 /// constructible, so we have to get the ptr to the data which is lame
 ///
-future<const wal_clock_pro_cache::cache_chunk *>
+future<wal_clock_pro_cache::chunk_t_ptr>
 wal_clock_pro_cache::clock_pro_get_page(uint32_t                 page,
                                         const io_priority_class &pc) {
-  using ret_type = const cache_chunk *;
-
-  // proper clock-pro starts here.
-  if (mhot_.contains(page)) {
-    ++stats_.hot_hits;
-    // it's a hit, just set the reference bit to 1
-    auto h = mhot_.get(page);
-    h->ref = true;  // replace w/ the roaring bitmap
-    return make_ready_future<ret_type>(mhot_.get_cache_chunk_ptr(page));
+  if (cache_->contains(page)) {
+    return make_ready_future<chunk_t_ptr>(cache_->get_page(page));
   }
-  if (mcold_.contains(page)) {
-    ++stats_.cold_hits;
-    // it's a hit, just set the reference bit to 1
-    auto c = mcold_.get(page);
-    c->ref = true;
-    return make_ready_future<ret_type>(mcold_.get_cache_chunk_ptr(page));
-  }
-
-  // first modification. The original algo assumes static working set.
   // we fetch things dynamiclly. so just fill up the buffer before eviction
   // agorithm kicks in. nothing fancy
   //
   // if we just let the clock-pro work w/out pre-allocating, you end up w/ one
   // or 2 pages that you are moving between hot and cold and test
   //
-  if (size() < number_of_pages) {
-    ++stats_.total_allocation;
+  if (cache_->size() < number_of_pages) {
     return fetch_page(page, pc).then([this, page](auto chunk) {
-      mcold_.emplace_front(std::move(chunk));
-      return make_ready_future<ret_type>(mcold_.get_cache_chunk_ptr(page));
+      cache_->set(std::move(chunk));
+      return make_ready_future<chunk_t_ptr>(cache_->get_chunk_ptr(page));
     });
   }
-
-  // it's a miss. relclaim the first met cold page w/ ref bit to 0
-  auto maybe_hot = mcold_.hand_cold();
-
-  // Note:
-  // next run hand_test() -> no need, we don't use that list
-  // This is the main difference of the algorithm.
-  // next: reorganize_list() -> no need. self organizing dt.
-
-  // we might need to emplace_front on the mhot_ if the ref == 1
-  if (maybe_hot) {
-    ++stats_.cold_to_hot;
-    mhot_.emplace_front(std::move(maybe_hot.value()));
-  }
-
-  auto maybe_cold = mhot_.hand_hot();
-  // we might need to emplace_back on the mcold_ if the ref == 0
-  if (maybe_cold) {
-    ++stats_.hot_to_cold;
-    mcold_.emplace_back(std::move(maybe_cold.value()));
-  }
-
+  cache_->run_cold_hand();
+  cache_->run_hot_hand();
+  cache_->fix_hands();
 
   // next add page to list
   return fetch_page(page, pc).then([this, page](auto chunk) {
-    ++stats_.total_allocation;
-    mcold_.emplace_back(std::move(chunk));
-    return make_ready_future<ret_type>(mcold_.get_cache_chunk_ptr(page));
+    cache_->set(std::move(chunk));
+    return make_ready_future<chunk_t_ptr>(cache_->get_chunk_ptr(page));
   });
 }
 
 
-future<wal_clock_pro_cache::cache_chunk> wal_clock_pro_cache::fetch_page(
+future<wal_clock_pro_cache::chunk_t> wal_clock_pro_cache::fetch_page(
   const uint32_t &page, const io_priority_class &pc) {
   static const uint64_t kAlignment = file_->disk_read_dma_alignment();
   const uint64_t page_offset_begin = static_cast<uint64_t>(page) * kAlignment;
@@ -126,25 +86,25 @@ future<wal_clock_pro_cache::cache_chunk> wal_clock_pro_cache::fetch_page(
   return std::move(fut).then(
     [page, bufptr = std::move(bufptr)](auto size) mutable {
       LOG_THROW_IF(size > kAlignment, "Read more than 1 page");
-      cache_chunk c(page, size, std::move(bufptr));
-      return make_ready_future<wal_clock_pro_cache::cache_chunk>(std::move(c));
+      chunk_t c(page, page_data(size, std::move(bufptr)));
+      return make_ready_future<chunk_t>(std::move(c));
     });
 }
 
-static uint64_t copy_page_data(temporary_buffer<char> *                buf,
-                               const int64_t &                         offset,
-                               const int64_t &                         size,
-                               const wal_clock_pro_cache::cache_chunk *chunk,
+static uint64_t copy_page_data(temporary_buffer<char> *               buf,
+                               const int64_t &                        offset,
+                               const int64_t &                        size,
+                               const wal_clock_pro_cache::chunk_t_ptr chunk,
                                const size_t &alignment) {
-  LOG_THROW_IF(chunk->buf_size == 0, "Bad page");
+  LOG_THROW_IF(chunk->data.buf_size == 0, "Bad page");
   const int64_t bottom_page_offset = offset > 0 ? offset % alignment : 0;
   const int64_t buffer_offset =
-    bottom_page_offset > 0 ? (bottom_page_offset % (chunk->buf_size)) : 0;
+    bottom_page_offset > 0 ? (bottom_page_offset % (chunk->data.buf_size)) : 0;
 
-  const char *   begin_src = chunk->data.get() + buffer_offset;
+  const char *   begin_src = chunk->data.data.get() + buffer_offset;
   char *         begin_dst = buf->get_write() + (buf->size() - size);
   const uint64_t step_size =
-    std::min<int64_t>(chunk->buf_size - buffer_offset, size);
+    std::min<int64_t>(chunk->data.buf_size - buffer_offset, size);
   const char *end_src = begin_src + step_size;
 
   LOG_THROW_IF(step_size == 0, "Invalid range to copy. step: {}", step_size);

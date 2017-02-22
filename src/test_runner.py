@@ -64,12 +64,17 @@ def test_environ():
 
 def run_subprocess(cmd, cfg, environ):
     logger.info("\nTest: {}\nConfig: {}".format(cmd,cfg))
+    if not os.path.exists(cfg["execution_directory"]):
+        raise Exception("Test directory does not exist: {}".format(
+            cfg["execution_directory"]))
+
     os.chdir(cfg["execution_directory"]);
-    proc =  subprocess.Popen(
+    proc = subprocess.Popen(
         cmd,
         stdout=sys.stdout,
         stderr=sys.stderr,
         env=environ,
+        cwd=cfg["execution_directory"],
         shell=True
     )
     return_code = 0

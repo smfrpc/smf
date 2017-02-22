@@ -1,7 +1,6 @@
 set(TEST_ROOT ${PROJECT_SOURCE_DIR}/src/test)
 set(TEST_RUNNER ${PROJECT_SOURCE_DIR}/src/test_runner.py)
 set(FAST_TESTS "")
-set(SLOW_TESTS "")
 
 # You need the name and the directory is going to execute.
 # The reason is that you ned to copy all of the products of the
@@ -15,17 +14,12 @@ function (register_fast_test NAME DIR)
   add_test (
     NAME ${NAME}_runner
     COMMAND "${TEST_RUNNER}" --test_type unit --binary $<TARGET_FILE:${NAME}> --directory ${DIR}
-    #WORKING_DIRECTORY ${DIR}
     )
 endfunction ()
 
 
-set(ALL_TESTS "")
-IF(CMAKE_ALL_TESTS)
-  set(ALL_TESTS ${FAST_TESTS} ${SLOW_TESTS})
-ELSE()
-  set(ALL_TESTS ${FAST_TESTS})
-ENDIF()
+set(ALL_TESTS ${FAST_TESTS})
+
 
 
 add_executable (simple_flatbuffers_tests ${TEST_ROOT}/flatbuffers/simple.cc)
@@ -53,6 +47,10 @@ add_executable(wal_head_file_functor_tests
 target_link_libraries(wal_head_file_functor_tests -lgtest smf_filesystem)
 register_fast_test (wal_head_file_functor_tests
   ${TEST_ROOT}/wal_head_file_functor_tests)
+
+add_executable(clock_pro_unit ${TEST_ROOT}/clock_pro/main.cc)
+target_link_libraries(clock_pro_unit -lgtest smf_filesystem)
+register_fast_test (clock_pro_unit ${TEST_ROOT}/clock_pro)
 
 add_custom_target (check
   COMMAND ctest --output-on-failure
