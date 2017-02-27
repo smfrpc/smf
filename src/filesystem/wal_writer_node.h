@@ -3,6 +3,7 @@
 #pragma once
 // seastar
 #include <core/fstream.hh>
+#include <core/semaphore.hh>
 // generated
 #include "flatbuffers/wal_generated.h"
 // smf
@@ -71,6 +72,7 @@ class wal_writer_node {
   wal_writer_node_opts                   opts_;
   uint64_t                               current_size_ = 0;
   std::unique_ptr<wal_writer_file_lease> lease_        = nullptr;
+  semaphore                              serialize_writes_{1};
 };
 
 }  // namespace smf

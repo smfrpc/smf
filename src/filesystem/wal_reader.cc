@@ -47,7 +47,6 @@ wal_reader::~wal_reader() {}
 future<> wal_reader::monitor_files(directory_entry entry) {
   auto e = wal_name_extractor_utils::extract_epoch(entry.name);
   if (buckets_.find(e) == buckets_.end()) {
-    LOG_INFO("Got new file: {}", entry.name);
     auto n = std::make_unique<wal_reader_node>(e, entry.name, rstats_);
     allocated_.emplace_back(std::move(n));
     buckets_.insert(allocated_.back());

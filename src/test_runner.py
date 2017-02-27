@@ -84,7 +84,7 @@ def run_subprocess(cmd, cfg, environ):
         sys.stderr.flush()
     except Exception as e:
         logger.exception("Could not run command: % ", e)
-        proc.terminate()
+        proc.kill()
         raise
 
     if return_code != 0: raise subprocess.CalledProcessError(return_code, cmd)

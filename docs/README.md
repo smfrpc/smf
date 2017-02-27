@@ -20,7 +20,16 @@
 <a name="Intro"/>
 # Intro
 
-`smf` was born out of the need to have a low latency queueing broker. During
+`smf` is a set of
+[mechanically friendly](https://groups.google.com/forum/#!forum/mechanical-sympathy)
+subsystems. It is the evolution of a set of distributed-sys primitives
+I've worked since college - named `moondog` - updated to run under the
+[seastar]((http://www.seastar-project.org/)
+share-nothing paradigm.
+
+The subproject
+[smfb](https://github.com/senior7515/smf/tree/master/src/smfb)
+was born out of the need to have a low latency queueing broker. During
 my tenure at Concord.io, I struggled to provide low latency messaging
 (single digit milliseconds) while providing exactly-once delivery of messages.
 Ideally, the systems should **not** require API changes from a programmer's
@@ -31,17 +40,6 @@ point of view. That is, the programmer shouldn't have to implement
 ```
 Turns out what people want is exactly-once processing, **not**
 exactly-once delivery, but that's another story.
-
-`smf` is a set of
-[mechanically friendly](https://groups.google.com/forum/#!forum/mechanical-sympathy)
-subsystems. It started out as a possible contribution to the
-[seastar](http://www.seastar-project.org/) project for a fast RPC mechanism
-that leveraged [DPDK](http://dpdk.org/) but with
-a friendly IDL generation stage based on
-[Google's Flatbuffers](https://google.github.io/flatbuffers/)
-, similar to [Cap'n Proto](https://capnproto.org/) or protoc (v3) and
-[gRPC](http://grpc.io).
-
 
 ## We need your help!
 

@@ -28,8 +28,14 @@ wal_writer::wal_writer(wal_writer &&o) noexcept
 
 
 future<> wal_writer::close() {
-  assert(writer_ != nullptr);
-  return writer_->close();
+  if (writer_) {
+    return writer_->close();
+  }
+  // writer can be null if after creation, but before open()
+  // is called there is a system_error or an exception
+  // so we never call open. We still need to wind down and close()
+  // or attempt to close all
+  return make_ready_future<>();
 }
 
 future<> wal_writer::open_empty_dir(sstring prefix) {

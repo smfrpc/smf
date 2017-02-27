@@ -1,10 +1,20 @@
 # [smf](http://senior7515.github.io/smf/)
 
-It is pronounced `smurf`
+**smf** is pronounced **/smɝf/**
 
-Mailing List: https://groups.google.com/forum/#!forum/smf-dev
+Mailing List:  https://groups.google.com/forum/#!forum/smf-dev
+Documentation: http://senior7515.github.io/smf/
 
-Please see documentation site: http://senior7515.github.io/smf/
+## Brief
+
+`smf` is a set of
+[mechanically friendly](https://groups.google.com/forum/#!forum/mechanical-sympathy)
+subsystems. It is the evolution of a set of distributed-sys primitives
+I've worked since college - named `moondog` - updated to run under the
+[seastar]((http://www.seastar-project.org/)
+share-nothing paradigm.
+
+See the rest of the docs here: http://senior7515.github.io/smf/
 
 ## We need your help!
 

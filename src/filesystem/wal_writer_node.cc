@@ -101,10 +101,14 @@ future<> wal_writer_node::do_append_with_flags(
 }
 
 future<uint64_t> wal_writer_node::append(wal_write_request req) {
-  const auto offset = opts_.epoch += current_size_;
-  return do_append(std::move(req)).then([offset] {
-    return make_ready_future<uint64_t>(offset);
-  });
+  return serialize_writes_.wait(1)
+    .then([this, req = std::move(req)]() mutable {
+      const auto offset = opts_.epoch += current_size_;
+      return do_append(std::move(req)).then([offset] {
+        return make_ready_future<uint64_t>(offset);
+      });
+    })
+    .finally([this] { serialize_writes_.signal(1); });
 }
 
 future<> wal_writer_node::do_append(wal_write_request req) {

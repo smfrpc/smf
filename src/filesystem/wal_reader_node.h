@@ -26,14 +26,16 @@ class wal_reader_node {
 
   future<wal_read_reply::maybe> get(wal_read_request r);
 
-  inline int64_t file_size() { return io_->file_size; }
-  inline int64_t ending_epoch() const {
-    return starting_epoch + io_->file_size;
-  }
+  inline int64_t file_size() const { return file_size_; }
+  inline int64_t ending_epoch() const { return starting_epoch + file_size_; }
+
+ private:
+  future<> open_node();
 
  private:
   reader_stats *                       rstats_;
   std::unique_ptr<wal_clock_pro_cache> io_;
+  uint64_t                             file_size_;
 };
 
 }  // namespace smf
