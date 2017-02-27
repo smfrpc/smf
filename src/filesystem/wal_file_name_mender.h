@@ -6,6 +6,7 @@
 #include "filesystem/wal_file_walker.h"
 #include "filesystem/wal_name_extractor_utils.h"
 #include "hashing/hashing_utils.h"
+#include "platform/log.h"
 
 namespace smf {
 struct wal_file_name_mender : wal_file_walker {
@@ -20,7 +21,11 @@ struct wal_file_name_mender : wal_file_walker {
       // now. Core dumps otherwise.
       if (engine().cpu_id() == moving_core) {
         auto name = wal_name_extractor_utils::name_without_prefix(de.name);
-        return rename_file(de.name, name);
+        return rename_file(de.name, name).handle_exception([
+          old = de.name, name
+        ](const auto &e) {
+          LOG_ERROR("Failed to recover file: `{}' -> `{}'", old, name);
+        });
       }
     }
     return make_ready_future<>();

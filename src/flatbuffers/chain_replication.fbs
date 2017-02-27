@@ -15,7 +15,7 @@ enum tx_operation:short {
 table tx_fragment {
   /// what should we do with this trasaction fragment
   op: tx_operation;
-  /// transaction id
+  /// sequence id.. not sure if needed
   id: uint;
   time: ulong;
   key: [ubyte];
@@ -23,45 +23,28 @@ table tx_fragment {
 }
 
 /// brief - stores `puts` transactionally
-table tx_put {
+table tx_put_request {
   topic: string;
   partition: uint;
   chain: [uint];
   txs: [tx_fragment];
 }
-
-/// brief - the transaction gaurantees are per 'put'
-/// not for the entire multiput
-/// at the moment, it only supports one tx_put transactionally
-enum tx_multiput_guarantee: short {
-  /// the guarantees here is per tx_put object
-  tx,
-  /// the guarantees here is for the entire multiput which
-  /// requires a quite expensive multi chain protocol & is not yet
-  /// implemented
-  batch
-}
-table tx_multiput {
-  guarantee: tx_multiput_guarantee = tx;
-  puts: [tx_put];
-}
-table tx_mput_reply {}
-table tx_sput_reply {}
+table tx_put_reply {}
 
 
-table tx_fetch {
+table tx_get_request {
   topic: string;
+  partition: uint;
   offset: ulong;
   max_bytes: uint;
 }
-table tx_fetch_request {
+
+table tx_get_reply {
+  next_offset: ulong;
+  puts: [tx_fragment];
 }
 
-table tx_fetch_reply {
-  puts: [tx_put];
-}
 rpc_service chain_replication {
-  mput(tx_multiput): tx_mput_reply;
-  sput(tx_put): tx_sput_reply;
-  fetch(tx_fetch_request): tx_fetch_reply;
+  put(tx_put_request): tx_put_reply;
+  get(tx_get_request): tx_get_reply;
 }

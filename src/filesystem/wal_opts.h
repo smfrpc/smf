@@ -1,13 +1,14 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #pragma once
-// std
+
 #include <experimental/optional>
 #include <memory>
 #include <utility>
-// seastar
+
+#include <boost/filesystem.hpp>
 #include <core/temporary_buffer.hh>
-// smf
+
 #include "filesystem/wal_writer_utils.h"
 #include "histogram/histogram.h"
 
@@ -103,6 +104,10 @@ struct cache_stats {
 // this should probably be a sharded<wal_otps> &
 // like the tcp server no?
 struct wal_opts {
+  static sstring canonical_dir(const sstring &directory) {
+    return boost::filesystem::canonical(directory.c_str()).string();
+  }
+
   explicit wal_opts(sstring log_directory) : directory(log_directory) {}
   wal_opts(wal_opts &&o) noexcept : directory(std::move(o.directory)),
                                     cache_size(o.cache_size),
@@ -110,7 +115,7 @@ struct wal_opts {
                                     wstats(std::move(o.wstats)),
                                     cstats(std::move(o.cstats)) {}
   wal_opts(const wal_opts &o)
-    : directory(o.directory)
+    : directory(canonical_dir(o.directory))
     , cache_size(o.cache_size)
     , rstats(o.rstats)
     , wstats(o.wstats)
