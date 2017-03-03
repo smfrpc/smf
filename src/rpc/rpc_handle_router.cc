@@ -2,7 +2,22 @@
 //
 #include "rpc/rpc_handle_router.h"
 
+
 namespace smf {
+
+std::ostream &operator<<(std::ostream &o, const smf::rpc_handle_router &r) {
+  o << "rpc_handle_router{";
+  for (const auto &service : r.services_) {
+    o << "rpc_service{name=" << service->service_name() << ",handles=";
+    for (const auto &method : service->methods()) {
+      o << "rpc_service_method_handle{name=" << method.method_name << "}";
+    }
+    o << "}";
+  }
+  o << "}";
+  return o;
+}
+
 bool rpc_handle_router::can_handle_request(
   const uint32_t &request_id,
   const flatbuffers::Vector<flatbuffers::Offset<fbs::rpc::DynamicHeader>>

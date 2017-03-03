@@ -1,7 +1,9 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #pragma once
-// smf
+
+#include <iostream>
+
 #include "platform/macros.h"
 #include "rpc/rpc_envelope.h"
 #include "rpc/rpc_recv_context.h"
@@ -40,5 +42,8 @@ class rpc_handle_router {
  private:
   std::unordered_map<uint32_t, rpc_service_method_handle> dispatch_{};
   std::vector<std::unique_ptr<rpc_service>> services_{};
+
+  friend std::ostream &operator<<(std::ostream &,
+                                  const smf::rpc_handle_router &);
 };
 }  // namespace smf

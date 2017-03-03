@@ -47,10 +47,13 @@ wal_reader::~wal_reader() {}
 future<> wal_reader::monitor_files(directory_entry entry) {
   auto e = wal_name_extractor_utils::extract_epoch(entry.name);
   if (buckets_.find(e) == buckets_.end()) {
-    auto n = std::make_unique<wal_reader_node>(e, entry.name, rstats_);
-    allocated_.emplace_back(std::move(n));
-    buckets_.insert(allocated_.back());
-    return allocated_.back().node->open();
+    auto n    = std::make_unique<wal_reader_node>(e, entry.name, rstats_);
+    auto copy = n.get();
+    return copy->open().then([this, n = std::move(n)]() mutable {
+      allocated_.emplace_back(std::move(n));
+      buckets_.insert(allocated_.back());
+      return make_ready_future<>();
+    });
   }
   return make_ready_future<>();
 }
