@@ -17,11 +17,8 @@
 
 namespace smf {
 
-enum RPCFLAGS : uint32_t {
-  RPCFLAGS_NONE = 0,
-  // TODO(agallego) - drop load
-  RPCFLAGS_LOAD_SHEDDING_ON = 1
-};
+// XXX(agallego)- add lineage failures to the connection parsing
+enum rpc_server_flags : uint32_t { rpc_server_flags_none = 0 };
 
 class rpc_server {
  public:
@@ -38,18 +35,22 @@ class rpc_server {
     return make_ready_future<smf::histogram>(std::move(h));
   }
 
-  template <typename T> void register_service() {
+  template <typename T, typename... Args>
+  void register_service(Args &&... args) {
     static_assert(std::is_base_of<rpc_service, T>::value,
                   "register_service can only be called with a derived class of "
                   "smf::rpc_service");
-    routes_.register_service(std::make_unique<T>());
+    routes_.register_service(std::make_unique<T>(std::forward<Args>(args)...));
   }
-  template <typename Function> void register_incoming_filter(Function fn) {
-    in_filters_.push_back(fn);
+  template <typename Function, typename... Args>
+  void register_incoming_filter(Args &&... args) {
+    in_filters_.push_back(Function(std::forward<Args>(args)...));
   }
 
-  template <typename Function> void register_outgoing_filter(Function fn) {
-    out_filters_.push_back(fn);
+
+  template <typename Function, typename... Args>
+  void register_outgoing_filter(Args &&... args) {
+    out_filters_.push_back(Function(std::forward<Args>(args)...));
   }
 
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_server);
@@ -75,6 +76,9 @@ class rpc_server {
 
   std::unique_ptr<rpc_connection_limits> limits_ =
     std::make_unique<rpc_connection_limits>();
+
+ private:
+  friend std::ostream &operator<<(std::ostream &, const smf::rpc_server &);
 };
 
 }  // namespace smf

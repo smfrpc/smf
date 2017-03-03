@@ -1,13 +1,26 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #include "smfb/smfb_command_line_options.h"
+
+#include <core/sstring.hh>
+
 namespace smf {
 boost::program_options::options_description smfb_options() {
   namespace po = boost::program_options;
   po::options_description opts("smfb broker options");
   auto                    o = opts.add_options();
-  o("smfb_port", po::value<uint16_t>()->default_value(11201), "rpc port");
-  o("rand_home", po::value<bool>()->default_value(false), "randomize $HOME");
+  o("rpc_port", po::value<uint16_t>()->default_value(11201), "rpc port");
+  o("write_ahead_log_dir", po::value<sstring>(), "log directory");
+
+  o("rpc_stats_period_mins", po::value<int>()->default_value(5),
+    "period to print stats in minutes");
+
+  o("wal_stats_period_mins", po::value<int>()->default_value(15),
+    "period to print stats in minutes");
+
+  o("log_level", po::value<sstring>()->default_value("info"),
+    "info | debug | trace");
+
   return opts;
 }
 

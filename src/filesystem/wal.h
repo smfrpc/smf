@@ -62,4 +62,8 @@ class shardable_wal : public wal_iface {
  private:
   std::unique_ptr<wal> w_;
 };
+
+// nicer type
+using write_ahead_log = shardable_wal;
+
 }  // namespace smf
