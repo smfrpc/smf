@@ -35,7 +35,7 @@ void rpc_connection_limits::release_resources(size_t memory_consumed) {
 rpc_connection_limits::~rpc_connection_limits() {}
 
 std::ostream &operator<<(std::ostream &o, const rpc_connection_limits &l) {
-  o << "{'basic_req_size':";
+  o << "rpc_connection_limits{'basic_req_size':";
   human_bytes<uint64_t>(o, l.basic_request_size);
   o << ",'bloat_factor': ";
   human_bytes<uint64_t>(o, l.bloat_factor);

@@ -202,7 +202,7 @@ int main(int args, char **argv, char **env) {
         return make_ready_future<>();
       })
       .then([&rpc, &stats, port] {
-        uint32_t flags = smf::RPCFLAGS::RPCFLAGS_LOAD_SHEDDING_ON;
+        uint32_t flags = smf::rpc_server_flags::rpc_server_flags_none;
         return rpc.start(&stats, port, flags).then([&rpc] {
           DLOG_DEBUG("Registering smf_gen::fbs::rpc::storage_service");
           return rpc.invoke_on_all(
@@ -211,8 +211,9 @@ int main(int args, char **argv, char **env) {
       })
       .then([&rpc] {
         /// example using a struct template
-        return rpc.invoke_on_all(&smf::rpc_server::register_incoming_filter,
-                                 smf::zstd_decompression_filter());
+        return rpc.invoke_on_all(
+          &smf::rpc_server::
+            register_incoming_filter<smf::zstd_decompression_filter>);
       })
       .then([&rpc] {
         DLOG_DEBUG("Invoking rpc start on all cores");

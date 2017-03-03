@@ -39,8 +39,8 @@ struct reducible_append {
 
 int main(int args, char **argv, char **env) {
   DLOG_DEBUG("About to start the client");
-  app_template                    app;
-  distributed<smf::shardable_wal> w;
+  app_template                      app;
+  distributed<smf::write_ahead_log> w;
   try {
     return app.run(args, argv, [&]() mutable -> future<int> {
       // SET_LOG_LEVEL(seastar::log_level::debug);
