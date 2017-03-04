@@ -1,5 +1,3 @@
-# Seastar doesn't finish linking w/ gold linker
-# "-fuse-ld=gold"
 set(BASE_FLAGS
   "-std=c++1z"
   "-fdiagnostics-color=auto"
@@ -18,6 +16,7 @@ set(BASE_FLAGS
   "-Wcast-align"
   "-Wno-missing-field-initializers"
   "-Wno-ignored-qualifiers"
+  "-Wdelete-non-virtual-dtor"
   )
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)

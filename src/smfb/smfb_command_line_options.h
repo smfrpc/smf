@@ -3,8 +3,10 @@
 #pragma once
 #include <boost/program_options.hpp>
 namespace smf {
-void smfb_add_command_line_options(boost::program_options::variables_map *m,
-                                   int                                    argc,
-                                   char **                                argv);
+struct smfb_command_line_options {
+  static void add(boost::program_options::options_description_easy_init);
+  static void validate(const boost::program_options::variables_map &vm);
+};
+
 
 }  // end namespace smf

@@ -15,6 +15,8 @@ struct wal_file_walker {
     , listing(directory.list_directory(
         [this](directory_entry de) { return dir_visit(de); })) {}
 
+  virtual ~wal_file_walker() {}
+
   virtual future<> visit(directory_entry wal_file_entry) = 0;
 
   virtual future<> dir_visit(directory_entry de) final {

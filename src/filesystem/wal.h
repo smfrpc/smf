@@ -23,6 +23,7 @@ class wal_iface {
   // \brief filesystem monitoring
   virtual future<> open()  = 0;
   virtual future<> close() = 0;
+  virtual ~wal_iface() {}
 };
 
 /// brief - write ahead log
