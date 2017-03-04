@@ -2,41 +2,39 @@
 //
 #include "smfb/smfb_command_line_options.h"
 
-#include <core/sstring.hh>
+#include "platform/log.h"
 
 namespace smf {
-boost::program_options::options_description smfb_options() {
-  namespace po = boost::program_options;
-  po::options_description opts("smfb broker options");
-  auto                    o = opts.add_options();
-  o("rpc_port", po::value<uint16_t>()->default_value(11201), "rpc port");
-  o("write_ahead_log_dir", po::value<sstring>(), "log directory");
 
-  o("rpc_stats_period_mins", po::value<int>()->default_value(5),
-    "period to print stats in minutes");
-
-  o("wal_stats_period_mins", po::value<int>()->default_value(15),
-    "period to print stats in minutes");
-
-  o("log_level", po::value<sstring>()->default_value("info"),
-    "info | debug | trace");
-
-  return opts;
+void smfb_command_line_options::validate(
+  const boost::program_options::variables_map &vm) {
+  const auto rpc_stats_period_mins = vm["rpc-stats-period-mins"].as<uint32_t>();
+  LOG_THROW_IF(
+    rpc_stats_period_mins == 0 || rpc_stats_period_mins > 6 * 60 /*6 hours*/,
+    "--rpc-stats-period-mins:`{}` is > 6hrs", rpc_stats_period_mins);
+  LOG_THROW_IF(!vm.count("write-ahead-log-dir"),
+               "--write-ahead-log-dir not specified");
 }
 
-void validate_options(const boost::program_options::variables_map &vm) {
-  // fix rand_home var, etc.
-}
-
-
-void smfb_add_command_line_options(boost::program_options::variables_map *vm,
-                                   int                                    argc,
-                                   char **argv) {
+// Note: boost has to use std::string as it has no built in parser for
+// sstring
+void smfb_command_line_options::add(
+  boost::program_options::options_description_easy_init o) {
   namespace po = boost::program_options;
-  po::store(po::command_line_parser(argc, argv).options(smfb_options()).run(),
-            *vm);
-  po::notify(*vm);
-  validate_options(*vm);
+  o("port", po::value<uint16_t>()->default_value(11201), "rpc port");
+  o("write-ahead-log-dir", po::value<std::string>(), "log directory");
+
+  o("rpc-stats-period-mins", po::value<uint32_t>()->default_value(5),
+    "period to print stats in minutes");
+
+  o("wal-stats-period-mins", po::value<uint32_t>()->default_value(15),
+    "period to print stats in minutes");
+
+  o("log-level", po::value<std::string>()->default_value("info"),
+    "debug | trace");
+
+  o("print-rpc-stats", po::value<bool>()->default_value(true),
+    "if false, --rpc-stats-period-mins is ignored");
 }
 
 

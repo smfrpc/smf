@@ -16,6 +16,7 @@ namespace smf {
 class rpc_handle_router {
  public:
   rpc_handle_router() {}
+  ~rpc_handle_router() {}
   void register_service(std::unique_ptr<rpc_service> s);
   future<> stop();
   /// \brief, MUST BE FAST - blocks the thread
