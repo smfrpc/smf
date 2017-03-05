@@ -13,3 +13,4 @@ add_library (cr STATIC
 # add_dependencies(cr
 #   ${PROJECT_SOURCE_DIR}/src/flatbuffers/chain_replication.smf.fb.h)
 target_link_libraries (cr smfrpc)
+install(TARGETS cr DESTINATION lib)

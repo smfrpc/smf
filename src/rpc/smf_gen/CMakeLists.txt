@@ -1,4 +1,14 @@
-include(${PROJECT_SOURCE_DIR}/CMake/smf_gen_sources.cmake)
+set(SMF_GEN_SOURCES
+  ${PROJECT_SOURCE_DIR}/src/rpc/smf_gen/cpp_generator.cc
+  ${PROJECT_SOURCE_DIR}/src/rpc/smf_gen/idl.cc
+  ${PROJECT_SOURCE_DIR}/src/rpc/smf_gen/main.cc
+  )
+set(SMF_GEN_LIBS
+  flatbuffers.a
+  glog
+  gflags
+  pthread
+  )
 # Compile the Types for the RPC tests - kinda recursive - sigh
 build_flatbuffers(
   #flatbuffers_schemas
@@ -21,3 +31,4 @@ build_flatbuffers(
 add_executable (smf_gen ${SMF_GEN_SOURCES})
 target_link_libraries (smf_gen ${BASE_FLAG} ${SMF_GEN_LIBS})
 add_dependencies(smf_gen smf_gen_demo_types)
+install(TARGETS smf_gen RUNTIME DESTINATION bin)

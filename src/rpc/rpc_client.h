@@ -27,6 +27,10 @@ namespace smf {
 ///
 class rpc_client {
  public:
+  using in_filter_t = std::function<future<rpc_recv_context>(rpc_recv_context)>;
+  using out_filter_t = std::function<future<rpc_envelope>(rpc_envelope)>;
+
+  // TODO(agallego) - add options for ipv6, ssl, buffering, etc.
   explicit rpc_client(ipv4_addr server_addr);
   /// \brief actually does the send to the remote location
   /// \param req - the bytes to send
@@ -36,8 +40,7 @@ class rpc_client {
   template <typename T>
   future<rpc_recv_typed_context<T>> send(rpc_envelope e, bool oneway = false) {
     using ret_type = rpc_recv_typed_context<T>;
-    assert(conn_ != nullptr);  // call connect() first
-    e.finish();                // make sure that the buff is ready
+    e.finish();  // make sure that the buff is ready
     auto measure = is_histogram_enabled() ? hist_->auto_measure() : nullptr;
     return rpc_filter_apply(&out_filters_, std::move(e))
       .then([this, oneway](rpc_envelope &&e) {
@@ -66,7 +69,7 @@ class rpc_client {
           using t = std::experimental::optional<rpc_recv_context>;
           return make_ready_future<t>(std::experimental::nullopt);
         }
-        return smf::rpc_recv_context::parse(conn_, nullptr);
+        return smf::rpc_recv_context::parse(conn_.get(), nullptr);
       });
   }
 
@@ -87,15 +90,18 @@ class rpc_client {
     return nullptr;
   }
 
-  template <typename Function> void register_incoming_filter(Function fn) {
-    in_filters_.push_back(fn);
-  }
+  /// \brief use to enqueue or dequeue filters
+  /// \code{.cpp}
+  ///    client->incoming_filters().push_back(zstd_decompression_filter());
+  /// \endcode
+  std::vector<in_filter_t> &incoming_filters() { return in_filters_; }
+  /// \brief use to enqueue or dequeue filters
+  /// \code{.cpp}
+  ///    client->outgoing_filters().push_back(zstd_compression_filter(1000));
+  /// \endcode
+  std::vector<out_filter_t> &outgoing_filters() { return out_filters_; }
 
-  template <typename Function> void register_outgoing_filter(Function fn) {
-    out_filters_.push_back(fn);
-  }
-
-  bool is_semaphore_empty() { return limit_.current() == 1; }
+  bool is_semaphore_empty() { return limit_.current() == 0; }
 
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_client);
 
@@ -118,11 +124,10 @@ class rpc_client {
   semaphore limit_{1};
 
  private:
-  rpc_connection *           conn_ = nullptr;
-  std::unique_ptr<histogram> hist_;
-  using in_filter_t = std::function<future<rpc_recv_context>(rpc_recv_context)>;
-  std::vector<in_filter_t> in_filters_;
-  using out_filter_t = std::function<future<rpc_envelope>(rpc_envelope)>;
+  std::unique_ptr<rpc_connection> conn_;
+  std::unique_ptr<histogram>      hist_;
+
+  std::vector<in_filter_t>  in_filters_;
   std::vector<out_filter_t> out_filters_;
 };
 

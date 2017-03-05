@@ -17,7 +17,7 @@ table tx_fragment {
   op: tx_operation;
   /// sequence id.. not sure if needed
   id: uint;
-  time: ulong;
+  time_micros: ulong;
   key: [ubyte];
   value: [ubyte];
 }
@@ -25,7 +25,7 @@ table tx_fragment {
 /// brief - stores `puts` transactionally
 table tx_put_request {
   topic: string;
-  partition: uint;
+  partition: uint; // xxhash32(topic,key)
   chain: [uint];
   txs: [tx_fragment];
 }

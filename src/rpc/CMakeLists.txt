@@ -20,3 +20,5 @@ target_link_libraries(smfrpc
   zstd.a
   )
 add_dependencies(smfrpc rpc_serialization)
+install(TARGETS smfrpc DESTINATION lib)
+add_subdirectory(${PROJECT_SOURCE_DIR}/src/rpc/smf_gen)

@@ -1,0 +1,31 @@
+---
+
+- name: Sync soure from git
+  git:
+    repo='https://github.com/arangodb/linenoise-ng.git'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/linenoise_ng'
+    update=yes
+    recursive=yes
+    version='b835038'
+    force=yes
+
+- file:
+    path='{{goobly_cache_dir}}/linenoise_ng/build'
+    state=directory
+
+- name: Configure
+  shell:
+    cmake -DCMAKE_INSTALL_PREFIX:PATH='{{third_party_dir}}' \
+    '{{goobly_cache_dir}}/linenoise_ng'
+  args:
+    chdir: '{{goobly_cache_dir}}/linenoise_ng/build'
+    creates: '{{goobly_cache_dir}}/linenoise_ng/build/Makefile'
+
+- name: Install
+  shell:
+    make install CXXFLAGS="-fPIC" -j{{ansible_processor_vcpus}}
+  args:
+    chdir: '{{goobly_cache_dir}}/linenoise_ng/build'
+    creates: '{{third_party_dir}}/lib/liblinenoise.a'

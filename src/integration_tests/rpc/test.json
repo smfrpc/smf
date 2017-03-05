@@ -1,8 +1,8 @@
 {
   "args": ["-c 2",
            "-m 2G",
-           "--req_num 1",
+           "--req-num 1",
            "--concurrency 2",
-           "--ip_address 127.0.0.1"],
+           "--ip 127.0.0.1"],
   "tmp_home": true
 }

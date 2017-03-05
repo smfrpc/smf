@@ -6,3 +6,4 @@ target_link_libraries(smftracing
   hdr_histogram_static
   ${SEASTAR_LDFLAGS}
   )
+install(TARGETS smftracing DESTINATION lib)

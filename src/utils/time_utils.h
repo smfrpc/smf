@@ -14,16 +14,16 @@ inline uint64_t time_now_millis() {
 
 inline uint64_t time_now_micros() {
   return std::chrono::duration_cast<std::chrono::microseconds>(
-           std::chrono::system_clock::now().time_since_epoch())
+           std::chrono::high_resolution_clock::now().time_since_epoch())
     .count();
 }
 
 // Extracted out of gmock
 // Converts the given epoch time in milliseconds to a date string in the ISO
 // 8601 format, without the timezone information.
-inline sstring time_as_iso_8601(uint64_t ms) {
+inline sstring time_as_iso_8601(uint64_t millisecs) {
   // Using non-reentrant version as localtime_r is not portable.
-  time_t                 seconds     = static_cast<time_t>(ms / 1000);
+  time_t                 seconds     = static_cast<time_t>(millisecs / 1000);
   const struct tm *const time_struct = localtime(&seconds);  // NOLINT
   if (time_struct == NULL) {
     return "";  // Invalid ms value

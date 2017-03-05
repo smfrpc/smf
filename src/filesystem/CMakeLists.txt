@@ -23,3 +23,5 @@ target_link_libraries (smf_filesystem
   re2
   libroaring.a
   )
+
+install(TARGETS smf_filesystem DESTINATION lib)

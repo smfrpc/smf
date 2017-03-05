@@ -11,3 +11,4 @@
     - zstd
     - smf_extra_libs
     - roaring_bitmap
+    - linenoise_ng

@@ -6,6 +6,7 @@
 
 #include "chain_replication/chain_replication_service.h"
 #include "filesystem/wal.h"
+#include "histogram/histogram_seastar_utils.h"
 #include "platform/log.h"
 #include "rpc/rpc_server.h"
 #include "rpc/rpc_server_stats_printer.h"
@@ -35,7 +36,7 @@ int main(int argc, char **argv, char **env) {
 
     return app.run_deprecated(argc, argv, [&] {
       LOG_INFO("Setting up at_exit hooks");
-      engine().at_exit([&rpc_printer] {
+      engine().at_exit([&rpc_printer, &rpc] {
         if (rpc_printer) {
           LOG_INFO("Stopping rpc_printer");
           return rpc_printer->stop();
@@ -65,9 +66,22 @@ int main(int argc, char **argv, char **env) {
         using min_t     = std::chrono::minutes;
         using printer_t = smf::rpc_server_stats_printer;
         auto mins       = min_t(config["rpc-stats-period-mins"].as<uint32_t>());
-        LOG_INFO("Enabling --print-rpc-stats");
+        LOG_INFO("Enabling --print-rpc-stats every: {}min", mins.count());
         rpc_printer = std::make_unique<printer_t>(&rpc_stats, mins);
       }
+      if (config["print-rpc-histogram-on-exit"].as<bool>()) {
+        engine().at_exit([&rpc] {
+          LOG_INFO("Writing rpc_server histograms");
+          return rpc
+            .map_reduce(adder<smf::histogram>(),
+                        &smf::rpc_server::copy_histogram)
+            .then([](smf::histogram h) {
+              return smf::histogram_seastar_utils::write_histogram(
+                "server_hdr.txt", std::move(h));
+            });
+        });
+      }
+
 
       LOG_INFO("Setting up at_exit hooks");
       return rpc_stats.start()

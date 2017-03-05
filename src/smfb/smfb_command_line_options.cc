@@ -21,7 +21,9 @@ void smfb_command_line_options::validate(
 void smfb_command_line_options::add(
   boost::program_options::options_description_easy_init o) {
   namespace po = boost::program_options;
+
   o("port", po::value<uint16_t>()->default_value(11201), "rpc port");
+
   o("write-ahead-log-dir", po::value<std::string>(), "log directory");
 
   o("rpc-stats-period-mins", po::value<uint32_t>()->default_value(5),
@@ -35,6 +37,9 @@ void smfb_command_line_options::add(
 
   o("print-rpc-stats", po::value<bool>()->default_value(true),
     "if false, --rpc-stats-period-mins is ignored");
+
+  o("print-rpc-histogram-on-exit", po::value<bool>()->default_value(true),
+    "if false, no server_hdr.txt will be printed");
 }
 
 
