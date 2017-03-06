@@ -31,6 +31,9 @@ build/
 # bazel
 bazel-*
 
+# Vagrant
+.vagrant/
+
 src/third_party/bin/
 src/third_party/include/
 src/third_party/lib/
