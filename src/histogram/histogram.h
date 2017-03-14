@@ -45,8 +45,10 @@ class histogram {
 
   void record_multiple_times(const uint64_t &v, const uint32_t &times);
   void record_corrected(const uint64_t &v, const uint64_t &interval);
-
-  size_t memory_size();
+  int64_t value_at(double percentile) const;
+  double stddev() const;
+  double mean() const;
+  size_t memory_size() const;
 
   const struct hdr_histogram *get() const;
 
@@ -59,6 +61,7 @@ class histogram {
  private:
   std::unique_ptr<hist_t> hist_ = std::make_unique<hist_t>();
 };
+std::ostream &operator<<(std::ostream &, const smf::histogram &h);
 
 /// simple struct that records the measurement at the dtor
 /// similar to boost_scope_exit;

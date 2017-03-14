@@ -8,6 +8,7 @@
 #include <core/fair_queue.hh>
 // smf
 #include "flatbuffers/wal_generated.h"
+#include "platform/log.h"
 #include "platform/macros.h"
 
 class io_priority_class;
@@ -97,9 +98,9 @@ struct wal_write_request {
                                                       data(std::move(w.data)),
                                                       pc(w.pc) {}
 
-  wal_write_request share_range(size_t i, size_t j) {
-    assert(j <= data.size());
-    return wal_write_request(flags, data.share(i, j), pc);
+  wal_write_request share_range(size_t i, size_t len) {
+    LOG_THROW_IF(i + len > data.size(), "Out of bounds error");
+    return wal_write_request(flags, data.share(i, len), pc);
   }
 
 

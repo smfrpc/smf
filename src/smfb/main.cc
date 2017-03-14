@@ -22,6 +22,9 @@ void base_init(const boost::program_options::variables_map &config) {
 }
 
 int main(int argc, char **argv, char **env) {
+  std::setvbuf(stdout, nullptr, _IOLBF, 1024);
+
+
   distributed<smf::rpc_server_stats>             rpc_stats;
   distributed<smf::rpc_server>                   rpc;
   distributed<smf::write_ahead_log>              log;
@@ -99,6 +102,7 @@ int main(int argc, char **argv, char **env) {
           return log.start(smf::wal_type::wal_type_disk_with_memory_cache,
                            smf::wal_opts(dir.c_str()));
         })
+        .then([&log] { return log.invoke_on_all(&smf::write_ahead_log::open); })
         .then([&rpc, &rpc_stats, &config] {
           const uint16_t port  = config["port"].as<uint16_t>();
           uint32_t       flags = smf::rpc_server_flags::rpc_server_flags_none;
