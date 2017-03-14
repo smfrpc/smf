@@ -15,7 +15,9 @@ class chain_replication_service : public chains::chain_replication {
   env_t put(smf::rpc_recv_typed_context<tx_put_request> &&) final;
   env_t get(smf::rpc_recv_typed_context<tx_get_request> &&) final;
 
- protected:
+ private:
+  env_t do_put(smf::rpc_recv_typed_context<tx_put_request> &&);
+
   distributed<smf::write_ahead_log> *wal_;
 };
 

@@ -92,6 +92,7 @@ future<uint64_t> wal_writer::append(wal_write_request req) {
 }
 
 future<> wal_writer::invalidate(uint64_t epoch) {
+  ++wstats_->total_invalidations;
   // write invalidation structure to WAL
   fbs::wal::invalid_wal_entry e{epoch};
   temporary_buffer<char>      data(sizeof(e));

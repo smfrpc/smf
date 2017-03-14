@@ -6,6 +6,8 @@
 #include <core/iostream.hh>
 // smf
 #include "flatbuffers/rpc_generated.h"
+#include "platform/macros.h"
+
 // Note: This class has no dependency on seastar so that we can
 // re-use this class w/ the folly::wangle rpc from non-seastar applications
 // don't bring in the seastar dependency
@@ -55,7 +57,7 @@ class rpc_envelope {
 
 
   /// \brief copy ctor deleted
-  rpc_envelope(const rpc_envelope &o) = delete;
+  SMF_DISALLOW_COPY_AND_ASSIGN(rpc_envelope);
 
   /// \brief move ctor
   rpc_envelope(rpc_envelope &&o) noexcept;

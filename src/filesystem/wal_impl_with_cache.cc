@@ -40,6 +40,7 @@ future<wal_read_reply::maybe> wal_impl_with_cache::get(wal_read_request req) {
 }
 
 future<> wal_impl_with_cache::open() {
+  LOG_INFO("starting: {}", opts);
   auto dir = opts.directory;
   return file_exists(dir)
     .then([dir](bool exists) {
@@ -60,6 +61,7 @@ future<> wal_impl_with_cache::open() {
 }
 
 future<> wal_impl_with_cache::close() {
+  LOG_INFO("stopping: {}", opts);
   return writer_->close().then([this] { return reader_->close(); });
 }
 
