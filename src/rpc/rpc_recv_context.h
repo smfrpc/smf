@@ -24,8 +24,8 @@ struct rpc_recv_context {
   /// size of the header, so we parse sizeof(Header). We with this information
   /// we parse the body of the request
   ///
-  static future<exp::optional<rpc_recv_context>> parse(
-    rpc_connection *conn, rpc_connection_limits *limits);
+  static future<rpc_recv_context> parse(rpc_connection *       conn,
+                                        rpc_connection_limits *limits);
 
   /// \brief default ctor
   /// moves in a hdr and body payload after verification. usually passed
@@ -33,15 +33,14 @@ struct rpc_recv_context {
   rpc_recv_context(temporary_buffer<char> &&hdr, temporary_buffer<char> &&body);
   rpc_recv_context(rpc_recv_context &&o) noexcept;
   ~rpc_recv_context();
+
   /// \brief used by the server side to determine the actual RPC
-  uint32_t request_id() const;
+  uint32_t request_id();
 
   /// \brief used by the client side to determine the status from the server
   /// follows the HTTP status codes
-  uint32_t status() const;
+  uint32_t status() ;
 
-  temporary_buffer<char> header_buf;
-  temporary_buffer<char> body_buf;
   /// Notice that this is safe. flatbuffers uses this internally via
   /// `PushBytes()` which is nothing more than
   /// \code
@@ -51,15 +50,23 @@ struct rpc_recv_context {
   /// because the flatbuffers compiler can force only primitive types that
   /// are padded to the largest member size
   /// This is the main reason we are using flatbuffers - no serialization cost
-  fbs::rpc::Header *header;
+  inline fbs::rpc::Header *header() {
+    return reinterpret_cast<fbs::rpc::Header *>(header_buf.get_write());
+  };
+
   /// \bfief casts the byte buffer to a pointer of the payload type
   /// This is what the root_type type; is with flatbuffers. if you
   /// look at the generated code it just calls GetMutableRoot<>
   ///
   /// This is the main reason we are using flatbuffers - no serialization cost
   ///
-  fbs::rpc::Payload *payload;
+  inline fbs::rpc::Payload *payload() {
+    return flatbuffers::GetMutableRoot<fbs::rpc::Payload>(
+      static_cast<void *>(body_buf.get_write()));
+  }
 
+  temporary_buffer<char> header_buf;
+  temporary_buffer<char> body_buf;
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_recv_context);
 };
 }  // namespace smf

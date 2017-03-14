@@ -12,6 +12,14 @@ function (register_integration_test NAME DIR)
 endfunction ()
 
 
+add_custom_command (
+  OUTPUT ${PROJECT_SOURCE_DIR}/src/flatbuffers/demo_service.smf.fb.h
+  COMMAND smf_gen --logtostderr --filename ${PROJECT_SOURCE_DIR}/src/flatbuffers/demo_service.fbs
+  DEPENDS smf_gen
+  DEPENDS ${PROJECT_SOURCE_DIR}/src/flatbuffers/demo_service.fbs
+  )
+
+
 add_executable(wal_writer ${IT_ROOT}/wal_writer/main.cc)
 target_link_libraries(wal_writer smf_filesystem)
 register_integration_test(wal_writer ${IT_ROOT}/wal_writer)

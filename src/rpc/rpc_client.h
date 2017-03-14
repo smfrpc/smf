@@ -27,8 +27,9 @@ namespace smf {
 ///
 class rpc_client {
  public:
-  using in_filter_t = std::function<future<rpc_recv_context>(rpc_recv_context)>;
-  using out_filter_t = std::function<future<rpc_envelope>(rpc_envelope)>;
+  using in_filter_t =
+    std::function<future<rpc_recv_context>(rpc_recv_context &&)>;
+  using out_filter_t = std::function<future<rpc_envelope>(rpc_envelope &&)>;
 
   // TODO(agallego) - add options for ipv6, ssl, buffering, etc.
   explicit rpc_client(ipv4_addr server_addr);
@@ -38,37 +39,23 @@ class rpc_client {
   ///        this is useful for void functions
   ///
   template <typename T>
-  future<rpc_recv_typed_context<T>> send(rpc_envelope e, bool oneway = false) {
+  future<rpc_recv_typed_context<T>> send(rpc_envelope &&e) {
     using ret_type = rpc_recv_typed_context<T>;
     e.finish();  // make sure that the buff is ready
     auto measure = is_histogram_enabled() ? hist_->auto_measure() : nullptr;
     return rpc_filter_apply(&out_filters_, std::move(e))
-      .then([this, oneway](rpc_envelope &&e) {
-        return chain_send(std::move(e), oneway);
+      .then([this](rpc_envelope &&e) { return chain_send(std::move(e)); })
+      .then([this](auto ctx) {
+        return rpc_filter_apply(&in_filters_, std::move(ctx));
       })
-      .then([this](auto opt_ctx) {
-        if (!opt_ctx) {
-          return make_ready_future<ret_type>(std::move(opt_ctx));
-        }
-        return rpc_filter_apply(&in_filters_, std::move(opt_ctx.value()))
-          .then([](auto ctx) {
-            return make_ready_future<ret_type>(
-              std::experimental::optional<decltype(ctx)>(std::move(ctx)));
-          });
-      })
-      .then([measure = std::move(measure)](auto opt_ctx) {
-        return make_ready_future<ret_type>(std::move(opt_ctx));
+      .then([measure = std::move(measure)](auto opt) {
+        return make_ready_future<ret_type>(std::move(opt));
       });
   }
 
-  future<std::experimental::optional<rpc_recv_context>> chain_send(
-    rpc_envelope e, bool oneway) {
+  future<rpc_recv_context> chain_send(rpc_envelope &&e) {
     return smf::rpc_envelope::send(&conn_->ostream, std::move(e))
-      .then([this, oneway]() {
-        if (oneway) {
-          using t = std::experimental::optional<rpc_recv_context>;
-          return make_ready_future<t>(std::experimental::nullopt);
-        }
+      .then([this]() {
         return smf::rpc_recv_context::parse(conn_.get(), nullptr);
       });
   }

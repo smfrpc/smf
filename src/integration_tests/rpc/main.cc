@@ -18,7 +18,7 @@
 #include "rpc/rpc_server_stats_printer.h"
 
 // templates
-#include "rpc/smf_gen/demo_service.smf.fb.h"
+#include "flatbuffers/demo_service.smf.fb.h"
 
 
 using client_t   = smf_gen::fbs::rpc::SmfStorageClient;

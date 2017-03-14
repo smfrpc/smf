@@ -138,10 +138,10 @@ void print_header_service_index(smf_printer *      printer,
     printer->indent();
     printer->print(vars, "\"$MethodName$\", $MethodId$,\n");
     printer->print(
-      "[this](smf::rpc_recv_context c) -> future<smf::rpc_envelope> {\n");
+      "[this](smf::rpc_recv_context &&c) -> future<smf::rpc_envelope> {\n");
     printer->indent();
-    printer->print(vars, "using t = smf::rpc_recv_typed_context<$InType$>;\n");
-    printer->print(vars, "return $MethodName$(t(std::move(c)));\n");
+    printer->print(vars, "using typed = smf::rpc_recv_typed_context<$InType$>;\n");
+    printer->print(vars, "return $MethodName$(typed(std::move(c)));\n");
     printer->outdent();
     printer->outdent();
     printer->print("});\n");
@@ -250,7 +250,7 @@ void print_header_client_method(smf_printer *     printer,
   printer->print(vars, "$MethodName$(smf::rpc_envelope e) {\n");
   printer->indent();
   printer->print(vars, "e.set_request_id($ServiceID$, $MethodID$);\n");
-  printer->print(vars, "return send<$OutType$>(std::move(e),false);\n");
+  printer->print(vars, "return send<$OutType$>(std::move(e));\n");
   printer->outdent();
   printer->print("}\n");
 }

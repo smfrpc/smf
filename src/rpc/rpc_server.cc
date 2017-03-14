@@ -58,16 +58,11 @@ future<> rpc_server::handle_client_connection(
     [conn] { return !conn->is_valid(); },
     [this, conn]() mutable {
       return rpc_recv_context::parse(conn.get(), limits_.get())
-        .then([this, conn](auto recv_ctx) mutable {
-          if (!recv_ctx) {
-            conn->set_error("Could not parse the request");
-            return make_ready_future<>();
-          }
+        .then([this, conn](auto ctx) mutable {
           auto metric = hist_->auto_measure();
-          return smf::rpc_filter_apply(&in_filters_,
-                                       std::move(recv_ctx.value()))
+          return smf::rpc_filter_apply(&in_filters_, std::move(ctx))
             .then([this, conn, metric = std::move(metric)](auto ctx) mutable {
-              auto payload_size = ctx.body_buf.size();
+              auto payload_size = ctx.header()->size();
               return this->dispatch_rpc(conn, std::move(ctx)).finally([
                 this, conn, metric = std::move(metric), payload_size
               ] {
@@ -103,7 +98,7 @@ future<> rpc_server::dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
     return make_ready_future<>();
   }
   if (!routes_.can_handle_request(ctx.request_id(),
-                                  ctx.payload->dynamic_headers())) {
+                                  ctx.payload()->dynamic_headers())) {
     stats_->local().no_route_requests++;
     conn->set_error("Can't find route for request. Invalid");
     return make_ready_future<>();
