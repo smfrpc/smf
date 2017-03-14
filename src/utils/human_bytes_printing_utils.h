@@ -5,7 +5,7 @@
 #include <ostream>
 namespace smf {
 
-template <typename T> static void human_bytes(std::ostream &o, T t) {
+template <typename T> static std::ostream &human_bytes(std::ostream &o, T t) {
   auto const orig_precision = o.precision();
   o << std::fixed << std::setprecision(3);
   if (t < 100) {
@@ -23,6 +23,7 @@ template <typename T> static void human_bytes(std::ostream &o, T t) {
     o << t << " TB";
   }
   std::setprecision(orig_precision);
+  return o;
 }
 
 

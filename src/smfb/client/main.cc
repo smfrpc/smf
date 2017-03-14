@@ -53,19 +53,20 @@ struct init_put {
     native_req.partition ^= smf::xxhash_32(topic.c_str(), topic.size());
     native_req.chain.push_back(uint32_t(2130706433) /*127.0.0.1*/);
 
-    auto frag         = std::make_unique<smf::chains::tx_fragmentT>();
-    frag->op          = smf::chains::tx_operation::tx_operation_full;
-    frag->id          = static_cast<uint32_t>(rand.next());
-    frag->time_micros = smf::time_now_micros();
+    for (auto i = 0u, max = cfg["batch-size"].as<uint32_t>(); i < max; ++i) {
+      auto frag         = std::make_unique<smf::chains::tx_fragmentT>();
+      frag->op          = smf::chains::tx_operation::tx_operation_full;
+      frag->id          = static_cast<uint32_t>(rand.next());
+      frag->time_micros = smf::time_now_micros();
 
-    frag->key.reserve(key.size());
-    frag->value.reserve(value.size());
+      frag->key.reserve(key.size());
+      frag->value.reserve(value.size());
 
-    std::copy(key.begin(), key.end(), std::back_inserter(frag->key));
-    std::copy(value.begin(), value.end(), std::back_inserter(frag->key));
+      std::copy(key.begin(), key.end(), std::back_inserter(frag->key));
+      std::copy(value.begin(), value.end(), std::back_inserter(frag->key));
 
-    native_req.txs.push_back(std::move(frag));
-
+      native_req.txs.push_back(std::move(frag));
+    }
     auto req = smf::chains::Createtx_put_request(*fbb, &native_req);
 
     fbb->Finish(req);
@@ -96,6 +97,9 @@ void cli_opts(boost::program_options::options_description_easy_init o) {
 
   o("value", po::value<std::string>()->default_value("dummy_value"),
     "value to enqueue on broker, set to `random' to auto gen");
+
+  o("batch-size", po::value<uint32_t>()->default_value(1000),
+    "number of request per concurrenct connection");
 }
 
 

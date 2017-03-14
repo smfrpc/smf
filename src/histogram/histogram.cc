@@ -1,11 +1,12 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
-#include "./histogram.h"
-// c headers
+#include "histogram/histogram.h"
+
 #include <cstdlib>
 #include <hdr/hdr_histogram.h>
 #include <hdr/hdr_histogram_log.h>
 
+#include <iostream>
 
 namespace smf {
 
@@ -42,12 +43,25 @@ void histogram::record_corrected(const uint64_t &v, const uint64_t &interval) {
   ::hdr_record_corrected_value(hist_->hist, v, interval);
 }
 
-size_t histogram::memory_size() { return ::hdr_get_memory_size(hist_->hist); }
+int64_t histogram::value_at(double percentile) const {
+  return ::hdr_value_at_percentile(hist_->hist, percentile);
+}
+double histogram::stddev() const { return ::hdr_stddev(hist_->hist); }
+double histogram::mean() const { return ::hdr_mean(hist_->hist); }
+size_t histogram::memory_size() const {
+  return ::hdr_get_memory_size(hist_->hist);
+}
 
 const struct hdr_histogram *histogram::get() const { return hist_->hist; }
 
 std::unique_ptr<struct histogram_measure> histogram::auto_measure() {
   return std::make_unique<struct histogram_measure>(this);
+}
+
+std::ostream &operator<<(std::ostream &o, const smf::histogram &h) {
+  o << "smf::histogram={p50=" << h.value_at(.5) << "μs,p99=" << h.value_at(.99)
+    << "μs,p999=" << h.value_at(.999) << "μs}";
+  return o;
 }
 
 int histogram::print(FILE *fp) const {
