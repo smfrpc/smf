@@ -11,12 +11,9 @@ template <typename T> struct rpc_recv_typed_context {
   rpc_recv_typed_context(rpc_recv_typed_context<T> &&o) noexcept
     : ctx(std::move(o.ctx)) {}
 
-  T *get() {
-    if (ctx) {
-      return flatbuffers::GetMutableRoot<T>(
-        ctx.payload()->mutable_body()->Data());
-    }
-    return nullptr;
+  inline T *get() {
+    return flatbuffers::GetMutableRoot<T>(
+      ctx.payload()->mutable_body()->Data());
   }
 
   rpc_recv_context ctx;
