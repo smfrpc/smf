@@ -12,8 +12,7 @@ template <typename T> struct rpc_recv_typed_context {
     : ctx(std::move(o.ctx)) {}
 
   inline T *get() {
-    return flatbuffers::GetMutableRoot<T>(
-      ctx.payload()->mutable_body()->Data());
+    return reinterpret_cast<T *>(ctx.payload()->mutable_body()->Data());
   }
 
   rpc_recv_context ctx;

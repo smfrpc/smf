@@ -190,13 +190,11 @@ static void validate_payload(const fbs::wal::wal_header &  hdr,
 
 static void print_parser_exception(std::exception_ptr              eptr,
                                    lw_shared_ptr<wal_read_request> req) {
-  if (eptr) {
-    try {
-      std::rethrow_exception(eptr);
-    } catch (const std::exception &e) {
-      LOG_ERROR("Caught exception: {}. Offset:{}, size:{}", e.what(),
-                req->offset, req->size);
-    }
+  try {
+    std::rethrow_exception(eptr);
+  } catch (const std::exception &e) {
+    LOG_ERROR("Caught exception: {}. Offset:{}, size:{}", e.what(), req->offset,
+              req->size);
   }
 }
 future<lw_shared_ptr<wal_read_reply>> wal_clock_pro_cache::do_read(

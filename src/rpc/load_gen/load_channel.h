@@ -39,13 +39,19 @@ template <typename ClientService> struct load_channel {
                                       "flatbuffers payload. See the "
                                       "documentation.");
 
-    return do_for_each(boost::counting_iterator<uint32_t>(0),
-                       boost::counting_iterator<uint32_t>(reqs),
-                       [this, func](uint32_t i) mutable {
-                         smf::rpc_envelope e(fbb->GetBufferPointer(),
-                                             fbb->GetSize());
-                         return func(client.get(), std::move(e));
-                       });
+    return do_for_each(
+      boost::counting_iterator<uint32_t>(0),
+      boost::counting_iterator<uint32_t>(reqs),
+      [this, func](uint32_t i) mutable {
+        smf::rpc_envelope e(fbb->GetBufferPointer(), fbb->GetSize());
+        return func(client.get(), std::move(e)).handle_exception([](auto eptr) {
+          try {
+            std::rethrow_exception(eptr);
+          } catch (const std::exception &e) {
+            LOG_ERROR("Caught exception during benchmark: {}", e.what());
+          }
+        });
+      });
   }
 
   SMF_DISALLOW_COPY_AND_ASSIGN(load_channel);
