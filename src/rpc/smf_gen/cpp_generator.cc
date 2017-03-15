@@ -166,7 +166,7 @@ void print_header_service_method(smf_printer *     printer,
     vars, "$MethodName$(smf::rpc_recv_typed_context<$InType$> &&rec) {\n");
   printer->indent();
   printer->print(vars, "// Output type: $OutType$\n");
-  printer->print("smf::rpc_envelope e(nullptr);\n");
+  printer->print("smf::rpc_envelope e;\n");
   printer->print(
     "// Helpful for clients to set the status.\n"
     "// Typically follows HTTP style. Not imposed by smf whatsoever.\n");
@@ -248,7 +248,7 @@ void print_header_client_method(smf_printer *     printer,
   printer->print(vars,
                  "/// MethodID:  $MethodID$ == crc32(\"$MethodName$\")\n");
   printer->print(vars, "future<smf::rpc_recv_typed_context<$OutType$>>\n");
-  printer->print(vars, "$MethodName$(smf::rpc_envelope e) {\n");
+  printer->print(vars, "$MethodName$(smf::rpc_envelope &&e) {\n");
   printer->indent();
   printer->print(vars, "e.set_request_id($ServiceID$, $MethodID$);\n");
   printer->print(vars, "return send<$OutType$>(std::move(e));\n");
@@ -269,7 +269,7 @@ void print_safe_header_client_method(smf_printer *     printer,
 
   printer->print(vars, "future<smf::rpc_recv_typed_context<$OutType$>>\n");
   printer->print(vars,
-                 "$SafeMethodPrefix$$MethodName$(smf::rpc_envelope e) {\n");
+                 "$SafeMethodPrefix$$MethodName$(smf::rpc_envelope &&e) {\n");
   printer->indent();
   printer->print(
     "return limit_.wait(1).then([this, e=std::move(e)]() mutable {\n");

@@ -33,13 +33,13 @@ future<smf::rpc_envelope> chain_replication_service::do_put(
   return wal_->local()
     .append(std::move(r))
     .then([](uint64_t last_index) {
-      smf::rpc_envelope e(nullptr);
+      smf::rpc_envelope e;
       e.set_status(200);
       return make_ready_future<smf::rpc_envelope>(std::move(e));
     })
     .handle_exception([](std::exception_ptr eptr) {
       LOG_ERROR("Error saving smf::chains::sput()");
-      smf::rpc_envelope e(nullptr);
+      smf::rpc_envelope e;
       e.set_status(500);
       return make_ready_future<smf::rpc_envelope>(std::move(e));
     });
@@ -47,7 +47,7 @@ future<smf::rpc_envelope> chain_replication_service::do_put(
 
 future<smf::rpc_envelope> chain_replication_service::get(
   smf::rpc_recv_typed_context<tx_get_request> &&record) {
-  smf::rpc_envelope e(nullptr);
+  smf::rpc_envelope e;
   e.set_status(501);  // Not implemented
   return make_ready_future<smf::rpc_envelope>(std::move(e));
 }

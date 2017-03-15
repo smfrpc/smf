@@ -10,7 +10,7 @@
 
 namespace smf {
 
-future<> rpc_envelope::send(output_stream<char> *out, rpc_envelope e) {
+future<> rpc_envelope::send(output_stream<char> *out, rpc_envelope &&e) {
   e.finish();
   temporary_buffer<char> header(kHeaderSize);
   // copy the remaining header bytes
@@ -34,34 +34,27 @@ future<> rpc_envelope::send(output_stream<char> *out, rpc_envelope e) {
     .then([out] { return out->flush(); });
 }
 
-rpc_envelope::rpc_envelope(const flatbuffers::FlatBufferBuilder &fbb) {
-  init(fbb.GetBufferPointer(), fbb.GetSize());
-}
+rpc_envelope::rpc_envelope() {}
+rpc_envelope::~rpc_envelope() {}
 
-rpc_envelope::rpc_envelope(const char *buf_to_copy) {
-  init(reinterpret_cast<const uint8_t *>(buf_to_copy),
-       buf_to_copy == nullptr ? 0 : std::strlen(buf_to_copy));
+rpc_envelope::rpc_envelope(const flatbuffers::FlatBufferBuilder &fbb) {
+  set_body(fbb.GetBufferPointer(), fbb.GetSize());
 }
 
 rpc_envelope::rpc_envelope(const char *buf_to_copy, size_t len) {
   static_assert(sizeof(char) == sizeof(uint8_t), "char is not 8 bits");
-  init(reinterpret_cast<const uint8_t *>(buf_to_copy), len);
+  set_body(reinterpret_cast<const uint8_t *>(buf_to_copy), len);
 }
 
 rpc_envelope::rpc_envelope(const uint8_t *buf_to_copy, size_t len) {
-  init(buf_to_copy, len);
-}
-
-rpc_envelope::rpc_envelope(const sstring &buf_to_copy) {
-  init(reinterpret_cast<const uint8_t *>(buf_to_copy.data()),
-       buf_to_copy.size());
+  set_body(buf_to_copy, len);
 }
 
 rpc_envelope::rpc_envelope(rpc_envelope &&o) noexcept
   : fbb_(std::move(o.fbb_)),
     compressed_buffer_(std::move(o.compressed_buffer_)),
-    meta_(o.meta_),
-    finished_(o.finished_),
+    meta_(std::move(o.meta_)),
+    finished_(std::move(o.finished_)),
     headers_(std::move(o.headers_)),
     user_buf_(std::move(o.user_buf_)) {
   header = (o.header);
@@ -106,7 +99,7 @@ void rpc_envelope::finish() {
     finished_ = true;
   }
 }
-void rpc_envelope::init(const uint8_t *buf_to_copy, size_t len) {
+void rpc_envelope::set_body(const uint8_t *buf_to_copy, size_t len) {
   if (buf_to_copy != nullptr && len > 0) {
     user_buf_ = std::move(fbb_->CreateVector(buf_to_copy, len));
   }
