@@ -97,8 +97,8 @@ std::string get_header_includes(smf_file *file) {
     std::map<std::string, std::string> vars;
 
     static const char *headers_strs[] = {
-      "experimental/optional", "rpc/rpc_service.h", "rpc/rpc_client.h",
-      "rpc/rpc_recv_typed_context.h", "platform/log.h"};
+      "rpc/rpc_service.h", "rpc/rpc_client.h", "rpc/rpc_recv_typed_context.h",
+      "platform/log.h"};
 
     std::vector<std::string> headers(headers_strs, array_end(headers_strs));
     print_includes(printer.get(), headers);
@@ -138,10 +138,11 @@ void print_header_service_index(smf_printer *      printer,
     printer->indent();
     printer->print(vars, "\"$MethodName$\", $MethodId$,\n");
     printer->print(
-      "[this](smf::rpc_recv_context c) -> future<smf::rpc_envelope> {\n");
+      "[this](smf::rpc_recv_context &&c) -> future<smf::rpc_envelope> {\n");
     printer->indent();
-    printer->print(vars, "using t = smf::rpc_recv_typed_context<$InType$>;\n");
-    printer->print(vars, "return $MethodName$(t(std::move(c)));\n");
+    printer->print(vars,
+                   "using typed = smf::rpc_recv_typed_context<$InType$>;\n");
+    printer->print(vars, "return $MethodName$(typed(std::move(c)));\n");
     printer->outdent();
     printer->outdent();
     printer->print("});\n");
@@ -165,7 +166,7 @@ void print_header_service_method(smf_printer *     printer,
     vars, "$MethodName$(smf::rpc_recv_typed_context<$InType$> &&rec) {\n");
   printer->indent();
   printer->print(vars, "// Output type: $OutType$\n");
-  printer->print("smf::rpc_envelope e(nullptr);\n");
+  printer->print("smf::rpc_envelope e;\n");
   printer->print(
     "// Helpful for clients to set the status.\n"
     "// Typically follows HTTP style. Not imposed by smf whatsoever.\n");
@@ -247,10 +248,10 @@ void print_header_client_method(smf_printer *     printer,
   printer->print(vars,
                  "/// MethodID:  $MethodID$ == crc32(\"$MethodName$\")\n");
   printer->print(vars, "future<smf::rpc_recv_typed_context<$OutType$>>\n");
-  printer->print(vars, "$MethodName$(smf::rpc_envelope e) {\n");
+  printer->print(vars, "$MethodName$(smf::rpc_envelope &&e) {\n");
   printer->indent();
   printer->print(vars, "e.set_request_id($ServiceID$, $MethodID$);\n");
-  printer->print(vars, "return send<$OutType$>(std::move(e),false);\n");
+  printer->print(vars, "return send<$OutType$>(std::move(e));\n");
   printer->outdent();
   printer->print("}\n");
 }
@@ -268,7 +269,7 @@ void print_safe_header_client_method(smf_printer *     printer,
 
   printer->print(vars, "future<smf::rpc_recv_typed_context<$OutType$>>\n");
   printer->print(vars,
-                 "$SafeMethodPrefix$$MethodName$(smf::rpc_envelope e) {\n");
+                 "$SafeMethodPrefix$$MethodName$(smf::rpc_envelope &&e) {\n");
   printer->indent();
   printer->print(
     "return limit_.wait(1).then([this, e=std::move(e)]() mutable {\n");

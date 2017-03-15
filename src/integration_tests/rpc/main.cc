@@ -18,7 +18,7 @@
 #include "rpc/rpc_server_stats_printer.h"
 
 // templates
-#include "rpc/smf_gen/demo_service.smf.fb.h"
+#include "flatbuffers/demo_service.smf.fb.h"
 
 
 using client_t   = smf_gen::fbs::rpc::SmfStorageClient;
@@ -75,7 +75,7 @@ struct init_callback {
 class storage_service : public smf_gen::fbs::rpc::SmfStorage {
   future<smf::rpc_envelope> Get(
     smf::rpc_recv_typed_context<smf_gen::fbs::rpc::Request> &&rec) final {
-    smf::rpc_envelope e(nullptr);
+    smf::rpc_envelope e;
     e.set_status(200);
     return make_ready_future<smf::rpc_envelope>(std::move(e));
   }

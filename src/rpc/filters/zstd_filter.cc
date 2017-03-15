@@ -35,7 +35,7 @@ future<rpc_envelope> zstd_compression_filter::operator()(rpc_envelope &&e) {
 
 future<rpc_recv_context> zstd_decompression_filter::operator()(
   rpc_recv_context &&ctx) {
-  if ((ctx.header->flags() & fbs::rpc::Flags::Flags_ZSTD)
+  if ((ctx.header()->flags() & fbs::rpc::Flags::Flags_ZSTD)
       == fbs::rpc::Flags::Flags_ZSTD) {
     auto zstd_size = ZSTD_getDecompressedSize(
       static_cast<const void *>(ctx.body_buf.get()), ctx.body_buf.size());
@@ -52,8 +52,8 @@ future<rpc_recv_context> zstd_decompression_filter::operator()(
       decompressed_body.trim(size_decompressed);
       // Recompute the header
       auto flags =
-        itof(ftoi(ctx.header->flags()) & ~ftoi(fbs::rpc::Flags::Flags_ZSTD));
-      *ctx.header = header_for_payload(decompressed_body.get(),
+        itof(ftoi(ctx.header()->flags()) & ~ftoi(fbs::rpc::Flags::Flags_ZSTD));
+      *ctx.header() = header_for_payload(decompressed_body.get(),
                                        decompressed_body.size(), flags);
       ctx.body_buf = std::move(decompressed_body);
     } else {

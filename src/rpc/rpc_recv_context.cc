@@ -19,24 +19,19 @@ rpc_recv_context::rpc_recv_context(temporary_buffer<char> &&hdr,
                                    temporary_buffer<char> &&body)
   : header_buf(std::move(hdr)), body_buf(std::move(body)) {
   assert(header_buf.size() == sizeof(fbs::rpc::Header));
-  header = reinterpret_cast<fbs::rpc::Header *>(header_buf.get_write());
-  assert(header->size() == body_buf.size());
-  payload = flatbuffers::GetMutableRoot<fbs::rpc::Payload>(
-    static_cast<void *>(body_buf.get_write()));
+  assert(header()->size() == body_buf.size());
 }
 
 rpc_recv_context::rpc_recv_context(rpc_recv_context &&o) noexcept
   : header_buf(std::move(o.header_buf)),
     body_buf(std::move(o.body_buf)) {
   assert(header_buf.size() == sizeof(fbs::rpc::Header));
-
-  header  = reinterpret_cast<fbs::rpc::Header *>(header_buf.get_write());
-  payload = flatbuffers::GetMutableRoot<fbs::rpc::Payload>(
-    static_cast<void *>(body_buf.get_write()));
+  assert(header()->size() == body_buf.size());
 }
+
 rpc_recv_context::~rpc_recv_context() {}
-uint32_t rpc_recv_context::request_id() const { return payload->meta(); }
-uint32_t rpc_recv_context::status() const { return payload->meta(); }
+uint32_t rpc_recv_context::request_id() { return payload()->meta(); }
+uint32_t rpc_recv_context::status() { return payload()->meta(); }
 
 
 future<temporary_buffer<char>> read_payload(rpc_connection *       conn,
@@ -52,40 +47,34 @@ future<temporary_buffer<char>> read_payload(rpc_connection *       conn,
   }
 }
 
-future<exp::optional<rpc_recv_context>> process_payload(
-  rpc_connection *       conn,
-  rpc_connection_limits *limits,
-  temporary_buffer<char> header) {
-  using ret_type = exp::optional<rpc_recv_context>;
-  auto hdr       = reinterpret_cast<const fbs::rpc::Header *>(header.get());
+future<rpc_recv_context> process_payload(rpc_connection *       conn,
+                                         rpc_connection_limits *limits,
+                                         temporary_buffer<char> header) {
+  auto hdr = reinterpret_cast<const fbs::rpc::Header *>(header.get());
   return read_payload(conn, limits, hdr->size())
     .then([header_buf =
              std::move(header)](temporary_buffer<char> body) mutable {
       auto hdr = reinterpret_cast<const fbs::rpc::Header *>(header_buf.get());
-      if (hdr->size() != body.size()) {
-        LOG_ERROR("Read incorrect number of bytes `{}`, expected header: `{}`",
-                  body.size(), *hdr);
-        return make_ready_future<ret_type>();
-      }
+      LOG_THROW_IF(hdr->size() != body.size(),
+                   "Read incorrect number of bytes `{}`, expected header: `{}`",
+                   body.size(), *hdr);
+
       if ((hdr->flags() & fbs::rpc::Flags::Flags_CHECKSUM)
           == fbs::rpc::Flags::Flags_CHECKSUM) {
         const uint32_t xx = xxhash_32(body.get(), body.size());
-        if (xx != hdr->checksum()) {
-          LOG_ERROR("Payload checksum `{}` does not match header checksum `{}`",
-                    xx, hdr->checksum());
-          return make_ready_future<ret_type>();
-        }
+
+        LOG_THROW_IF(
+          xx != hdr->checksum(),
+          "Payload checksum `{}` does not match header checksum `{}`", xx,
+          hdr->checksum());
       }
       rpc_recv_context ctx(std::move(header_buf), std::move(body));
-      return make_ready_future<ret_type>(
-        exp::optional<rpc_recv_context>(std::move(ctx)));
+      return make_ready_future<rpc_recv_context>(std::move(ctx));
     });
 }
 
-future<exp::optional<rpc_recv_context>> rpc_recv_context::parse(
+future<rpc_recv_context> rpc_recv_context::parse(
   rpc_connection *conn, rpc_connection_limits *limits) {
-  using ret_type = exp::optional<rpc_recv_context>;
-
   static constexpr size_t kRPCHeaderSize = sizeof(fbs::rpc::Header);
 
   /// serializes access to the input_stream
@@ -94,18 +83,13 @@ future<exp::optional<rpc_recv_context>> rpc_recv_context::parse(
   conn->istream_active_parser++;
   return conn->istream.read_exactly(kRPCHeaderSize)
     .then([conn, limits](temporary_buffer<char> header) {
-      if (kRPCHeaderSize != header.size()) {
-        LOG_ERROR_IF(conn->is_valid(),
-                     "Invalid header size `{}`, expected `{}`, skipping req",
-                     header.size(), kRPCHeaderSize);
-        return make_ready_future<ret_type>();
-      }
-      auto hdr = reinterpret_cast<const fbs::rpc::Header *>(header.get());
+      LOG_THROW_IF(kRPCHeaderSize != header.size(),
+                   "Invalid header size `{}`, expected `{}`", header.size(),
+                   kRPCHeaderSize);
 
-      if (hdr->size() == 0) {
-        LOG_ERROR("Emty body to parse. skipping");
-        return make_ready_future<ret_type>();
-      }
+      auto hdr = reinterpret_cast<const fbs::rpc::Header *>(header.get());
+      LOG_THROW_IF(hdr->size() == 0, "Emty body to parse. skipping");
+
       return process_payload(conn, limits, std::move(header));
     })
     .finally([conn] { conn->istream_active_parser--; });

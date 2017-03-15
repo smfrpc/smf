@@ -55,44 +55,48 @@ future<> rpc_server::stop() {
 future<> rpc_server::handle_client_connection(
   lw_shared_ptr<rpc_server_connection> conn) {
   return do_until(
-    [conn] { return !conn->is_valid(); },
-    [this, conn]() mutable {
-      return rpc_recv_context::parse(conn.get(), limits_.get())
-        .then([this, conn](auto recv_ctx) mutable {
-          if (!recv_ctx) {
-            conn->set_error("Could not parse the request");
-            return make_ready_future<>();
-          }
-          auto metric = hist_->auto_measure();
-          return smf::rpc_filter_apply(&in_filters_,
-                                       std::move(recv_ctx.value()))
-            .then([this, conn, metric = std::move(metric)](auto ctx) mutable {
-              auto payload_size = ctx.body_buf.size();
-              return this->dispatch_rpc(conn, std::move(ctx)).finally([
-                this, conn, metric = std::move(metric), payload_size
-              ] {
-                limits_->release_payload_resources(payload_size);
-                return conn->ostream.flush().finally([this, conn] {
-                  if (conn->has_error()) {
-                    LOG_ERROR("There was an error with the connection: {}",
-                              conn->get_error());
-                    stats_->local().bad_requests++;
-                    stats_->local().active_connections--;
-                    LOG_INFO("Closing connection for client: {}",
-                             conn->remote_address);
-                    return conn->ostream.close();
-                  } else {
-                    stats_->local().completed_requests++;
-                    return make_ready_future<>();
-                  }
-                });
-              });  // end finally()
-            })     //  parse_rpc_recv_context.then()
-            .handle_exception([this, conn](std::exception_ptr eptr) {
-              conn->set_error("Exception parsing request ");
-              return conn->ostream.close();
-            });
-        });
+           [conn] { return !conn->is_valid(); },
+           [this, conn]() mutable {
+             return rpc_recv_context::parse(conn.get(), limits_.get())
+               .then([this, conn](auto ctx) mutable {
+                 auto metric = hist_->auto_measure();
+                 return smf::rpc_filter_apply(&in_filters_, std::move(ctx))
+                   .then([this, conn,
+                          metric = std::move(metric)](auto ctx) mutable {
+                     auto payload_size = ctx.header()->size();
+                     return this->dispatch_rpc(conn, std::move(ctx)).finally([
+                       this, conn, metric = std::move(metric), payload_size
+                     ] {
+                       limits_->release_payload_resources(payload_size);
+                       return conn->ostream.flush().finally([this, conn] {
+                         if (conn->has_error()) {
+                           LOG_ERROR(
+                             "There was an error with the connection: {}",
+                             conn->get_error());
+                           stats_->local().bad_requests++;
+                           stats_->local().active_connections--;
+                           LOG_INFO("Closing connection for client: {}",
+                                    conn->remote_address);
+                           return conn->ostream.close();
+                         } else {
+                           stats_->local().completed_requests++;
+                           return make_ready_future<>();
+                         }
+                       });
+                     });  // end finally()
+                   })     //  parse_rpc_recv_context.then()
+                   .handle_exception([this, conn](std::exception_ptr eptr) {
+                     conn->set_error("Exception parsing request ");
+                     return conn->ostream.close();
+                   });
+               });
+           })
+    .handle_exception([this](std::exception_ptr eptr) {
+      try {
+        std::rethrow_exception(eptr);
+      } catch (const std::exception &e) {
+        LOG_ERROR("Caught exception during connection handling: {}", e.what());
+      }
     });
 }
 
@@ -103,7 +107,7 @@ future<> rpc_server::dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
     return make_ready_future<>();
   }
   if (!routes_.can_handle_request(ctx.request_id(),
-                                  ctx.payload->dynamic_headers())) {
+                                  ctx.payload()->dynamic_headers())) {
     stats_->local().no_route_requests++;
     conn->set_error("Can't find route for request. Invalid");
     return make_ready_future<>();

@@ -66,9 +66,10 @@ class rpc_server {
   const uint16_t                 port_;
   rpc_handle_router              routes_;
 
-  using in_filter_t = std::function<future<rpc_recv_context>(rpc_recv_context)>;
+  using in_filter_t =
+    std::function<future<rpc_recv_context>(rpc_recv_context &&)>;
   std::vector<in_filter_t> in_filters_;
-  using out_filter_t = std::function<future<rpc_envelope>(rpc_envelope)>;
+  using out_filter_t = std::function<future<rpc_envelope>(rpc_envelope &&)>;
   std::vector<out_filter_t> out_filters_;
 
   std::unique_ptr<histogram> hist_ = std::make_unique<histogram>();

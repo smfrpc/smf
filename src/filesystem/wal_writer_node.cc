@@ -52,10 +52,13 @@ future<> wal_writer_node::do_append_with_header(fbs::wal::wal_header h,
   h.mutate_checksum(xxhash_32(req.data.get(), req.data.size()));
   h.mutate_size(req.data.size());
   current_size_ += kWalHeaderSize;
+  ++opts_.wstats->total_writes;
+  opts_.wstats->total_bytes += kWalHeaderSize;
   return lease_->append((const char *)&h, kWalHeaderSize).then([
     this, req = std::move(req)
   ]() mutable {
     current_size_ += req.data.size();
+    opts_.wstats->total_bytes += req.data.size();
     return lease_->append(req.data.get(), req.data.size());
   });
 }
@@ -79,7 +82,6 @@ future<> wal_writer_node::do_append_with_flags(
   }
 
   // bigger than compression size & has compression enabled
-
   temporary_buffer<char> compressed_buf(req.data.size());
   void *                 dst = static_cast<void *>(compressed_buf.get_write());
   const void *           src = reinterpret_cast<const void *>(req.data.get());
@@ -101,6 +103,7 @@ future<> wal_writer_node::do_append_with_flags(
 }
 
 future<uint64_t> wal_writer_node::append(wal_write_request req) {
+  auto measure = opts_.wstats->hist->auto_measure();
   return serialize_writes_.wait(1)
     .then([this, req = std::move(req)]() mutable {
       const auto offset = opts_.epoch += current_size_;
@@ -108,7 +111,8 @@ future<uint64_t> wal_writer_node::append(wal_write_request req) {
         return make_ready_future<uint64_t>(offset);
       });
     })
-    .finally([this] { serialize_writes_.signal(1); });
+    .finally(
+      [measure = std::move(measure), this] { serialize_writes_.signal(1); });
 }
 
 future<> wal_writer_node::do_append(wal_write_request req) {

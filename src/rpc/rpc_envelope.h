@@ -6,6 +6,8 @@
 #include <core/iostream.hh>
 // smf
 #include "flatbuffers/rpc_generated.h"
+#include "platform/macros.h"
+
 // Note: This class has no dependency on seastar so that we can
 // re-use this class w/ the folly::wangle rpc from non-seastar applications
 // don't bring in the seastar dependency
@@ -18,10 +20,10 @@ namespace smf {
 class rpc_envelope {
  public:
   constexpr static size_t kHeaderSize = sizeof(fbs::rpc::Header);
+  static future<> send(output_stream<char> *out, rpc_envelope &&req);
 
-  static future<> send(output_stream<char> *out, rpc_envelope req);
-
-
+  rpc_envelope();
+  ~rpc_envelope();
   /// \brief convenience method. copy the byte array of the flatbuffer builder
   /// \args buf_to_copy - is a pointer to the flatbuffers after the user called
   /// fbb->finished()
@@ -29,23 +31,10 @@ class rpc_envelope {
 
   /// \brief copy the byte array to internal data structures.
   /// \args buf_to_copy - is a pointer to the byte array to send to remote
-  /// convenience method for sending literals. i.e.: rpc_envelope("hello")
-  ///
-  explicit rpc_envelope(const char *buf_to_copy);
-
-  /// \brief copy the byte array to internal data structures.
-  /// \args buf_to_copy - is a pointer to the byte array to send to remote
   /// convenience method for not having to manually cast between seastar &
   /// flatbuffers
   ///
   rpc_envelope(const char *buf_to_copy, size_t len);
-
-  /// \brief copy the sstring to internal data structures.
-  /// \args buf_to_copy - is a ref to the sstring to send to remote
-  /// convenience method for not having to manually cast between seastar &
-  /// flatbuffers
-  ///
-  explicit rpc_envelope(const sstring &buf_to_copy);
 
   /// \brief copy the byte array to internal data structures.
   /// \args buf_to_copy - is a pointer to the byte array to send to remote
@@ -55,7 +44,7 @@ class rpc_envelope {
 
 
   /// \brief copy ctor deleted
-  rpc_envelope(const rpc_envelope &o) = delete;
+  SMF_DISALLOW_COPY_AND_ASSIGN(rpc_envelope);
 
   /// \brief move ctor
   rpc_envelope(rpc_envelope &&o) noexcept;
@@ -101,9 +90,9 @@ class rpc_envelope {
     return std::move(compressed_buffer_);
   }
 
- private:
   /// \brief shared initialization
-  void init(const uint8_t *buf_to_copy, size_t len);
+  void set_body(const uint8_t *buf_to_copy, size_t len);
+
 
  private:
   std::unique_ptr<flatbuffers::FlatBufferBuilder> fbb_ =
