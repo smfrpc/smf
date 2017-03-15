@@ -99,6 +99,10 @@ int main(int argc, char **argv, char **env) {
           return log.start(smf::wal_type::wal_type_disk_with_memory_cache,
                            smf::wal_opts(dir.c_str()));
         })
+        .then([&log] {
+          LOG_INFO("Opening write ahead log");
+          return log.invoke_on_all(&smf::write_ahead_log::open);
+        })
         .then([&rpc, &rpc_stats, &config] {
           const uint16_t port  = config["port"].as<uint16_t>();
           uint32_t       flags = smf::rpc_server_flags::rpc_server_flags_none;
