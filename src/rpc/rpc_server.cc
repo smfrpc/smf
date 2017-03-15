@@ -91,12 +91,11 @@ future<> rpc_server::handle_client_connection(
                    });
                });
            })
-    .handle_exception([this, conn](std::exception_ptr eptr) {
+    .handle_exception([this](std::exception_ptr eptr) {
       try {
         std::rethrow_exception(eptr);
       } catch (const std::exception &e) {
         LOG_ERROR("Caught exception during connection handling: {}", e.what());
-        return conn->ostream.close();
       }
     });
 }
