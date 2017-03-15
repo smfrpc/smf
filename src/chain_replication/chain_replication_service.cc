@@ -13,10 +13,17 @@ namespace smf {
 namespace chains {
 future<smf::rpc_envelope> chain_replication_service::put(
   smf::rpc_recv_typed_context<tx_put_request> &&record) {
-  auto core_to_handle = put_to_lcore(record.get());
-  return smp::submit_to(
-    core_to_handle,
-    [this, p = std::move(record)]() mutable { return do_put(std::move(p)); });
+  unsigned core = put_to_lcore(record.get());
+  return smp::submit_to(core, [this, record = std::move(record)]() mutable {
+           // do the actual put on the correct core
+           return do_put(std::move(record)).then([](auto ctx) {
+             auto ctx_p = make_lw_shared<smf::rpc_envelope>(std::move(ctx));
+             return make_ready_future<lw_shared_ptr<smf::rpc_envelope>>(ctx_p);
+           });
+         })
+    .then([](auto ctx_ptr) {
+      return make_ready_future<smf::rpc_envelope>(std::move(*ctx_ptr));
+    });
 }
 
 future<smf::rpc_envelope> chain_replication_service::do_put(
