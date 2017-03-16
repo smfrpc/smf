@@ -61,6 +61,7 @@ class rpc_envelope {
 
   /// \brief move ctor
   rpc_envelope(rpc_envelope &&o) noexcept;
+  rpc_envelope &operator=(rpc_envelope &&o) noexcept;
 
   /// \brief returns the size of the payload excluding headers
   size_t payload_size() { return fbb_->GetSize(); }
