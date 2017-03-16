@@ -8,16 +8,9 @@ if [[ ! -e $patch_file ]]; then
 fi
 echo "Working with file $patch_file"
 
-# first look for the subject line,
-# then set the first field to blank
-subject_line=$(grep 'Subject: ' $patch_file  | awk '{$1=""; print $0}')
-
-# go to the root to apply patch
 cwd=$CWD
 git_root=$(git rev-parse --show-toplevel)
 cd $git_root
 
-
-git am $patch_file
-git push origin master
-git send-email HEAD^..HEAD --compose --subject "$subject_line" --to smf-dev@googlegroups.com
+git am --interactive $patch_file
+echo "Remember to git push origin master"
