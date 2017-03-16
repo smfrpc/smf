@@ -57,6 +57,19 @@ rpc_envelope::rpc_envelope(const sstring &buf_to_copy) {
        buf_to_copy.size());
 }
 
+rpc_envelope &rpc_envelope::operator=(rpc_envelope &&o) noexcept {
+  if (this != &o) {
+    fbb_               = std::move(o.fbb_);
+    compressed_buffer_ = std::move(o.compressed_buffer_);
+    meta_              = (o.meta_);
+    finished_          = o.finished_;
+    headers_           = std::move(o.headers_);
+    user_buf_          = std::move(o.user_buf_);
+    header             = (o.header);
+  }
+  return *this;
+}
+
 rpc_envelope::rpc_envelope(rpc_envelope &&o) noexcept
   : fbb_(std::move(o.fbb_)),
     compressed_buffer_(std::move(o.compressed_buffer_)),
