@@ -17,7 +17,7 @@ add_library (smf_filesystem STATIC
 # add_dependencies(smf_filesystem
 #   ${PROJECT_SOURCE_DIR}/src/flatbuffers/wal_generated.fb.h)
 target_link_libraries (smf_filesystem
-  ${SEASTAR_LDFLAGS}
+  smf_utils
   smftracing
   xxhash_static
   zstd.a

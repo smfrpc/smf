@@ -26,5 +26,4 @@ template <typename T> static std::ostream &human_bytes(std::ostream &o, T t) {
   return o;
 }
 
-
 }  // namespace smf

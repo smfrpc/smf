@@ -1,0 +1,21 @@
+#!/bin/bash
+set -x
+set -e
+git_root=$(git rev-parse --show-toplevel)
+debug_dir=${git_root}/build_debug
+release_dir=$git_root/build_release
+function make_package() {
+    if [[ -e "$1" ]]; then
+        pushd $1;
+
+        cpack -D CPACK_RPM_PACKAGE_DEBUG=1 \
+              -D CPACK_RPM_SPEC_INSTALL_POST="/bin/true" -G RPM;
+
+        cpack -D CPACK_DEBIAN_PACKAGE_DEBUG=1  -G DEB;
+
+        popd;
+    fi
+}
+
+make_package $debug_dir
+make_package $release_dir

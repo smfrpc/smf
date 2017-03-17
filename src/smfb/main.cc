@@ -11,6 +11,9 @@
 #include "rpc/rpc_server.h"
 #include "rpc/rpc_server_stats_printer.h"
 #include "smfb/smfb_command_line_options.h"
+#include "utils/checks/cpu.h"
+#include "utils/checks/disk.h"
+#include "utils/checks/memory.h"
 
 void base_init(const boost::program_options::variables_map &config) {
   auto l = config["log-level"].as<std::string>();
@@ -23,7 +26,6 @@ void base_init(const boost::program_options::variables_map &config) {
 
 int main(int argc, char **argv, char **env) {
   std::setvbuf(stdout, nullptr, _IOLBF, 1024);
-
 
   distributed<smf::rpc_server_stats>             rpc_stats;
   distributed<smf::rpc_server>                   rpc;
@@ -85,9 +87,17 @@ int main(int argc, char **argv, char **env) {
         });
       }
 
+      smf::checks::cpu::check();
+      smf::checks::memory::check(config["developer"].as<bool>());
 
-      LOG_INFO("Setting up at_exit hooks");
-      return rpc_stats.start()
+      LOG_INFO("Checking disk type");
+      return smf::checks::disk::check(
+               config["write-ahead-log-dir"].as<std::string>(),
+               config["developer"].as<bool>())
+        .then([&rpc_stats] {
+          LOG_INFO("Setting up at_exit hooks");
+          return rpc_stats.start();
+        })
         .then([&rpc_printer, &config] {
           if (config["print-rpc-stats"].as<bool>()) {
             auto rpc_period = config["rpc-stats-period-mins"].as<uint32_t>();

@@ -13,7 +13,7 @@ template <typename T>
 T *throw_if_null(const char *file, int line, const char *names, T *t);
 inline void noop(...) { /*silences compiler errors*/
 }
-}  // namespacesmf::log_detail
+}  // namespace log_detail
 }  // namespace smf
 
 

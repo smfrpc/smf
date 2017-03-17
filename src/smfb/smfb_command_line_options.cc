@@ -40,6 +40,8 @@ void smfb_command_line_options::add(
 
   o("print-rpc-histogram-on-exit", po::value<bool>()->default_value(true),
     "if false, no server_hdr.txt will be printed");
+
+  o("developer", po::value<bool>()->default_value(false), "developer mode");
 }
 
 
