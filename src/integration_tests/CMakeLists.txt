@@ -20,7 +20,16 @@ add_executable(histograms ${IT_ROOT}/histograms/main.cc)
 target_link_libraries(histograms smf_filesystem)
 register_integration_test(histograms ${IT_ROOT}/histograms)
 
-add_executable(rpc ${IT_ROOT}/rpc/main.cc)
+
+add_custom_command (
+  OUTPUT ${PROJECT_SOURCE_DIR}/src/flatbuffers/demo_service.smf.fb.h
+  COMMAND smf_gen --logtostderr --filename ${PROJECT_SOURCE_DIR}/src/flatbuffers/demo_service.fbs
+  DEPENDS smf_gen
+  DEPENDS ${PROJECT_SOURCE_DIR}/src/flatbuffers/demo_service.fbs
+  )
+add_executable(rpc
+  ${PROJECT_SOURCE_DIR}/src/flatbuffers/demo_service.smf.fb.h
+  ${IT_ROOT}/rpc/main.cc)
 target_link_libraries(rpc smfrpc)
 register_integration_test(rpc ${IT_ROOT}/rpc)
 
