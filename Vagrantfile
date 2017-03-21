@@ -12,10 +12,16 @@ SCRIPT
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = "fedora/25-cloud-base"
-  config.vbguest.auto_update = true
+
+  if Vagrant.has_plugin? "vagrant-vbguest"
+    config.vbguest.auto_update = true
+  else
+    puts "We highly recommend that you install vagrant-vbguest via:"
+    puts "vagrant plugin install vagrant-vbguest"
+  end
 
   # From https://fedoraproject.org/wiki/Vagrant, setup vagrant-hostmanager
-  if Vagrant.has_plugin?("vagrant-hostmanager")
+  if Vagrant.has_plugin? "vagrant-hostmanager"
       config.hostmanager.enabled = true
       config.hostmanager.manage_host = true
   end
