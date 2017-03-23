@@ -1,5 +1,4 @@
 set(BASE_FLAGS
-  "-std=c++1z"
   "-fdiagnostics-color=auto"
   "-fPIC"
   "-fconcepts"

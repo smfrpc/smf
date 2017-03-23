@@ -43,7 +43,7 @@
     update=yes
     recursive=yes
     force=yes
-    version='d4c4c40a'
+    version='6b2119'
 
 - command: ./configure.py --enable-dpdk
   args:
