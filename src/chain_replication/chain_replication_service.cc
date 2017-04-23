@@ -20,31 +20,32 @@ future<smf::rpc_envelope> chain_replication_service::put(
   }
   auto core_to_handle = put_to_lcore(record.get());
   return smp::submit_to(
-           core_to_handle, [this, p = std::move(record)]() mutable {
-             auto body = p.ctx.value().payload->mutable_body();
-             temporary_buffer<char> buf(body->size());
+    core_to_handle, [this, p = std::move(record)]() mutable {
+      auto                   body = p.ctx.value().payload->mutable_body();
+      temporary_buffer<char> buf(body->size());
 
-             auto src = reinterpret_cast<const char *>(body->data());
-             auto end = reinterpret_cast<const char *>(src + body->size());
+      auto src = reinterpret_cast<const char *>(body->data());
+      auto end = reinterpret_cast<const char *>(src + body->size());
 
-             std::copy(src, end, buf.get_write());
+      std::copy(src, end, buf.get_write());
 
-             smf::wal_write_request r(
-               0, std::move(buf), smf::priority_manager::thread_local_instance()
-                                    .streaming_write_priority());
+      smf::wal_write_request r(0, std::move(buf),
+                               smf::priority_manager::thread_local_instance()
+                                 .streaming_write_priority());
 
-             return wal_->local().append(std::move(r));
-           })
-    .then([](uint64_t last_index) {
-      smf::rpc_envelope e(nullptr);
-      e.set_status(200);
-      return make_ready_future<smf::rpc_envelope>(std::move(e));
-    })
-    .handle_exception([](std::exception_ptr eptr) {
-      LOG_ERROR("Error saving smf::chains::sput()");
-      smf::rpc_envelope e(nullptr);
-      e.set_status(500);
-      return make_ready_future<smf::rpc_envelope>(std::move(e));
+      return wal_->local()
+        .append(std::move(r))
+        .then([](uint64_t last_index) {
+          smf::rpc_envelope e(nullptr);
+          e.set_status(200);
+          return make_ready_future<smf::rpc_envelope>(std::move(e));
+        })
+        .handle_exception([](std::exception_ptr eptr) {
+          LOG_ERROR("Error saving smf::chains::sput()");
+          smf::rpc_envelope e(nullptr);
+          e.set_status(500);
+          return make_ready_future<smf::rpc_envelope>(std::move(e));
+        });
     });
 }
 
