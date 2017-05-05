@@ -23,3 +23,12 @@ else
     echo "Successfully installed ansible!"
     echo "Next: ansible-playbook playbooks/devbox_all.yml"
 fi
+
+# check if git config stuff is set, ansible needs it
+if [[ $(git config --global user.email) == "" ]]; then
+  git config --global user.email "commitbot@smf.unset"
+fi
+
+if [[ $(git config --global user.name) == "" ]]; then
+  git config --global user.name "commitbot"
+fi
