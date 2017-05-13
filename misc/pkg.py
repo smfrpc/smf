@@ -12,13 +12,13 @@ import glob
 import shutil
 import re
 
-fmt_string='%(levelname)s:%(asctime)s %(filename)s:%(lineno)d] %(message)s'
+fmt_string = '%(levelname)s:%(asctime)s %(filename)s:%(lineno)d] %(message)s'
 logging.basicConfig(format=fmt_string)
 formatter = logging.Formatter(fmt_string)
-for h in logging.getLogger().handlers: h.setFormatter(formatter)
+for h in logging.getLogger().handlers:
+    h.setFormatter(formatter)
 logger = logging.getLogger('pkg')
 logger.setLevel(logging.DEBUG)
-
 
 BOOTSTRAP_ENVIRONMENT = b"""
 import os
@@ -42,7 +42,7 @@ from _pex.pex_bootstrapper import bootstrap_pex
 bootstrap_pex(__entry_point__)
 """
 
-RUN_TEST=b"""
+RUN_TEST = b"""
 import os
 import sys
 import subprocess
@@ -67,11 +67,13 @@ def run_subprocess(cmd):
 
 """
 
+
 def get_ldd_lines(binary):
     ret = str(subprocess.check_output("ldd {}".format(binary), shell=True))
     if ret is None:
         raise Exception("Error ldd'ing binary: %s", ret)
     return ret.splitlines()
+
 
 def clean_ldd(output, lines):
     def link_line(line):
@@ -87,19 +89,24 @@ def clean_ldd(output, lines):
         return match
 
     filters = [link_line, hard_dep_line]
-    for line in lines: any(f(line) for f in filters)
+    for line in lines:
+        any(f(line) for f in filters)
+
 
 def get_binary_libs(binary):
     libraries = {}
-    ldd_libs = get_ldd_lines(binary);
+    ldd_libs = get_ldd_lines(binary)
     clean_ldd(libraries, ldd_libs)
     return libraries
+
 
 def create_archive_layout():
     dirpath = tempfile.mkdtemp()
     dirs = ["/lib", "/bin", "/etc"]
-    for d in dirs: os.makedirs(dirpath + d)
+    for d in dirs:
+        os.makedirs(dirpath + d)
     return dirpath
+
 
 def create_archive(binary, runner):
     root_dir = create_archive_layout()
@@ -111,11 +118,13 @@ def create_archive(binary, runner):
         shutil.copy2(l, root_dir + "/lib/" + os.path.basename(l))
     shutil.copy2(runner, root_dir + "/" + os.path.basename(runner))
 
+
 def generate_options():
     parser = argparse.ArgumentParser(description='run smf integration tests')
     parser.add_argument('--binary', type=str, help='binary program to run')
     parser.add_argument('--runner', type=str, help='program to run executable')
     return parser
+
 
 def main():
     parser = generate_options()
@@ -127,6 +136,7 @@ def main():
         parser.print_help()
         raise Exception("Missing runner script usually r.py")
     create_archive(options.binary, options.runner)
+
 
 if __name__ == '__main__':
     main()

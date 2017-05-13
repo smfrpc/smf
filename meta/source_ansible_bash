@@ -17,7 +17,7 @@ else
     mkdir -p ${DIR}/tmp
     virtualenv ${DIR}/tmp
     source ${DIR}/tmp/bin/activate
-    pip install paramiko PyYAML Jinja2 httplib2
+    pip install paramiko PyYAML Jinja2 httplib2 yapf futures
     # turns out that ansible 2.0.0.v1 is so broken
     pip install ansible==2.0.0.2
     echo "Successfully installed ansible!"
