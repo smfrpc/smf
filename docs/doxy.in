@@ -1,0 +1,34 @@
+# Here we generate documentation for the Kudu C++ client API.
+PROJECT_NAME           = "SMF"
+
+# Current empty value reflects the fact that working directory where
+# doxygen runs is the location where necessary directory structure
+# with header files resides.
+INPUT                  = @PROJECT_SOURCE_DIR@/src 
+
+# Due to current layout of the header files to process, the recursive scan
+# for files is turned on.
+RECURSIVE              = YES
+
+# We exclude some of the sources under the top-level client hierarchy
+# which we don't want to process since there isn't doxygen documentation
+# in those anyway.
+EXCLUDE_PATTERNS       = @PROJECT_SOURCE_DIR@/src/thrid_party/*
+
+# We add information about the Kudu version the documentation is generated for.
+# NOTE: this tag requires GENERATE_HTML enabled.
+HTML_FOOTER            = 
+
+# Current value is set by one of make targets while generating
+# the Kudu C++ client API documentation.
+OUTPUT_DIRECTORY       = @CMAKE_CURRENT_BINARY_DIR@ 
+
+# Do not be too verbose: QUIET is set to YES, so informational messages are off.
+QUIET                  = YES
+
+# We want to have warnings for functions/methods which are documented,
+# but have no documentation for their parameters or the return value.
+WARN_NO_PARAMDOC       = YES
+
+# As for now, documentation in LaTeX format is not needed.
+GENERATE_LATEX         = NO

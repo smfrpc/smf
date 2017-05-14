@@ -18,6 +18,9 @@ cd $build_dir
 cmake -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
       -DCMAKE_BUILD_TYPE=Release $git_root
 
+#produce documentation
+cmake --build $build_dir --target doc
 
 ninja-build -v
 ctest -V -j$nprocs --force-new-ctest-process
+

@@ -5,7 +5,9 @@ build_dir=$git_root/build_debug
 mkdir -p $build_dir
 cd $build_dir
 
-cmake -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
+cmake -Wdev \
+      --graphviz=$build_dir/dependencies.dot \
+      -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
       -DCMAKE_BUILD_TYPE=Debug $git_root
 
 nprocs=$(grep -c ^processor /proc/cpuinfo)
