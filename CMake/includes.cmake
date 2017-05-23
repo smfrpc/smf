@@ -12,3 +12,8 @@ include_directories(
 include_directories(
   ${PROJECT_SOURCE_DIR}/src
   )
+
+# accept include dirs passed in command line
+foreach(dir ${CMAKE_INCLUDE_PATH})
+  include_directories(${dir})
+endforeach()
