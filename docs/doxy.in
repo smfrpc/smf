@@ -32,3 +32,6 @@ WARN_NO_PARAMDOC       = YES
 
 # As for now, documentation in LaTeX format is not needed.
 GENERATE_LATEX         = NO
+
+# generate the xml commands for markdown
+GENERATE_XML           = YES
