@@ -2,9 +2,10 @@
 
 **smf** is pronounced **/smɝf/**
 
-Mailing List:  https://groups.google.com/forum/#!forum/smf-dev
-
-Documentation: http://senior7515.github.io/smf/
+Site         | Link
+------------ | --------
+Mailing List  | https://groups.google.com/forum/#!forum/smf-dev
+Documentation | http://senior7515.github.io/smf/
 
 ## Brief
 
