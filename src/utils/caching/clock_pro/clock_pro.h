@@ -117,9 +117,9 @@ template <typename Key, typename Value> class clock_pro_cache {
   explicit clock_pro_cache(uint32_t pages) : max_pages(pages) {}
 
   clock_pro_cache(clock_pro_cache &&c) noexcept
-    : max_pages(std::move(c.max_pages)),
-      mcold_(std::move(c.mcold_)),
-      mhot_(std::move(c.mhot_)) {}
+    : max_pages(std::move(c.max_pages))
+    , mcold_(std::move(c.mcold_))
+    , mhot_(std::move(c.mhot_)) {}
 
   const uint32_t         max_pages;
   const size_t           size() const { return mhot_->size() + mcold_->size(); }

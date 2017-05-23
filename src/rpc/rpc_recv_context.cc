@@ -26,8 +26,7 @@ rpc_recv_context::rpc_recv_context(temporary_buffer<char> &&hdr,
 }
 
 rpc_recv_context::rpc_recv_context(rpc_recv_context &&o) noexcept
-  : header_buf(std::move(o.header_buf)),
-    body_buf(std::move(o.body_buf)) {
+  : header_buf(std::move(o.header_buf)), body_buf(std::move(o.body_buf)) {
   assert(header_buf.size() == sizeof(fbs::rpc::Header));
 
   header  = reinterpret_cast<fbs::rpc::Header *>(header_buf.get_write());

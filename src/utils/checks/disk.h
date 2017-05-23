@@ -10,5 +10,5 @@ namespace checks {
 struct disk {
   static future<> check(sstring path, bool ignore = false);
 };
-}  // namespace smf
 }  // namespace checks
+}  // namespace smf

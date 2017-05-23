@@ -94,9 +94,8 @@ struct wal_write_request {
                     const ::io_priority_class &_pc)
     : flags(_flags), data(std::move(_data)), pc(_pc) {}
 
-  wal_write_request(wal_write_request &&w) noexcept : flags(w.flags),
-                                                      data(std::move(w.data)),
-                                                      pc(w.pc) {}
+  wal_write_request(wal_write_request &&w) noexcept
+    : flags(w.flags), data(std::move(w.data)), pc(w.pc) {}
 
   wal_write_request share_range(size_t i, size_t len) {
     LOG_THROW_IF(i + len > data.size(), "Out of bounds error");

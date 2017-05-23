@@ -35,11 +35,11 @@ wal_reader::wal_reader(sstring _dir, reader_stats *s)
   : directory(_dir), rstats_(DTHROW_IFNULL(s)) {}
 
 wal_reader::wal_reader(wal_reader &&o) noexcept
-  : directory(std::move(o.directory)),
-    rstats_(o.rstats_),
-    allocated_(std::move(o.allocated_)),
-    buckets_(std::move(o.buckets_)),
-    fs_observer_(std::move(o.fs_observer_)) {}
+  : directory(std::move(o.directory))
+  , rstats_(o.rstats_)
+  , allocated_(std::move(o.allocated_))
+  , buckets_(std::move(o.buckets_))
+  , fs_observer_(std::move(o.fs_observer_)) {}
 
 
 wal_reader::~wal_reader() {}

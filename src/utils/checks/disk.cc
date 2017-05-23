@@ -23,5 +23,5 @@ future<> disk::check(sstring path, bool ignore) {
   });
 }
 
-}  // namespace smf
 }  // namespace checks
+}  // namespace smf

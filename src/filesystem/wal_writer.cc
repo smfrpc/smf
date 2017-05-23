@@ -22,9 +22,9 @@ wal_writer::wal_writer(sstring _dir, writer_stats *s)
   : directory(_dir), wstats_(s) {}
 
 wal_writer::wal_writer(wal_writer &&o) noexcept
-  : directory(std::move(o.directory)),
-    wstats_(o.wstats_),
-    writer_(std::move(o.writer_)) {}
+  : directory(std::move(o.directory))
+  , wstats_(o.wstats_)
+  , writer_(std::move(o.writer_)) {}
 
 
 future<> wal_writer::close() {

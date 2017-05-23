@@ -7,5 +7,5 @@ namespace checks {
 struct memory {
   static void check(bool ignore = false);
 };
-}  // namespace smf
 }  // namespace checks
+}  // namespace smf

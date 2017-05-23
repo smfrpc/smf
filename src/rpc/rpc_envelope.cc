@@ -71,12 +71,12 @@ rpc_envelope &rpc_envelope::operator=(rpc_envelope &&o) noexcept {
 }
 
 rpc_envelope::rpc_envelope(rpc_envelope &&o) noexcept
-  : fbb_(std::move(o.fbb_)),
-    compressed_buffer_(std::move(o.compressed_buffer_)),
-    meta_(o.meta_),
-    finished_(o.finished_),
-    headers_(std::move(o.headers_)),
-    user_buf_(std::move(o.user_buf_)) {
+  : fbb_(std::move(o.fbb_))
+  , compressed_buffer_(std::move(o.compressed_buffer_))
+  , meta_(o.meta_)
+  , finished_(o.finished_)
+  , headers_(std::move(o.headers_))
+  , user_buf_(std::move(o.user_buf_)) {
   header = (o.header);
 }
 

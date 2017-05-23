@@ -72,8 +72,7 @@ struct histogram_measure {
   }
   histogram_measure(const histogram_measure &o) = delete;
   histogram_measure(histogram_measure &&o) noexcept
-    : h(o.h),
-      begin_t(std::move(o.begin_t)) {}
+    : h(o.h), begin_t(std::move(o.begin_t)) {}
 
   void set_trace(bool b) { trace_ = b; }
 

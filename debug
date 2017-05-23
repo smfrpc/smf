@@ -6,7 +6,6 @@ mkdir -p $build_dir
 cd $build_dir
 
 cmake -Wdev \
-      --graphviz=$build_dir/dependencies.dot \
       -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
       -DCMAKE_BUILD_TYPE=Debug $git_root
 

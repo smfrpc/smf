@@ -34,9 +34,8 @@ struct chunk : public boost::intrusive::set_base_hook<>,
   chunk(key_type &&k, value_type &&v, bool _ref)
     : key(std::move(k)), data(std::move(v)), ref(_ref) {}
 
-  chunk(chunk &&c) noexcept : key(std::move(c.key)),
-                              data(std::move(c.data)),
-                              ref(std::move(c.ref)) {}
+  chunk(chunk &&c) noexcept
+    : key(std::move(c.key)), data(std::move(c.data)), ref(std::move(c.ref)) {}
   ~chunk() {}
   chunk(const chunk &) = delete;
   void operator=(const chunk &) = delete;

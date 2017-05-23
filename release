@@ -15,7 +15,8 @@ $git_root/misc/format_files.sh
 mkdir -p $build_dir
 cd $build_dir
 
-cmake -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
+cmake --graphviz=$build_dir/dependencies.dot \
+      -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
       -DCMAKE_BUILD_TYPE=Release $git_root
 
 #produce documentation

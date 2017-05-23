@@ -28,9 +28,10 @@ template <typename Key, typename Value> struct clock_list {
 
   clock_list() { clock_hand = allocated.end(); }
 
-  clock_list(clock_list &&l) noexcept : lookup(std::move(l.lookup)),
-                                        allocated(std::move(l.allocated)),
-                                        clock_hand(l.clock_hand) {}
+  clock_list(clock_list &&l) noexcept
+    : lookup(std::move(l.lookup))
+    , allocated(std::move(l.allocated))
+    , clock_hand(l.clock_hand) {}
   ~clock_list() { lookup.clear(); }
 
   /// \brief - push at the back of the allocated list.

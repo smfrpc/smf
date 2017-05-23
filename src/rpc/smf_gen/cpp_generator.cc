@@ -83,7 +83,8 @@ std::string get_header_prologue(smf_file *file) {
     printer->print(vars, "#define SMF_$filename_identifier$_INCLUDED\n");
     printer->print("\n\n// hack: to use seastar's string type\n");
     printer->print("#include <core/sstring.hh>\n\n");
-    printer->print(vars, "#include \"$filename_base$$message_header_ext$\"\n\n");
+    printer->print(vars,
+                   "#include \"$filename_base$$message_header_ext$\"\n\n");
   }
   return output;
 }

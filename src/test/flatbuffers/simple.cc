@@ -1,7 +1,7 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
-#include <gtest/gtest.h>
 #include <core/sstring.hh>
+#include <gtest/gtest.h>
 #include "flatbuffers/rpc_generated.h"
 
 

@@ -27,5 +27,5 @@ void memory::check(bool ignore) {
   LOG_ERROR_IF(ignore, "{}", ss.str());
 }
 
-}  // namespace smf
 }  // namespace checks
+}  // namespace smf

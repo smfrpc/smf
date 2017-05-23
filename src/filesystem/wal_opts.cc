@@ -7,10 +7,10 @@
 namespace smf {
 
 reader_stats::reader_stats(reader_stats &&o) noexcept
-  : total_reads(o.total_reads),
-    total_bytes(o.total_bytes),
-    total_flushes(o.total_flushes),
-    hist(std::move(o.hist)) {}
+  : total_reads(o.total_reads)
+  , total_bytes(o.total_bytes)
+  , total_flushes(o.total_flushes)
+  , hist(std::move(o.hist)) {}
 
 reader_stats::reader_stats(const reader_stats &o)
   : total_reads(o.total_reads)
@@ -42,10 +42,10 @@ std::ostream &operator<<(std::ostream &o, const reader_stats &s) {
 
 
 writer_stats::writer_stats(writer_stats &&o) noexcept
-  : total_writes(o.total_writes),
-    total_bytes(o.total_bytes),
-    total_invalidations(o.total_invalidations),
-    hist(std::move(o.hist)) {}
+  : total_writes(o.total_writes)
+  , total_bytes(o.total_bytes)
+  , total_invalidations(o.total_invalidations)
+  , hist(std::move(o.hist)) {}
 writer_stats::writer_stats(const writer_stats &o)
   : total_writes(o.total_writes)
   , total_bytes(o.total_bytes)
@@ -95,11 +95,12 @@ static sstring canonical_dir(const sstring &directory) {
   return boost::filesystem::canonical(directory.c_str()).string();
 }
 wal_opts::wal_opts(sstring log_directory) : directory(log_directory) {}
-wal_opts::wal_opts(wal_opts &&o) noexcept : directory(std::move(o.directory)),
-                                            cache_size(o.cache_size),
-                                            rstats(std::move(o.rstats)),
-                                            wstats(std::move(o.wstats)),
-                                            cstats(std::move(o.cstats)) {}
+wal_opts::wal_opts(wal_opts &&o) noexcept
+  : directory(std::move(o.directory))
+  , cache_size(o.cache_size)
+  , rstats(std::move(o.rstats))
+  , wstats(std::move(o.wstats))
+  , cstats(std::move(o.cstats)) {}
 wal_opts::wal_opts(const wal_opts &o)
   : directory(canonical_dir(o.directory))
   , cache_size(o.cache_size)

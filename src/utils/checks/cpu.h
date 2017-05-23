@@ -7,5 +7,5 @@ namespace checks {
 struct cpu {
   static void check();
 };
-}  // namespace smf
 }  // namespace checks
+}  // namespace smf

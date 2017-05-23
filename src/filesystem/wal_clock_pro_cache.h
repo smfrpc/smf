@@ -19,8 +19,8 @@ class wal_clock_pro_cache {
   struct page_data {
     using bufptr_t = std::unique_ptr<char[], free_deleter>;
     page_data(uint32_t size, bufptr_t d) : buf_size(size), data(std::move(d)) {}
-    page_data(page_data &&d) noexcept : buf_size(std::move(d.buf_size)),
-                                        data(std::move(d.data)) {}
+    page_data(page_data &&d) noexcept
+      : buf_size(std::move(d.buf_size)), data(std::move(d.data)) {}
     const uint32_t buf_size;
     bufptr_t       data;
     SMF_DISALLOW_COPY_AND_ASSIGN(page_data);
