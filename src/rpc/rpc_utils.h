@@ -1,6 +1,7 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #pragma once
+#include <core/sstring.hh>
 #include "rpc_generated.h"
 namespace smf {
 fbs::rpc::Header header_for_payload(

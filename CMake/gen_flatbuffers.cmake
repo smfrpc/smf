@@ -1,6 +1,6 @@
 set(FLATBUFFERS_FLATC_EXECUTABLE
   ${PROJECT_SOURCE_DIR}/src/third_party/bin/flatc)
-set(FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS --gen-name-strings --gen-object-api)
+set(FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS --gen-name-strings --gen-object-api --cpp-str-type sstring)
 include(${PROJECT_SOURCE_DIR}/CMake/BuildFlatBuffers.cmake)
 set(FLATBUFFERS_FILES
   ${PROJECT_SOURCE_DIR}/src/flatbuffers/rpc.fbs
