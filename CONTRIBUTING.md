@@ -1,11 +1,15 @@
 Contributing to smf
-=======================
+==========================
 
 # Sending Patches
-smf follows a patch submission similar to Linux. Send patches to smf-dev,
-with a [DCO](http://elinux.org/Developer_Certificate_Of_Origin) signed off message. Use git send-email to send your patch.
+`smf` follows a patch submission similar to Linux. 
+Send patches to smf-dev, with a 
+[DCO](http://elinux.org/Developer_Certificate_Of_Origin) 
+signed-off-message. 
 
-Example:
+Use `git send-email` to send your patch.
+
+## Example:
 
 1. When you commit, use `"-s"` in your git commit command, which adds a DCO
 signed off message. DCO is a "[Developer's Certificate of Origin]
@@ -27,6 +31,7 @@ the original message. Also, if you are sending out a new version of the change,
 use git rebase and then a `git send-email` with a `-v2`, for instance, to
 denote that it is a second version.
 
-# Testing and Approval
-Run test.py and ensure tests are passing (at least) as well as before the
+## Testing and Approval
+
+Run `release` and ensure tests are passing (at least) as well as before the
 patch.
