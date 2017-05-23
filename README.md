@@ -38,7 +38,7 @@ Take a look at the issue list, or send an email to the
 [smf-dev mailing List](https://groups.google.com/forum/#!forum/smf-dev)
 to get started. 
 
-## Getting started on Fedora 25
+## Getting started
 
 Development happens on Fedora25 OS & gcc6 environment. If you have that
 environment, the build system, transitive dependencies, etc are all automated.
@@ -60,9 +60,8 @@ If you don't have a Fedora25 available, you can test the project under Vagrant
 
 ```bash
 
-ROOT=$(git rev-parse --show-toplevel)
-cd $ROOT
-vagrant up --provision
+cd $(git rev-parse --show-toplevel)/misc
+./provision_vagrant.sh
 
 ```
 
