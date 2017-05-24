@@ -16,6 +16,14 @@
 #include "rpc/rpc_filter.h"
 #include "rpc/rpc_recv_typed_context.h"
 
+// NOTE:
+// Currently there is a limitation of 2GB per payload
+// This is a flatbuffer's limination that we can bypass quickly if we
+// simply read in 3 steps. HEADER + BODY_METADATA + BODY.
+// Since we don't have any clients sending more than 2GB, we can skip this for
+// now.
+// This would be a backward incompatible change
+
 namespace smf {
 /// \brief class intented for communicating with a remote host
 ///        this class is relatively cheap outside of the socket cost
@@ -32,6 +40,21 @@ class rpc_client {
 
   // TODO(agallego) - add options for ipv6, ssl, buffering, etc.
   explicit rpc_client(ipv4_addr server_addr);
+
+  template <typename ReturnType, typename NativeTable>
+  future<rpc_recv_typed_context<ReturnType>> send(const NativeTable &t,
+                                                  bool oneway = false) {
+    static_assert(std::is_base_of<flatbuffers::NativeTable, NativeTable>::value,
+                  "argument `t' must extend flatbuffers::NativeTable");
+
+#define FBB_FN_BUILD(T) Create##T
+
+    // need to get the basic builder for payload
+    rpc_envelope e(nullptr);
+    FBB_FN_BUILD(NativeTable)(*e.mutable_builder(), &t);
+    return send<ReturnType>(std::move(e), oneway);
+  }
+
   /// \brief actually does the send to the remote location
   /// \param req - the bytes to send
   /// \param oneway - if oneway, then, no recv request is issued

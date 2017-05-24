@@ -90,6 +90,10 @@ class rpc_envelope {
   void set_request_id(const uint32_t &service, const uint32_t method);
   void set_status(const uint32_t &status);
 
+  inline flatbuffers::FlatBufferBuilder *mutable_builder() {
+    return fbb_.get();
+  }
+
   /// \brief you must call this before you ship it
   /// it will get automatically called for you right before you send the data
   /// over the write by the rpc_client

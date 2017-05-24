@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -ex
+
 system=$(lsb_release -si | tr '[:upper:]' '[:lower:]' )
 git_root=$(git rev-parse --show-toplevel)
 cd $git_root
@@ -13,11 +16,11 @@ if [[ $system == "fedora" ]]; then
         sudo bash -c 'wget http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo | tee '
         popd
         sudo dnf update
-        sudo dnf install binutils gcc make patch libgomp glibc-headers glibc-devel kernel-headers kernel-PAE-devel dkms libffi-devel
-        sudo dnf install VirtualBox
-        vagrant plugin install vagrant-vbguest
+        sudo dnf install binutils gcc make patch libgomp glibc-headers glibc-devel \
+             kernel-headers kernel-PAE-devel dkms libffi-devel ruby-devel VirtualBox
     fi
 fi
-
-vagrant up --provision --provider virtualbox
+vagrant plugin install vagrant-vbguest
+vagrant plugin install vagrant-disksize
+vagrant halt && vagrant up --provision --provider virtualbox
 [[ $? != 0 ]] && echo "Broken Vagrant" && exit $?
