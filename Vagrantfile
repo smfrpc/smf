@@ -5,8 +5,10 @@ VAGRANTFILE_API_VERSION = "2"
 $provision_smf = <<SCRIPT
 echo Provisioning SMF
 
+export PYTHONUNBUFFERED=1
+
 sudo dnf upgrade -y
-sudo dnf install -y git
+sudo dnf install -y git htop
 
 cd /vagrant/meta
 source source_ansible_bash
@@ -18,16 +20,14 @@ SCRIPT
 
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.hostname = "smurf"
   config.vm.box = "fedora/25-cloud-base"
-  if Vagrant.has_plugin? "vagrant-vbguest"
-    config.vbguest.auto_update = true
-  end
+  config.ssh.keep_alive = true
   # From https://fedoraproject.org/wiki/Vagrant, setup vagrant-hostmanager
   if Vagrant.has_plugin? "vagrant-hostmanager"
       config.hostmanager.enabled = true
       config.hostmanager.manage_host = true
   end
-  config.disksize.size = '15GB'
   config.vm.provision "shell", inline: $provision_smf
   config.vm.provider :virtualbox do |vb|
     vb.memory = 8096

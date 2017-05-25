@@ -1,8 +1,14 @@
 #!/bin/bash
 
 set -ex
+export VAGRANT_LOG=info
+export PYTHONUNBUFFERED=1
 
-system=$(lsb_release -si | tr '[:upper:]' '[:lower:]' )
+system="darwin"
+if [[ $(which lsb_release) != "" ]]; then
+    system=$(lsb_release -si | tr '[:upper:]' '[:lower:]' )
+fi
+
 git_root=$(git rev-parse --show-toplevel)
 cd $git_root
 
@@ -20,7 +26,17 @@ if [[ $system == "fedora" ]]; then
              kernel-headers kernel-PAE-devel dkms libffi-devel ruby-devel VirtualBox
     fi
 fi
-vagrant plugin install vagrant-vbguest
-vagrant plugin install vagrant-disksize
+
+if [[ $system == "darwin" ]]; then
+    if [[ $(which brew) == "" ]]; then
+        /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    fi
+    if [[ $(which vagrant) == "" ]]; then
+        brew cask install vagrant virtualbox
+    fi
+fi
+if [[ $(vagrant plugin list | grep vbguest) == "" ]]; then
+    vagrant plugin install vagrant-vbguest
+fi
 vagrant halt && vagrant up --provision --provider virtualbox
 [[ $? != 0 ]] && echo "Broken Vagrant" && exit $?
