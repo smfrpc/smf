@@ -41,6 +41,18 @@ to get started.
 
 ## Getting started
 
+
+```bash
+
+
+cd $(git rev-parse --show-toplevel)/misc
+./provision_vagrant.sh
+
+
+```
+
+This will give you a working VirtualBox machine to edit & run code.
+
 Development happens on Fedora25 OS & gcc6 environment. If you have that
 environment, the build system, transitive dependencies, etc are all automated.
 
@@ -57,14 +69,8 @@ ansible-playbook playbooks/devbox_all.yml
 
 We welcome contributions to port `smf` to other platforms, and OS's.
 
-If you don't have a Fedora25 available, you can test the project under Vagrant
+If you don't have a Fedora25 available, use the VirtualBox script above.
 
-```bash
-
-cd $(git rev-parse --show-toplevel)/misc
-./provision_vagrant.sh
-
-```
 
 ## asciinema
 
@@ -74,3 +80,6 @@ cd $(git rev-parse --show-toplevel)/misc
 Yours Truly,
 * [@emaxerrno](https://twitter.com/emaxerrno)
 * [site](http://alexgallego.org)
+
+
+[![Analytics](https://ga-beacon.appspot.com/UA-99983285-1/chromeskel_a/readme?pixel)]()

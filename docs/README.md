@@ -519,3 +519,7 @@ We welcome contributions to port `smf` to other platforms, and OS's.
 * [Kudu](https://kudu.apache.org/)
 * [Clock-pro caching algorithm](http://static.usenix.org/event/usenix05/tech/general/full_papers/jiang/jiang_html/html.html)
 * [Cap'n Proto](https://capnproto.org/)
+
+
+[![Analytics](https://ga-beacon.appspot.com/UA-99983285-1/chromeskel_a/readme?pixel)]()
+
