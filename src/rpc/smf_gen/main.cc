@@ -46,4 +46,5 @@ int main(int argc, char **argv, char **env) {
   VLOG(1) << "File `" << FLAGS_filename << "` parsed. Generating";
 
   smf_gen::generate(parser, flatbuffers::StripExtension(FLAGS_filename));
+  parser.MarkGenerated();
 }

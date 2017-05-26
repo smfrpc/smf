@@ -14,7 +14,7 @@ template <typename T> struct rpc_recv_typed_context {
   rpc_recv_typed_context(rpc_recv_typed_context<T> &&o) noexcept
     : ctx(std::move(o.ctx)) {}
 
-  T *get() {
+  inline T *get() {
     if (ctx) {
       return flatbuffers::GetMutableRoot<T>(
         ctx.value().payload->mutable_body()->Data());
@@ -28,7 +28,7 @@ template <typename T> struct rpc_recv_typed_context {
   ///     if(obj){}
   /// \endcode
   /// simply forward the bool operator to the option
-  operator bool() const { return ctx.operator bool(); }
+  inline operator bool() const { return ctx.operator bool(); }
   opt_recv_ctx_t ctx;
 
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_recv_typed_context);
