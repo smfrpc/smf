@@ -6,6 +6,8 @@
 
 #include <core/temporary_buffer.hh>
 
+#include <flatbuffers/flatbuffers.h>
+
 #include "flatbuffers/rpc_generated.h"
 #include "platform/macros.h"
 #include "platform/log.h"
@@ -20,7 +22,7 @@ enum rpc_letter_type : uint8_t {
 
 
 struct rpc_letter {
-  rpc_letter_type dtype = payload_type::payload_type_payload;
+  rpc_letter_type dtype = rpc_letter_type::rpc_letter_type_payload;
 
   fbs::rpc::Header header = {0, fbs::rpc::Flags::Flags_NONE, 0};
 
@@ -48,7 +50,7 @@ struct rpc_letter {
 
 
   void mutate_payload_to_binary() {
-    LOG_THROW_IF(dtype == payload_type::payload_type_binary,
+    LOG_THROW_IF(dtype == rpc_letter_type::rpc_letter_type_binary,
                  "Letter already a binary array. Dataloss");
 
     // clean up the builder first
@@ -64,7 +66,7 @@ struct rpc_letter {
     temporary_buffer<char> tmp(builder.GetSize());
     const char *p = reinterpret_cast<const char *>(builder.GetBufferPointer());
     std::copy(p, p + builder.GetSize(), tmp.get_write());
-    dtype = payload_type::payload_type_binary;
+    dtype = rpc_letter_type::rpc_letter_type_binary;
     body = std::move(tmp);
   }
 
@@ -74,7 +76,7 @@ struct rpc_letter {
   // Second copy: Next it moves it into the payload
   //
   template <typename T,
-            typename = std::enable_if_t<std::is_base_of<flatbuffers::NativeType,
+            typename = std::enable_if_t<std::is_base_of<flatbuffers::NativeTable,
                                                         T>::value>>
   static rpc_letter native_table_to_rpc_letter(const T &t) {
 #define FBB_FN_BUILD(__type) Create##__type
@@ -99,7 +101,7 @@ struct rpc_letter {
     return std::move(let);
   }
 
-  static flatbuffers::FlatbufferBuilder &local_builder() {
+  static ::flatbuffers::FlatbufferBuilder &local_builder() {
     static thread_local flatbuffers::FlatbufferBuilder fbb;
     return fbb;
   }
