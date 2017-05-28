@@ -41,13 +41,6 @@ class rpc_client {
   // TODO(agallego) - add options for ipv6, ssl, buffering, etc.
   explicit rpc_client(ipv4_addr server_addr);
 
-  template <typename ReturnType, typename NativeTable>
-  future<rpc_recv_typed_context<ReturnType>> send(const NativeTable &&t,
-                                                  bool oneway = false) {
-
-    return send<ReturnType>(rpc_envelope::native_table_as_envelope<NativeTable>(t), oneway);
-  }
-
   /// \brief actually does the send to the remote location
   /// \param req - the bytes to send
   /// \param oneway - if oneway, then, no recv request is issued
@@ -56,7 +49,6 @@ class rpc_client {
   template <typename T>
   future<rpc_recv_typed_context<T>> send(rpc_envelope e, bool oneway = false) {
     using ret_type = rpc_recv_typed_context<T>;
-    e.finish();  // make sure that the buff is ready
     auto measure = is_histogram_enabled() ? hist_->auto_measure() : nullptr;
     return rpc_filter_apply(&out_filters_, std::move(e))
       .then([this, oneway](rpc_envelope &&e) {

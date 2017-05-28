@@ -9,8 +9,8 @@
 #include <flatbuffers/flatbuffers.h>
 
 #include "flatbuffers/rpc_generated.h"
-#include "platform/macros.h"
 #include "platform/log.h"
+#include "platform/macros.h"
 
 namespace smf {
 
@@ -46,6 +46,22 @@ struct rpc_letter {
     temporary_buffer<char> body;
   };
 
+  rpc_letter(){}
+  rpc_letter &operator=(rpc_letter &&l) {
+    dtype = std::move(l.dtype);
+    if (dtype == rpc_letter_type::rpc_letter_type_payload) {
+      payload = std::move(l.payload);
+    } else if (dtype == rpc_letter_type::rpc_letter_type_binary) {
+      body = std::move(l.body);
+    }
+    return *this;
+  }
+  explicit rpc_letter(rpc_letter &&l) {
+    *this = std::move(l);
+  }
+
+  ~rpc_letter(){}
+
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_letter);
 
 
@@ -67,7 +83,7 @@ struct rpc_letter {
     const char *p = reinterpret_cast<const char *>(builder.GetBufferPointer());
     std::copy(p, p + builder.GetSize(), tmp.get_write());
     dtype = rpc_letter_type::rpc_letter_type_binary;
-    body = std::move(tmp);
+    body  = std::move(tmp);
   }
 
   // Does 2 copies.
@@ -75,9 +91,10 @@ struct rpc_letter {
   // format.
   // Second copy: Next it moves it into the payload
   //
-  template <typename T,
-            typename = std::enable_if_t<std::is_base_of<flatbuffers::NativeTable,
-                                                        T>::value>>
+  template <
+    typename T,
+    typename =
+      std::enable_if_t<std::is_base_of<flatbuffers::NativeTable, T>::value>>
   static rpc_letter native_table_to_rpc_letter(const T &t) {
 #define FBB_FN_BUILD(__type) Create##__type
     rpc_letter let;
@@ -96,13 +113,12 @@ struct rpc_letter {
     let.payload.body.reserve(builder.GetSize());
     const char *p = reinterpret_cast<const char *>(builder.GetBufferPointer());
     std::copy(p, p + builder.GetSize(),
-              reinterpret_cast<char *>(let.payload.body[0]));
-    let.user_buf = std::move(tmp);
+              reinterpret_cast<char *>(&let.payload.body[0]));
     return std::move(let);
   }
 
-  static ::flatbuffers::FlatbufferBuilder &local_builder() {
-    static thread_local flatbuffers::FlatbufferBuilder fbb;
+  static ::flatbuffers::FlatBufferBuilder &local_builder() {
+    static thread_local flatbuffers::FlatBufferBuilder fbb;
     return fbb;
   }
 };

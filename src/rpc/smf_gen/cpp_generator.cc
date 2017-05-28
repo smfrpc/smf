@@ -167,7 +167,7 @@ void print_header_service_method(smf_printer *     printer,
     vars, "$MethodName$(smf::rpc_recv_typed_context<$InType$> &&rec) {\n");
   printer->indent();
   printer->print(vars, "// Output type: $OutType$\n");
-  printer->print("smf::rpc_envelope e(nullptr);\n");
+  printer->print("smf::rpc_envelope e;\n");
   printer->print(
     "// Helpful for clients to set the status.\n"
     "// Typically follows HTTP style. Not imposed by smf whatsoever.\n");

@@ -11,8 +11,6 @@ namespace smf {
 namespace load_gen {
 
 
-/// TODO(agallego) - enable zstd compressor as options of enums
-/// and other enums
 template <typename ClientService> struct load_channel {
   using func_t = std::function<future<>(ClientService *, smf::rpc_envelope &&)>;
 
@@ -20,6 +18,7 @@ template <typename ClientService> struct load_channel {
     : client(new ClientService(ipv4_addr{ip, port}))
     , fbb(new flatbuffers::FlatBufferBuilder()) {
     client->enable_histogram_metrics(true);
+    /// TODO(agallego) - enable zstd compressor as options of enums
     client->incoming_filters().push_back(smf::zstd_decompression_filter());
     client->outgoing_filters().push_back(smf::zstd_compression_filter(1000));
   }

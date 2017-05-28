@@ -18,7 +18,8 @@ struct rpc_envelope {
   constexpr static size_t kHeaderSize = sizeof(fbs::rpc::Header);
   static future<> send(output_stream<char> *out, rpc_envelope req);
 
-
+  rpc_envelope();
+  ~rpc_envelope();
   explicit rpc_envelope(rpc_letter &&_letter);
 
   /// \brief copy ctor deleted
