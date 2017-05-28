@@ -41,20 +41,6 @@ class rpc_client {
   // TODO(agallego) - add options for ipv6, ssl, buffering, etc.
   explicit rpc_client(ipv4_addr server_addr);
 
-  template <typename ReturnType, typename NativeTable>
-  future<rpc_recv_typed_context<ReturnType>> send(const NativeTable &t,
-                                                  bool oneway = false) {
-    static_assert(std::is_base_of<flatbuffers::NativeTable, NativeTable>::value,
-                  "argument `t' must extend flatbuffers::NativeTable");
-
-#define FBB_FN_BUILD(T) Create##T
-
-    // need to get the basic builder for payload
-    rpc_envelope e(nullptr);
-    FBB_FN_BUILD(NativeTable)(*e.mutable_builder(), &t);
-    return send<ReturnType>(std::move(e), oneway);
-  }
-
   /// \brief actually does the send to the remote location
   /// \param req - the bytes to send
   /// \param oneway - if oneway, then, no recv request is issued
@@ -63,8 +49,7 @@ class rpc_client {
   template <typename T>
   future<rpc_recv_typed_context<T>> send(rpc_envelope e, bool oneway = false) {
     using ret_type = rpc_recv_typed_context<T>;
-    e.finish();  // make sure that the buff is ready
-    auto measure = is_histogram_enabled() ? hist_->auto_measure() : nullptr;
+    auto measure   = is_histogram_enabled() ? hist_->auto_measure() : nullptr;
     return rpc_filter_apply(&out_filters_, std::move(e))
       .then([this, oneway](rpc_envelope &&e) {
         return chain_send(std::move(e), oneway);

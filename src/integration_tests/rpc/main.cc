@@ -21,7 +21,7 @@
 #include "flatbuffers/demo_service.smf.fb.h"
 
 
-using client_t   = smf_gen::fbs::rpc::SmfStorageClient;
+using client_t   = smf_gen::demo::SmfStorageClient;
 using load_gen_t = smf::load_gen::load_generator<client_t>;
 
 struct method_callback {
@@ -32,50 +32,49 @@ struct method_callback {
   }
 };
 
-struct init_callback {
-  void operator()(flatbuffers::FlatBufferBuilder *             fbb,
-                  const boost::program_options::variables_map &cfg) {
-    static const char *kPayloadSonet43ElizabethBarretBowen =
-      "How do I love thee? Let me count the ways."
-      "I love thee to the depth and breadth and height"
-      "My soul can reach, when feeling out of sight"
-      "For the ends of being and ideal grace."
-      "I love thee to the level of every day's"
-      "Most quiet need, by sun and candle-light."
-      "I love thee freely, as men strive for right."
-      "I love thee purely, as they turn from praise."
-      "I love thee with the passion put to use"
-      "In my old griefs, and with my childhood's faith."
-      "I love thee with a love I seemed to lose"
-      "With my lost saints. I love thee with the breath,"
-      "Smiles, tears, of all my life; and, if God choose,"
-      "I shall but love thee better after death."
-      "How do I love thee? Let me count the ways."
-      "I love thee to the depth and breadth and height"
-      "My soul can reach, when feeling out of sight"
-      "For the ends of being and ideal grace."
-      "I love thee to the level of every day's"
-      "Most quiet need, by sun and candle-light."
-      "I love thee freely, as men strive for right."
-      "I love thee purely, as they turn from praise."
-      "I love thee with the passion put to use"
-      "In my old griefs, and with my childhood's faith."
-      "I love thee with a love I seemed to lose"
-      "With my lost saints. I love thee with the breath,"
-      "Smiles, tears, of all my life; and, if God choose,"
-      "I shall but love thee better after death.";
-    auto req = smf_gen::fbs::rpc::CreateRequest(
-      *fbb, fbb->CreateString(kPayloadSonet43ElizabethBarretBowen));
-    fbb->Finish(req);
-    DLOG_DEBUG("Size of payload:{}", 12 + fbb->GetSize());
+struct generator {
+  smf::rpc_envelope operator()(
+    const boost::program_options::variables_map &cfg) {
+    auto req = smf_gen::demo::RequestT{};
+    req.name = "How do I love thee? Let me count the ways."
+               "I love thee to the depth and breadth and height"
+               "My soul can reach, when feeling out of sight"
+               "For the ends of being and ideal grace."
+               "I love thee to the level of every day's"
+               "Most quiet need, by sun and candle-light."
+               "I love thee freely, as men strive for right."
+               "I love thee purely, as they turn from praise."
+               "I love thee with the passion put to use"
+               "In my old griefs, and with my childhood's faith."
+               "I love thee with a love I seemed to lose"
+               "With my lost saints. I love thee with the breath,"
+               "Smiles, tears, of all my life; and, if God choose,"
+               "I shall but love thee better after death."
+               "How do I love thee? Let me count the ways."
+               "I love thee to the depth and breadth and height"
+               "My soul can reach, when feeling out of sight"
+               "For the ends of being and ideal grace."
+               "I love thee to the level of every day's"
+               "Most quiet need, by sun and candle-light."
+               "I love thee freely, as men strive for right."
+               "I love thee purely, as they turn from praise."
+               "I love thee with the passion put to use"
+               "In my old griefs, and with my childhood's faith."
+               "I love thee with a love I seemed to lose"
+               "With my lost saints. I love thee with the breath,"
+               "Smiles, tears, of all my life; and, if God choose,"
+               "I shall but love thee better after death.";
+
+    return smf::rpc_envelope(
+      smf::rpc_letter::native_table_to_rpc_letter<smf_gen::demo::Request>(req));
   }
 };
 
 
-class storage_service : public smf_gen::fbs::rpc::SmfStorage {
+class storage_service : public smf_gen::demo::SmfStorage {
   future<smf::rpc_envelope> Get(
-    smf::rpc_recv_typed_context<smf_gen::fbs::rpc::Request> &&rec) final {
-    smf::rpc_envelope e(nullptr);
+    smf::rpc_recv_typed_context<smf_gen::demo::Request> &&rec) final {
+    smf::rpc_envelope e;
     e.set_status(200);
     return make_ready_future<smf::rpc_envelope>(std::move(e));
   }
@@ -130,7 +129,7 @@ int main(int args, char **argv, char **env) {
         uint32_t flags = smf::rpc_server_flags::rpc_server_flags_none;
         uint16_t port  = cfg["port"].as<uint16_t>();
         return rpc.start(&stats, port, flags).then([&rpc] {
-          DLOG_DEBUG("Registering smf_gen::fbs::rpc::storage_service");
+          DLOG_DEBUG("Registering smf_gen::demo::storage_service");
           return rpc.invoke_on_all(
             &smf::rpc_server::register_service<storage_service>);
         });
@@ -161,9 +160,9 @@ int main(int args, char **argv, char **env) {
       .then([&load] {
         DLOG_DEBUG("Benchmarking server");
         return load.invoke_on_all([](load_gen_t &server) {
-          load_gen_t::init_cb_t   init   = init_callback{};
-          load_gen_t::method_cb_t method = method_callback{};
-          return server.benchmark(init, method).then([](auto test) {
+          load_gen_t::generator_cb_t gen    = generator{};
+          load_gen_t::method_cb_t    method = method_callback{};
+          return server.benchmark(gen, method).then([](auto test) {
             DLOG_DEBUG("Test ran in:{}ms", test.duration_in_millis());
             return make_ready_future<>();
           });

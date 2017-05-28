@@ -7,13 +7,14 @@
 
 #include <core/shared_ptr.hh>
 
+#include "rpc/rpc_envelope.h"
+
 #include "rpc/load_gen/generator_args.h"
 #include "rpc/load_gen/generator_duration.h"
-#include "rpc/rpc_envelope.h"
+
 
 namespace smf {
 namespace load_gen {
-
 
 /// \brief enable load generator for any smf::rpc_client*
 /// You can only have one client per active stream
@@ -31,18 +32,8 @@ template <typename ClientService> class load_generator {
 
   using method_cb_t =
     std::function<future<>(ClientService *, smf::rpc_envelope &&)>;
-
-  /// \brief used to fill up the request buffer before sending it to server
-  /// For example:
-  /// \code{.cpp}
-  ///        auto req = smf_gen::fbs::rpc::CreateRequest(
-  ///        *fbb, fbb->CreateString(...));
-  ///        ...
-  ///        fbb->Finish(req);
-  /// \endcode
-  using init_cb_t =
-    std::function<void(flatbuffers::FlatBufferBuilder *fbb,
-                       const boost::program_options::variables_map &)>;
+  using generator_cb_t = std::function<smf::rpc_envelope(
+    const boost::program_options::variables_map &)>;
 
 
   explicit load_generator(generator_args _args) : args(_args) {
@@ -68,32 +59,29 @@ template <typename ClientService> class load_generator {
     return do_for_each(channels_.begin(), channels_.end(),
                        [](auto &c) { return c->connect(); });
   }
-  future<generator_duration> benchmark(init_cb_t   init_cb,
-                                       method_cb_t method_cb) {
-    for (auto &c : channels_) {
-      init_cb(c->fbb.get(), args.cfg);
-    }
+  future<generator_duration> benchmark(generator_cb_t gen,
+                                       method_cb_t    method_cb) {
     namespace co = std::chrono;
-
-
     const uint32_t reqs_per_channel =
       std::max<uint32_t>(1, std::ceil(args.num_of_req / args.concurrency));
     auto duration = make_lw_shared<generator_duration>(reqs_per_channel);
 
     return do_with(
              semaphore(args.concurrency),
-             [this, duration, method_cb,
+             [this, duration, method_cb, gen,
               reqs_per_channel](auto &limit) mutable {
                duration->begin();
                return do_for_each(
                         channels_.begin(), channels_.end(),
-                        [&limit, method_cb, reqs_per_channel](auto &c) mutable {
-                          return limit.wait(1).then([&c, &limit,
+                        [this, &limit, gen, method_cb,
+                         reqs_per_channel](auto &c) mutable {
+                          return limit.wait(1).then([this, gen, &c, &limit,
                                                      reqs_per_channel,
                                                      method_cb]() mutable {
                             // notice that this does not return, hence
                             // executing concurrently
-                            c->invoke(reqs_per_channel, method_cb)
+                            c->invoke(reqs_per_channel, args.cfg, gen,
+                                      method_cb)
                               .finally([&limit] { limit.signal(1); });
                           });
                         })

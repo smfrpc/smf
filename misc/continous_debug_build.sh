@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 if [[ $(which inotifywait) == "" ]]; then
     echo "You do not have inotifywait installed."
     echo "In fedora builds you want to use: dnf install inotify-tools"
@@ -18,14 +16,14 @@ cd $git_root
 # First make sure that it actually builds
 ./debug
 
+build_tool="ninja"
+if [[ $system == "fedora" ]]; then
+    build_tool="ninja-build"
+fi
 
 function build_no_tests(){
     pushd $git_root/build_debug
-    if [[ $system == "fedora" ]]; then
-        ninja-build
-    else
-        ninja
-    fi
+    $build_tool
     popd
 }
 
@@ -45,7 +43,15 @@ while true; do
         echo "Triggering build: ${build_counter}"
         echo
         build_no_tests
-        sleep 5
+        if [[ $? != 0 ]]; then
+            echo "Bad exit code from build system...: $?"
+            for i in {{1..10}}; do
+                echo "Trying again in $((10-$i)) seconds"
+                sleep 1
+            done
+        else
+            sleep 5
+        fi
         echo
         echo
         echo

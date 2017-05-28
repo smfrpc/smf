@@ -17,10 +17,10 @@ enum Flags:uint (bit_flags) {
 /// that is, must be a struct in fbs language
 ///
 struct Header {
-  size: uint;
-  flags: Flags = 0;
+  size: uint = 0;
+  flags: Flags = CHECKSUM;
   /// currently we use xxhash32
-  checksum: uint;
+  checksum: uint = 0;
 }
 
 /// \brief used for extra headers, ala HTTP
@@ -60,7 +60,7 @@ table Payload {
   /// This is how the server multiplexer figures out what function pointer
   /// to call
   ///
-  meta: uint;
+  meta: uint = 0;
 
   /// cookies are a state that is shared between client and server.
   /// server can send arbitrary state back to the client for subsequent posts

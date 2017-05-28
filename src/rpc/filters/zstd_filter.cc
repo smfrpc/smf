@@ -12,12 +12,19 @@
 namespace smf {
 
 future<rpc_envelope> zstd_compression_filter::operator()(rpc_envelope &&e) {
-  if (e.payload_size() >= min_compression_size) {
-    temporary_buffer<char> buf(e.payload_size());
-    void *                 dst = static_cast<void *>(buf.get_write());
-    const void *           src = reinterpret_cast<const void *>(e.payload());
-    auto                   zstd_compressed_size = ZSTD_compress(
-      dst, buf.size(), src, e.payload_size(), 3 /*default compression level*/);
+  if (e.letter.dtype == rpc_letter_type::rpc_letter_type_payload) {
+    e.letter.mutate_payload_to_binary();
+  }
+  auto const body_size = e.letter.body.size();
+  if (body_size >= min_compression_size) {
+    temporary_buffer<char> buf(body_size);
+    // prepare inputs
+    void *      dst = static_cast<void *>(buf.get_write());
+    const void *src = reinterpret_cast<const void *>(e.letter.body.get());
+    // create compressed buffers
+    auto zstd_compressed_size = ZSTD_compress(dst, buf.size(), src, body_size,
+                                              3 /*default compression level*/);
+    // check erros
     auto zstd_err = ZSTD_isError(zstd_compressed_size);
     if (zstd_err == 0) {
       buf.trim(zstd_compressed_size);

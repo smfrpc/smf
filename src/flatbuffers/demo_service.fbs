@@ -1,4 +1,4 @@
-namespace smf_gen.fbs.rpc;
+namespace smf_gen.demo;
 
 table Request {
   name: string;

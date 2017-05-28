@@ -2,6 +2,8 @@
 //
 #pragma once
 
+#include <core/shared_ptr.hh>
+
 #include "platform/log.h"
 #include "platform/macros.h"
 #include "rpc/filters/zstd_filter.h"
@@ -11,15 +13,16 @@ namespace smf {
 namespace load_gen {
 
 
-/// TODO(agallego) - enable zstd compressor as options of enums
-/// and other enums
 template <typename ClientService> struct load_channel {
   using func_t = std::function<future<>(ClientService *, smf::rpc_envelope &&)>;
+  using generator_t = std::function<smf::rpc_envelope(
+    const boost::program_options::variables_map &)>;
 
   load_channel(const char *ip, uint16_t port)
     : client(new ClientService(ipv4_addr{ip, port}))
     , fbb(new flatbuffers::FlatBufferBuilder()) {
     client->enable_histogram_metrics(true);
+    /// TODO(agallego) - enable zstd compressor as options of enums
     client->incoming_filters().push_back(smf::zstd_decompression_filter());
     client->outgoing_filters().push_back(smf::zstd_compression_filter(1000));
   }
@@ -33,18 +36,19 @@ template <typename ClientService> struct load_channel {
 
   future<> connect() { return client->connect(); }
 
-  future<> invoke(uint32_t reqs, func_t func) {
+  future<> invoke(uint32_t                                     reqs,
+                  const boost::program_options::variables_map &opts,
+                  generator_t                                  gen,
+                  func_t                                       func) {
     LOG_THROW_IF(reqs == 0, "bad number of requests");
-    LOG_THROW_IF(fbb->GetSize() == 0, "Empty builder, don't forget to build "
-                                      "flatbuffers payload. See the "
-                                      "documentation.");
 
+    // explicitly make copies of opts, gen, and func
+    // happens once per reqs call
+    //
     return do_for_each(boost::counting_iterator<uint32_t>(0),
                        boost::counting_iterator<uint32_t>(reqs),
-                       [this, func](uint32_t i) mutable {
-                         smf::rpc_envelope e(fbb->GetBufferPointer(),
-                                             fbb->GetSize());
-                         return func(client.get(), std::move(e));
+                       [this, opts, gen, func](uint32_t i) mutable {
+                         return func(client.get(), gen(opts));
                        });
   }
 
