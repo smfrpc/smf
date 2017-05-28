@@ -48,7 +48,7 @@ struct rpc_letter {
 
 
   void mutate_payload_to_binary() {
-    LOG_THROW_IF(dtype != payload_type::payload_type_binary,
+    LOG_THROW_IF(dtype == payload_type::payload_type_binary,
                  "Letter already a binary array. Dataloss");
 
     // clean up the builder first
