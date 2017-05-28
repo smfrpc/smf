@@ -8,10 +8,26 @@
 #include "platform/log.h"
 #include "rpc/rpc_utils.h"
 
+
 namespace smf {
 
+  void envelope_builder_data::init(const uint8_t *buf_to_copy, size_t len){
+    if (buf_to_copy != nullptr && len > 0) {
+      user_buf = std::move(fbb.CreateVector(buf_to_copy, len));
+    }
+  }
+}
+
+
+namespace smf {
+
+  static flatbuffers::FlatbufferBuilder &local_builder() {
+    static thread_local flatbuffers::FlatbufferBuilder fbb;
+    return fbb;
+  }
+
+
 future<> rpc_envelope::send(output_stream<char> *out, rpc_envelope e) {
-  e.finish();
   temporary_buffer<char> header(kHeaderSize);
   // copy the remaining header bytes
   std::copy(reinterpret_cast<char *>(&e.header),
@@ -22,6 +38,12 @@ future<> rpc_envelope::send(output_stream<char> *out, rpc_envelope e) {
     .then([out, e = std::move(e)]() mutable {
       if ((e.header.flags() & fbs::rpc::Flags::Flags_ZSTD)
           == fbs::rpc::Flags::Flags_ZSTD) {
+        // This payload is actually the ENTIRE builder
+        // IT is *NOT* part of the payload, it is the
+        // smf.fbs.rpc.Payload table
+        //
+        // This is usually set by outgoing filters
+        //
         auto p = std::move(e.get_compressed_payload());
         return out->write(std::move(p));
       } else {
@@ -34,26 +56,23 @@ future<> rpc_envelope::send(output_stream<char> *out, rpc_envelope e) {
     .then([out] { return out->flush(); });
 }
 
-rpc_envelope::rpc_envelope(const flatbuffers::FlatBufferBuilder &fbb) {
-  init(fbb.GetBufferPointer(), fbb.GetSize());
-}
 
 rpc_envelope::rpc_envelope(const char *buf_to_copy) {
-  init(reinterpret_cast<const uint8_t *>(buf_to_copy),
+  data_.builder.init(reinterpret_cast<const uint8_t *>(buf_to_copy),
        buf_to_copy == nullptr ? 0 : std::strlen(buf_to_copy));
 }
 
 rpc_envelope::rpc_envelope(const char *buf_to_copy, size_t len) {
   static_assert(sizeof(char) == sizeof(uint8_t), "char is not 8 bits");
-  init(reinterpret_cast<const uint8_t *>(buf_to_copy), len);
+  data_.builder.init(reinterpret_cast<const uint8_t *>(buf_to_copy), len);
 }
 
 rpc_envelope::rpc_envelope(const uint8_t *buf_to_copy, size_t len) {
-  init(buf_to_copy, len);
+  data_.builder.init(buf_to_copy, len);
 }
 
 rpc_envelope::rpc_envelope(const sstring &buf_to_copy) {
-  init(reinterpret_cast<const uint8_t *>(buf_to_copy.data()),
+  data_.builder.init(reinterpret_cast<const uint8_t *>(buf_to_copy.data()),
        buf_to_copy.size());
 }
 
@@ -120,10 +139,7 @@ void rpc_envelope::finish() {
   }
 }
 void rpc_envelope::init(const uint8_t *buf_to_copy, size_t len) {
-  if (buf_to_copy != nullptr && len > 0) {
-    user_buf_ = std::move(fbb_->CreateVector(buf_to_copy, len));
   }
-}
 
 void rpc_envelope::set_compressed_payload(temporary_buffer<char> buf) {
   compressed_buffer_ = std::move(buf);

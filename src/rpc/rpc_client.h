@@ -42,17 +42,10 @@ class rpc_client {
   explicit rpc_client(ipv4_addr server_addr);
 
   template <typename ReturnType, typename NativeTable>
-  future<rpc_recv_typed_context<ReturnType>> send(const NativeTable &t,
+  future<rpc_recv_typed_context<ReturnType>> send(const NativeTable &&t,
                                                   bool oneway = false) {
-    static_assert(std::is_base_of<flatbuffers::NativeTable, NativeTable>::value,
-                  "argument `t' must extend flatbuffers::NativeTable");
 
-#define FBB_FN_BUILD(T) Create##T
-
-    // need to get the basic builder for payload
-    rpc_envelope e(nullptr);
-    FBB_FN_BUILD(NativeTable)(*e.mutable_builder(), &t);
-    return send<ReturnType>(std::move(e), oneway);
+    return send<ReturnType>(rpc_envelope::native_table_as_envelope<NativeTable>(t), oneway);
   }
 
   /// \brief actually does the send to the remote location

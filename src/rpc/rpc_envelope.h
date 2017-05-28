@@ -8,9 +8,6 @@
 #include "flatbuffers/rpc_generated.h"
 #include "platform/macros.h"
 
-// Note: This class has no dependency on seastar so that we can
-// re-use this class w/ the folly::wangle rpc from non-seastar applications
-// don't bring in the seastar dependency
 namespace smf {
 /// \brief send rpc request to stablished remote host.
 /// This class will async send the request to the remote host in rpc_client.h
@@ -24,10 +21,19 @@ class rpc_envelope {
   static future<> send(output_stream<char> *out, rpc_envelope req);
 
 
-  /// \brief convenience method. copy the byte array of the flatbuffer builder
-  /// \args buf_to_copy - is a pointer to the flatbuffers after the user called
-  /// fbb->finished()
-  explicit rpc_envelope(const flatbuffers::FlatBufferBuilder &fbb);
+  /// \brief helper method to turn a flatbuffers::NativeTable
+  /// into an envelope
+  template <typename T>
+  static rpc_envelope native_table_as_envelope(const T &t) {
+    static_assert(std::is_base_of<flatbuffers::NativeTable, T>::value,
+                  "argument `t' must extend flatbuffers::NativeTable");
+
+#define FBB_FN_BUILD(T) Create##T
+    rpc_envelope e(nullptr);
+    FBB_FN_BUILD(type)(*e.mutable_builder(), &t);
+    return std::move(e);
+  }
+
 
   /// \brief copy the byte array to internal data structures.
   /// \args buf_to_copy - is a pointer to the byte array to send to remote
@@ -99,8 +105,6 @@ class rpc_envelope {
   /// over the write by the rpc_client
   void finish();
 
-  fbs::rpc::Header header{0, fbs::rpc::Flags::Flags_NONE, 0};
-
 
   void set_compressed_payload(temporary_buffer<char> buf);
 
@@ -108,19 +112,16 @@ class rpc_envelope {
     return std::move(compressed_buffer_);
   }
 
- private:
-  /// \brief shared initialization
-  void init(const uint8_t *buf_to_copy, size_t len);
+  fbs::rpc::Header header{0, fbs::rpc::Flags::Flags_NONE, 0};
 
  private:
-  std::unique_ptr<flatbuffers::FlatBufferBuilder> fbb_ =
-    std::make_unique<flatbuffers::FlatBufferBuilder>();
+  /// Sets `letter_.user_buf' to the contents of `src_copy' with size `len'
+  /// Also ensurfes that the letter type is `rpc_letter_type_fbb_builder`
+  ///
+  void init(const uint8_t *src_copy, size_t len);
 
-  temporary_buffer<char> compressed_buffer_;
-  uint32_t               meta_     = 0;
-  bool                   finished_ = false;
-
-  std::vector<flatbuffers::Offset<fbs::rpc::DynamicHeader>> headers_{};
-  flatbuffers::Offset<flatbuffers::Vector<unsigned char>>   user_buf_;
+ private:
+  rpc_letter letter_;
+  bool       finished = false;
 };
 }  // namespace smf
