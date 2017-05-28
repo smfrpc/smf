@@ -1,22 +1,28 @@
-// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+// Copyright (c) 2017 Alexander Gallego. All rights reserved.
 //
 #pragma once
 
 #include <unordered_map>
 
+#include <core/temporary_buffer.hh>
+
 #include "flatbuffers/rpc_generated.h"
+#include "platform/macros.h"
+#include "platform/log.h"
 
 namespace smf {
 
 // needed for the union
 enum rpc_letter_type : uint8_t {
-  rpc_letter_type_compressed,
-  rpc_letter_type_fbb_builder
+  rpc_letter_type_payload,
+  rpc_letter_type_binary
 };
 
 
 struct rpc_letter {
-  rpc_letter_type dtype = payload_type::payload_type_fbb_builder;
+  rpc_letter_type dtype = payload_type::payload_type_payload;
+
+  fbs::rpc::Header header = {0, fbs::rpc::Flags::Flags_NONE, 0};
 
 
   union {
@@ -40,6 +46,28 @@ struct rpc_letter {
 
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_letter);
 
+
+  void mutate_payload_to_binary() {
+    LOG_THROW_IF(dtype != payload_type::payload_type_binary,
+                 "Letter already a binary array. Dataloss");
+
+    // clean up the builder first
+    auto &builder = local_builder();
+    // Might want to keep a moving average of the memory usg
+    // so that we can actually reclaim memory. by re-setting it to a smaller
+    // buffer
+    //
+    builder.Clear();
+    CreatePayload(builder, &payload);
+
+    // setup the body before
+    temporary_buffer<char> tmp(builder.GetSize());
+    const char *p = reinterpret_cast<const char *>(builder.GetBufferPointer());
+    std::copy(p, p + builder.GetSize(), tmp.get_write());
+    dtype = payload_type::payload_type_binary;
+    body = std::move(tmp);
+  }
+
   // Does 2 copies.
   // First copy:  it converts it into a byte array in flatbuffers-aligned
   // format.
@@ -52,7 +80,11 @@ struct rpc_letter {
 #define FBB_FN_BUILD(__type) Create##__type
     rpc_letter let;
     // clean up the builder first
-    auto & builder = local_builder();
+    auto &builder = local_builder();
+    // Might want to keep a moving average of the memory usg
+    // so that we can actually reclaim memory. by re-setting it to a smaller
+    // buffer
+    //
     builder.Clear();
 
     // first copy into this local_builder
@@ -60,9 +92,8 @@ struct rpc_letter {
 
     // second copy - into user_buf
     let.payload.body.reserve(builder.GetSize());
-    const char *p =
-      reinterpret_cast<const char *>(builder.GetBufferPointer());
-    std::copy(p, p + local_uilder.GetSize(),
+    const char *p = reinterpret_cast<const char *>(builder.GetBufferPointer());
+    std::copy(p, p + builder.GetSize(),
               reinterpret_cast<char *>(let.payload.body[0]));
     let.user_buf = std::move(tmp);
     return std::move(let);
