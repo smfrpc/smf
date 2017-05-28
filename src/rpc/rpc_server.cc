@@ -123,8 +123,12 @@ future<> rpc_server::dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
                  return rpc_filter_apply(&out_filters_, std::move(e));
                })
                .then([this, conn](rpc_envelope &&e) {
+                 if (e.letter.dtype
+                     == rpc_letter_type::rpc_letter_type_payload) {
+                   e.letter.mutate_payload_to_binary();
+                 }
                  stats_->local().out_bytes +=
-                   e.payload_size() + rpc_envelope::kHeaderSize;
+                   e.letter.body.size() + rpc_envelope::kHeaderSize;
                  return smf::rpc_envelope::send(&conn->ostream, std::move(e));
                });
            })

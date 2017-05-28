@@ -25,12 +25,12 @@ struct test_put {
   }
 };
 
-struct init_put {
-  void operator()(flatbuffers::FlatBufferBuilder *             fbb,
-                  const boost::program_options::variables_map &cfg) {
-    fbb->Clear();
-    smf::random rand;
+struct put_data_generator {
+  smf::rpc_envelope operator()(
+    const boost::program_options::variables_map &cfg) {
     // anti pattern w/ seastar, but boost ... has no conversion to sstring
+    smf::random rand;
+
     std::string topic = cfg["topic"].as<std::string>();
     std::string key   = cfg["key"].as<std::string>();
     std::string value = cfg["value"].as<std::string>();
@@ -67,11 +67,9 @@ struct init_put {
 
       native_req.txs.push_back(std::move(frag));
     }
-    auto req = smf::chains::Createtx_put_request(*fbb, &native_req);
-
-    fbb->Finish(req);
-
-    LOG_INFO("Payload size is:{}", 12 /*rpc header*/ + fbb->GetSize());
+    return smf::rpc_envelope(
+      smf::rpc_letter::native_table_to_rpc_letter<smf::chains::tx_put_request>(
+        native_req));
   }
 };
 
@@ -128,9 +126,10 @@ int main(int argc, char **argv, char **env) {
         .then([&load] {
           LOG_INFO("Benchmarking server");
           return load.invoke_on_all([](load_gen_t &server) {
-            load_gen_t::init_cb_t   init   = init_put{};
-            load_gen_t::method_cb_t method = test_put{};
-            return server.benchmark(init, method).then([](auto test) {
+            load_gen_t::method_cb_t    method = test_put{};
+            load_gen_t::generator_cb_t gen    = put_data_generator{};
+
+            return server.benchmark(gen, method).then([](auto test) {
               LOG_INFO("Test ran in:{}ms", test.duration_in_millis());
               return make_ready_future<>();
             });
