@@ -16,4 +16,4 @@ namespace smf {
     }; // NOLINT
 
 // clang-format on
-} // namespace smf
+}  // namespace smf
