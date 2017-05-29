@@ -26,10 +26,14 @@ struct test_put {
 };
 
 struct put_data_generator {
+  smf::random &random() {
+    static thread_local smf::random rand;
+    return rand;
+  }
+
   smf::rpc_envelope operator()(
     const boost::program_options::variables_map &cfg) {
     // anti pattern w/ seastar, but boost ... has no conversion to sstring
-    smf::random rand;
 
     std::string topic = cfg["topic"].as<std::string>();
     std::string key   = cfg["key"].as<std::string>();
@@ -38,25 +42,24 @@ struct put_data_generator {
       static_cast<uint32_t>(std::numeric_limits<uint16_t>::max());
 
     if (key == "random") {
-      key = rand.next_str(rand.next() % max_rand_bytes).c_str();
+      key = random().next_str(random().next() % max_rand_bytes).c_str();
     }
     if (value == "random") {
-      value = rand.next_str(rand.next() % max_rand_bytes).c_str();
+      value = random().next_str(random().next() % max_rand_bytes).c_str();
     }
     if (topic == "random") {
-      topic = rand.next_str(rand.next() % max_rand_bytes).c_str();
+      topic = random().next_str(random().next() % max_rand_bytes).c_str();
     }
 
     smf::chains::tx_put_requestT native_req;
     native_req.topic     = topic;
-    native_req.partition = smf::xxhash_32(key.c_str(), key.size());
-    native_req.partition ^= smf::xxhash_32(topic.c_str(), topic.size());
+    native_req.partition = static_cast<uint32_t>(random().next());
     native_req.chain.push_back(uint32_t(2130706433) /*127.0.0.1*/);
 
     for (auto i = 0u, max = cfg["batch-size"].as<uint32_t>(); i < max; ++i) {
       auto frag         = std::make_unique<smf::chains::tx_fragmentT>();
       frag->op          = smf::chains::tx_operation::tx_operation_full;
-      frag->id          = static_cast<uint32_t>(rand.next());
+      frag->id          = static_cast<uint32_t>(random().next());
       frag->time_micros = smf::time_now_micros();
 
       frag->key.reserve(key.size());
