@@ -72,11 +72,12 @@ struct generator {
 
 
 class storage_service : public smf_gen::demo::SmfStorage {
-  future<smf::rpc_envelope> Get(
+  virtual future<smf::rpc_typed_envelope<smf_gen::demo::Response>> Get(
     smf::rpc_recv_typed_context<smf_gen::demo::Request> &&rec) final {
-    smf::rpc_envelope e;
-    e.set_status(200);
-    return make_ready_future<smf::rpc_envelope>(std::move(e));
+    smf::rpc_typed_envelope<smf_gen::demo::Response> data;
+    data.envelope.set_status(200);
+    return make_ready_future<smf::rpc_typed_envelope<smf_gen::demo::Response>>(
+      std::move(data));
   }
 };
 

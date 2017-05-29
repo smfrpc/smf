@@ -11,12 +11,13 @@
 
 namespace smf {
 namespace chains {
-future<smf::rpc_envelope> chain_replication_service::put(
+future<smf::rpc_typed_envelope<tx_put_reply>> chain_replication_service::put(
   smf::rpc_recv_typed_context<tx_put_request> &&record) {
   if (!record) {
-    smf::rpc_envelope e;
-    e.set_status(501);  // Not implemented
-    return make_ready_future<smf::rpc_envelope>(std::move(e));
+    smf::rpc_typed_envelope<tx_put_reply> data;
+    data.envelope.set_status(400);
+    return make_ready_future<smf::rpc_typed_envelope<tx_put_reply>>(
+      std::move(data));
   }
   auto core_to_handle = put_to_lcore(record.get());
   return smp::submit_to(
@@ -36,24 +37,27 @@ future<smf::rpc_envelope> chain_replication_service::put(
              return wal_->local().append(std::move(r));
            })
     .then([](uint64_t last_index) {
-      smf::rpc_envelope e;
-      e.set_status(200);
-      return make_ready_future<smf::rpc_envelope>(std::move(e));
+      smf::rpc_typed_envelope<tx_put_reply> data;
+      data.envelope.set_status(200);
+      return make_ready_future<smf::rpc_typed_envelope<tx_put_reply>>(
+        std::move(data));
     })
     .handle_exception([](std::exception_ptr eptr) {
       LOG_ERROR("Error saving smf::chains::sput()");
-      smf::rpc_envelope e;
-      e.set_status(500);
-      return make_ready_future<smf::rpc_envelope>(std::move(e));
+      smf::rpc_typed_envelope<tx_put_reply> data;
+      data.envelope.set_status(501);
+      return make_ready_future<smf::rpc_typed_envelope<tx_put_reply>>(
+        std::move(data));
     });
 }
 
 
-future<smf::rpc_envelope> chain_replication_service::get(
+future<smf::rpc_typed_envelope<tx_get_reply>> chain_replication_service::get(
   smf::rpc_recv_typed_context<tx_get_request> &&record) {
-  smf::rpc_envelope e;
-  e.set_status(501);  // Not implemented
-  return make_ready_future<smf::rpc_envelope>(std::move(e));
+  smf::rpc_typed_envelope<tx_get_reply> data;
+  data.envelope.set_status(501);
+  return make_ready_future<smf::rpc_typed_envelope<tx_get_reply>>(
+    std::move(data));
 }
 }  // end namespace chains
 }  // end namespace smf

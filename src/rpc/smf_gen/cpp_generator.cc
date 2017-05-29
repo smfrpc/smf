@@ -98,8 +98,9 @@ std::string get_header_includes(smf_file *file) {
     std::map<std::string, std::string> vars;
 
     static const char *headers_strs[] = {
-      "experimental/optional", "rpc/rpc_service.h", "rpc/rpc_client.h",
-      "rpc/rpc_recv_typed_context.h", "platform/log.h"};
+      "experimental/optional",    "rpc/rpc_service.h",
+      "rpc/rpc_client.h",         "rpc/rpc_recv_typed_context.h",
+      "rpc/rpc_typed_envelope.h", "platform/log.h"};
 
     std::vector<std::string> headers(headers_strs, array_end(headers_strs));
     print_includes(printer.get(), headers);
@@ -143,7 +144,11 @@ void print_header_service_index(smf_printer *      printer,
       "[this](smf::rpc_recv_context c) -> future<smf::rpc_envelope> {\n");
     printer->indent();
     printer->print(vars, "using t = smf::rpc_recv_typed_context<$InType$>;\n");
-    printer->print(vars, "return $MethodName$(t(std::move(c)));\n");
+    printer->print(vars,
+                   "return $MethodName$(t(std::move(c))).then([](auto te){\n");
+    printer->print("  return "
+                   "make_ready_future<smf::rpc_envelope>(te.serialize_data());"
+                   "\n});\n");
     printer->outdent();
     printer->outdent();
     printer->print("});\n");
@@ -162,18 +167,19 @@ void print_header_service_method(smf_printer *     printer,
   vars["MethodId"]   = method->method_id();
   vars["InType"]     = method->input_type_name();
   vars["OutType"]    = method->output_type_name();
-  printer->print("virtual future<smf::rpc_envelope>\n");
+  printer->print(vars, "virtual future<smf::rpc_typed_envelope<$OutType$>>\n");
   printer->print(
     vars, "$MethodName$(smf::rpc_recv_typed_context<$InType$> &&rec) {\n");
   printer->indent();
-  printer->print(vars, "// Output type: $OutType$\n");
-  printer->print("smf::rpc_envelope e;\n");
+  printer->print(vars, "smf::rpc_typed_envelope<$OutType$> data;\n");
   printer->print(
     "// Helpful for clients to set the status.\n"
-    "// Typically follows HTTP style. Not imposed by smf whatsoever.\n");
-  printer->print("e.set_status(501); // Not implemented\n");
-  printer->print(
-    "return make_ready_future<smf::rpc_envelope>(std::move(e));\n");
+    "// Typically follows HTTP style. Not imposed by smf whatsoever.\n"
+    "// i.e. 501 == Method not implemented\n");
+  printer->print("data.envelope.set_status(501);\n");
+  printer->print(vars, "return "
+                       "make_ready_future<smf::rpc_typed_envelope<$OutType$>>("
+                       "std::move(data));\n");
   printer->outdent();
   printer->print("}\n");
 }

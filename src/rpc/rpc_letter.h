@@ -7,7 +7,8 @@
 
 #include <core/sstring.hh>
 #include <core/temporary_buffer.hh>
-#include <flatbuffers/flatbuffers.h>
+
+#include "rpc/rpc_letter_concepts.h"
 
 #include "flatbuffers/rpc_generated.h"
 #include "platform/log.h"
@@ -58,14 +59,18 @@ struct rpc_letter {
   // format.
   // Second copy: Next it moves it into the payload
   //
-  template <
-    typename RootType,
-    typename = std::
-      enable_if_t<std::is_base_of<flatbuffers::NativeTable,
-                                  typename RootType::NativeTableType>::value>>
-  static rpc_letter native_table_to_rpc_letter(
-    const typename RootType::NativeTableType &t) {
+  template <typename RootType>
+  requires FlatBuffersNativeTable<RootType> static rpc_letter
+  native_table_to_rpc_letter(const typename RootType::NativeTableType &t) {
     auto let = rpc_letter{};
+    rpc_letter::serialize_type_into_letter<RootType>(t, let);
+    return std::move(let);
+  }
+
+  template <typename RootType>
+  requires FlatBuffersNativeTable<RootType> static void
+  serialize_type_into_letter(const typename RootType::NativeTableType &t,
+                             rpc_letter &                              let) {
     // clean up the builder first
     auto &builder = rpc_letter::local_builder();
     // Might want to keep a moving average of the memory usg
@@ -84,7 +89,6 @@ struct rpc_letter {
       let.payload->body.size());
     DLOG_THROW_IF(builder.GetSize() != let.payload->body.size(),
                   "Error coyping types into envelope");
-    return std::move(let);
   }
 
   static flatbuffers::FlatBufferBuilder &local_builder() {
