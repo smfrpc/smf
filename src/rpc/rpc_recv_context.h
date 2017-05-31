@@ -24,13 +24,14 @@ struct rpc_recv_context {
   /// size of the header, so we parse sizeof(Header). We with this information
   /// we parse the body of the request
   ///
-  static future<exp::optional<rpc_recv_context>> parse(
+  static seastar::future<exp::optional<rpc_recv_context>> parse(
     rpc_connection *conn, rpc_connection_limits *limits);
 
   /// \brief default ctor
   /// moves in a hdr and body payload after verification. usually passed
   // in via the parse() function above
-  rpc_recv_context(temporary_buffer<char> &&hdr, temporary_buffer<char> &&body);
+  rpc_recv_context(seastar::temporary_buffer<char> &&hdr,
+                   seastar::temporary_buffer<char> &&body);
   rpc_recv_context(rpc_recv_context &&o) noexcept;
   ~rpc_recv_context();
   /// \brief used by the server side to determine the actual RPC
@@ -40,8 +41,8 @@ struct rpc_recv_context {
   /// follows the HTTP status codes
   uint32_t status() const;
 
-  temporary_buffer<char> header_buf;
-  temporary_buffer<char> body_buf;
+  seastar::temporary_buffer<char> header_buf;
+  seastar::temporary_buffer<char> body_buf;
   /// Notice that this is safe. flatbuffers uses this internally via
   /// `PushBytes()` which is nothing more than
   /// \code

@@ -15,8 +15,8 @@
 namespace smf {
 class wal_reader;
 struct wal_reader_visitor : wal_file_walker {
-  wal_reader_visitor(wal_reader *r, file dir);
-  future<> visit(directory_entry wal_file_entry) final;
+  wal_reader_visitor(wal_reader *r, seastar::file dir);
+  seastar::future<> visit(seastar::directory_entry wal_file_entry) final;
   wal_reader *reader;
 };
 
@@ -44,19 +44,19 @@ class wal_reader {
                 "bad key for intrusive map");
 
  public:
-  wal_reader(sstring _dir, reader_stats *s);
+  wal_reader(seastar::sstring _dir, reader_stats *s);
   wal_reader(wal_reader &&o) noexcept;
   ~wal_reader();
-  future<> open();
-  future<> close();
+  seastar::future<> open();
+  seastar::future<> close();
   /// brief - returns the next record in the log
-  future<wal_read_reply::maybe> get(wal_read_request req);
+  seastar::future<wal_read_reply::maybe> get(wal_read_request req);
 
-  const sstring directory;
+  const seastar::sstring directory;
 
  private:
   friend wal_reader_visitor;
-  future<> monitor_files(directory_entry wal_file_entry);
+  seastar::future<> monitor_files(seastar::directory_entry wal_file_entry);
 
   reader_stats *                      rstats_;
   std::list<reader_bucket>            allocated_;

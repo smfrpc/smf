@@ -15,11 +15,11 @@
 namespace smf {
 // TODO(agallego) - use the stats internally now that you have them
 struct wal_writer_node_opts {
-  writer_stats * wstats;
-  sstring        prefix;
-  uint64_t       epoch                = 0;
-  const uint64_t min_compression_size = 512;
-  const uint64_t file_size            = wal_file_size_aligned();
+  writer_stats *   wstats;
+  seastar::sstring prefix;
+  uint64_t         epoch                = 0;
+  const uint64_t   min_compression_size = 512;
+  const uint64_t   file_size            = wal_file_size_aligned();
 };
 
 /// \brief - given a prefix and an epoch (monotinically increasing counter)
@@ -45,14 +45,14 @@ class wal_writer_node {
   ///
   /// This is a recursive function
   ///
-  future<uint64_t> append(wal_write_request req);
+  seastar::future<uint64_t> append(wal_write_request req);
   /// \brief flushes the file before closing
-  future<> close();
+  seastar::future<> close();
   /// \brief opens the file w/ open_flags::rw | open_flags::create |
   ///                          open_flags::truncate | open_flags::exclusive
   /// the file should fail if it exists. It should not exist on disk, as
   /// we'll truncate them
-  future<> open();
+  seastar::future<> open();
 
   ~wal_writer_node();
 
@@ -62,17 +62,19 @@ class wal_writer_node {
   }
 
  private:
-  future<> rotate_fstream();
+  seastar::future<> rotate_fstream();
   /// \brief 0-copy append to buffer
-  future<> do_append(wal_write_request);
-  future<> do_append_with_flags(wal_write_request, fbs::wal::wal_entry_flags);
-  future<> do_append_with_header(fbs::wal::wal_header, wal_write_request);
+  seastar::future<> do_append(wal_write_request);
+  seastar::future<> do_append_with_flags(wal_write_request,
+                                         fbs::wal::wal_entry_flags);
+  seastar::future<> do_append_with_header(fbs::wal::wal_header,
+                                          wal_write_request);
 
  private:
   wal_writer_node_opts                   opts_;
   uint64_t                               current_size_ = 0;
   std::unique_ptr<wal_writer_file_lease> lease_        = nullptr;
-  semaphore                              serialize_writes_{1};
+  seastar::semaphore                     serialize_writes_{1};
 };
 
 }  // namespace smf

@@ -15,8 +15,8 @@ ostream &operator<<(ostream &o, const smf::fbs::rpc::Header &h) {
 
 namespace smf {
 namespace exp = std::experimental;
-rpc_recv_context::rpc_recv_context(temporary_buffer<char> &&hdr,
-                                   temporary_buffer<char> &&body)
+rpc_recv_context::rpc_recv_context(seastar::temporary_buffer<char> &&hdr,
+                                   seastar::temporary_buffer<char> &&body)
   : header_buf(std::move(hdr)), body_buf(std::move(body)) {
   assert(header_buf.size() == sizeof(fbs::rpc::Header));
   header = reinterpret_cast<fbs::rpc::Header *>(header_buf.get_write());
@@ -38,9 +38,8 @@ uint32_t rpc_recv_context::request_id() const { return payload->meta(); }
 uint32_t rpc_recv_context::status() const { return payload->meta(); }
 
 
-future<temporary_buffer<char>> read_payload(rpc_connection *       conn,
-                                            rpc_connection_limits *limits,
-                                            size_t payload_size) {
+seastar::future<seastar::temporary_buffer<char>> read_payload(
+  rpc_connection *conn, rpc_connection_limits *limits, size_t payload_size) {
   if (limits == nullptr) {
     return conn->istream.read_exactly(payload_size);
   } else {
@@ -51,20 +50,20 @@ future<temporary_buffer<char>> read_payload(rpc_connection *       conn,
   }
 }
 
-future<exp::optional<rpc_recv_context>> process_payload(
-  rpc_connection *       conn,
-  rpc_connection_limits *limits,
-  temporary_buffer<char> header) {
+seastar::future<exp::optional<rpc_recv_context>> process_payload(
+  rpc_connection *                conn,
+  rpc_connection_limits *         limits,
+  seastar::temporary_buffer<char> header) {
   using ret_type = exp::optional<rpc_recv_context>;
   auto hdr       = reinterpret_cast<const fbs::rpc::Header *>(header.get());
   return read_payload(conn, limits, hdr->size())
     .then([header_buf =
-             std::move(header)](temporary_buffer<char> body) mutable {
+             std::move(header)](seastar::temporary_buffer<char> body) mutable {
       auto hdr = reinterpret_cast<const fbs::rpc::Header *>(header_buf.get());
       if (hdr->size() != body.size()) {
         LOG_ERROR("Read incorrect number of bytes `{}`, expected header: `{}`",
                   body.size(), *hdr);
-        return make_ready_future<ret_type>();
+        return seastar::make_ready_future<ret_type>();
       }
       if ((hdr->flags() & fbs::rpc::Flags::Flags_CHECKSUM)
           == fbs::rpc::Flags::Flags_CHECKSUM) {
@@ -72,16 +71,16 @@ future<exp::optional<rpc_recv_context>> process_payload(
         if (xx != hdr->checksum()) {
           LOG_ERROR("Payload checksum `{}` does not match header checksum `{}`",
                     xx, hdr->checksum());
-          return make_ready_future<ret_type>();
+          return seastar::make_ready_future<ret_type>();
         }
       }
       rpc_recv_context ctx(std::move(header_buf), std::move(body));
-      return make_ready_future<ret_type>(
+      return seastar::make_ready_future<ret_type>(
         exp::optional<rpc_recv_context>(std::move(ctx)));
     });
 }
 
-future<exp::optional<rpc_recv_context>> rpc_recv_context::parse(
+seastar::future<exp::optional<rpc_recv_context>> rpc_recv_context::parse(
   rpc_connection *conn, rpc_connection_limits *limits) {
   using ret_type = exp::optional<rpc_recv_context>;
 
@@ -92,18 +91,18 @@ future<exp::optional<rpc_recv_context>> rpc_recv_context::parse(
   assert(conn->istream_active_parser == 0);
   conn->istream_active_parser++;
   return conn->istream.read_exactly(kRPCHeaderSize)
-    .then([conn, limits](temporary_buffer<char> header) {
+    .then([conn, limits](seastar::temporary_buffer<char> header) {
       if (kRPCHeaderSize != header.size()) {
         LOG_ERROR_IF(conn->is_valid(),
                      "Invalid header size `{}`, expected `{}`, skipping req",
                      header.size(), kRPCHeaderSize);
-        return make_ready_future<ret_type>();
+        return seastar::make_ready_future<ret_type>();
       }
       auto hdr = reinterpret_cast<const fbs::rpc::Header *>(header.get());
 
       if (hdr->size() == 0) {
         LOG_ERROR("Emty body to parse. skipping");
-        return make_ready_future<ret_type>();
+        return seastar::make_ready_future<ret_type>();
       }
       return process_payload(conn, limits, std::move(header));
     })

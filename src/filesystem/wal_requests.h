@@ -6,12 +6,13 @@
 #include <utility>
 // third party
 #include <core/fair_queue.hh>
+#include <core/file.hh>
 // smf
 #include "flatbuffers/wal_generated.h"
 #include "platform/log.h"
 #include "platform/macros.h"
 
-class io_priority_class;
+// class seastar::io_priority_class;
 
 namespace smf {
 enum class wal_type : uint8_t {
@@ -23,16 +24,16 @@ enum wal_read_request_flags : uint32_t {
 };
 
 struct wal_read_request {
-  wal_read_request(int64_t                    _offset,
-                   int64_t                    _size,
-                   uint32_t                   _flags,
-                   const ::io_priority_class &priority)
+  wal_read_request(int64_t                             _offset,
+                   int64_t                             _size,
+                   uint32_t                            _flags,
+                   const ::seastar::io_priority_class &priority)
     : offset(_offset), size(_size), flags(_flags), pc(priority) {}
 
-  int64_t                    offset;
-  int64_t                    size;
-  uint32_t                   flags;
-  const ::io_priority_class &pc;
+  int64_t                             offset;
+  int64_t                             size;
+  uint32_t                            flags;
+  const ::seastar::io_priority_class &pc;
 };
 
 
@@ -40,19 +41,20 @@ struct wal_read_reply {
   using maybe = std::experimental::optional<wal_read_reply>;
   wal_read_reply() {}
   struct fragment {
-    fragment(fbs::wal::wal_header h, temporary_buffer<char> &&d)
+    fragment(fbs::wal::wal_header h, seastar::temporary_buffer<char> &&d)
       : hdr(std::move(h)), data(std::move(d)) {
       hdr.mutate_size(data.size());
     }
-    explicit fragment(temporary_buffer<char> &&d) : data(std::move(d)) {
+    explicit fragment(seastar::temporary_buffer<char> &&d)
+      : data(std::move(d)) {
       hdr.mutate_size(data.size());
       hdr.mutate_flags(fbs::wal::wal_entry_flags::wal_entry_flags_full_frament);
     }
 
     fragment(fragment &&f) noexcept : hdr(f.hdr), data(std::move(f.data)) {}
 
-    fbs::wal::wal_header   hdr;
-    temporary_buffer<char> data;
+    fbs::wal::wal_header            hdr;
+    seastar::temporary_buffer<char> data;
     SMF_DISALLOW_COPY_AND_ASSIGN(fragment);
   };
 
@@ -89,9 +91,9 @@ enum wal_write_request_flags : uint32_t {
 };
 
 struct wal_write_request {
-  wal_write_request(uint32_t                   _flags,
-                    temporary_buffer<char> &&  _data,
-                    const ::io_priority_class &_pc)
+  wal_write_request(uint32_t                            _flags,
+                    seastar::temporary_buffer<char> &&  _data,
+                    const ::seastar::io_priority_class &_pc)
     : flags(_flags), data(std::move(_data)), pc(_pc) {}
 
   wal_write_request(wal_write_request &&w) noexcept
@@ -103,10 +105,10 @@ struct wal_write_request {
   }
 
 
-  uint32_t               flags;
-  temporary_buffer<char> data;
+  uint32_t                        flags;
+  seastar::temporary_buffer<char> data;
 
-  const ::io_priority_class &pc;
+  const ::seastar::io_priority_class &pc;
   SMF_DISALLOW_COPY_AND_ASSIGN(wal_write_request);
 };
 }  // namespace smf

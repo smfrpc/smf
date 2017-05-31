@@ -15,7 +15,7 @@ uint32_t put_to_lcore(const tx_put_request *p) {
 
   const uint64_t tp_hash = topic_hash ^ partition;
 
-  return jump_consistent_hash(tp_hash, smp::count);
+  return jump_consistent_hash(tp_hash, seastar::smp::count);
 }
 
 }  // end namespace chains

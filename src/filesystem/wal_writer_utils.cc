@@ -21,8 +21,8 @@ uint64_t wal_file_size_aligned() {
   return kDefaultFileSize - extra_bytes;
 }
 
-sstring wal_file_name(const sstring &prefix, uint64_t epoch) {
-  return prefix + ":" + to_sstring(epoch) + ".wal";
+seastar::sstring wal_file_name(const seastar::sstring &prefix, uint64_t epoch) {
+  return prefix + ":" + seastar::to_sstring(epoch) + ".wal";
 }
 
 }  // namespace smf

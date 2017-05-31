@@ -15,7 +15,8 @@ struct rpc_service_method_handle {
     BIDI_STREAMING
   };
 
-  using fn_t = std::function<future<rpc_envelope>(rpc_recv_context &&recv)>;
+  using fn_t =
+    std::function<seastar::future<rpc_envelope>(rpc_recv_context &&recv)>;
   rpc_service_method_handle(const char *name, const uint32_t &id, fn_t f)
     : method_name(name), method_id(id), apply(f) {}
 

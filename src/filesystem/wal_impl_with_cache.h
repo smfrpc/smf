@@ -13,13 +13,13 @@ class wal_impl_with_cache : public wal {
  public:
   explicit wal_impl_with_cache(wal_opts _opts);
 
-  future<uint64_t> append(wal_write_request req) final;
-  future<> invalidate(uint64_t epoch) final;
+  seastar::future<uint64_t> append(wal_write_request req) final;
+  seastar::future<> invalidate(uint64_t epoch) final;
 
-  future<> open() final;
-  future<> close() final;
+  seastar::future<> open() final;
+  seastar::future<> close() final;
 
-  future<wal_read_reply::maybe> get(wal_read_request req) final;
+  seastar::future<wal_read_reply::maybe> get(wal_read_request req) final;
 
  private:
   std::unique_ptr<wal_writer>    writer_ = nullptr;

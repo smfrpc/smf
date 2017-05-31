@@ -9,10 +9,10 @@
 namespace smf {
 namespace checks {
 
-future<> disk::check(sstring path, bool ignore) {
+seastar::future<> disk::check(seastar::sstring path, bool ignore) {
   return check_direct_io_support(path).then([path, ignore] {
     return file_system_at(path).then([path, ignore](auto fs) {
-      if (fs != fs_type::xfs) {
+      if (fs != seastar::fs_type::xfs) {
         LOG_THROW_IF(!ignore,
                      "filesystem != fs_type::xfs. Path: `{}' is unsuported.",
                      path);

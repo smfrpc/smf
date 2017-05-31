@@ -10,21 +10,21 @@
 namespace smf {
 class rpc_server_stats_printer {
  public:
-  using duration_t = timer<>::duration;
-  rpc_server_stats_printer(distributed<rpc_server_stats> *stats,
+  using duration_t = seastar::timer<>::duration;
+  rpc_server_stats_printer(seastar::distributed<rpc_server_stats> *stats,
                            duration_t d = std::chrono::minutes(2));
 
-  void     start();
-  future<> stop();
+  void              start();
+  seastar::future<> stop();
 
  private:
   /// \brief calls map_reduce on distributed<stats>
   ///
-  future<rpc_server_stats> aggregate_stats();
+  seastar::future<rpc_server_stats> aggregate_stats();
 
  private:
-  timer<>                        timer_;
-  distributed<rpc_server_stats> *stats_;
-  duration_t                     period_;
+  seastar::timer<>                        timer_;
+  seastar::distributed<rpc_server_stats> *stats_;
+  duration_t                              period_;
 };
 }  // namespace smf

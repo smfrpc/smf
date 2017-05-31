@@ -140,15 +140,16 @@ void print_header_service_index(smf_printer *      printer,
     printer->print("handles.emplace_back(\n");
     printer->indent();
     printer->print(vars, "\"$MethodName$\", $MethodId$,\n");
-    printer->print(
-      "[this](smf::rpc_recv_context c) -> future<smf::rpc_envelope> {\n");
+    printer->print("[this](smf::rpc_recv_context c) -> "
+                   "seastar::future<smf::rpc_envelope> {\n");
     printer->indent();
     printer->print(vars, "using t = smf::rpc_recv_typed_context<$InType$>;\n");
     printer->print(vars,
                    "return $MethodName$(t(std::move(c))).then([](auto te){\n");
-    printer->print("  return "
-                   "make_ready_future<smf::rpc_envelope>(te.serialize_data());"
-                   "\n});\n");
+    printer->print(
+      "  return "
+      "seastar::make_ready_future<smf::rpc_envelope>(te.serialize_data());"
+      "\n});\n");
     printer->outdent();
     printer->outdent();
     printer->print("});\n");
@@ -167,7 +168,8 @@ void print_header_service_method(smf_printer *     printer,
   vars["MethodId"]   = method->method_id();
   vars["InType"]     = method->input_type_name();
   vars["OutType"]    = method->output_type_name();
-  printer->print(vars, "virtual future<smf::rpc_typed_envelope<$OutType$>>\n");
+  printer->print(
+    vars, "virtual seastar::future<smf::rpc_typed_envelope<$OutType$>>\n");
   printer->print(
     vars, "$MethodName$(smf::rpc_recv_typed_context<$InType$> &&rec) {\n");
   printer->indent();
@@ -177,9 +179,10 @@ void print_header_service_method(smf_printer *     printer,
     "// Typically follows HTTP style. Not imposed by smf whatsoever.\n"
     "// i.e. 501 == Method not implemented\n");
   printer->print("data.envelope.set_status(501);\n");
-  printer->print(vars, "return "
-                       "make_ready_future<smf::rpc_typed_envelope<$OutType$>>("
-                       "std::move(data));\n");
+  printer->print(
+    vars, "return "
+          "seastar::make_ready_future<smf::rpc_typed_envelope<$OutType$>>("
+          "std::move(data));\n");
   printer->outdent();
   printer->print("}\n");
 }
@@ -254,7 +257,8 @@ void print_header_client_method(smf_printer *     printer,
                  "/// ServiceID: $ServiceID$ == crc32(\"$ServiceName$\")\n");
   printer->print(vars,
                  "/// MethodID:  $MethodID$ == crc32(\"$MethodName$\")\n");
-  printer->print(vars, "future<smf::rpc_recv_typed_context<$OutType$>>\n");
+  printer->print(vars,
+                 "seastar::future<smf::rpc_recv_typed_context<$OutType$>>\n");
   printer->print(vars, "$MethodName$(smf::rpc_envelope e) {\n");
   printer->indent();
   printer->print(vars, "e.set_request_id($ServiceID$, $MethodID$);\n");
@@ -274,7 +278,8 @@ void print_safe_header_client_method(smf_printer *     printer,
   vars["InType"]           = method->input_type_name();
   vars["OutType"]          = method->output_type_name();
 
-  printer->print(vars, "future<smf::rpc_recv_typed_context<$OutType$>>\n");
+  printer->print(vars,
+                 "seastar::future<smf::rpc_recv_typed_context<$OutType$>>\n");
   printer->print(vars,
                  "$SafeMethodPrefix$$MethodName$(smf::rpc_envelope e) {\n");
   printer->indent();
@@ -304,7 +309,7 @@ void print_header_client(smf_printer *printer, const smf_service *service) {
   printer->indent();
 
   // print ctor
-  printer->print(vars, "$ClientName$(ipv4_addr "
+  printer->print(vars, "$ClientName$(seastar::ipv4_addr "
                        "server_addr)\n:smf::rpc_client(std::move(server_addr))"
                        " {}\n");
 

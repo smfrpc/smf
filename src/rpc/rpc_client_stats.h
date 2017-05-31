@@ -18,8 +18,8 @@ class rpc_client_stats {
   // i.e.:
   // obj_.map_reduce(adder<type>, &outer::rpc_client_stats);
   void operator+=(const rpc_client_stats &o);
-  rpc_client_stats self();
-  future<>         stop();
+  rpc_client_stats  self();
+  seastar::future<> stop();
 };
 
 std::ostream &operator<<(std::ostream &o, const rpc_client_stats &s);

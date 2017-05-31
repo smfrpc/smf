@@ -44,7 +44,7 @@ void rpc_letter::mutate_payload_to_binary() {
   builder.Finish(smf::fbs::rpc::Payload::Pack(builder, payload.get()));
 
   // setup the body before
-  temporary_buffer<char> tmp(builder.GetSize());
+  seastar::temporary_buffer<char> tmp(builder.GetSize());
   const char *p = reinterpret_cast<const char *>(builder.GetBufferPointer());
   std::copy(p, p + builder.GetSize(), tmp.get_write());
   header  = header_for_payload(tmp.get(), tmp.size());

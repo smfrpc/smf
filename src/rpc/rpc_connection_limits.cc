@@ -19,7 +19,8 @@ size_t rpc_connection_limits::estimate_request_size(size_t serialized_size) {
   return (basic_request_size + serialized_size) * bloat_factor;
 }
 
-future<> rpc_connection_limits::wait_for_resources(size_t memory_consumed) {
+seastar::future<> rpc_connection_limits::wait_for_resources(
+  size_t memory_consumed) {
   LOG_THROW_IF(
     memory_consumed > max_memory,
     "memory to serve request `{}`, exceeds max available memory `{}`",

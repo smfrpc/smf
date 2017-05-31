@@ -19,7 +19,9 @@ rpc_server_stats rpc_server_stats::self() {
   return *this;  // make a copy for map_reduce framework
 }
 
-future<> rpc_server_stats::stop() { return make_ready_future<>(); }
+seastar::future<> rpc_server_stats::stop() {
+  return seastar::make_ready_future<>();
+}
 
 
 std::ostream &operator<<(std::ostream &o, const rpc_server_stats &s) {

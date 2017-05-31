@@ -15,8 +15,9 @@
 
 namespace smf {
 
-future<> rpc_envelope::send(output_stream<char> *out, rpc_envelope e) {
-  temporary_buffer<char> header_buf(kHeaderSize);
+seastar::future<> rpc_envelope::send(seastar::output_stream<char> *out,
+                                     rpc_envelope                  e) {
+  seastar::temporary_buffer<char> header_buf(kHeaderSize);
   DLOG_THROW_IF(e.letter.header.size() == 0, "Invalid computed header");
   // use 0 copy iface in seastar
   // prepare the header locally
@@ -90,7 +91,7 @@ void rpc_envelope::set_status(const uint32_t &status) {
   letter.payload->meta = status;
 }
 
-void rpc_envelope::set_compressed_payload(temporary_buffer<char> buf) {
+void rpc_envelope::set_compressed_payload(seastar::temporary_buffer<char> buf) {
   letter.dtype  = rpc_letter_type::rpc_letter_type_binary;
   letter.body   = std::move(buf);
   letter.header = header_for_payload(letter.body.get(), letter.body.size(),

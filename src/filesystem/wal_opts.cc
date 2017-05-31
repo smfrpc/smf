@@ -91,10 +91,10 @@ std::ostream &operator<<(std::ostream &o, const cache_stats &s) {
   return o;
 }
 
-static sstring canonical_dir(const sstring &directory) {
+static seastar::sstring canonical_dir(const seastar::sstring &directory) {
   return boost::filesystem::canonical(directory.c_str()).string();
 }
-wal_opts::wal_opts(sstring log_directory) : directory(log_directory) {}
+wal_opts::wal_opts(seastar::sstring log_directory) : directory(log_directory) {}
 wal_opts::wal_opts(wal_opts &&o) noexcept
   : directory(std::move(o.directory))
   , cache_size(o.cache_size)

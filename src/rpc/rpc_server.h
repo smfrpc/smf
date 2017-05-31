@@ -22,17 +22,17 @@ enum rpc_server_flags : uint32_t { rpc_server_flags_none = 0 };
 
 class rpc_server {
  public:
-  rpc_server(distributed<rpc_server_stats> *stats,
-             uint16_t                       port,
-             uint32_t                       flags);
+  rpc_server(seastar::distributed<rpc_server_stats> *stats,
+             uint16_t                                port,
+             uint32_t                                flags);
   ~rpc_server();
 
-  void     start();
-  future<> stop();
+  void              start();
+  seastar::future<> stop();
 
-  future<smf::histogram> copy_histogram() {
+  seastar::future<smf::histogram> copy_histogram() {
     smf::histogram h(hist_->get());
-    return make_ready_future<smf::histogram>(std::move(h));
+    return seastar::make_ready_future<smf::histogram>(std::move(h));
   }
 
   template <typename T, typename... Args>
@@ -56,19 +56,22 @@ class rpc_server {
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_server);
 
  private:
-  future<> handle_client_connection(lw_shared_ptr<rpc_server_connection> conn);
-  future<> dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
-                        rpc_recv_context &&                  ctx);
+  seastar::future<> handle_client_connection(
+    seastar::lw_shared_ptr<rpc_server_connection> conn);
+  seastar::future<> dispatch_rpc(
+    seastar::lw_shared_ptr<rpc_server_connection> conn, rpc_recv_context &&ctx);
 
  private:
-  lw_shared_ptr<server_socket>   listener_;
-  distributed<rpc_server_stats> *stats_;
-  const uint16_t                 port_;
-  rpc_handle_router              routes_;
+  seastar::lw_shared_ptr<seastar::server_socket> listener_;
+  seastar::distributed<rpc_server_stats> *       stats_;
+  const uint16_t                                 port_;
+  rpc_handle_router                              routes_;
 
-  using in_filter_t = std::function<future<rpc_recv_context>(rpc_recv_context)>;
+  using in_filter_t =
+    std::function<seastar::future<rpc_recv_context>(rpc_recv_context)>;
   std::vector<in_filter_t> in_filters_;
-  using out_filter_t = std::function<future<rpc_envelope>(rpc_envelope)>;
+  using out_filter_t =
+    std::function<seastar::future<rpc_envelope>(rpc_envelope)>;
   std::vector<out_filter_t> out_filters_;
 
   std::unique_ptr<histogram> hist_ = std::make_unique<histogram>();

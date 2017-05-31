@@ -17,7 +17,7 @@ void smfb_command_line_options::validate(
 }
 
 // Note: boost has to use std::string as it has no built in parser for
-// sstring
+// seastar::sstring
 void smfb_command_line_options::add(
   boost::program_options::options_description_easy_init o) {
   namespace po = boost::program_options;

@@ -11,8 +11,10 @@
 
 namespace smf {
 struct histogram_seastar_utils {
-  static future<temporary_buffer<char>> print_histogram(histogram h);
-  static future<> write_histogram(sstring filename, histogram h);
+  static seastar::future<seastar::temporary_buffer<char>> print_histogram(
+    histogram h);
+  static seastar::future<> write_histogram(seastar::sstring filename,
+                                           histogram        h);
 };
 
 }  // namespace smf

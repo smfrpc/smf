@@ -14,23 +14,25 @@
 namespace smf {
 class wal_reader_node {
  public:
-  wal_reader_node(uint64_t epoch, sstring filename, reader_stats *stats);
+  wal_reader_node(uint64_t         epoch,
+                  seastar::sstring filename,
+                  reader_stats *   stats);
   ~wal_reader_node();
 
-  const int64_t starting_epoch;
-  const sstring filename;
+  const int64_t          starting_epoch;
+  const seastar::sstring filename;
 
   /// \brief flushes the file before closing
-  future<> close();
-  future<> open();
+  seastar::future<> close();
+  seastar::future<> open();
 
-  future<wal_read_reply::maybe> get(wal_read_request r);
+  seastar::future<wal_read_reply::maybe> get(wal_read_request r);
 
   inline int64_t file_size() const { return file_size_; }
   inline int64_t ending_epoch() const { return starting_epoch + file_size_; }
 
  private:
-  future<> open_node();
+  seastar::future<> open_node();
 
  private:
   reader_stats *                       rstats_;

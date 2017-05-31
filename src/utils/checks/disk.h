@@ -8,7 +8,7 @@
 namespace smf {
 namespace checks {
 struct disk {
-  static future<> check(sstring path, bool ignore = false);
+  static seastar::future<> check(seastar::sstring path, bool ignore = false);
 };
 }  // namespace checks
 }  // namespace smf

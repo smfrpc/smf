@@ -69,12 +69,12 @@ class SmfStorage: public smf::rpc_service {
     std::vector<h> handles;
     handles.emplace_back(
       "Get", 3312871568,
-      [this](smf::rpc_recv_context c) -> future<smf::rpc_envelope> {
+      [this](smf::rpc_recv_context c) -> seastar::future<smf::rpc_envelope> {
         return Get(std::move(c));
     });
     return handles;
   }
-  virtual future<smf::rpc_envelope>
+  virtual seastar::future<smf::rpc_envelope>
   Get(smf::rpc_recv_context rec) {
     /*Input type: Request*/
     /*Output type: Response*/
@@ -82,7 +82,7 @@ class SmfStorage: public smf::rpc_service {
     // Helpful for clients to set the status.
     // Typically follows HTTP style. Not imposed by smf whatsoever.
     e.set_status(200);
-    return make_ready_future<smf::rpc_envelope>(std::move(e));
+    return seastar::make_ready_future<smf::rpc_envelope>(std::move(e));
   }
 }; // end of service: SmfStorage
 
@@ -91,7 +91,7 @@ class SmfStorageClient: public smf::rpc_client {
   SmfStorageClient(ipv4_addr server_addr)
   :smf::rpc_client(std::move(server_addr)) {}
 
-  future<smf::rpc_recv_ctx_t<Response>>
+  seastar::future<smf::rpc_recv_ctx_t<Response>>
   GetSend(smf::rpc_envelope req) {
     // RequestID: 1969906889 ^ 3312871568
     // ServiceID: 1969906889 == crc32(ServiceName)

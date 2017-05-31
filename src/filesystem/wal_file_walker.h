@@ -10,27 +10,28 @@
 
 namespace smf {
 struct wal_file_walker {
-  explicit wal_file_walker(file d)
+  explicit wal_file_walker(seastar::file d)
     : directory(std::move(d))
     , listing(directory.list_directory(
-        [this](directory_entry de) { return dir_visit(de); })) {}
+        [this](seastar::directory_entry de) { return dir_visit(de); })) {}
 
   virtual ~wal_file_walker() {}
 
-  virtual future<> visit(directory_entry wal_file_entry) = 0;
+  virtual seastar::future<> visit(seastar::directory_entry wal_file_entry) = 0;
 
-  virtual future<> dir_visit(directory_entry de) final {
-    if (de.type /*optional type*/ && de.type == directory_entry_type::regular
+  virtual seastar::future<> dir_visit(seastar::directory_entry de) final {
+    if (de.type /*optional type*/
+        && de.type == seastar::directory_entry_type::regular
         && wal_name_extractor_utils::is_wal_file_name(de.name)) {
       return visit(std::move(de));
     }
-    return make_ready_future<>();
+    return seastar::make_ready_future<>();
   }
 
-  future<> done() { return listing.done(); }
+  seastar::future<> done() { return listing.done(); }
 
-  file                          directory;
-  subscription<directory_entry> listing;
+  seastar::file                                   directory;
+  seastar::subscription<seastar::directory_entry> listing;
 };
 
 }  // namespace smf

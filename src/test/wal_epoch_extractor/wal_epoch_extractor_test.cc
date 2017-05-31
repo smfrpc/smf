@@ -46,10 +46,10 @@ TEST(wal_name_extractor_utils_core_extractor, with_locked_file) {
 TEST(wal_name_extractor_utils_prefix_cleaner, with_locked_file) {
   ASSERT_EQ(
     smf::wal_name_extractor_utils::name_without_prefix("locked:1:0:1234.wal"),
-    sstring("1:0:1234.wal"));
+    seastar::sstring("1:0:1234.wal"));
   ASSERT_EQ(
     smf::wal_name_extractor_utils::name_without_prefix("locked:1:9999:0.wal"),
-    sstring("1:9999:0.wal"));
+    seastar::sstring("1:9999:0.wal"));
 }
 TEST(wal_name_extractor_utils_is_wal_name, basic) {
   ASSERT_TRUE(

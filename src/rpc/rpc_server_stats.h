@@ -22,8 +22,8 @@ class rpc_server_stats {
   // i.e.:
   // obj_.map_reduce(adder<type>, &outer::rpc_server_stats);
   void operator+=(const rpc_server_stats &o);
-  rpc_server_stats self();
-  future<>         stop();
+  rpc_server_stats  self();
+  seastar::future<> stop();
 };
 std::ostream &operator<<(std::ostream &o, const rpc_server_stats &s);
 }  // namespace smf

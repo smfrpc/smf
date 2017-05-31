@@ -18,7 +18,7 @@ class rpc_handle_router {
   rpc_handle_router() {}
   ~rpc_handle_router() {}
   void register_service(std::unique_ptr<rpc_service> s);
-  future<> stop();
+  seastar::future<> stop();
   /// \brief, MUST BE FAST - blocks the thread
   /// there will be a header specifying the requested resource
   /// use LookupByKey - as headers are guaranteed to be sorted
@@ -34,7 +34,7 @@ class rpc_handle_router {
     const flatbuffers::Vector<flatbuffers::Offset<fbs::rpc::DynamicHeader>>
       *hdrs);
   /// \brief actually makes the router dispatch
-  virtual future<rpc_envelope> handle(rpc_recv_context &&recv);
+  virtual seastar::future<rpc_envelope> handle(rpc_recv_context &&recv);
 
   /// \brief multiple rpc_services can register w/ this  handle router
   void register_rpc_service(rpc_service *s);

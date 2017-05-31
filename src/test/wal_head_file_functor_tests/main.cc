@@ -8,9 +8,10 @@
 
 TEST(wal_head_file_functor_min, comparator) {
   smf::wal_head_file_min_comparator c;
-  const sstring                     kMin("1:0:0.wal");
+  const seastar::sstring            kMin("1:0:0.wal");
   for (uint32_t i = 1; i < 10; ++i) {
-    ASSERT_FALSE(c(kMin, sstring("1:0:0:") + to_sstring(i * i) + ".wal"));
+    ASSERT_FALSE(c(
+      kMin, seastar::sstring("1:0:0:") + seastar::to_sstring(i * i) + ".wal"));
   }
 }
 TEST(wal_head_file_functor_min, nil) {
@@ -19,9 +20,10 @@ TEST(wal_head_file_functor_min, nil) {
 }
 TEST(wal_head_file_functor_max, comparator) {
   smf::wal_head_file_max_comparator c;
-  const sstring                     kMin("1:0:0.wal");
+  const seastar::sstring            kMin("1:0:0.wal");
   for (uint32_t i = 1; i < 10; ++i) {
-    ASSERT_TRUE(c(kMin, sstring("1:0:") + to_sstring(i * i) + ".wal"));
+    ASSERT_TRUE(
+      c(kMin, seastar::sstring("1:0:") + seastar::to_sstring(i * i) + ".wal"));
   }
 }
 TEST(wal_head_file_functor_max, nil) {

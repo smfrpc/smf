@@ -33,7 +33,7 @@ requires FlatBuffersNativeTable<RootType> struct rpc_typed_envelope {
   /// the envelope will be invalid after this method call
   rpc_envelope &&serialize_data() {
     rpc_letter::serialize_type_into_letter<RootType>(*(data.get()),
-                                                     envelope.letter);
+                                                     &envelope.letter);
     return std::move(envelope);
   }
   /// \brief copy ctor deleted

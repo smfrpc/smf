@@ -11,13 +11,14 @@
 
 namespace smf {
 
-future<rpc_envelope> zstd_compression_filter::operator()(rpc_envelope &&e) {
+seastar::future<rpc_envelope> zstd_compression_filter::operator()(
+  rpc_envelope &&e) {
   if (e.letter.dtype == rpc_letter_type::rpc_letter_type_payload) {
     e.letter.mutate_payload_to_binary();
   }
   auto const body_size = e.letter.body.size();
   if (body_size >= min_compression_size) {
-    temporary_buffer<char> buf(body_size);
+    seastar::temporary_buffer<char> buf(body_size);
     // prepare inputs
     void *      dst = static_cast<void *>(buf.get_write());
     const void *src = reinterpret_cast<const void *>(e.letter.body.get());
@@ -36,11 +37,11 @@ future<rpc_envelope> zstd_compression_filter::operator()(rpc_envelope &&e) {
     }
   }
 
-  return make_ready_future<rpc_envelope>(std::move(e));
+  return seastar::make_ready_future<rpc_envelope>(std::move(e));
 }
 
 
-future<rpc_recv_context> zstd_decompression_filter::operator()(
+seastar::future<rpc_recv_context> zstd_decompression_filter::operator()(
   rpc_recv_context &&ctx) {
   if ((ctx.header->flags() & fbs::rpc::Flags::Flags_ZSTD)
       == fbs::rpc::Flags::Flags_ZSTD) {
@@ -48,10 +49,10 @@ future<rpc_recv_context> zstd_decompression_filter::operator()(
       static_cast<const void *>(ctx.body_buf.get()), ctx.body_buf.size());
     if (zstd_size == 0) {
       LOG_ERROR("Cannot decompress. Size of the original is unknown");
-      return make_ready_future<rpc_recv_context>(std::move(ctx));
+      return seastar::make_ready_future<rpc_recv_context>(std::move(ctx));
     }
-    temporary_buffer<char> decompressed_body(zstd_size);
-    auto                   size_decompressed = ZSTD_decompress(
+    seastar::temporary_buffer<char> decompressed_body(zstd_size);
+    auto                            size_decompressed = ZSTD_decompress(
       static_cast<void *>(decompressed_body.get_write()), zstd_size,
       static_cast<const void *>(ctx.body_buf.get()), ctx.body_buf.size());
 
@@ -69,7 +70,7 @@ future<rpc_recv_context> zstd_decompression_filter::operator()(
         zstd_size, size_decompressed);
     }
   }
-  return make_ready_future<rpc_recv_context>(std::move(ctx));
+  return seastar::make_ready_future<rpc_recv_context>(std::move(ctx));
 }
 
 

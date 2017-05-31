@@ -43,14 +43,16 @@
     update=yes
     recursive=yes
     force=yes
-    version='6b2119'
+    version='c6c067e'
 
-- command: ./configure.py --enable-dpdk
+- name: configure sources with dpdk enabled
+  command: ./configure.py --enable-dpdk
   args:
     chdir: '{{goobly_cache_dir}}/seastar'
     creates: '{{goobly_cache_dir}}/seastar/build.ninja'
 
-- shell: "ninja-build -j$((({{ansible_processor_vcpus}}-1)))"
+- name: build with ninja
+  shell: "ninja-build -j$((({{ansible_processor_vcpus}}-1)))"
   args:
     chdir: '{{goobly_cache_dir}}/seastar'
     creates: '{{goobly_cache_dir}}/seastar/build/release/libseastar.a'

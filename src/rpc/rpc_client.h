@@ -35,11 +35,13 @@ namespace smf {
 ///
 class rpc_client {
  public:
-  using in_filter_t = std::function<future<rpc_recv_context>(rpc_recv_context)>;
-  using out_filter_t = std::function<future<rpc_envelope>(rpc_envelope)>;
+  using in_filter_t =
+    std::function<seastar::future<rpc_recv_context>(rpc_recv_context)>;
+  using out_filter_t =
+    std::function<seastar::future<rpc_envelope>(rpc_envelope)>;
 
   // TODO(agallego) - add options for ipv6, ssl, buffering, etc.
-  explicit rpc_client(ipv4_addr server_addr);
+  explicit rpc_client(seastar::ipv4_addr server_addr);
 
   /// \brief actually does the send to the remote location
   /// \param req - the bytes to send
@@ -47,7 +49,8 @@ class rpc_client {
   ///        this is useful for void functions
   ///
   template <typename T>
-  future<rpc_recv_typed_context<T>> send(rpc_envelope e, bool oneway = false) {
+  seastar::future<rpc_recv_typed_context<T>> send(rpc_envelope e,
+                                                  bool         oneway = false) {
     using ret_type = rpc_recv_typed_context<T>;
     auto measure   = is_histogram_enabled() ? hist_->auto_measure() : nullptr;
     return rpc_filter_apply(&out_filters_, std::move(e))
@@ -56,34 +59,34 @@ class rpc_client {
       })
       .then([this](auto opt_ctx) {
         if (!opt_ctx) {
-          return make_ready_future<ret_type>(std::move(opt_ctx));
+          return seastar::make_ready_future<ret_type>(std::move(opt_ctx));
         }
         return rpc_filter_apply(&in_filters_, std::move(opt_ctx.value()))
           .then([](auto ctx) {
-            return make_ready_future<ret_type>(
+            return seastar::make_ready_future<ret_type>(
               std::experimental::optional<decltype(ctx)>(std::move(ctx)));
           });
       })
       .then([measure = std::move(measure)](auto opt_ctx) {
-        return make_ready_future<ret_type>(std::move(opt_ctx));
+        return seastar::make_ready_future<ret_type>(std::move(opt_ctx));
       });
   }
 
-  future<std::experimental::optional<rpc_recv_context>> chain_send(
+  seastar::future<std::experimental::optional<rpc_recv_context>> chain_send(
     rpc_envelope e, bool oneway) {
     return smf::rpc_envelope::send(&conn_->ostream, std::move(e))
       .then([this, oneway]() {
         if (oneway) {
           using t = std::experimental::optional<rpc_recv_context>;
-          return make_ready_future<t>(std::experimental::nullopt);
+          return seastar::make_ready_future<t>(std::experimental::nullopt);
         }
         return smf::rpc_recv_context::parse(conn_.get(), nullptr);
       });
   }
 
-  future<> connect();
+  seastar::future<> connect();
 
-  virtual future<> stop();
+  virtual seastar::future<> stop();
 
   virtual ~rpc_client();
 
@@ -114,7 +117,7 @@ class rpc_client {
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_client);
 
  public:
-  const ipv4_addr server_addr;
+  const seastar::ipv4_addr server_addr;
 
  protected:
   /// \brief - semaphore for `safe_` codegen calls
@@ -126,10 +129,10 @@ class rpc_client {
   /// Note that this should only be used by `safe_` calls, it is otherwise
   /// mus slower and not in line w/ the seastar model. This was added here
   /// for usability. This increases the latency, on a highly contended core
-  /// the future<> scheduler may yield
+  /// the seastar::future<> scheduler may yield
   /// (or if the scheduler has executed enough ready_future<>'s)
   ///
-  semaphore limit_{1};
+  seastar::semaphore limit_{1};
 
  private:
   std::unique_ptr<rpc_connection> conn_;

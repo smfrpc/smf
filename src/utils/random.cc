@@ -13,7 +13,8 @@ random::~random() {}
 
 uint64_t random::next() { return dist_(rand_); }
 
-// TODO(agallego) - move to sstring when my patch to flatbuffers get merged
+// TODO(agallego) - move to seastar::sstring when my patch to flatbuffers get
+// merged
 std::basic_string<char> random::next_str(uint32_t size) {
   static const std::string kDict = "abcdefghijklmnopqrstuvwxyz"
                                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

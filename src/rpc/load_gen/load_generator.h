@@ -31,7 +31,7 @@ template <typename ClientService> class load_generator {
   using channel_t_ptr = std::unique_ptr<channel_t>;
 
   using method_cb_t =
-    std::function<future<>(ClientService *, smf::rpc_envelope &&)>;
+    std::function<seastar::future<>(ClientService *, smf::rpc_envelope &&)>;
   using generator_cb_t = std::function<smf::rpc_envelope(
     const boost::program_options::variables_map &)>;
 
@@ -54,24 +54,25 @@ template <typename ClientService> class load_generator {
     return std::move(h);
   }
 
-  future<> stop() { return make_ready_future<>(); }
-  future<> connect() {
-    return do_for_each(channels_.begin(), channels_.end(),
-                       [](auto &c) { return c->connect(); });
+  seastar::future<> stop() { return seastar::make_ready_future<>(); }
+  seastar::future<> connect() {
+    return seastar::do_for_each(channels_.begin(), channels_.end(),
+                                [](auto &c) { return c->connect(); });
   }
-  future<generator_duration> benchmark(generator_cb_t gen,
-                                       method_cb_t    method_cb) {
+  seastar::future<generator_duration> benchmark(generator_cb_t gen,
+                                                method_cb_t    method_cb) {
     namespace co = std::chrono;
     const uint32_t reqs_per_channel =
       std::max<uint32_t>(1, std::ceil(args.num_of_req / args.concurrency));
-    auto duration = make_lw_shared<generator_duration>(reqs_per_channel);
+    auto duration =
+      seastar::make_lw_shared<generator_duration>(reqs_per_channel);
 
-    return do_with(
-             semaphore(args.concurrency),
+    return seastar::do_with(
+             seastar::semaphore(args.concurrency),
              [this, duration, method_cb, gen,
               reqs_per_channel](auto &limit) mutable {
                duration->begin();
-               return do_for_each(
+               return seastar::do_for_each(
                         channels_.begin(), channels_.end(),
                         [this, &limit, gen, method_cb,
                          reqs_per_channel](auto &c) mutable {
@@ -93,7 +94,8 @@ template <typename ClientService> class load_generator {
                  });
              })
       .then([duration] {
-        return make_ready_future<generator_duration>(std::move(*duration));
+        return seastar::make_ready_future<generator_duration>(
+          std::move(*duration));
       });
   }
 

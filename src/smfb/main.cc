@@ -27,13 +27,13 @@ void base_init(const boost::program_options::variables_map &config) {
 int main(int argc, char **argv, char **env) {
   std::setvbuf(stdout, nullptr, _IOLBF, 1024);
 
-  distributed<smf::rpc_server_stats>             rpc_stats;
-  distributed<smf::rpc_server>                   rpc;
-  distributed<smf::write_ahead_log>              log;
+  seastar::distributed<smf::rpc_server_stats>    rpc_stats;
+  seastar::distributed<smf::rpc_server>          rpc;
+  seastar::distributed<smf::write_ahead_log>     log;
   std::unique_ptr<smf::rpc_server_stats_printer> rpc_printer;
 
 
-  app_template app;
+  seastar::app_template app;
 
   try {
     LOG_INFO("Setting up command line flags");
@@ -41,22 +41,22 @@ int main(int argc, char **argv, char **env) {
 
     return app.run_deprecated(argc, argv, [&] {
       LOG_INFO("Setting up at_exit hooks");
-      engine().at_exit([&rpc_printer, &rpc] {
+      seastar::engine().at_exit([&rpc_printer, &rpc] {
         if (rpc_printer) {
           LOG_INFO("Stopping rpc_printer");
           return rpc_printer->stop();
         }
-        return make_ready_future<>();
+        return seastar::make_ready_future<>();
       });
-      engine().at_exit([&rpc_stats] {
+      seastar::engine().at_exit([&rpc_stats] {
         LOG_INFO("Stopping rpc_stats");
         return rpc_stats.stop();
       });
-      engine().at_exit([&rpc] {
+      seastar::engine().at_exit([&rpc] {
         LOG_INFO("Stopping RPC");
         return rpc.stop();
       });
-      engine().at_exit([&log] {
+      seastar::engine().at_exit([&log] {
         LOG_INFO("Stopping write_ahead_log");
         return log.stop();
       });
@@ -75,10 +75,10 @@ int main(int argc, char **argv, char **env) {
         rpc_printer = std::make_unique<printer_t>(&rpc_stats, mins);
       }
       if (config["print-rpc-histogram-on-exit"].as<bool>()) {
-        engine().at_exit([&rpc] {
+        seastar::engine().at_exit([&rpc] {
           LOG_INFO("Writing rpc_server histograms");
           return rpc
-            .map_reduce(adder<smf::histogram>(),
+            .map_reduce(seastar::adder<smf::histogram>(),
                         &smf::rpc_server::copy_histogram)
             .then([](smf::histogram h) {
               return smf::histogram_seastar_utils::write_histogram(
@@ -104,7 +104,7 @@ int main(int argc, char **argv, char **env) {
             LOG_INFO("Starting stats, with period:{}", rpc_period);
             rpc_printer->start();
           }
-          return make_ready_future<>();
+          return seastar::make_ready_future<>();
         })
         .then([&log, &config] {
           auto dir = config["write-ahead-log-dir"].as<std::string>();

@@ -26,7 +26,8 @@ namespace smf {
 ///
 class wal_writer_file_lease_impl : public virtual wal_writer_file_lease {
  public:
-  wal_writer_file_lease_impl(sstring filename, file_output_stream_options opts)
+  wal_writer_file_lease_impl(seastar::sstring                    filename,
+                             seastar::file_output_stream_options opts)
     : original_name_(filename), opts_(opts) {}
   ~wal_writer_file_lease_impl() {
     LOG_ERROR_IF(!closed_, "***DATA LOSS*** wal_file_lease was not closed. "
@@ -34,31 +35,32 @@ class wal_writer_file_lease_impl : public virtual wal_writer_file_lease {
                  original_name_, lock_prefix() + original_name_);
   }
 
-  future<> open() final {
+  seastar::future<> open() final {
     auto name = lock_prefix() + original_name_;
     // the file should fail if it exists. It should not exist on disk, as
     // we'll truncate them
-    auto flags = open_flags::rw | open_flags::create | open_flags::truncate
-                 | open_flags::exclusive;
+    auto flags = seastar::open_flags::rw | seastar::open_flags::create
+                 | seastar::open_flags::truncate
+                 | seastar::open_flags::exclusive;
 
-    return open_file_dma(name, flags).then([this](file f) {
+    return seastar::open_file_dma(name, flags).then([this](seastar::file f) {
       fstream_ = make_file_output_stream(std::move(f), opts_);
-      return make_ready_future<>();
+      return seastar::make_ready_future<>();
     });
   }
-  future<> close() final {
+  seastar::future<> close() final {
     closed_      = true;
     auto current = lock_prefix() + original_name_;
     auto real    = original_name_;
     return fstream_.flush()
       .then([this] { return fstream_.close(); })
-      .then([real, current] { return rename_file(current, real); });
+      .then([real, current] { return seastar::rename_file(current, real); });
   }
 
-  future<> flush() final { return fstream_.flush(); }
+  seastar::future<> flush() final { return fstream_.flush(); }
 
-  future<> append(const char *buf, size_t n) final {
-    // TODO(agallego): add temporary_buffer<char>
+  seastar::future<> append(const char *buf, size_t n) final {
+    // TODO(agallego): add seastar::temporary_buffer<char>
     // https://groups.google.com/forum/?hl=en#!topic/seastar-dev/SY-VG9xPVaY
     // buffers need to be aligned on the filesystem
     // so it's better if you let the underlying system copy
@@ -66,16 +68,16 @@ class wal_writer_file_lease_impl : public virtual wal_writer_file_lease {
     return fstream_.write(buf, n);
   }
 
-  static const sstring &lock_prefix() {
-    static thread_local const sstring kCorePrefix = "locked:";
+  static const seastar::sstring &lock_prefix() {
+    static thread_local const seastar::sstring kCorePrefix = "locked:";
     return kCorePrefix;
   }
 
  private:
-  const sstring              original_name_;
-  file_output_stream_options opts_;
-  output_stream<char>        fstream_;
-  bool                       closed_{false};
+  const seastar::sstring              original_name_;
+  seastar::file_output_stream_options opts_;
+  seastar::output_stream<char>        fstream_;
+  bool                                closed_{false};
 };
 
 }  // namespace smf

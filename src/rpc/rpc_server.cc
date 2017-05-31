@@ -14,26 +14,26 @@ std::ostream &operator<<(std::ostream &o, const smf::rpc_server &s) {
   return o;
 }
 
-rpc_server::rpc_server(distributed<rpc_server_stats> *stats,
-                       uint16_t                       port,
-                       uint32_t                       flags)
+rpc_server::rpc_server(seastar::distributed<rpc_server_stats> *stats,
+                       uint16_t                                port,
+                       uint32_t                                flags)
   : stats_(THROW_IFNULL(stats)), port_(port), flags_(flags) {}
 
 rpc_server::~rpc_server() {}
 
 void rpc_server::start() {
   LOG_INFO("Starging server:{}", *this);
-  listen_options lo;
+  seastar::listen_options lo;
   lo.reuse_address = true;
-  listener_        = listen(make_ipv4_address({port_}), lo);
-  keep_doing([this] {
-    return listener_->accept().then(
-      [this](connected_socket fd, socket_address addr) mutable {
-        auto conn = make_lw_shared<rpc_server_connection>(
-          std::move(fd), std::move(addr), stats_);
-        // DO NOT return the future. Need to execute in parallel
-        handle_client_connection(conn);
-      });
+  listener_        = seastar::listen(seastar::make_ipv4_address({port_}), lo);
+  seastar::keep_doing([this] {
+    return listener_->accept().then([this](
+      seastar::connected_socket fd, seastar::socket_address addr) mutable {
+      auto conn = seastar::make_lw_shared<rpc_server_connection>(
+        std::move(fd), std::move(addr), stats_);
+      // DO NOT return the future. Need to execute in parallel
+      handle_client_connection(conn);
+    });
   }).handle_exception([](auto ep) {
     // Current and future \ref accept() calls will terminate immediately
     // with an error after listener_->abort_accept().
@@ -46,22 +46,22 @@ void rpc_server::start() {
   });
 }
 
-future<> rpc_server::stop() {
+seastar::future<> rpc_server::stop() {
   LOG_WARN("Stopping rpc server: aborting future accept() calls");
   listener_->abort_accept();
   return limits_->reply_gate.close();
 }
 
-future<> rpc_server::handle_client_connection(
-  lw_shared_ptr<rpc_server_connection> conn) {
-  return do_until(
+seastar::future<> rpc_server::handle_client_connection(
+  seastar::lw_shared_ptr<rpc_server_connection> conn) {
+  return seastar::do_until(
     [conn] { return !conn->is_valid(); },
     [this, conn]() mutable {
       return rpc_recv_context::parse(conn.get(), limits_.get())
         .then([this, conn](auto recv_ctx) mutable {
           if (!recv_ctx) {
             conn->set_error("Could not parse the request");
-            return make_ready_future<>();
+            return seastar::make_ready_future<>();
           }
           auto metric = hist_->auto_measure();
           return smf::rpc_filter_apply(&in_filters_,
@@ -83,7 +83,7 @@ future<> rpc_server::handle_client_connection(
                     return conn->ostream.close();
                   } else {
                     stats_->local().completed_requests++;
-                    return make_ready_future<>();
+                    return seastar::make_ready_future<>();
                   }
                 });
               });  // end finally()
@@ -96,17 +96,17 @@ future<> rpc_server::handle_client_connection(
     });
 }
 
-future<> rpc_server::dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
-                                  rpc_recv_context &&                  ctx) {
+seastar::future<> rpc_server::dispatch_rpc(
+  seastar::lw_shared_ptr<rpc_server_connection> conn, rpc_recv_context &&ctx) {
   if (ctx.request_id() == 0) {
     conn->set_error("Missing request_id. Invalid request");
-    return make_ready_future<>();
+    return seastar::make_ready_future<>();
   }
   if (!routes_.can_handle_request(ctx.request_id(),
                                   ctx.payload->dynamic_headers())) {
     stats_->local().no_route_requests++;
     conn->set_error("Can't find route for request. Invalid");
-    return make_ready_future<>();
+    return seastar::make_ready_future<>();
   }
   stats_->local().in_bytes += ctx.header_buf.size() + ctx.body_buf.size();
 
@@ -135,7 +135,7 @@ future<> rpc_server::dispatch_rpc(lw_shared_ptr<rpc_server_connection> conn,
     .handle_exception([this, conn](auto ptr) {
       LOG_INFO("Cannot dispatch rpc. Server is shutting down...");
       conn->disable();
-      return make_ready_future<>();
+      return seastar::make_ready_future<>();
     });
 }
 

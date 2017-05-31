@@ -15,7 +15,9 @@ rpc_client_stats rpc_client_stats::self() {
   return *this;  // make a copy for map_reduce framework
 }
 
-future<> rpc_client_stats::stop() { return make_ready_future<>(); }
+seastar::future<> rpc_client_stats::stop() {
+  return seastar::make_ready_future<>();
+}
 
 std::ostream &operator<<(std::ostream &o, const rpc_client_stats &s) {
   o << "{'in_bytes': " << s.in_bytes << ","

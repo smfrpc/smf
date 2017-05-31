@@ -42,7 +42,7 @@ struct rpc_letter {
   // The receiving end will close/abort/etc the connection if this buffer
   // is not correctly formatted as a smf.fbs.rpc.Payload table.
   //
-  temporary_buffer<char> body;
+  seastar::temporary_buffer<char> body;
 
   rpc_letter();
   rpc_letter &operator=(rpc_letter &&l);
@@ -63,14 +63,14 @@ struct rpc_letter {
   requires FlatBuffersNativeTable<RootType> static rpc_letter
   native_table_to_rpc_letter(const typename RootType::NativeTableType &t) {
     auto let = rpc_letter{};
-    rpc_letter::serialize_type_into_letter<RootType>(t, let);
+    rpc_letter::serialize_type_into_letter<RootType>(t, &let);
     return std::move(let);
   }
 
   template <typename RootType>
   requires FlatBuffersNativeTable<RootType> static void
   serialize_type_into_letter(const typename RootType::NativeTableType &t,
-                             rpc_letter &                              let) {
+                             rpc_letter *                              let) {
     // clean up the builder first
     auto &builder = rpc_letter::local_builder();
     // Might want to keep a moving average of the memory usg
@@ -81,13 +81,13 @@ struct rpc_letter {
     // first copy into this local_builder
     builder.Finish(RootType::Pack(builder, &t, nullptr));
     // second copy - into user_buf
-    let.payload->body.reserve(builder.GetSize());
+    let->payload->body.reserve(builder.GetSize());
     const char *p = reinterpret_cast<const char *>(builder.GetBufferPointer());
-    std::copy(p, p + builder.GetSize(), std::back_inserter(let.payload->body));
-    let.header = header_for_payload(
-      reinterpret_cast<const char *>(let.payload->body.data()),
-      let.payload->body.size());
-    DLOG_THROW_IF(builder.GetSize() != let.payload->body.size(),
+    std::copy(p, p + builder.GetSize(), std::back_inserter(let->payload->body));
+    let->header = header_for_payload(
+      reinterpret_cast<const char *>(let->payload->body.data()),
+      let->payload->body.size());
+    DLOG_THROW_IF(builder.GetSize() != let->payload->body.size(),
                   "Error coyping types into envelope");
   }
 

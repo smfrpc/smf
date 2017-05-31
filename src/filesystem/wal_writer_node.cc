@@ -18,8 +18,9 @@ namespace smf {
 
 static const size_t kWalHeaderSize = sizeof(fbs::wal::wal_header);
 
-file_output_stream_options fstream_opts(const wal_writer_node_opts &opts) {
-  file_output_stream_options o;
+seastar::file_output_stream_options fstream_opts(
+  const wal_writer_node_opts &opts) {
+  seastar::file_output_stream_options o;
   o.buffer_size        = opts.file_size;
   o.preallocation_size = opts.file_size;
   return o;
@@ -37,7 +38,7 @@ wal_writer_node::wal_writer_node(wal_writer_node_opts &&opts)
                opts_.file_size, min_entry_size());
 }
 
-future<> wal_writer_node::open() {
+seastar::future<> wal_writer_node::open() {
   const auto name = wal_file_name(opts_.prefix, opts_.epoch);
   LOG_THROW_IF(lease_ != nullptr,
                "opening new file. Previous file is unclosed");
@@ -47,8 +48,8 @@ future<> wal_writer_node::open() {
 }
 
 // this might not be needed. hehe.
-future<> wal_writer_node::do_append_with_header(fbs::wal::wal_header h,
-                                                wal_write_request    req) {
+seastar::future<> wal_writer_node::do_append_with_header(
+  fbs::wal::wal_header h, wal_write_request req) {
   h.mutate_checksum(xxhash_32(req.data.get(), req.data.size()));
   h.mutate_size(req.data.size());
   current_size_ += kWalHeaderSize;
@@ -69,7 +70,7 @@ static void add_binary_flags(fbs::wal::wal_header *    o,
   o->mutate_flags(static_cast<fbs::wal::wal_entry_flags>(b));
 }
 
-future<> wal_writer_node::do_append_with_flags(
+seastar::future<> wal_writer_node::do_append_with_flags(
   wal_write_request req, fbs::wal::wal_entry_flags flags) {
   fbs::wal::wal_header hdr;
   add_binary_flags(&hdr, flags);
@@ -82,9 +83,9 @@ future<> wal_writer_node::do_append_with_flags(
   }
 
   // bigger than compression size & has compression enabled
-  temporary_buffer<char> compressed_buf(req.data.size());
-  void *                 dst = static_cast<void *>(compressed_buf.get_write());
-  const void *           src = reinterpret_cast<const void *>(req.data.get());
+  seastar::temporary_buffer<char> compressed_buf(req.data.size());
+  void *      dst = static_cast<void *>(compressed_buf.get_write());
+  const void *src = reinterpret_cast<const void *>(req.data.get());
   // 3 - default compression level
   auto zstd_compressed_size =
     ZSTD_compress(dst, req.data.size(), src, req.data.size(), 3);
@@ -102,20 +103,20 @@ future<> wal_writer_node::do_append_with_flags(
             zstd_err, ZSTD_getErrorName(zstd_err));
 }
 
-future<uint64_t> wal_writer_node::append(wal_write_request req) {
+seastar::future<uint64_t> wal_writer_node::append(wal_write_request req) {
   auto measure = opts_.wstats->hist->auto_measure();
   return serialize_writes_.wait(1)
     .then([this, req = std::move(req)]() mutable {
       const auto offset = opts_.epoch += current_size_;
       return do_append(std::move(req)).then([offset] {
-        return make_ready_future<uint64_t>(offset);
+        return seastar::make_ready_future<uint64_t>(offset);
       });
     })
     .finally(
       [measure = std::move(measure), this] { serialize_writes_.signal(1); });
 }
 
-future<> wal_writer_node::do_append(wal_write_request req) {
+seastar::future<> wal_writer_node::do_append(wal_write_request req) {
   auto const write_size = wal_write_request_size(req);
   if (SMF_LIKELY(write_size < space_left())) {
     return do_append_with_flags(
@@ -142,18 +143,18 @@ future<> wal_writer_node::do_append(wal_write_request req) {
   });
 }
 
-future<> wal_writer_node::close() {
+seastar::future<> wal_writer_node::close() {
   return lease_->close().finally([this] { lease_ = nullptr; });
 }
 wal_writer_node::~wal_writer_node() {}
-future<> wal_writer_node::rotate_fstream() {
+seastar::future<> wal_writer_node::rotate_fstream() {
   LOG_INFO("rotating fstream");
   return lease_->flush().then([this] {
     lease_->close()
       .finally([this] {
         // clean up memory
         lease_ = nullptr;
-        return make_ready_future<>();
+        return seastar::make_ready_future<>();
       })
       .then([this] {
         opts_.epoch += current_size_;

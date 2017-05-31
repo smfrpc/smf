@@ -18,7 +18,7 @@
 
 namespace smf {
 
-wal_writer::wal_writer(sstring _dir, writer_stats *s)
+wal_writer::wal_writer(seastar::sstring _dir, writer_stats *s)
   : directory(_dir), wstats_(s) {}
 
 wal_writer::wal_writer(wal_writer &&o) noexcept
@@ -27,7 +27,7 @@ wal_writer::wal_writer(wal_writer &&o) noexcept
   , writer_(std::move(o.writer_)) {}
 
 
-future<> wal_writer::close() {
+seastar::future<> wal_writer::close() {
   if (writer_) {
     return writer_->close();
   }
@@ -35,11 +35,11 @@ future<> wal_writer::close() {
   // is called there is a system_error or an exception
   // so we never call open. We still need to wind down and close()
   // or attempt to close all
-  return make_ready_future<>();
+  return seastar::make_ready_future<>();
 }
 
-future<> wal_writer::open_empty_dir(sstring prefix) {
-  auto                 id = to_sstring(engine().cpu_id());
+seastar::future<> wal_writer::open_empty_dir(seastar::sstring prefix) {
+  auto                 id = seastar::to_sstring(seastar::engine().cpu_id());
   wal_writer_node_opts wo;
   wo.wstats = wstats_;
   wo.prefix = prefix + id;
@@ -47,14 +47,15 @@ future<> wal_writer::open_empty_dir(sstring prefix) {
   return writer_->open();
 }
 
-future<> wal_writer::open_non_empty_dir(sstring last_file, sstring prefix) {
+seastar::future<> wal_writer::open_non_empty_dir(seastar::sstring last_file,
+                                                 seastar::sstring prefix) {
   auto epoch = wal_name_extractor_utils::extract_epoch(last_file);
   DLOG_TRACE("epoch extracted: {}, filename:{}", epoch, last_file);
-  return open_file_dma(last_file, open_flags::ro)
-    .then([this, prefix, epoch](file f) {
-      auto last = make_lw_shared<file>(std::move(f));
+  return seastar::open_file_dma(last_file, seastar::open_flags::ro)
+    .then([this, prefix, epoch](seastar::file f) {
+      auto last = seastar::make_lw_shared<seastar::file>(std::move(f));
       return last->size().then([this, prefix, last, epoch](uint64_t size) {
-        auto                 id = to_sstring(engine().cpu_id());
+        auto id = seastar::to_sstring(seastar::engine().cpu_id());
         wal_writer_node_opts wo;
         wo.wstats = wstats_;
         wo.prefix = prefix + id;
@@ -65,11 +66,12 @@ future<> wal_writer::open_non_empty_dir(sstring last_file, sstring prefix) {
     });
 }
 
-future<> wal_writer::do_open() {
-  return open_directory(directory).then([this](file f) {
-    auto l = make_lw_shared<wal_head_file_max_functor>(std::move(f));
+seastar::future<> wal_writer::do_open() {
+  return seastar::open_directory(directory).then([this](seastar::file f) {
+    auto l = seastar::make_lw_shared<wal_head_file_max_functor>(std::move(f));
     return l->done().then([l, this]() {
-      sstring run_prefix = to_sstring(time_now_micros()) + ":";
+      seastar::sstring run_prefix =
+        seastar::to_sstring(time_now_micros()) + ":";
       if (l->last_file.empty()) {
         return open_empty_dir(run_prefix);
       }
@@ -78,24 +80,25 @@ future<> wal_writer::do_open() {
   });
 }
 
-future<> wal_writer::open() {
-  return file_exists(directory).then([this](bool dir_exists) {
+seastar::future<> wal_writer::open() {
+  return seastar::file_exists(directory).then([this](bool dir_exists) {
     if (dir_exists) {
       return do_open();
     }
-    return make_directory(directory).then([this] { return do_open(); });
+    return seastar::make_directory(directory).then(
+      [this] { return do_open(); });
   });
 }
 
-future<uint64_t> wal_writer::append(wal_write_request req) {
+seastar::future<uint64_t> wal_writer::append(wal_write_request req) {
   return writer_->append(std::move(req));
 }
 
-future<> wal_writer::invalidate(uint64_t epoch) {
+seastar::future<> wal_writer::invalidate(uint64_t epoch) {
   ++wstats_->total_invalidations;
   // write invalidation structure to WAL
-  fbs::wal::invalid_wal_entry e{epoch};
-  temporary_buffer<char>      data(sizeof(e));
+  fbs::wal::invalid_wal_entry     e{epoch};
+  seastar::temporary_buffer<char> data(sizeof(e));
   std::copy(reinterpret_cast<char *>(&e),
             reinterpret_cast<char *>(&e) + sizeof(e), data.get_write());
 
@@ -104,7 +107,7 @@ future<> wal_writer::invalidate(uint64_t epoch) {
     priority_manager::thread_local_instance().commitlog_priority());
 
   return append(std::move(req)).then([](auto _) {
-    return make_ready_future<>();
+    return seastar::make_ready_future<>();
   });
 }
 

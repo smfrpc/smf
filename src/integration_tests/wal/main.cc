@@ -14,8 +14,8 @@
 
 static const char *kPayload = "hello";
 
-smf::wal_write_request gen_payload(sstring str) {
-  temporary_buffer<char> buf(str.size());
+smf::wal_write_request gen_payload(seastar::sstring str) {
+  seastar::temporary_buffer<char> buf(str.size());
   std::copy(str.begin(), str.end(), buf.get_write());
   return smf::wal_write_request(
     0, std::move(buf),
@@ -39,13 +39,13 @@ struct reducible_append {
 
 int main(int args, char **argv, char **env) {
   DLOG_DEBUG("About to start the client");
-  app_template                      app;
-  distributed<smf::write_ahead_log> w;
+  seastar::app_template                      app;
+  seastar::distributed<smf::write_ahead_log> w;
   try {
-    return app.run(args, argv, [&]() mutable -> future<int> {
+    return app.run(args, argv, [&]() mutable -> seastar::future<int> {
       // SET_LOG_LEVEL(seastar::log_level::debug);
       DLOG_DEBUG("setting up exit hooks");
-      engine().at_exit([&] { return w.stop(); });
+      seastar::engine().at_exit([&] { return w.stop(); });
       DLOG_DEBUG("about to start the wal.h");
 
       return w
@@ -56,7 +56,7 @@ int main(int args, char **argv, char **env) {
           std::vector<uint64_t> v;
           return w
             .map_reduce(
-              adder<reducible_append>(),
+              seastar::adder<reducible_append>(),
               [](smf::shardable_wal &x) {
                 return x.append(gen_payload(kPayload)).then([&x](uint64_t i) {
                   auto &p = smf::priority_manager::thread_local_instance()
@@ -79,17 +79,18 @@ int main(int args, char **argv, char **env) {
             .then([&w](reducible_append &&ra) {
               DLOG_DEBUG("got value: {}",
                          std::vector<uint64_t>(ra.v.begin(), ra.v.end()));
-              return do_for_each(ra.v.begin(), ra.v.end(), [&w](uint64_t i) {
-                DLOG_DEBUG("About to invalidate epoch: {}", i);
-                return w.invoke_on_all(&smf::shardable_wal::invalidate, i)
-                  .then([i]() {
-                    DLOG_DEBUG("Invalidated epoch `{}' on all cores", i);
-                    return make_ready_future<>();
-                  });
-              });
+              return seastar::do_for_each(
+                ra.v.begin(), ra.v.end(), [&w](uint64_t i) {
+                  DLOG_DEBUG("About to invalidate epoch: {}", i);
+                  return w.invoke_on_all(&smf::shardable_wal::invalidate, i)
+                    .then([i]() {
+                      DLOG_DEBUG("Invalidated epoch `{}' on all cores", i);
+                      return seastar::make_ready_future<>();
+                    });
+                });
             });
         })
-        .then([] { return make_ready_future<int>(0); });
+        .then([] { return seastar::make_ready_future<int>(0); });
     });
   } catch (const std::exception &e) {
     std::cerr << "Fatal exception: " << e.what() << std::endl;

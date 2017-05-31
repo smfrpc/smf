@@ -16,13 +16,13 @@ namespace smf {
 class wal_iface {
  public:
   /// \brief returns starting offset off a successful write
-  virtual future<uint64_t> append(wal_write_request req)          = 0;
-  virtual future<> invalidate(uint64_t epoch)                     = 0;
-  virtual future<wal_read_reply::maybe> get(wal_read_request req) = 0;
+  virtual seastar::future<uint64_t> append(wal_write_request req)          = 0;
+  virtual seastar::future<> invalidate(uint64_t epoch)                     = 0;
+  virtual seastar::future<wal_read_reply::maybe> get(wal_read_request req) = 0;
 
   // \brief filesystem monitoring
-  virtual future<> open()  = 0;
-  virtual future<> close() = 0;
+  virtual seastar::future<> open()  = 0;
+  virtual seastar::future<> close() = 0;
   virtual ~wal_iface() {}
 };
 
@@ -46,19 +46,20 @@ class shardable_wal : public wal_iface {
  public:
   shardable_wal(wal_type type, wal_opts o)
     : w_(wal::make_wal(type, std::move(o))) {}
-  inline future<uint64_t> append(wal_write_request req) final {
+  inline seastar::future<uint64_t> append(wal_write_request req) final {
     return w_->append(std::move(req));
   }
-  inline future<> invalidate(uint64_t epoch) final {
+  inline seastar::future<> invalidate(uint64_t epoch) final {
     return w_->invalidate(epoch);
   }
-  inline future<wal_read_reply::maybe> get(wal_read_request req) final {
+  inline seastar::future<wal_read_reply::maybe> get(
+    wal_read_request req) final {
     return w_->get(std::move(req));
   }
-  inline future<> open() final { return w_->open(); }
-  inline future<> close() final { return w_->close(); }
+  inline seastar::future<> open() final { return w_->open(); }
+  inline seastar::future<> close() final { return w_->close(); }
   // seastar shardable template param
-  future<> stop() { return close(); }
+  seastar::future<> stop() { return close(); }
 
  private:
   std::unique_ptr<wal> w_;

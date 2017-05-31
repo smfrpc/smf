@@ -18,40 +18,42 @@ wal_impl_with_cache::wal_impl_with_cache(wal_opts _opts)
   cache_  = std::make_unique<wal_mem_cache>(opts.cache_size, &opts.cstats);
 }
 
-future<uint64_t> wal_impl_with_cache::append(wal_write_request req) {
+seastar::future<uint64_t> wal_impl_with_cache::append(wal_write_request req) {
   return writer_->append(std::move(req)).then([
     this, bufcpy = req.data.share()
   ](uint64_t epoch) mutable { return cache_->put(epoch, std::move(bufcpy)); });
 }
 
-future<> wal_impl_with_cache::invalidate(uint64_t epoch) {
+seastar::future<> wal_impl_with_cache::invalidate(uint64_t epoch) {
   return cache_->remove(epoch).then(
     [this, epoch] { return writer_->invalidate(epoch); });
 }
 
-future<wal_read_reply::maybe> wal_impl_with_cache::get(wal_read_request req) {
+seastar::future<wal_read_reply::maybe> wal_impl_with_cache::get(
+  wal_read_request req) {
   uint64_t offset = req.offset;
   return cache_->get(offset).then([this, req = std::move(req)](auto maybe_buf) {
     if (!maybe_buf) {
       return reader_->get(std::move(req));
     }
-    return make_ready_future<wal_read_reply::maybe>(std::move(maybe_buf));
+    return seastar::make_ready_future<wal_read_reply::maybe>(
+      std::move(maybe_buf));
   });
 }
 
-future<> wal_impl_with_cache::open() {
+seastar::future<> wal_impl_with_cache::open() {
   LOG_INFO("starting: {}", opts);
   auto dir = opts.directory;
   return file_exists(dir)
     .then([dir](bool exists) {
       if (exists) {
-        return make_ready_future<>();
+        return seastar::make_ready_future<>();
       }
-      return make_directory(dir);
+      return seastar::make_directory(dir);
     })
     .then([this, dir] {
-      return open_directory(dir).then([this](file f) {
-        auto l = make_lw_shared<wal_file_name_mender>(std::move(f));
+      return open_directory(dir).then([this](seastar::file f) {
+        auto l = seastar::make_lw_shared<wal_file_name_mender>(std::move(f));
         return l->done().finally([l] {});
       });
     })
@@ -60,7 +62,7 @@ future<> wal_impl_with_cache::open() {
     });
 }
 
-future<> wal_impl_with_cache::close() {
+seastar::future<> wal_impl_with_cache::close() {
   LOG_INFO("stopping: {}", opts);
   return writer_->close().then([this] { return reader_->close(); });
 }

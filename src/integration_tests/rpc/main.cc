@@ -20,14 +20,13 @@
 // templates
 #include "flatbuffers/demo_service.smf.fb.h"
 
-
 using client_t   = smf_gen::demo::SmfStorageClient;
 using load_gen_t = smf::load_gen::load_generator<client_t>;
 
 struct method_callback {
-  future<> operator()(client_t *c, smf::rpc_envelope &&e) {
+  seastar::future<> operator()(client_t *c, smf::rpc_envelope &&e) {
     return c->Get(std::move(e)).then([](auto ret) {
-      return make_ready_future<>();
+      return seastar::make_ready_future<>();
     });
   }
 };
@@ -72,12 +71,13 @@ struct generator {
 
 
 class storage_service : public smf_gen::demo::SmfStorage {
-  virtual future<smf::rpc_typed_envelope<smf_gen::demo::Response>> Get(
+  virtual seastar::future<smf::rpc_typed_envelope<smf_gen::demo::Response>> Get(
     smf::rpc_recv_typed_context<smf_gen::demo::Request> &&rec) final {
     smf::rpc_typed_envelope<smf_gen::demo::Response> data;
     data.envelope.set_status(200);
-    return make_ready_future<smf::rpc_typed_envelope<smf_gen::demo::Response>>(
-      std::move(data));
+    return seastar::
+      make_ready_future<smf::rpc_typed_envelope<smf_gen::demo::Response>>(
+        std::move(data));
   }
 };
 
@@ -101,21 +101,21 @@ void cli_opts(boost::program_options::options_description_easy_init o) {
 int main(int args, char **argv, char **env) {
   // SET_LOG_LEVEL(seastar::log_level::debug);
   DLOG_DEBUG("About to start the RPC test");
-  distributed<smf::rpc_server_stats> stats;
-  distributed<smf::rpc_server>       rpc;
-  distributed<load_gen_t>            load;
-  smf::rpc_server_stats_printer      stats_printer(&stats);
-  app_template                       app;
+  seastar::distributed<smf::rpc_server_stats> stats;
+  seastar::distributed<smf::rpc_server>       rpc;
+  seastar::distributed<load_gen_t>            load;
+  smf::rpc_server_stats_printer               stats_printer(&stats);
 
+  seastar::app_template app;
 
   cli_opts(app.add_options());
 
-  return app.run(args, argv, [&]() -> future<int> {
+  return app.run(args, argv, [&]() -> seastar::future<int> {
     DLOG_DEBUG("Setting up at_exit hooks");
-    engine().at_exit([&] { return stats_printer.stop(); });
-    engine().at_exit([&] { return stats.stop(); });
-    engine().at_exit([&] { return rpc.stop(); });
-    engine().at_exit([&] { return load.stop(); });
+    seastar::engine().at_exit([&] { return stats_printer.stop(); });
+    seastar::engine().at_exit([&] { return stats.stop(); });
+    seastar::engine().at_exit([&] { return rpc.stop(); });
+    seastar::engine().at_exit([&] { return load.stop(); });
 
     auto &cfg = app.configuration();
 
@@ -124,7 +124,7 @@ int main(int args, char **argv, char **env) {
       .then([&stats_printer] {
         DLOG_DEBUG("Starting printer");
         stats_printer.start();
-        return make_ready_future<>();
+        return seastar::make_ready_future<>();
       })
       .then([&rpc, &stats, &cfg] {
         uint32_t flags = smf::rpc_server_flags::rpc_server_flags_none;
@@ -165,14 +165,14 @@ int main(int args, char **argv, char **env) {
           load_gen_t::method_cb_t    method = method_callback{};
           return server.benchmark(gen, method).then([](auto test) {
             DLOG_DEBUG("Test ran in:{}ms", test.duration_in_millis());
-            return make_ready_future<>();
+            return seastar::make_ready_future<>();
           });
         });
       })
       .then([&load] {
         DLOG_DEBUG("MapReducing stats");
         return load
-          .map_reduce(adder<smf::histogram>(),
+          .map_reduce(seastar::adder<smf::histogram>(),
                       [](load_gen_t &shard) { return shard.copy_histogram(); })
           .then([](smf::histogram h) {
             DLOG_DEBUG("Writing client histograms");
@@ -182,7 +182,8 @@ int main(int args, char **argv, char **env) {
       })
       .then([&] {
         return rpc
-          .map_reduce(adder<smf::histogram>(), &smf::rpc_server::copy_histogram)
+          .map_reduce(seastar::adder<smf::histogram>(),
+                      &smf::rpc_server::copy_histogram)
           .then([](smf::histogram h) {
             DLOG_DEBUG("Writing server histograms");
             return smf::histogram_seastar_utils::write_histogram(
@@ -191,7 +192,7 @@ int main(int args, char **argv, char **env) {
       })
       .then([] {
         DLOG_DEBUG("Exiting");
-        return make_ready_future<int>(0);
+        return seastar::make_ready_future<int>(0);
       });
   });
 }

@@ -18,9 +18,9 @@ using load_gen_t = smf::load_gen::load_generator<client_t>;
 
 
 struct test_put {
-  future<> operator()(client_t *c, smf::rpc_envelope &&e) {
+  seastar::future<> operator()(client_t *c, smf::rpc_envelope &&e) {
     return c->put(std::move(e)).then([](auto ret) {
-      return make_ready_future<>();
+      return seastar::make_ready_future<>();
     });
   }
 };
@@ -33,7 +33,8 @@ struct put_data_generator {
 
   smf::rpc_envelope operator()(
     const boost::program_options::variables_map &cfg) {
-    // anti pattern w/ seastar, but boost ... has no conversion to sstring
+    // anti pattern w/ seastar, but boost ... has no conversion to
+    // seastar::sstring
 
     std::string topic = cfg["topic"].as<std::string>();
     std::string key   = cfg["key"].as<std::string>();
@@ -105,13 +106,13 @@ void cli_opts(boost::program_options::options_description_easy_init o) {
 
 
 int main(int argc, char **argv, char **env) {
-  distributed<load_gen_t> load;
-  app_template            app;
+  seastar::distributed<load_gen_t> load;
+  seastar::app_template            app;
 
   try {
     cli_opts(app.add_options());
     return app.run(argc, argv, [&] {
-      engine().at_exit([&load] { return load.stop(); });
+      seastar::engine().at_exit([&load] { return load.stop(); });
 
       auto &cfg = app.configuration();
 
@@ -134,7 +135,7 @@ int main(int argc, char **argv, char **env) {
 
             return server.benchmark(gen, method).then([](auto test) {
               LOG_INFO("Test ran in:{}ms", test.duration_in_millis());
-              return make_ready_future<>();
+              return seastar::make_ready_future<>();
             });
           });
         })
@@ -142,7 +143,7 @@ int main(int argc, char **argv, char **env) {
           LOG_INFO("Requesting load histogram from all cores");
           return load
             .map_reduce(
-              adder<smf::histogram>(),
+              seastar::adder<smf::histogram>(),
               [](load_gen_t &shard) { return shard.copy_histogram(); })
             .then([](smf::histogram h) {
               LOG_INFO("Writing histogram: load_hdr.txt");
@@ -152,7 +153,7 @@ int main(int argc, char **argv, char **env) {
         })
         .then([] {
           LOG_INFO("End load");
-          return make_ready_future<int>(0);
+          return seastar::make_ready_future<int>(0);
         });
     });
   } catch (...) {

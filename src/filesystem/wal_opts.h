@@ -56,16 +56,16 @@ std::ostream &operator<<(std::ostream &o, const cache_stats &s);
 // this should probably be a sharded<wal_otps> &
 // like the tcp server no?
 struct wal_opts {
-  explicit wal_opts(sstring log_directory);
+  explicit wal_opts(seastar::sstring log_directory);
   wal_opts(wal_opts &&o) noexcept;
   wal_opts(const wal_opts &o);
   wal_opts &operator=(const wal_opts &o);
 
-  const sstring  directory;
-  const uint64_t cache_size = wal_file_size_aligned() * 2;
-  reader_stats   rstats;
-  writer_stats   wstats;
-  cache_stats    cstats;
+  const seastar::sstring directory;
+  const uint64_t         cache_size = wal_file_size_aligned() * 2;
+  reader_stats           rstats;
+  writer_stats           wstats;
+  cache_stats            cstats;
 };
 std::ostream &operator<<(std::ostream &o, const wal_opts &opts);
 

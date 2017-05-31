@@ -27,7 +27,9 @@ bool rpc_handle_router::can_handle_request(
   }
   return true;
 }
-future<rpc_envelope> rpc_handle_router::handle(rpc_recv_context &&recv) {
+
+seastar::future<rpc_envelope> rpc_handle_router::handle(
+  rpc_recv_context &&recv) {
   return dispatch_.find(recv.request_id())->second.apply(std::move(recv));
 }
 

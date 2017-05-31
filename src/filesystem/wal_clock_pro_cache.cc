@@ -22,9 +22,10 @@ static uint32_t round_up(int64_t file_size, size_t alignment) {
   return ret;
 }
 
-wal_clock_pro_cache::wal_clock_pro_cache(lw_shared_ptr<file> f,
-                                         int64_t             size,
-                                         uint32_t max_pages_in_memory)
+wal_clock_pro_cache::wal_clock_pro_cache(
+  seastar::lw_shared_ptr<seastar::file> f,
+  int64_t                               size,
+  uint32_t                              max_pages_in_memory)
   : file_size(size)
   , number_of_pages(round_up(file_size, f->disk_read_dma_alignment()))
   , file_(std::move(f)) {
@@ -37,7 +38,7 @@ wal_clock_pro_cache::wal_clock_pro_cache(lw_shared_ptr<file> f,
   cache_        = std::make_unique<cache_t>(max_pages_in_memory);
 }
 
-future<> wal_clock_pro_cache::close() {
+seastar::future<> wal_clock_pro_cache::close() {
   auto f = file_;  // must hold file until handle closes
   return f->close().finally([f] {});
 }
@@ -45,11 +46,11 @@ future<> wal_clock_pro_cache::close() {
 /// intrusive containers::iterators are not default no-throw move
 /// constructible, so we have to get the ptr to the data which is lame
 ///
-future<wal_clock_pro_cache::chunk_t_ptr>
-wal_clock_pro_cache::clock_pro_get_page(uint32_t                 page,
-                                        const io_priority_class &pc) {
+seastar::future<wal_clock_pro_cache::chunk_t_ptr>
+wal_clock_pro_cache::clock_pro_get_page(uint32_t                          page,
+                                        const seastar::io_priority_class &pc) {
   if (cache_->contains(page)) {
-    return make_ready_future<chunk_t_ptr>(cache_->get_page(page));
+    return seastar::make_ready_future<chunk_t_ptr>(cache_->get_page(page));
   }
   // we fetch things dynamiclly. so just fill up the buffer before eviction
   // agorithm kicks in. nothing fancy
@@ -60,7 +61,8 @@ wal_clock_pro_cache::clock_pro_get_page(uint32_t                 page,
   if (cache_->size() < number_of_pages) {
     return fetch_page(page, pc).then([this, page](auto chunk) {
       cache_->set(std::move(chunk));
-      return make_ready_future<chunk_t_ptr>(cache_->get_chunk_ptr(page));
+      return seastar::make_ready_future<chunk_t_ptr>(
+        cache_->get_chunk_ptr(page));
     });
   }
   cache_->run_cold_hand();
@@ -70,28 +72,28 @@ wal_clock_pro_cache::clock_pro_get_page(uint32_t                 page,
   // next add page to list
   return fetch_page(page, pc).then([this, page](auto chunk) {
     cache_->set(std::move(chunk));
-    return make_ready_future<chunk_t_ptr>(cache_->get_chunk_ptr(page));
+    return seastar::make_ready_future<chunk_t_ptr>(cache_->get_chunk_ptr(page));
   });
 }
 
 
-future<wal_clock_pro_cache::chunk_t> wal_clock_pro_cache::fetch_page(
-  const uint32_t &page, const io_priority_class &pc) {
+seastar::future<wal_clock_pro_cache::chunk_t> wal_clock_pro_cache::fetch_page(
+  const uint32_t &page, const seastar::io_priority_class &pc) {
   static const uint64_t kAlignment = file_->disk_read_dma_alignment();
   const uint64_t page_offset_begin = static_cast<uint64_t>(page) * kAlignment;
 
-  auto bufptr = allocate_aligned_buffer<char>(kAlignment, kAlignment);
+  auto bufptr = seastar::allocate_aligned_buffer<char>(kAlignment, kAlignment);
   auto fut = file_->dma_read(page_offset_begin, bufptr.get(), kAlignment, pc);
 
   return std::move(fut).then(
     [page, bufptr = std::move(bufptr)](auto size) mutable {
       LOG_THROW_IF(size > kAlignment, "Read more than 1 page");
       chunk_t c(page, page_data(size, std::move(bufptr)));
-      return make_ready_future<chunk_t>(std::move(c));
+      return seastar::make_ready_future<chunk_t>(std::move(c));
     });
 }
 
-static uint64_t copy_page_data(temporary_buffer<char> *               buf,
+static uint64_t copy_page_data(seastar::temporary_buffer<char> *      buf,
                                const int64_t &                        offset,
                                const int64_t &                        size,
                                const wal_clock_pro_cache::chunk_t_ptr chunk,
@@ -112,10 +114,12 @@ static uint64_t copy_page_data(temporary_buffer<char> *               buf,
   return step_size;
 }
 
-future<temporary_buffer<char>> wal_clock_pro_cache::read_exactly(
-  int64_t offset, int64_t size, const io_priority_class &pc) {
+seastar::future<seastar::temporary_buffer<char>>
+wal_clock_pro_cache::read_exactly(int64_t                           offset,
+                                  int64_t                           size,
+                                  const seastar::io_priority_class &pc) {
   struct buf_req {
-    buf_req(int64_t _offset, int64_t _size, const io_priority_class &p)
+    buf_req(int64_t _offset, int64_t _size, const seastar::io_priority_class &p)
       : offset(_offset), size(_size), pc(p) {}
 
     void update_step(uint64_t step) {
@@ -123,39 +127,40 @@ future<temporary_buffer<char>> wal_clock_pro_cache::read_exactly(
       offset += step;
     }
 
-    int64_t                  offset;
-    int64_t                  size;
-    const io_priority_class &pc;
+    int64_t                           offset;
+    int64_t                           size;
+    const seastar::io_priority_class &pc;
   };
   static const size_t kAlignment = file_->disk_read_dma_alignment();
-  auto                buf        = make_lw_shared<temporary_buffer<char>>(size);
-  auto                req        = make_lw_shared<buf_req>(offset, size, pc);
-  auto                max_pages  = 1 + (req->size / kAlignment);
+  auto buf = seastar::make_lw_shared<seastar::temporary_buffer<char>>(size);
+  auto req = seastar::make_lw_shared<buf_req>(offset, size, pc);
+  auto max_pages = 1 + (req->size / kAlignment);
   LOG_THROW_IF(max_pages > number_of_pages,
                "Request asked to read more pages, than available on disk");
-  return repeat([buf, this, req]() mutable {
+  return seastar::repeat([buf, this, req]() mutable {
            auto page = offset_to_page(req->offset, kAlignment);
            return this->clock_pro_get_page(page, req->pc)
              .then([buf, req](auto chunk) {
                if (req->size <= 0) {
-                 return stop_iteration::yes;
+                 return seastar::stop_iteration::yes;
                }
                auto step = copy_page_data(buf.get(), req->offset, req->size,
                                           chunk, kAlignment);
                req->update_step(step);
-               return stop_iteration::no;
+               return seastar::stop_iteration::no;
              });
          })
     .then([buf] {
-      return make_ready_future<temporary_buffer<char>>(buf->share());
+      return seastar::make_ready_future<seastar::temporary_buffer<char>>(
+        buf->share());
     });
 }
 
-future<wal_read_reply> wal_clock_pro_cache::read(wal_read_request r) {
+seastar::future<wal_read_reply> wal_clock_pro_cache::read(wal_read_request r) {
   return this->do_read(r).then([](auto ret) {
     wal_read_reply reply;
     reply.emplace_back(ret->move_fragments());
-    return make_ready_future<wal_read_reply>(std::move(reply));
+    return seastar::make_ready_future<wal_read_reply>(std::move(reply));
   });
 }
 
@@ -167,7 +172,8 @@ static void validate_header(const fbs::wal::wal_header &hdr,
                "Header asked for more data than file_size. Header:{}", hdr);
 }
 
-static fbs::wal::wal_header get_header(const temporary_buffer<char> &buf) {
+static fbs::wal::wal_header get_header(
+  const seastar::temporary_buffer<char> &buf) {
   static const uint32_t kHeaderSize = sizeof(fbs::wal::wal_header);
   fbs::wal::wal_header  hdr;
   LOG_THROW_IF(buf.size() < kHeaderSize, "Could not read header. Only read",
@@ -177,8 +183,8 @@ static fbs::wal::wal_header get_header(const temporary_buffer<char> &buf) {
   return hdr;
 }
 
-static void validate_payload(const fbs::wal::wal_header &  hdr,
-                             const temporary_buffer<char> &buf) {
+static void validate_payload(const fbs::wal::wal_header &           hdr,
+                             const seastar::temporary_buffer<char> &buf) {
   LOG_THROW_IF(buf.size() != hdr.size(), "Could not read header. Only read",
                buf.size());
   uint32_t checksum = xxhash_32(buf.get(), buf.size());
@@ -188,8 +194,8 @@ static void validate_payload(const fbs::wal::wal_header &  hdr,
                hdr, checksum);
 }
 
-static void print_parser_exception(std::exception_ptr              eptr,
-                                   lw_shared_ptr<wal_read_request> req) {
+static void print_parser_exception(
+  std::exception_ptr eptr, seastar::lw_shared_ptr<wal_read_request> req) {
   if (eptr) {
     try {
       std::rethrow_exception(eptr);
@@ -199,19 +205,20 @@ static void print_parser_exception(std::exception_ptr              eptr,
     }
   }
 }
-future<lw_shared_ptr<wal_read_reply>> wal_clock_pro_cache::do_read(
-  wal_read_request r) {
-  using ret_type = lw_shared_ptr<wal_read_reply>;
+seastar::future<seastar::lw_shared_ptr<wal_read_reply>>
+wal_clock_pro_cache::do_read(wal_read_request r) {
+  using ret_type = seastar::lw_shared_ptr<wal_read_reply>;
   LOG_THROW_IF(r.offset + r.size > file_size,
                "Expected normalized offsets. Invalid range."
                "see wal_reader_node.cc?");
   static const uint32_t kHeaderSize = sizeof(fbs::wal::wal_header);
 
-  auto ret = make_lw_shared<wal_read_reply>();
-  auto req = make_lw_shared<wal_read_request>(r);
-  return repeat([ret, this, req]() mutable {
+  auto ret = seastar::make_lw_shared<wal_read_reply>();
+  auto req = seastar::make_lw_shared<wal_read_request>(r);
+  return seastar::repeat([ret, this, req]() mutable {
            if (req->size <= 0) {
-             return make_ready_future<stop_iteration>(stop_iteration::yes);
+             return seastar::make_ready_future<seastar::stop_iteration>(
+               seastar::stop_iteration::yes);
            }
            return this->read_exactly(req->offset, kHeaderSize, req->pc)
              .then([this, ret, req](auto buf) mutable {
@@ -229,21 +236,21 @@ future<lw_shared_ptr<wal_read_reply>> wal_clock_pro_cache::do_read(
                    wal_read_reply::fragment f(hdr, std::move(buf));
                    ret->fragments.emplace_back(std::move(f));
                    if (req->size <= 0) {
-                     return stop_iteration::yes;
+                     return seastar::stop_iteration::yes;
                    }
-                   return stop_iteration::no;
+                   return seastar::stop_iteration::no;
                  })
                  .handle_exception([req](std::exception_ptr eptr) {
                    print_parser_exception(eptr, req);
-                   return stop_iteration::no;
+                   return seastar::stop_iteration::no;
                  });
              })
              .handle_exception([req](std::exception_ptr eptr) {
                print_parser_exception(eptr, req);
-               return stop_iteration::no;
+               return seastar::stop_iteration::no;
              });
          })
-    .then([ret] { return make_ready_future<ret_type>(ret); });
+    .then([ret] { return seastar::make_ready_future<ret_type>(ret); });
 }
 
 }  // namespace smf
