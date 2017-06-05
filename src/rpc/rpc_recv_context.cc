@@ -50,6 +50,14 @@ seastar::future<seastar::temporary_buffer<char>> read_payload(
   }
 }
 
+constexpr uint32_t max_flatbuffers_size() {
+  // 2GB - 1 is the max a flatbuffers::vector<uint8_t> can hold
+  //
+  // needed so that we have access to the internal typedefs
+  using namespace flatbuffers;
+  return static_cast<uint32_t>(FLATBUFFERS_MAX_BUFFER_SIZE);
+}
+
 seastar::future<exp::optional<rpc_recv_context>> process_payload(
   rpc_connection *                conn,
   rpc_connection_limits *         limits,
@@ -63,6 +71,10 @@ seastar::future<exp::optional<rpc_recv_context>> process_payload(
       if (hdr->size() != body.size()) {
         LOG_ERROR("Read incorrect number of bytes `{}`, expected header: `{}`",
                   body.size(), *hdr);
+        return seastar::make_ready_future<ret_type>();
+      }
+      if (hdr->size() > max_flatbuffers_size()) {
+        LOG_ERROR("Bad payload. Body is >  FLATBUFFERS_MAX_BUFFER_SIZE");
         return seastar::make_ready_future<ret_type>();
       }
       if ((hdr->flags() & fbs::rpc::Flags::Flags_CHECKSUM)
