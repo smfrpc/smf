@@ -127,9 +127,9 @@ int main(int args, char **argv, char **env) {
         return seastar::make_ready_future<>();
       })
       .then([&rpc, &stats, &cfg] {
-        uint32_t flags = smf::rpc_server_flags::rpc_server_flags_none;
-        uint16_t port  = cfg["port"].as<uint16_t>();
-        return rpc.start(&stats, port, flags).then([&rpc] {
+        smf::rpc_server_args args;
+        args.rpc_port = cfg["port"].as<uint16_t>();
+        return rpc.start(&stats, args).then([&rpc] {
           DLOG_DEBUG("Registering smf_gen::demo::storage_service");
           return rpc.invoke_on_all(
             &smf::rpc_server::register_service<storage_service>);
@@ -177,7 +177,7 @@ int main(int args, char **argv, char **env) {
           .then([](smf::histogram h) {
             DLOG_DEBUG("Writing client histograms");
             return smf::histogram_seastar_utils::write_histogram(
-              "clients_hdr.txt", std::move(h));
+              "clients_hdr.hgrm", std::move(h));
           });
       })
       .then([&] {
@@ -187,7 +187,7 @@ int main(int args, char **argv, char **env) {
           .then([](smf::histogram h) {
             DLOG_DEBUG("Writing server histograms");
             return smf::histogram_seastar_utils::write_histogram(
-              "server_hdr.txt", std::move(h));
+              "server_hdr.hgrm", std::move(h));
           });
       })
       .then([] {

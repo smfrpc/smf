@@ -146,9 +146,9 @@ int main(int argc, char **argv, char **env) {
               seastar::adder<smf::histogram>(),
               [](load_gen_t &shard) { return shard.copy_histogram(); })
             .then([](smf::histogram h) {
-              LOG_INFO("Writing histogram: load_hdr.txt");
+              LOG_INFO("Writing histogram: load_hdr.hgrm");
               return smf::histogram_seastar_utils::write_histogram(
-                "load_hdr.txt", std::move(h));
+                "load_hdr.hgrm", std::move(h));
             });
         })
         .then([] {

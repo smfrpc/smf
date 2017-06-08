@@ -18,28 +18,27 @@ namespace smf {
 ///     sum(req_mem) <= max_memory
 ///
 struct rpc_connection_limits {
-  rpc_connection_limits(
-    size_t basic_req_size = 1024,
-    size_t bloat_mult     = 1.57,  // same as folly::vector
-    /// The defaults are the ones from scylladb as of 8e124b3a
-    size_t max_mem = std::max<size_t>(
-      0.08 * seastar::memory::stats().total_memory(), 1000000));
+  rpc_connection_limits(uint64_t basic_req_size = 256,
+                        uint64_t bloat_mult = 1.57,  // same as folly::vector
+                        uint64_t max_mem    = std::max<uint64_t>(
+                          0.08 * seastar::memory::stats().total_memory(),
+                          uint64_t(1) << 32 /*4GB per core*/));
 
   /// Minimum request footprint in memory
-  const size_t basic_request_size;
+  const uint64_t basic_request_size;
   /// Serialized size multiplied by this to estimate
   /// memory used by request
-  const size_t       bloat_factor;
-  const size_t       max_memory;
+  const uint64_t     bloat_factor;
+  const uint64_t     max_memory;
   seastar::semaphore resources_available;
   // TODO(agallego) - rename to connection drain accept()
   seastar::gate reply_gate;
 
 
-  seastar::future<> wait_for_payload_resources(size_t payload_size) {
+  seastar::future<> wait_for_payload_resources(uint64_t payload_size) {
     return wait_for_resources(estimate_request_size(payload_size));
   }
-  void release_payload_resources(size_t payload_size) {
+  void release_payload_resources(uint64_t payload_size) {
     release_resources(estimate_request_size(payload_size));
   }
 
@@ -50,9 +49,9 @@ struct rpc_connection_limits {
   /// If you use manually, be careful not to leak resources
   /// Please try to use wait_for_payload_resources()
   /// and release_payload_resources()
-  size_t estimate_request_size(size_t serialized_size);
-  seastar::future<> wait_for_resources(size_t memory_consumed);
-  void release_resources(size_t memory_consumed);
+  uint64_t estimate_request_size(uint64_t serialized_size);
+  seastar::future<> wait_for_resources(uint64_t memory_consumed);
+  void release_resources(uint64_t memory_consumed);
 };
 std::ostream &operator<<(std::ostream &o, const rpc_connection_limits &l);
 

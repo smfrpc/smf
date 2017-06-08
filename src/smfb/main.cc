@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <core/app-template.hh>
+#include <core/prometheus.hh>
 
 #include "chain_replication/chain_replication_service.h"
 #include "filesystem/wal.h"
@@ -31,7 +32,6 @@ int main(int argc, char **argv, char **env) {
   seastar::distributed<smf::rpc_server>          rpc;
   seastar::distributed<smf::write_ahead_log>     log;
   std::unique_ptr<smf::rpc_server_stats_printer> rpc_printer;
-
 
   seastar::app_template app;
 
@@ -82,7 +82,7 @@ int main(int argc, char **argv, char **env) {
                         &smf::rpc_server::copy_histogram)
             .then([](smf::histogram h) {
               return smf::histogram_seastar_utils::write_histogram(
-                "server_hdr.txt", std::move(h));
+                "server_hdr.hgrm", std::move(h));
             });
         });
       }
@@ -114,10 +114,9 @@ int main(int argc, char **argv, char **env) {
         })
         .then([&log] { return log.invoke_on_all(&smf::write_ahead_log::open); })
         .then([&rpc, &rpc_stats, &config] {
-          const uint16_t port  = config["port"].as<uint16_t>();
-          uint32_t       flags = smf::rpc_server_flags::rpc_server_flags_none;
-          LOG_INFO("Building RPC, port:{}, flags:{}", port, flags);
-          return rpc.start(&rpc_stats, port, flags);
+          smf::rpc_server_args args;
+          args.rpc_port = config["port"].as<uint16_t>();
+          return rpc.start(&rpc_stats, args);
         })
         .then([&rpc, &log] {
           LOG_INFO("Registering smf::chains::chain_replication_service");

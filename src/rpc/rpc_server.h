@@ -6,6 +6,7 @@
 #include <type_traits>
 // seastar
 #include <core/distributed.hh>
+#include <http/httpd.hh>
 // smf
 #include "histogram/histogram.h"
 #include "platform/macros.h"
@@ -17,14 +18,18 @@
 
 namespace smf {
 
-// XXX(agallego)- add lineage failures to the connection parsing
-enum rpc_server_flags : uint32_t { rpc_server_flags_none = 0 };
+enum rpc_server_flags : uint32_t { rpc_server_flags_disable_http_server = 1 };
+
+struct rpc_server_args {
+  uint16_t rpc_port = 11225;
+  uint16_t http_port = 33140;
+  uint32_t flags    = 0;
+};
 
 class rpc_server {
  public:
   rpc_server(seastar::distributed<rpc_server_stats> *stats,
-             uint16_t                                port,
-             uint32_t                                flags);
+             rpc_server_args                         args);
   ~rpc_server();
 
   void              start();
@@ -62,9 +67,10 @@ class rpc_server {
     seastar::lw_shared_ptr<rpc_server_connection> conn, rpc_recv_context &&ctx);
 
  private:
+  seastar::distributed<rpc_server_stats> *stats_;
+  const rpc_server_args                   args_;
+
   seastar::lw_shared_ptr<seastar::server_socket> listener_;
-  seastar::distributed<rpc_server_stats> *       stats_;
-  const uint16_t                                 port_;
   rpc_handle_router                              routes_;
 
   using in_filter_t =
@@ -79,6 +85,8 @@ class rpc_server {
 
   std::unique_ptr<rpc_connection_limits> limits_ =
     std::make_unique<rpc_connection_limits>();
+
+  seastar::lw_shared_ptr<seastar::http_server> admin_ = nullptr;
 
  private:
   friend std::ostream &operator<<(std::ostream &, const smf::rpc_server &);

@@ -54,7 +54,7 @@ constexpr uint32_t max_flatbuffers_size() {
   // 2GB - 1 is the max a flatbuffers::vector<uint8_t> can hold
   //
   // needed so that we have access to the internal typedefs
-  using namespace flatbuffers;
+  using namespace flatbuffers;  // NOLINT
   return static_cast<uint32_t>(FLATBUFFERS_MAX_BUFFER_SIZE);
 }
 

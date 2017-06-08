@@ -1,6 +1,9 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #include "rpc/rpc_server.h"
+
+#include <core/prometheus.hh>
+
 #include "histogram/histogram_seastar_utils.h"
 #include "platform/log.h"
 #include "rpc/rpc_envelope.h"
@@ -9,23 +12,43 @@
 namespace smf {
 
 std::ostream &operator<<(std::ostream &o, const smf::rpc_server &s) {
-  o << "rpc_server{flags=" << s.flags_ << ", port=" << s.port_
-    << ", routes=" << s.routes_ << ", limits=" << *s.limits_.get() << "}";
+  o << "rpc_server{args.flags=" << s.args_.flags
+    << ", args.rpc_port=" << s.args_.rpc_port
+    << ", args.http_port=" << s.args_.http_port << ", rpc_routes=" << s.routes_
+    << ", limits=" << *s.limits_.get() << "}";
   return o;
 }
 
 rpc_server::rpc_server(seastar::distributed<rpc_server_stats> *stats,
-                       uint16_t                                port,
-                       uint32_t                                flags)
-  : stats_(THROW_IFNULL(stats)), port_(port), flags_(flags) {}
+                       rpc_server_args                         args)
+  : stats_(THROW_IFNULL(stats)), args_(args) {}
 
 rpc_server::~rpc_server() {}
 
 void rpc_server::start() {
   LOG_INFO("Starging server:{}", *this);
+  if (!(args_.flags & rpc_server_flags_disable_http_server)) {
+    LOG_INFO("Starting HTTP admin server on background future");
+    admin_ = seastar::make_lw_shared<seastar::http_server>("smf admin server");
+    LOG_INFO("HTTP server started, adding prometheus routes");
+    seastar::prometheus::config conf;
+    conf.metric_help = "smf-broker statistics";
+    conf.prefix      = "smf";
+    // start on background co-routine
+    seastar::prometheus::add_prometheus_routes(*admin_, conf).then([
+      http_port = args_.http_port, admin = admin_
+    ]() {
+      return admin->listen(seastar::ipv4_addr{"127.0.0.1", http_port})
+        .handle_exception([](auto ep) {
+          LOG_ERROR("Exception on HTTP Admin: {}", ep);
+          return seastar::make_exception_future<>(ep);
+        });
+    });
+  }
+  LOG_INFO("Starting RPC Server...");
   seastar::listen_options lo;
   lo.reuse_address = true;
-  listener_        = seastar::listen(seastar::make_ipv4_address({port_}), lo);
+  listener_ = seastar::listen(seastar::make_ipv4_address({args_.rpc_port}), lo);
   seastar::keep_doing([this] {
     return listener_->accept().then([this](
       seastar::connected_socket fd, seastar::socket_address addr) mutable {
@@ -38,18 +61,22 @@ void rpc_server::start() {
     // Current and future \ref accept() calls will terminate immediately
     // with an error after listener_->abort_accept().
     // prevent future connections
-    try {
-      std::rethrow_exception(ep);
-    } catch (const std::exception &e) {
-      LOG_WARN("Server stopped accepting connections: `{}`", e.what());
-    }
+    LOG_WARN("Server stopped accepting connections: `{}`", ep);
   });
 }
 
 seastar::future<> rpc_server::stop() {
   LOG_WARN("Stopping rpc server: aborting future accept() calls");
   listener_->abort_accept();
-  return limits_->reply_gate.close();
+  return limits_->reply_gate.close().then([admin = admin_] {
+    if (!admin) {
+      return seastar::make_ready_future<>();
+    }
+    return admin->stop().handle_exception([](auto ep) {
+      LOG_WARN("Error (ignoring...) shutting down HTTP server: {}", ep);
+      return seastar::make_ready_future<>();
+    });
+  });
 }
 
 seastar::future<> rpc_server::handle_client_connection(
