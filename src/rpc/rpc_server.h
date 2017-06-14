@@ -21,9 +21,9 @@ namespace smf {
 enum rpc_server_flags : uint32_t { rpc_server_flags_disable_http_server = 1 };
 
 struct rpc_server_args {
-  uint16_t rpc_port = 11225;
+  uint16_t rpc_port  = 11225;
   uint16_t http_port = 33140;
-  uint32_t flags    = 0;
+  uint32_t flags     = 0;
 };
 
 class rpc_server {
