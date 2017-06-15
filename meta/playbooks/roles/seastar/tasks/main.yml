@@ -36,17 +36,14 @@
 
 - name: Sync soure from git
   git:
-    # seastar has a pending patch when they merge my patch, we can use the original git repo
-    # https://groups.google.com/forum/#!topic/seastar-dev/37Ds8_CeQSA 
-    # repo='https://github.com/scylladb/seastar.git'
-    repo='https://github.com/senior7515/seastar.git'
+    repo='https://github.com/scylladb/seastar.git'
     accept_hostkey=yes
     clone=yes
     dest='{{goobly_cache_dir}}/seastar'
     update=yes
     recursive=yes
     force=yes
-    version='9b9224'
+    version='243f45e'
 
 - name: configure sources with dpdk enabled
   command: ./configure.py --enable-dpdk
