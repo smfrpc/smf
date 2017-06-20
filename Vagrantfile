@@ -18,9 +18,9 @@ nice -n 19 ./tmp/bin/ansible-playbook playbooks/devbox_all.yml
 
 SCRIPT
 
-
+git_branch=`git rev-parse --abbrev-ref HEAD `
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  config.vm.hostname = "smurf"
+  config.vm.hostname = "smurf" + "." + git_branch.gsub(/[/,:()]/ , '.')
   config.vm.box = "fedora/25-cloud-base"
   config.ssh.keep_alive = true
   # From https://fedoraproject.org/wiki/Vagrant, setup vagrant-hostmanager

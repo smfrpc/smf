@@ -1,7 +1,11 @@
 #!/bin/bash
 
 set -ex
-export VAGRANT_LOG=info
+echo "usage: provision_vagrant.sh (debug|quiet)?"
+if [[ $1 == "debug" ]]; then
+    export VAGRANT_LOG=info
+fi
+
 export PYTHONUNBUFFERED=1
 
 system="darwin"
