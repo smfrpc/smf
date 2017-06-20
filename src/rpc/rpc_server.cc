@@ -115,7 +115,8 @@ seastar::future<> rpc_server::handle_client_connection(
                 });
               });  // end finally()
             })     //  parse_rpc_recv_context.then()
-            .handle_exception([this, conn](std::exception_ptr eptr) {
+            .handle_exception([this, conn](auto eptr) {
+              LOG_ERROR("Caught exception dispatching rpc: {}", eptr);
               conn->set_error("Exception parsing request ");
               return conn->ostream.close();
             });

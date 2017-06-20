@@ -105,15 +105,9 @@ seastar::future<wal_read_reply::maybe> wal_reader::get(wal_read_request r) {
                }
                return seastar::stop_iteration::no;
              })
-             .handle_exception([req](std::exception_ptr eptr) {
-               try {
-                 if (eptr) {
-                   std::rethrow_exception(eptr);
-                 }
-               } catch (const std::exception &e) {
-                 LOG_ERROR("Caught exception: {}. Offset:{}, size:{}", e.what(),
-                           req->offset, req->size);
-               }
+             .handle_exception([req](auto eptr) {
+               LOG_ERROR("Caught exception: {}. Offset:{}, size:{}", eptr,
+                         req->offset, req->size);
                return seastar::stop_iteration::yes;
              });
          })

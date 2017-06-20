@@ -194,17 +194,6 @@ static void validate_payload(const fbs::wal::wal_header &           hdr,
                hdr, checksum);
 }
 
-static void print_parser_exception(
-  std::exception_ptr eptr, seastar::lw_shared_ptr<wal_read_request> req) {
-  if (eptr) {
-    try {
-      std::rethrow_exception(eptr);
-    } catch (const std::exception &e) {
-      LOG_ERROR("Caught exception: {}. Offset:{}, size:{}", e.what(),
-                req->offset, req->size);
-    }
-  }
-}
 seastar::future<seastar::lw_shared_ptr<wal_read_reply>>
 wal_clock_pro_cache::do_read(wal_read_request r) {
   using ret_type = seastar::lw_shared_ptr<wal_read_reply>;
@@ -240,13 +229,15 @@ wal_clock_pro_cache::do_read(wal_read_request r) {
                    }
                    return seastar::stop_iteration::no;
                  })
-                 .handle_exception([req](std::exception_ptr eptr) {
-                   print_parser_exception(eptr, req);
+                 .handle_exception([req](auto eptr) {
+                   LOG_ERROR("Caught exception: {}. Offset:{}, size:{}", eptr,
+                             req->offset, req->size);
                    return seastar::stop_iteration::no;
                  });
              })
-             .handle_exception([req](std::exception_ptr eptr) {
-               print_parser_exception(eptr, req);
+             .handle_exception([req](auto eptr) {
+               LOG_ERROR("Caught exception: {}. Offset:{}, size:{}", eptr,
+                         req->offset, req->size);
                return seastar::stop_iteration::no;
              });
          })

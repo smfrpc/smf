@@ -43,8 +43,8 @@ chain_replication_service::put(
       return seastar::make_ready_future<smf::rpc_typed_envelope<tx_put_reply>>(
         std::move(data));
     })
-    .handle_exception([](std::exception_ptr eptr) {
-      LOG_ERROR("Error saving smf::chains::sput()");
+    .handle_exception([](auto eptr) {
+      LOG_ERROR("Error saving smf::chains::sput(): {}", eptr);
       smf::rpc_typed_envelope<tx_put_reply> data;
       data.envelope.set_status(501);
       return seastar::make_ready_future<smf::rpc_typed_envelope<tx_put_reply>>(
