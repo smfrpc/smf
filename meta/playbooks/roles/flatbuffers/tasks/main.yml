@@ -8,7 +8,7 @@
     update=yes
     recursive=yes
     force=yes
-    version='398ae0c'
+    version='6f94fb5'
 
 - file:
     path='{{goobly_cache_dir}}/flatbuffers/build'
