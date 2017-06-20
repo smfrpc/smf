@@ -30,11 +30,11 @@ add_custom_command (
 add_executable(rpc
   ${PROJECT_SOURCE_DIR}/src/flatbuffers/demo_service.smf.fb.h
   ${IT_ROOT}/rpc/main.cc)
-target_link_libraries(rpc smfrpc)
+target_link_libraries(rpc smf_rpc)
 register_integration_test(rpc ${IT_ROOT}/rpc)
 
 add_executable(wal ${IT_ROOT}/wal/main.cc)
-target_link_libraries(wal smf_filesystem smfrpc)
+target_link_libraries(wal smf_filesystem smf_rpc)
 register_integration_test(wal ${IT_ROOT}/wal)
 
 add_executable(clock_pro ${IT_ROOT}/wal_clock_pro_cache/main.cc)

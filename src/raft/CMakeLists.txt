@@ -6,4 +6,4 @@ add_custom_command (
   )
 add_library (raft STATIC
   ${PROJECT_SOURCE_DIR}/src/flatbuffers/raft.smf.fb.h)
-target_link_libraries (raft smfrpc)
+target_link_libraries (raft smf_rpc)

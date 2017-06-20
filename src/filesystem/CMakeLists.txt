@@ -18,7 +18,7 @@ add_library (smf_filesystem STATIC
 #   ${PROJECT_SOURCE_DIR}/src/flatbuffers/wal_generated.fb.h)
 target_link_libraries (smf_filesystem
   smf_utils
-  smftracing
+  smf_tracing
   xxhash_static
   zstd.a
   re2

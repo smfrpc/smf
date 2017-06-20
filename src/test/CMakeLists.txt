@@ -23,7 +23,7 @@ set(ALL_TESTS ${FAST_TESTS})
 
 
 add_executable (simple_flatbuffers_tests ${TEST_ROOT}/flatbuffers/simple.cc)
-target_link_libraries(simple_flatbuffers_tests -lgtest smfrpc)
+target_link_libraries(simple_flatbuffers_tests -lgtest smf_rpc)
 register_fast_test (simple_flatbuffers_tests ${TEST_ROOT}/flatbuffers)
 
 add_executable(wal_epoch_extractor
