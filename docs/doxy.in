@@ -2,10 +2,10 @@ PROJECT_NAME           = "SMF"
 # filled via cmake
 INPUT                  = @PROJECT_SOURCE_DIR@/src 
 RECURSIVE              = YES
-EXCLUDE_PATTERNS       = @PROJECT_SOURCE_DIR@/src/thrid_party/*
+EXCLUDE_PATTERNS       = @PROJECT_SOURCE_DIR@/src/third_party/*
 EXCLUDE_PATTERNS      += @PROJECT_SOURCE_DIR@/src/test/*
 EXCLUDE_PATTERNS      += @PROJECT_SOURCE_DIR@/src/alf_tests/*
-EXCLUDE_PATTERNS      += @PROJECT_SOURCE_DIR@/src/integration_test/*
+EXCLUDE_PATTERNS      += @PROJECT_SOURCE_DIR@/src/integration_tests/*
 EXCLUDE_PATTERNS      += @PROJECT_SOURCE_DIR@/src/flatbuffers/*
 # out to current build directory in cmake 
 OUTPUT_DIRECTORY       = @CMAKE_CURRENT_BINARY_DIR@ 
