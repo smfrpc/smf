@@ -1,8 +1,10 @@
 // Copyright 2017 Alexander Gallego
 //
 #pragma once
+
 #include <random>
-#include <string>
+
+#include <core/sstring.hh>
 
 namespace smf {
 class random {
@@ -12,7 +14,7 @@ class random {
 
   uint64_t next();
 
-  std::basic_string<char> next_str(uint32_t size);
+  seastar::sstring next_str(uint32_t size);
 
  private:
   std::mt19937 rand_;
