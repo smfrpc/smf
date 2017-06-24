@@ -20,6 +20,7 @@ add_executable(histograms ${IT_ROOT}/histograms/main.cc)
 target_link_libraries(histograms smf_filesystem)
 register_integration_test(histograms ${IT_ROOT}/histograms)
 
+## Multiple tests depend on this custom command
 
 add_custom_command (
   OUTPUT ${PROJECT_SOURCE_DIR}/src/flatbuffers/demo_service.smf.fb.h
@@ -27,11 +28,19 @@ add_custom_command (
   DEPENDS smf_gen
   DEPENDS ${PROJECT_SOURCE_DIR}/src/flatbuffers/demo_service.fbs
   )
+# BOTH tests depend on the custom_command
 add_executable(rpc
   ${PROJECT_SOURCE_DIR}/src/flatbuffers/demo_service.smf.fb.h
   ${IT_ROOT}/rpc/main.cc)
 target_link_libraries(rpc smf_rpc)
 register_integration_test(rpc ${IT_ROOT}/rpc)
+add_executable(rpc_recv_timeout
+  ${PROJECT_SOURCE_DIR}/src/flatbuffers/demo_service.smf.fb.h
+  ${IT_ROOT}/rpc_recv_timeout/main.cc)
+target_link_libraries(rpc_recv_timeout smf_rpc)
+register_integration_test(rpc_recv_timeout ${IT_ROOT}/rpc_recv_timeout)
+
+
 
 add_executable(wal ${IT_ROOT}/wal/main.cc)
 target_link_libraries(wal smf_filesystem smf_rpc)

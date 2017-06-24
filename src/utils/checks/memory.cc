@@ -21,8 +21,8 @@ void memory::check(bool ignore) {
 
   std::stringstream ss;
   ss << "Memory below recommended: `";
-  smf::human_bytes(ss, kMinMemory) << "'. Actual is: `";
-  smf::human_bytes(ss, shard_mem) << "'";
+  smf::human_bytes::print(ss, kMinMemory) << "'. Actual is: `";
+  smf::human_bytes::print(ss, shard_mem) << "'";
   LOG_THROW_IF(!ignore, "{}", ss.str());
   LOG_ERROR_IF(ignore, "{}", ss.str());
 }

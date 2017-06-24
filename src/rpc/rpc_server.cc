@@ -21,7 +21,12 @@ std::ostream &operator<<(std::ostream &o, const smf::rpc_server &s) {
   return o;
 }
 
-rpc_server::rpc_server(rpc_server_args args) : args_(args) {
+rpc_server::rpc_server(rpc_server_args args)
+  : args_(args)
+  , limits_(new rpc_connection_limits(args.basic_req_size,
+                                      args.bloat_mult,
+                                      args.memory_avail_per_core,
+                                      args.recv_timeout)) {
   namespace sm = seastar::metrics;
   metrics_.add_group(
     "smf::rpc_server",
