@@ -44,8 +44,14 @@ seastar::future<seastar::temporary_buffer<char>> read_payload(
     return conn->istream.read_exactly(payload_size);
   } else {
     return limits->wait_for_payload_resources(payload_size)
-      .then([payload_size, conn]() {
-        return conn->istream.read_exactly(payload_size);
+      .then([payload_size, conn, limits]() {
+        // set timeout in the limits
+        // by default 1minute to read this connection.
+        // else we expire and throw an exception
+        limits->set_body_parsing_timeout();
+        return conn->istream.read_exactly(payload_size).finally([limits] {
+          limits->cancel_body_parsing_timeout();
+        });
       });
   }
 }

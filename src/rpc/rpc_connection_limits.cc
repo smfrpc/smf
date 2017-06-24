@@ -32,6 +32,27 @@ seastar::future<> rpc_connection_limits::wait_for_resources(
 void rpc_connection_limits::release_resources(size_t memory_consumed) {
   resources_available.signal(memory_consumed);
 }
+void rpc_connection_limits::release_payload_resources(uint64_t payload_size) {
+  release_resources(estimate_request_size(payload_size));
+}
+
+seastar::future<> rpc_connection_limits::wait_for_payload_resources(
+  uint64_t payload_size) {
+  return wait_for_resources(estimate_request_size(payload_size));
+}
+void rpc_connection_limits::set_body_parsing_timeout() {
+  using namespace std::chrono_literals;
+  body_timeout_.set_callback([] {
+    auto msg = "Parsing the body of the connection took more than 1minute. "
+               "Timeout exceeded";
+    throw std::runtime_error(msg);
+  });
+  body_timeout_.arm(1min);
+}
+void rpc_connection_limits::cancel_body_parsing_timeout() {
+  body_timeout_.cancel();
+}
+
 
 rpc_connection_limits::~rpc_connection_limits() {}
 
