@@ -38,7 +38,7 @@ register_fast_test (file_size_utils ${TEST_ROOT}/file_size_utils)
 
 add_executable(human_bytes_printing_utils
   ${TEST_ROOT}/human_bytes_printing_utils/main.cc)
-target_link_libraries(human_bytes_printing_utils -lgtest)
+target_link_libraries(human_bytes_printing_utils -lgtest smf_filesystem) # fugazi
 register_fast_test (human_bytes_printing_utils
   ${TEST_ROOT}/human_bytes_printing_utils)
 

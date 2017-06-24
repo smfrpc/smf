@@ -15,7 +15,7 @@
 #include "rpc/rpc_filter.h"
 #include "rpc/rpc_handle_router.h"
 #include "rpc/rpc_server.h"
-
+#include "utils/random.h"
 // templates
 #include "flatbuffers/demo_service.smf.fb.h"
 
@@ -87,7 +87,15 @@ void cli_opts(boost::program_options::options_description_easy_init o) {
   o("ip", po::value<std::string>()->default_value("127.0.0.1"),
     "ip to connect to");
 
-  o("port", po::value<uint16_t>()->default_value(11225), "port for service");
+  smf::random rand;
+  o("port", po::value<uint16_t>()->default_value(
+              rand.next() % std::numeric_limits<uint16_t>::max()),
+    "port for service");
+
+  o("httpport", po::value<uint16_t>()->default_value(
+                  rand.next() % std::numeric_limits<uint16_t>::max()),
+    "port for http stats service");
+
 
   o("req-num", po::value<uint32_t>()->default_value(100),
     "number of request per concurrenct connection");
@@ -115,7 +123,9 @@ int main(int args, char **argv, char **env) {
     auto &cfg = app.configuration();
 
     smf::rpc_server_args args;
-    args.rpc_port = cfg["port"].as<uint16_t>();
+    args.rpc_port  = cfg["port"].as<uint16_t>();
+    args.http_port = cfg["httpport"].as<uint16_t>();
+    args.flags |= smf::rpc_server_flags::rpc_server_flags_disable_http_server;
     return rpc.start(args)
       .then([&rpc] {
         DLOG_DEBUG("Registering smf_gen::demo::storage_service");

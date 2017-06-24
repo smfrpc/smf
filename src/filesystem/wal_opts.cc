@@ -115,9 +115,9 @@ wal_opts &wal_opts::operator=(const wal_opts &o) {
 
 std::ostream &operator<<(std::ostream &o, const wal_opts &opts) {
   o << "cache_stats{directory=" << opts.directory << ",cache_size=";
-  human_bytes(o, opts.cache_size) << ",rstats=" << opts.rstats
-                                  << ",wstats=" << opts.wstats
-                                  << ",cstats=" << opts.cstats << "}";
+  human_bytes::print(o, opts.cache_size) << ",rstats=" << opts.rstats
+                                         << ",wstats=" << opts.wstats
+                                         << ",cstats=" << opts.cstats << "}";
   return o;
 }
 }  // namespace smf

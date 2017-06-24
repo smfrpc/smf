@@ -14,7 +14,19 @@ namespace smf {
 rpc_client::rpc_client(seastar::ipv4_addr addr)
   : server_addr(std::move(addr)) {}
 
-seastar::future<> rpc_client::stop() { return seastar::make_ready_future(); }
+seastar::future<> rpc_client::stop() {
+  if (conn_) {
+    return conn_->istream.close().then([this] {
+      return conn_->ostream.flush().then([this]() {
+        return conn_->ostream.close().finally([this] {
+          conn_->socket.shutdown_output();
+          conn_->socket.shutdown_input();
+        });
+      });
+    });
+  }
+  return seastar::make_ready_future<>();
+}
 rpc_client::~rpc_client() {}
 
 void rpc_client::enable_histogram_metrics(bool enable) {

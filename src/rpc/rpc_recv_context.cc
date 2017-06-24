@@ -44,8 +44,25 @@ seastar::future<seastar::temporary_buffer<char>> read_payload(
     return conn->istream.read_exactly(payload_size);
   } else {
     return limits->wait_for_payload_resources(payload_size)
-      .then([payload_size, conn]() {
-        return conn->istream.read_exactly(payload_size);
+      .then([payload_size, conn, limits]() {
+        // set timeout
+        seastar::timer<> body_timeout;
+        body_timeout.set_callback(
+          [max_timeout = limits->max_body_parsing_duration, conn] {
+            LOG_ERROR(
+              "Parsing the body of the connnection exceeded max_timeout: {}ms",
+              std::chrono::duration_cast<std::chrono::milliseconds>(max_timeout)
+                .count());
+            conn->set_error("Connection body parsing exceeded timeout");
+            conn->socket.shutdown_input();
+          });
+        body_timeout.arm(limits->max_body_parsing_duration);
+        return conn->istream.read_exactly(payload_size)
+          .then([body_timeout = std::move(body_timeout)](auto payload) mutable {
+            body_timeout.cancel();
+            return seastar::make_ready_future<decltype(payload)>(
+              std::move(payload));
+          });
       });
   }
 }

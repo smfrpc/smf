@@ -76,7 +76,7 @@ def run_subprocess(cmd, cfg, environ):
 
     os.chdir(cfg["execution_directory"])
     proc = subprocess.Popen(
-        cmd,
+        "exec %s" % cmd,
         stdout=sys.stdout,
         stderr=sys.stderr,
         env=environ,
