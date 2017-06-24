@@ -2,6 +2,8 @@
 //
 #include "rpc/rpc_server.h"
 
+// seastar
+#include <core/metrics.hh>
 #include <core/prometheus.hh>
 
 #include "histogram/histogram_seastar_utils.h"
@@ -19,9 +21,34 @@ std::ostream &operator<<(std::ostream &o, const smf::rpc_server &s) {
   return o;
 }
 
-rpc_server::rpc_server(seastar::distributed<rpc_server_stats> *stats,
-                       rpc_server_args                         args)
-  : stats_(THROW_IFNULL(stats)), args_(args) {}
+rpc_server::rpc_server(rpc_server_args args) : args_(args) {
+  namespace sm = seastar::metrics;
+  metrics_.add_group(
+    "smf::rpc_server",
+    {
+      sm::make_derive("active_connections", stats_.active_connections,
+                      sm::description("Currently active connections")),
+      sm::make_derive("total_connections", stats_.total_connections,
+                      sm::description("Counts a total connetions")),
+      sm::make_derive("incoming_bytes", stats_.in_bytes,
+                      sm::description("Total bytes received of healthy "
+                                      "connections - ignores bad connections")),
+      sm::make_derive("outgoing_bytes", stats_.out_bytes,
+                      sm::description("Total bytes sent to clients")),
+      sm::make_derive("bad_requests", stats_.bad_requests,
+                      sm::description("Bad requests")),
+      sm::make_derive(
+        "no_route_requests", stats_.no_route_requests,
+        sm::description(
+          "Requests made to this sersvice with correct header but no handler")),
+      sm::make_derive("completed_requests", stats_.completed_requests,
+                      sm::description("Correct round-trip returned responses")),
+      sm::make_derive(
+        "too_large_requests", stats_.too_large_requests,
+        sm::description(
+          "Requests made to this server larger than max allowedd (2GB)")),
+    });
+}
 
 rpc_server::~rpc_server() {}
 
@@ -53,7 +80,7 @@ void rpc_server::start() {
     return listener_->accept().then([this](
       seastar::connected_socket fd, seastar::socket_address addr) mutable {
       auto conn = seastar::make_lw_shared<rpc_server_connection>(
-        std::move(fd), std::move(addr), stats_);
+        std::move(fd), std::move(addr), &stats_);
       // DO NOT return the future. Need to execute in parallel
       handle_client_connection(conn);
     });
@@ -103,13 +130,13 @@ seastar::future<> rpc_server::handle_client_connection(
                   if (conn->has_error()) {
                     LOG_ERROR("There was an error with the connection: {}",
                               conn->get_error());
-                    stats_->local().bad_requests++;
-                    stats_->local().active_connections--;
+                    stats_.bad_requests++;
+                    stats_.active_connections--;
                     LOG_INFO("Closing connection for client: {}",
                              conn->remote_address);
                     return conn->ostream.close();
                   } else {
-                    stats_->local().completed_requests++;
+                    stats_.completed_requests++;
                     return seastar::make_ready_future<>();
                   }
                 });
@@ -132,11 +159,11 @@ seastar::future<> rpc_server::dispatch_rpc(
   }
   if (!routes_.can_handle_request(ctx.request_id(),
                                   ctx.payload->dynamic_headers())) {
-    stats_->local().no_route_requests++;
+    stats_.no_route_requests++;
     conn->set_error("Can't find route for request. Invalid");
     return seastar::make_ready_future<>();
   }
-  stats_->local().in_bytes += ctx.header_buf.size() + ctx.body_buf.size();
+  stats_.in_bytes += ctx.header_buf.size() + ctx.body_buf.size();
 
 
   /// the request follow [filters] -> handle -> [filters]
@@ -155,7 +182,7 @@ seastar::future<> rpc_server::dispatch_rpc(
                      == rpc_letter_type::rpc_letter_type_payload) {
                    e.letter.mutate_payload_to_binary();
                  }
-                 stats_->local().out_bytes +=
+                 stats_.out_bytes +=
                    e.letter.body.size() + rpc_envelope::kHeaderSize;
                  return smf::rpc_envelope::send(&conn->ostream, std::move(e));
                });

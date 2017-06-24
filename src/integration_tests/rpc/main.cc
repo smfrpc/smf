@@ -15,7 +15,6 @@
 #include "rpc/rpc_filter.h"
 #include "rpc/rpc_handle_router.h"
 #include "rpc/rpc_server.h"
-#include "rpc/rpc_server_stats_printer.h"
 
 // templates
 #include "flatbuffers/demo_service.smf.fb.h"
@@ -101,10 +100,8 @@ void cli_opts(boost::program_options::options_description_easy_init o) {
 int main(int args, char **argv, char **env) {
   // SET_LOG_LEVEL(seastar::log_level::debug);
   DLOG_DEBUG("About to start the RPC test");
-  seastar::distributed<smf::rpc_server_stats> stats;
-  seastar::distributed<smf::rpc_server>       rpc;
-  seastar::distributed<load_gen_t>            load;
-  smf::rpc_server_stats_printer               stats_printer(&stats);
+  seastar::distributed<smf::rpc_server> rpc;
+  seastar::distributed<load_gen_t>      load;
 
   seastar::app_template app;
 
@@ -112,28 +109,18 @@ int main(int args, char **argv, char **env) {
 
   return app.run(args, argv, [&]() -> seastar::future<int> {
     DLOG_DEBUG("Setting up at_exit hooks");
-    seastar::engine().at_exit([&] { return stats_printer.stop(); });
-    seastar::engine().at_exit([&] { return stats.stop(); });
     seastar::engine().at_exit([&] { return rpc.stop(); });
     seastar::engine().at_exit([&] { return load.stop(); });
 
     auto &cfg = app.configuration();
 
-    DLOG_DEBUG("starting stats");
-    return stats.start()
-      .then([&stats_printer] {
-        DLOG_DEBUG("Starting printer");
-        stats_printer.start();
-        return seastar::make_ready_future<>();
-      })
-      .then([&rpc, &stats, &cfg] {
-        smf::rpc_server_args args;
-        args.rpc_port = cfg["port"].as<uint16_t>();
-        return rpc.start(&stats, args).then([&rpc] {
-          DLOG_DEBUG("Registering smf_gen::demo::storage_service");
-          return rpc.invoke_on_all(
-            &smf::rpc_server::register_service<storage_service>);
-        });
+    smf::rpc_server_args args;
+    args.rpc_port = cfg["port"].as<uint16_t>();
+    return rpc.start(args)
+      .then([&rpc] {
+        DLOG_DEBUG("Registering smf_gen::demo::storage_service");
+        return rpc.invoke_on_all(
+          &smf::rpc_server::register_service<storage_service>);
       })
       .then([&rpc] {
         return rpc.invoke_on_all(

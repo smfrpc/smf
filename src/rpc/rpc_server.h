@@ -6,6 +6,7 @@
 #include <type_traits>
 // seastar
 #include <core/distributed.hh>
+#include <core/metrics_registration.hh>
 #include <http/httpd.hh>
 // smf
 #include "histogram/histogram.h"
@@ -15,6 +16,7 @@
 #include "rpc/rpc_filter.h"
 #include "rpc/rpc_handle_router.h"
 #include "rpc/rpc_server_connection.h"
+#include "rpc/rpc_server_stats.h"
 
 namespace smf {
 
@@ -28,8 +30,7 @@ struct rpc_server_args {
 
 class rpc_server {
  public:
-  rpc_server(seastar::distributed<rpc_server_stats> *stats,
-             rpc_server_args                         args);
+  explicit rpc_server(rpc_server_args args);
   ~rpc_server();
 
   void              start();
@@ -67,8 +68,7 @@ class rpc_server {
     seastar::lw_shared_ptr<rpc_server_connection> conn, rpc_recv_context &&ctx);
 
  private:
-  seastar::distributed<rpc_server_stats> *stats_;
-  const rpc_server_args                   args_;
+  const rpc_server_args args_;
 
   seastar::lw_shared_ptr<seastar::server_socket> listener_;
   rpc_handle_router                              routes_;
@@ -87,6 +87,9 @@ class rpc_server {
     std::make_unique<rpc_connection_limits>();
 
   seastar::lw_shared_ptr<seastar::http_server> admin_ = nullptr;
+
+  seastar::metrics::metric_groups metrics_{};
+  rpc_server_stats                stats_;
 
  private:
   friend std::ostream &operator<<(std::ostream &, const smf::rpc_server &);

@@ -10,7 +10,6 @@
 #include "histogram/histogram_seastar_utils.h"
 #include "platform/log.h"
 #include "rpc/rpc_server.h"
-#include "rpc/rpc_server_stats_printer.h"
 #include "smfb/smfb_command_line_options.h"
 #include "utils/checks/cpu.h"
 #include "utils/checks/disk.h"
@@ -28,10 +27,8 @@ void base_init(const boost::program_options::variables_map &config) {
 int main(int argc, char **argv, char **env) {
   std::setvbuf(stdout, nullptr, _IOLBF, 1024);
 
-  seastar::distributed<smf::rpc_server_stats>    rpc_stats;
-  seastar::distributed<smf::rpc_server>          rpc;
-  seastar::distributed<smf::write_ahead_log>     log;
-  std::unique_ptr<smf::rpc_server_stats_printer> rpc_printer;
+  seastar::distributed<smf::rpc_server>      rpc;
+  seastar::distributed<smf::write_ahead_log> log;
 
   seastar::app_template app;
 
@@ -41,17 +38,6 @@ int main(int argc, char **argv, char **env) {
 
     return app.run_deprecated(argc, argv, [&] {
       LOG_INFO("Setting up at_exit hooks");
-      seastar::engine().at_exit([&rpc_printer, &rpc] {
-        if (rpc_printer) {
-          LOG_INFO("Stopping rpc_printer");
-          return rpc_printer->stop();
-        }
-        return seastar::make_ready_future<>();
-      });
-      seastar::engine().at_exit([&rpc_stats] {
-        LOG_INFO("Stopping rpc_stats");
-        return rpc_stats.stop();
-      });
       seastar::engine().at_exit([&rpc] {
         LOG_INFO("Stopping RPC");
         return rpc.stop();
@@ -67,13 +53,6 @@ int main(int argc, char **argv, char **env) {
       base_init(app.configuration());
       auto &config = app.configuration();
 
-      if (config["print-rpc-stats"].as<bool>()) {
-        using min_t     = std::chrono::minutes;
-        using printer_t = smf::rpc_server_stats_printer;
-        auto mins       = min_t(config["rpc-stats-period-mins"].as<uint32_t>());
-        LOG_INFO("Enabling --print-rpc-stats every: {}min", mins.count());
-        rpc_printer = std::make_unique<printer_t>(&rpc_stats, mins);
-      }
       if (config["print-rpc-histogram-on-exit"].as<bool>()) {
         seastar::engine().at_exit([&rpc] {
           LOG_INFO("Writing rpc_server histograms");
@@ -94,18 +73,6 @@ int main(int argc, char **argv, char **env) {
       return smf::checks::disk::check(
                config["write-ahead-log-dir"].as<std::string>(),
                config["developer"].as<bool>())
-        .then([&rpc_stats] {
-          LOG_INFO("Setting up at_exit hooks");
-          return rpc_stats.start();
-        })
-        .then([&rpc_printer, &config] {
-          if (config["print-rpc-stats"].as<bool>()) {
-            auto rpc_period = config["rpc-stats-period-mins"].as<uint32_t>();
-            LOG_INFO("Starting stats, with period:{}", rpc_period);
-            rpc_printer->start();
-          }
-          return seastar::make_ready_future<>();
-        })
         .then([&log, &config] {
           auto dir = config["write-ahead-log-dir"].as<std::string>();
           LOG_INFO("Starting write-ahead-log in: `{}`", dir);
@@ -113,10 +80,10 @@ int main(int argc, char **argv, char **env) {
                            smf::wal_opts(dir.c_str()));
         })
         .then([&log] { return log.invoke_on_all(&smf::write_ahead_log::open); })
-        .then([&rpc, &rpc_stats, &config] {
+        .then([&rpc, &config] {
           smf::rpc_server_args args;
           args.rpc_port = config["port"].as<uint16_t>();
-          return rpc.start(&rpc_stats, args);
+          return rpc.start(args);
         })
         .then([&rpc, &log] {
           LOG_INFO("Registering smf::chains::chain_replication_service");
