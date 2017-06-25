@@ -15,6 +15,7 @@
 #include "rpc/rpc_filter.h"
 #include "rpc/rpc_handle_router.h"
 #include "rpc/rpc_server.h"
+#include "test_utils/non_root_port.h"
 #include "utils/random.h"
 // templates
 #include "flatbuffers/demo_service.smf.fb.h"
@@ -88,12 +89,12 @@ void cli_opts(boost::program_options::options_description_easy_init o) {
     "ip to connect to");
 
   smf::random rand;
-  o("port", po::value<uint16_t>()->default_value(
-              rand.next() % std::numeric_limits<uint16_t>::max()),
+  o("port", po::value<uint16_t>()->default_value(smf::non_root_port(
+              rand.next() % std::numeric_limits<uint16_t>::max())),
     "port for service");
 
-  o("httpport", po::value<uint16_t>()->default_value(
-                  rand.next() % std::numeric_limits<uint16_t>::max()),
+  o("httpport", po::value<uint16_t>()->default_value(smf::non_root_port(
+                  rand.next() % std::numeric_limits<uint16_t>::max())),
     "port for http stats service");
 
 

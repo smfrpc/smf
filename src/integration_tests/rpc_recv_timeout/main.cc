@@ -14,8 +14,8 @@
 #include "rpc/rpc_handle_router.h"
 #include "rpc/rpc_recv_context.h"
 #include "rpc/rpc_server.h"
+#include "test_utils/non_root_port.h"
 #include "utils/random.h"
-
 // templates
 #include "flatbuffers/demo_service.smf.fb.h"
 
@@ -38,15 +38,17 @@ int main(int args, char **argv, char **env) {
   seastar::app_template app;
 
   smf::random rand;
-  uint16_t    random_port = rand.next() % std::numeric_limits<uint16_t>::max();
+  uint16_t    random_port =
+    smf::non_root_port(rand.next() % std::numeric_limits<uint16_t>::max());
   return app.run(args, argv, [&]() -> seastar::future<int> {
     DLOG_DEBUG("Setting up at_exit hooks");
     seastar::engine().at_exit([&] { return rpc.stop(); });
 
     smf::random          r;
     smf::rpc_server_args sargs;
-    sargs.rpc_port  = random_port;
-    sargs.http_port = rand.next() % std::numeric_limits<uint16_t>::max();
+    sargs.rpc_port = random_port;
+    sargs.http_port =
+      smf::non_root_port(rand.next() % std::numeric_limits<uint16_t>::max());
     sargs.flags |= smf::rpc_server_flags::rpc_server_flags_disable_http_server;
     sargs.recv_timeout = std::chrono::milliseconds(1);  // immediately
     return rpc.start(sargs)
