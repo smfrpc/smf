@@ -110,8 +110,11 @@ class rpc_server {
 
   seastar::lw_shared_ptr<seastar::http_server> admin_ = nullptr;
 
-  seastar::metrics::metric_groups metrics_{};
-  rpc_server_stats                stats_;
+  seastar::metrics::metric_groups          metrics_{};
+  // connection counting happens in different future
+  // must survive this instance
+  seastar::lw_shared_ptr<rpc_server_stats> stats_ =
+    seastar::make_lw_shared<rpc_server_stats>();
 
  private:
   friend std::ostream &operator<<(std::ostream &, const smf::rpc_server &);
