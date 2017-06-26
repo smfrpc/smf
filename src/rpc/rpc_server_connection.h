@@ -59,13 +59,13 @@ struct rpc_server_connection_options {
 };
 class rpc_server_connection : public rpc_connection {
  public:
-  rpc_server_connection(seastar::connected_socket     sock,
-                        seastar::socket_address       address,
-                        rpc_server_stats *            stats,
-                        rpc_server_connection_options opts = {})
+  rpc_server_connection(seastar::connected_socket                sock,
+                        seastar::socket_address                  address,
+                        seastar::lw_shared_ptr<rpc_server_stats> stats,
+                        rpc_server_connection_options            opts = {})
     : rpc_connection(std::move(sock))
     , remote_address(address)
-    , stats_(THROW_IFNULL(stats))
+    , stats_(stats)
     , opts_(opts) {
     socket.set_nodelay(opts_.nodelay);
     if (opts_.keepalive) {
@@ -81,7 +81,7 @@ class rpc_server_connection : public rpc_connection {
   const seastar::socket_address remote_address;
 
  private:
-  rpc_server_stats *            stats_;
-  rpc_server_connection_options opts_;
+  seastar::lw_shared_ptr<rpc_server_stats> stats_;
+  rpc_server_connection_options            opts_;
 };
 }  // namespace smf
