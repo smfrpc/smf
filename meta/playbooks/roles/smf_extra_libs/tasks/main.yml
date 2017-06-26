@@ -1,7 +1,0 @@
----
-
-- name: extra libs for smf
-  become: yes
-  dnf: name='{{item}}'
-  with_items:
-    - re2-devel # rus cox's libs

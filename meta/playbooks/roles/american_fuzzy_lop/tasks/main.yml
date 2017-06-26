@@ -2,7 +2,6 @@
 
 - unarchive:
     src: "http://lcamtuf.coredump.cx/afl/releases/afl-2.39b.tgz"
-    copy: False
     dest: '{{goobly_cache_dir}}/'
     creates: '{{goobly_cache_dir}}/afl-2.39b'
     remote_src: True

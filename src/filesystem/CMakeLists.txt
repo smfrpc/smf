@@ -21,7 +21,7 @@ target_link_libraries (smf_filesystem
   smf_tracing
   xxhash_static
   zstd.a
-  re2
+  re2.a
   libroaring.a
   )
 
