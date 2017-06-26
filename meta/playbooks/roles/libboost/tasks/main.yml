@@ -1,0 +1,28 @@
+---
+
+- unarchive:
+    src: "https://dl.bintray.com/boostorg/release/1.64.0/source/boost_1_64_0.tar.gz"
+    dest: '{{goobly_cache_dir}}/'
+    creates: '{{goobly_cache_dir}}/boost_1_64_0'
+    remote_src: True
+
+- name: Bootstrap
+  shell:
+    ./bootstrap.sh --prefix="{{third_party_dir}}" 
+  args:
+    chdir: '{{goobly_cache_dir}}/boost_1_64_0'
+    creates: '{{goobly_cache_dir}}/boost_1_64_0/b2'
+
+- name: build
+  shell:
+    ./b2 --prefix="{{third_party_dir}}" --variant=release --link=static -j{{ansible_processor_vcpus}}
+  args:
+    chdir: '{{goobly_cache_dir}}/boost_1_64_0'
+    creates: '{{goobly_cache_dir}}/boost_1_64_0/stage/lib/libboost_filesystem.a' 
+
+- name: install
+  shell:
+    ./b2 install --prefix="{{third_party_dir}}"  
+  args:
+    chdir: '{{goobly_cache_dir}}/boost_1_64_0'
+    creates: '{{third_party_dir}}/lib/libboost_filesystem.a'

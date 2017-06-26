@@ -3,6 +3,7 @@
 - name: Install & build all development dependencies
   hosts: localhost
   roles:
+    - libboost          # utilities & needed by ALL projects
     - seastar           # futures/tasks/filesystem lib
     - flatbuffers       # serialization lib
     - xxhash            # fast hashing
