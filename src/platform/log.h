@@ -1,7 +1,7 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #pragma once
-#include <fmt/format.h>
+#include <fmt/printf.h>
 #include <util/log.hh>
 
 #include "platform/macros.h"

@@ -11,16 +11,16 @@ sudo dnf upgrade -y
 sudo dnf install -y git htop
 
 cd /vagrant/meta
-source source_ansible_bash
 
 echo $(pwd)
-nice -n 19 ./tmp/bin/ansible-playbook playbooks/devbox_all.yml
+. source_ansible_bash
+nice -n 19 ansible-playbook playbooks/devbox_all.yml
 
 SCRIPT
 
 git_branch=`git rev-parse --abbrev-ref HEAD `
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  config.vm.hostname = "smurf" + "." + git_branch.gsub(/[/,:()]/ , '.')
+  config.vm.hostname = "smurf" + "." + git_branch.gsub(/[\/,:()\s_]/ , '.')
   config.vm.box = "fedora/25-cloud-base"
   config.ssh.keep_alive = true
   # From https://fedoraproject.org/wiki/Vagrant, setup vagrant-hostmanager
