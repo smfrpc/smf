@@ -4,13 +4,16 @@ git_root=$(git rev-parse --show-toplevel)
 build_dir=$git_root/build_release
 nprocs=$(grep -c ^processor /proc/cpuinfo)
 
-echo "Generating version file"
-$git_root/misc/version.sh
-cat $git_root/src/version.h
+echo "./release quick"
+echo "To build and run tests only, no formatting, validation, etc"
 
-echo "Formatting files"
-$git_root/misc/format_files.sh
-
+if [[ $1 != "quick" ]]; then
+    echo "Generating version file"
+    $git_root/misc/version.sh
+    cat $git_root/src/version.h
+    echo "Formatting files"
+    $git_root/misc/format_files.sh
+fi
 
 mkdir -p $build_dir
 cd $build_dir
@@ -20,7 +23,7 @@ cmake --graphviz=$build_dir/dependencies.dot \
       -DCMAKE_BUILD_TYPE=Release $git_root
 
 #produce documentation
-cmake --build $build_dir --target doc
+[[ $1 != "quick" ]] && cmake --build $build_dir --target doc
 
 ninja-build -v
 ctest -V -j$nprocs --force-new-ctest-process
