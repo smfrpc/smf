@@ -12,6 +12,7 @@ add_library (smf_filesystem STATIC
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_writer_utils.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_pretty_print_utils.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_opts.cc
+  ${PROJECT_SOURCE_DIR}/src/filesystem/wal_writer_file_lease_impl.cc
   )
 
 # add_dependencies(smf_filesystem
