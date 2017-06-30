@@ -71,10 +71,15 @@ class wal_writer_node {
                                           wal_write_request);
 
  private:
-  wal_writer_node_opts                   opts_;
-  uint64_t                               current_size_ = 0;
-  std::unique_ptr<wal_writer_file_lease> lease_        = nullptr;
-  seastar::semaphore                     serialize_writes_{1};
+  wal_writer_node_opts opts_;
+  uint64_t             current_size_ = 0;
+  // the lease has to be a lw_shared_ptr because the object
+  // may go immediately out of existence, before we get a chance to close the
+  // file it needs to exist in the background fiber that closes the
+  // underlying file
+  //
+  seastar::lw_shared_ptr<wal_writer_file_lease> lease_ = nullptr;
+  seastar::semaphore                            serialize_writes_{1};
 };
 
 }  // namespace smf

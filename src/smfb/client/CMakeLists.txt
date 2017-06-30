@@ -1,5 +1,5 @@
 add_executable (smfb_client
   ${PROJECT_SOURCE_DIR}/src/smfb/client/main.cc
   )
-target_link_libraries (smfb_client smf_rpc cr)
+target_link_libraries (smfb_client smf_rpc smf_cr)
 install(TARGETS smfb_client RUNTIME DESTINATION bin)

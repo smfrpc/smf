@@ -4,7 +4,9 @@
 #include "flatbuffers/chain_replication.smf.fb.h"
 namespace smf {
 namespace chains {
-/** \brief map the request to the lcore that is going to handle the put */
+/// \brief map the request to the lcore that is going to handle the put
 uint32_t put_to_lcore(const tx_put_request *r);
+/// \brief map the request to the lcore that is going to handle the reads
+uint32_t get_to_lcore(const tx_get_request *r);
 }
 }
