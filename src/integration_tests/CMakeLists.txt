@@ -50,6 +50,15 @@ add_executable(clock_pro ${IT_ROOT}/wal_clock_pro_cache/main.cc)
 target_link_libraries(clock_pro smf_filesystem)
 register_integration_test(clock_pro ${IT_ROOT}/wal_writer)
 
+
+add_executable(chain_replication_utils
+  ${IT_ROOT}/chain_replication_utils/main.cc)
+target_link_libraries(chain_replication_utils smf_cr flatbuffers)
+register_fast_test (chain_replication_utils
+  ${IT_ROOT}/chain_replication_utils)
+
+
+
 add_custom_target(integration
   COMMAND ctest --output-on-failure
   DEPENDS ${IT_TESTS})

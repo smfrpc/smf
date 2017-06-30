@@ -8,7 +8,7 @@
 #include <core/reactor.hh>
 #include <zstd.h>
 // smf
-#include "filesystem/wal_writer_file_lease_impl.h"
+#include "filesystem/wal_writer_file_lease.h"
 #include "filesystem/wal_writer_utils.h"
 #include "hashing/hashing_utils.h"
 #include "platform/log.h"
@@ -40,10 +40,9 @@ wal_writer_node::wal_writer_node(wal_writer_node_opts &&opts)
 
 seastar::future<> wal_writer_node::open() {
   const auto name = wal_file_name(opts_.prefix, opts_.epoch);
-  LOG_THROW_IF(lease_ != nullptr,
-               "opening new file. Previous file is unclosed");
-  using lease_impl = smf::wal_writer_file_lease_impl;
-  lease_           = std::make_unique<lease_impl>(name, fstream_opts(opts_));
+  LOG_THROW_IF(lease_, "opening new file. Previous file is unclosed");
+  lease_ = seastar::make_lw_shared<smf::wal_writer_file_lease>(
+    name, fstream_opts(opts_));
   return lease_->open();
 }
 
@@ -144,23 +143,17 @@ seastar::future<> wal_writer_node::do_append(wal_write_request req) {
 }
 
 seastar::future<> wal_writer_node::close() {
-  return lease_->close().finally([this] { lease_ = nullptr; });
+  auto l = lease_;
+  return l->flush().then([l] { return l->close(); }).finally([l] {});
 }
 wal_writer_node::~wal_writer_node() {}
 seastar::future<> wal_writer_node::rotate_fstream() {
   LOG_INFO("rotating fstream");
-  return lease_->flush().then([this] {
-    lease_->close()
-      .finally([this] {
-        // clean up memory
-        lease_ = nullptr;
-        return seastar::make_ready_future<>();
-      })
-      .then([this] {
-        opts_.epoch += current_size_;
-        current_size_ = 0;
-        return open();
-      });
+  return close().then([this] {
+    lease_ = nullptr;
+    opts_.epoch += current_size_;
+    current_size_ = 0;
+    return open();
   });
 }
 
