@@ -23,7 +23,9 @@ cmake --graphviz=$build_dir/dependencies.dot \
       -DCMAKE_BUILD_TYPE=Release $git_root
 
 #produce documentation
-[[ $1 != "quick" ]] && cmake --build $build_dir --target doc
+if [[ $1 != "quick" ]]; then
+    cmake --build $build_dir --target doc
+fi
 
 ninja-build -v
 ctest -V -j$nprocs --force-new-ctest-process
