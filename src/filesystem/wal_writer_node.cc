@@ -143,18 +143,29 @@ seastar::future<> wal_writer_node::do_append(wal_write_request req) {
 }
 
 seastar::future<> wal_writer_node::close() {
-  auto l = lease_;
-  return l->flush().then([l] { return l->close(); }).finally([l] {});
+  // need to make sure the file is not closed in the midst of a write
+  //
+  return serialize_writes_.wait(1)
+    .then([l = lease_] {
+      return l->flush().then([l] { return l->close(); }).finally([l] {});
+    })
+    .finally([this] { serialize_writes_.signal(1); });
 }
 wal_writer_node::~wal_writer_node() {}
 seastar::future<> wal_writer_node::rotate_fstream() {
   LOG_INFO("rotating fstream");
-  return close().then([this] {
+  // Although close() does similar work, it will deadlock the fiber
+  // if you call close here. Close ensures that there is no other ongoing
+  // operations and it is a public method which needs to serialize access to
+  // the internal file.
+  auto l = lease_;
+  l->flush().then([l] { return l->close(); }).then([this] {
     lease_ = nullptr;
     opts_.epoch += current_size_;
     current_size_ = 0;
     return open();
   });
+  .finally([l] {});
 }
 
 
