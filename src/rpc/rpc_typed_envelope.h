@@ -10,15 +10,16 @@
 namespace smf {
 template <typename RootType>
 requires FlatBuffersNativeTable<RootType> struct rpc_typed_envelope {
-  using type = typename RootType::NativeTableType;
+  using type        = RootType;
+  using native_type = typename RootType::NativeTableType;
 
-  rpc_envelope          envelope;
-  std::unique_ptr<type> data;
+  rpc_envelope                 envelope;
+  std::unique_ptr<native_type> data;
 
 
-  rpc_typed_envelope() : data(std::make_unique<type>()) {}
+  rpc_typed_envelope() : data(std::make_unique<native_type>()) {}
   ~rpc_typed_envelope() {}
-  rpc_typed_envelope(std::unique_ptr<type> &&ptr) noexcept
+  rpc_typed_envelope(std::unique_ptr<native_type> &&ptr) noexcept
     : data(std::move(ptr)) {}
   rpc_typed_envelope &operator=(rpc_typed_envelope<RootType> &&te) noexcept {
     envelope = std::move(te.envelope);
