@@ -29,14 +29,17 @@ table tx_put_request {
   chain: [uint];
   txs: [tx_fragment];
 }
-table tx_put_reply {}
+table tx_put_reply {
+  /// \brief the committed offset into the WAL
+  offset: ulong;
+}
 
 
 table tx_get_request {
   topic: string;
   partition: uint;
   offset: ulong;
-  max_bytes: uint;
+  max_bytes: uint = 1 << 30;
 }
 
 table tx_get_reply {
