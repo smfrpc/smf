@@ -50,9 +50,7 @@ void print_includes(smf_printer *                   printer,
   vars["r"] = FLAGS_use_system_headers ? '>' : '"';
   if (!FLAGS_search_path.empty()) {
     vars["l"] += FLAGS_search_path;
-    if (FLAGS_search_path.back() != '/') {
-      vars["l"] += '/';
-    }
+    if (FLAGS_search_path.back() != '/') { vars["l"] += '/'; }
   }
   for (auto i = headers.begin(); i != headers.end(); i++) {
     vars["h"] = *i;
@@ -233,9 +231,7 @@ std::string proper_postfix_token(std::string s, std::string postfix) {
     return s + postfix;
   }
   auto lowerstr = [](std::string &str) -> std::string {
-    for (auto i = 0u; i < str.length(); ++i) {
-      str[i] = tolower(str[i]);
-    }
+    for (auto i = 0u; i < str.length(); ++i) { str[i] = tolower(str[i]); }
     return str;
   };
   return lowerstr(s) + std::string("_") + lowerstr(postfix);
@@ -337,9 +333,7 @@ std::string get_header_services(smf_file *file) {
     // Package string is empty or ends with a dot. It is used to fully qualify
     // method names.
     vars["Package"] = file->package();
-    if (!file->package().empty()) {
-      vars["Package"].append(".");
-    }
+    if (!file->package().empty()) { vars["Package"].append("."); }
 
     if (!FLAGS_services_namespace.empty()) {
       vars["services_namespace"] = FLAGS_services_namespace;

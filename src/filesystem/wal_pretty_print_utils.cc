@@ -3,26 +3,47 @@
 #include "filesystem/wal_pretty_print_utils.h"
 
 namespace std {
-ostream &operator<<(ostream &o, const ::smf::fbs::wal::wal_header &h) {
-  namespace fl = ::smf::fbs::wal;
-  o << "{'flags':'";
-  auto flags = static_cast<uint32_t>(h.flags());
-  if (flags & fl::wal_entry_flags::wal_entry_flags_partial_fragment) {
-    o << "(partial_fragment)";
-  }
-  if (flags & fl::wal_entry_flags::wal_entry_flags_full_frament) {
-    o << "(full_frament)";
-  }
-  if (flags & fl::wal_entry_flags::wal_entry_flags_zstd) {
-    o << "(zstd)";
-  }
-  o << "', 'size':" << h.size() << ", 'checksum':" << h.checksum() << "}";
+using namespace smf;       // NOLINT
+using namespace smf::wal;  // NOLINT
+ostream &operator<<(ostream &o, const wal_header &h) {
+  o << "wal_header={compression: "
+    << EnumNamewal_entry_compression_type(h.compression())
+    << ", size: " << h.size() << " , checksum: " << h.checksum() << "}";
+  return o;
+}
+ostream &operator<<(ostream &o, const tx_get_request &r) {
+  o << "tx_get_request={topic: " << r.topic()
+    << ", partition: " << r.partition() << ", offset: " << r.offset()
+    << ", max_bytes: " << r.max_bytes() << "}";
+  return o;
+}
+ostream &operator<<(ostream &o, const tx_get_reply &r) {
+  o << "tx_get_reply={next_offset:" << r.next_offset() << " PENDING TODO }";
+  return o;
+}
+ostream &operator<<(ostream &o, const tx_put_request &r) {
+  o << "tx_put_request={ PENDING TODO }";
+  return o;
+}
+ostream &operator<<(ostream &o, const tx_put_reply &r) {
+  o << "tx_put_reply={ PENDING TODO }";
   return o;
 }
 
-ostream &operator<<(ostream &o, const ::smf::wal_read_request &r) {
-  o << "{'offset':" << r.offset << ", 'size':" << r.size
-    << ", 'flags': " << r.flags << " }";
+ostream &operator<<(ostream &o, const wal_read_request &r) {
+  o << "wal_read_request={ address: " << r.req << "}";
+  return o;
+}
+ostream &operator<<(ostream &o, const wal_read_reply &r) {
+  o << "wal_read_reply={ address: " << r.data.get() << "}";
+  return o;
+}
+ostream &operator<<(ostream &o, const wal_write_request &r) {
+  o << "wal_write_request={ address: " << r.req << "}";
+  return o;
+}
+ostream &operator<<(ostream &o, const wal_write_reply &r) {
+  o << "wal_write_reply={ start_offset: " << r.data.start_offset << "}";
   return o;
 }
 

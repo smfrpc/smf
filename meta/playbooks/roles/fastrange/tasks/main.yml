@@ -1,0 +1,23 @@
+---
+- name: Sync soure from git
+  git:
+    repo='https://github.com/lemire/fastrange.git'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/fastrange'
+    update=yes
+    recursive=yes
+    force=yes
+    version='11bb5c1'
+    
+- file:
+    path='{{third_party_dir}}/include/fastrange'
+    state=directory
+
+- name: install fastrange
+  copy:
+    src='{{goobly_cache_dir}}/{{item}}'
+    dest='{{third_party_dir}}/include/{{item}}'
+  with_items:
+    - 'fastrange/fastrange.h'
+

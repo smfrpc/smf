@@ -14,11 +14,9 @@ bool generate(const flatbuffers::Parser &parser, const std::string &file_name) {
   int nservices = 0;
   for (auto it = parser.services_.vec.begin(); it != parser.services_.vec.end();
        ++it) {
-    if (!(*it)->generated)
-      nservices++;
+    if (!(*it)->generated) nservices++;
   }
-  if (!nservices)
-    return true;
+  if (!nservices) return true;
 
   smf_file fbfile(parser, file_name);
 

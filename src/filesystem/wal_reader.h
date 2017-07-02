@@ -4,13 +4,13 @@
 #include <list>
 #include <memory>
 #include <utility>
-// generated
-#include "flatbuffers/wal_generated.h"
-// smf
-#include "filesystem/wal.h"
+
+#include <core/sstring.hh>
+
 #include "filesystem/wal_file_walker.h"
 #include "filesystem/wal_reader_node.h"
 #include "filesystem/wal_requests.h"
+#include "flatbuffers/wal_generated.h"
 
 namespace smf {
 class wal_reader;
@@ -44,21 +44,28 @@ class wal_reader {
                 "bad key for intrusive map");
 
  public:
-  wal_reader(seastar::sstring _dir, reader_stats *s);
+  wal_reader(seastar::sstring topic, uint32_t partition);
   wal_reader(wal_reader &&o) noexcept;
   ~wal_reader();
+  SMF_DISALLOW_COPY_AND_ASSIGN(wal_reader);
+
   seastar::future<> open();
   seastar::future<> close();
   /// brief - returns the next record in the log
-  seastar::future<wal_read_reply::maybe> get(wal_read_request req);
+  seastar::future<wal_read_reply> get(wal_read_request req);
+
+  /// \brief this is risky and is for performance reasons
+  /// we do not want to fs::stat files all the time.
+  /// This recomputes offsets of files that we want to read
+  void update_file_size_by(int64_t node_epoch, uint64_t delta);
 
   const seastar::sstring directory;
+  const uint32_t         partition;
 
  private:
   friend wal_reader_visitor;
   seastar::future<> monitor_files(seastar::directory_entry wal_file_entry);
 
-  reader_stats *                      rstats_;
   std::list<reader_bucket>            allocated_;
   intrusive_map                       buckets_;
   std::unique_ptr<wal_reader_visitor> fs_observer_;

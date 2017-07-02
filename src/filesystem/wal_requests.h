@@ -4,111 +4,162 @@
 #include <list>
 #include <numeric>
 #include <utility>
-// third party
+
 #include <core/fair_queue.hh>
 #include <core/file.hh>
-// smf
+#include <core/shared_ptr.hh>
+
 #include "flatbuffers/wal_generated.h"
 #include "platform/log.h"
 #include "platform/macros.h"
+#include "seastar_io/priority_manager.h"
 
 // class seastar::io_priority_class;
 
+// Note that the put/get requests are pointers because they typically come from
+// an RPC call. it is the responsibility of the caller to ensure that the
+// requests and pointers stay valid throughout the request lifecycle.
+//
+// In addition, they must be cheap to copy-construct - typically a couple of
+// pointer copy.
+//
+
 namespace smf {
-enum class wal_type : uint8_t {
-  wal_type_disk_with_memory_cache,
-  wal_type_memory_only
+namespace details {
+template <typename T> struct priority_wrapper {
+  priority_wrapper(const T *ptr, const ::seastar::io_priority_class &p)
+    : req(THROW_IFNULL(ptr)), pc(p) {}
+  priority_wrapper(priority_wrapper &&o) noexcept
+    : req(std::move(o.req)), pc(std::move(o.pc)) {}
+  priority_wrapper(const priority_wrapper &o) : req(o.req), pc(o.pc) {}
+  const T *                                req;
+  const ::seastar::io_priority_class &     pc;
 };
-enum wal_read_request_flags : uint32_t {
-  wrrf_flags_no_decompression = 1,
+}  // namespace details
+}  // namespace smf
+
+namespace smf {
+
+
+// reads
+
+struct wal_read_request : details::priority_wrapper<smf::wal::tx_get_request> {
+  wal_read_request(const smf::wal::tx_get_request *ptr,
+                   ::seastar::io_priority_class &  p)
+    : priority_wrapper(ptr, p) {}
+  uint32_t adjusted_offset() const { return req->offset() + delta_skipped; }
+
+  // we need to skip bad offsets, so this moves the req->offset() alongsies
+  uint32_t delta_skipped = 0;
 };
-
-struct wal_read_request {
-  wal_read_request(int64_t                             _offset,
-                   int64_t                             _size,
-                   uint32_t                            _flags,
-                   const ::seastar::io_priority_class &priority)
-    : offset(_offset), size(_size), flags(_flags), pc(priority) {}
-
-  int64_t                             offset;
-  int64_t                             size;
-  uint32_t                            flags;
-  const ::seastar::io_priority_class &pc;
-};
-
-
 struct wal_read_reply {
-  using maybe = std::experimental::optional<wal_read_reply>;
   wal_read_reply() {}
-  struct fragment {
-    fragment(fbs::wal::wal_header h, seastar::temporary_buffer<char> &&d)
-      : hdr(std::move(h)), data(std::move(d)) {
-      hdr.mutate_size(data.size());
-    }
-    explicit fragment(seastar::temporary_buffer<char> &&d)
-      : data(std::move(d)) {
-      hdr.mutate_size(data.size());
-      hdr.mutate_flags(fbs::wal::wal_entry_flags::wal_entry_flags_full_frament);
-    }
+  wal_read_reply(wal_read_reply &&r) noexcept : data(std::move(r.data)) {}
+  wal_read_reply(const wal_read_reply &o) { data = o.data; }
 
-    fragment(fragment &&f) noexcept : hdr(f.hdr), data(std::move(f.data)) {}
 
-    fbs::wal::wal_header            hdr;
-    seastar::temporary_buffer<char> data;
-    SMF_DISALLOW_COPY_AND_ASSIGN(fragment);
-  };
-
-  explicit wal_read_reply(fragment &&f) {
-    fragments.emplace_back(std::move(f));
+  // useful for merging temporary steps from multiple IOs
+  void merge(wal_read_reply &&o) {
+    for (auto &&t : o.data->gets) { data->gets.push_back(std::move(t)); }
+    data->next_offset = std::max(data->next_offset, o.data->next_offset);
   }
-  wal_read_reply(wal_read_reply &&r) noexcept
-    : fragments(std::move(r.fragments)) {}
-  void merge(wal_read_reply &&r) {
-    fragments.splice(std::end(fragments), std::move(r.fragments));
-  }
+  /// \brief needed to make sure we don't exceed number of bytes read
+  ///
   uint64_t size() {
-    return std::accumulate(fragments.begin(), fragments.end(), uint64_t(0),
-                           [](uint64_t acc, const auto &it) {
-                             return acc + it.data.size()
-                                    + sizeof(fbs::wal::wal_header);
-                           });
+    return uint64_t(sizeof(data->next_offset))
+           + std::accumulate(data->gets.begin(), data->gets.end(), uint64_t(0),
+                             [](uint64_t acc, const auto &it) {
+                               return acc + it->fragment.size()
+                                      + sizeof(wal::wal_header);
+                             });
   }
-  inline bool empty() const { return fragments.empty(); }
-  std::list<wal_read_reply::fragment> &&move_fragments() {
-    return std::move(fragments);
-  }
-  void emplace_back(std::list<wal_read_reply::fragment> &&fs) {
-    this->fragments.splice(std::end(fragments), std::move(fs));
-  }
-  std::list<wal_read_reply::fragment> fragments{};
-  SMF_DISALLOW_COPY_AND_ASSIGN(wal_read_reply);
+
+  inline bool empty() const { return data->gets.empty(); }
+
+  seastar::lw_shared_ptr<wal::tx_get_replyT> data =
+    seastar::make_lw_shared<wal::tx_get_replyT>();
 };
 
-enum wal_write_request_flags : uint32_t {
-  wwrf_no_compression     = 1,
-  wwrf_flush_immediately  = 1 << 1,
-  wwrf_invalidate_payload = 1 << 2
-};
+// writes
 
-struct wal_write_request {
-  wal_write_request(uint32_t                            _flags,
-                    seastar::temporary_buffer<char> &&  _data,
-                    const ::seastar::io_priority_class &_pc)
-    : flags(_flags), data(std::move(_data)), pc(_pc) {}
+struct wal_write_request : details::priority_wrapper<smf::wal::tx_put_request> {
+  using fb_const_iter_t = typename flatbuffers::
+    Vector<flatbuffers::Offset<smf::wal::tx_put_partition_pair>>::
+      const_iterator;
 
-  wal_write_request(wal_write_request &&w) noexcept
-    : flags(w.flags), data(std::move(w.data)), pc(w.pc) {}
+  class write_request_iterator
+    : std::iterator<std::input_iterator_tag, fb_const_iter_t> {
+   public:
+    using const_iter_t = fb_const_iter_t;
+    write_request_iterator(const std::set<uint32_t> &view,
+                           const_iter_t              start,
+                           const_iter_t              end)
+      : view_(view), start_(start), end_(end) {
+      if (start_ != end_ && view_.find(start_->partition()) == view_.end()) {
+        next();
+      }
+    }
 
-  wal_write_request share_range(size_t i, size_t len) {
-    LOG_THROW_IF(i + len > data.size(), "Out of bounds error");
-    return wal_write_request(flags, data.share(i, len), pc);
+    write_request_iterator(const write_request_iterator &o)
+      : view_(o.view_), start_(o.start_), end_(o.end_) {
+      if (start_ != end_ && view_.find(start_->partition()) == view_.end()) {
+        next();
+      }
+    }
+
+    write_request_iterator &next() {
+      while (start_ != end_) {
+        ++start_;
+        if (start_ != end_ && view_.find(start_->partition()) != view_.end()) {
+          break;
+        }
+      }
+      return *this;
+    }
+
+    write_request_iterator &operator++() { return next(); }
+    write_request_iterator operator++(int) {
+      write_request_iterator retval = *this;
+      next();
+      return retval;
+    }
+    const_iter_t operator->() { return start_; }
+    const_iter_t operator*() { return start_; }
+    bool operator==(const write_request_iterator &o) {
+      return start_ == o.start_ && end_ == o.end_ && view_ == o.view_;
+    }
+    bool operator!=(const write_request_iterator &o) { return !(*this == o); }
+
+   private:
+    const std::set<uint32_t> &view_;
+    const_iter_t              start_;
+    const_iter_t              end_;
+  };
+  wal_write_request(const smf::wal::tx_put_request *    ptr,
+                    const ::seastar::io_priority_class &p,
+                    const std::set<uint32_t> &          partitions)
+    : priority_wrapper(ptr, p), partition_view(partitions) {}
+
+  wal_write_request(const wal_write_request &) = default;
+  wal_write_request &operator=(const wal_write_request &) = default;
+
+  write_request_iterator begin() {
+    return write_request_iterator(partition_view, req->data()->begin(),
+                                  req->data()->end());
   }
-
-
-  uint32_t                        flags;
-  seastar::temporary_buffer<char> data;
-
-  const ::seastar::io_priority_class &pc;
-  SMF_DISALLOW_COPY_AND_ASSIGN(wal_write_request);
+  write_request_iterator end() {
+    return write_request_iterator(partition_view, req->data()->end(),
+                                  req->data()->end());
+  }
+  std::set<uint32_t> partition_view;
 };
+
+struct wal_write_reply {
+  wal_write_reply(uint64_t start_offset, uint64_t end_offset) {
+    data.start_offset = start_offset;
+    data.end_offset   = end_offset;
+  }
+  smf::wal::tx_put_replyT data;
+};
+
 }  // namespace smf

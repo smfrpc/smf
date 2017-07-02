@@ -4,10 +4,14 @@ AlignEscapedNewlinesLeft: true
 AlignTrailingComments: true
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
+
 AllowAllParametersOfDeclarationOnNextLine: true
 AllowShortFunctionsOnASingleLine: true
-AllowShortIfStatementsOnASingleLine: false
-AllowShortLoopsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: true 
+AllowShortLoopsOnASingleLine: true
+AllowShortBlocksOnASingleLine: true
+AlignOperands: true
+
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: false
 BinPackParameters: false
@@ -25,11 +29,11 @@ DerivePointerBinding: false
 IndentCaseLabels: false
 IndentFunctionDeclarationAfterType: false
 IndentWidth: 2
-Language: Cpp
 MaxEmptyLinesToKeep: 2
 NamespaceIndentation: None
 ObjCSpaceAfterProperty: true
 ObjCSpaceBeforeProtocolList: true
+DerivePointerAlignment: false
 PointerAlignment: Right
 SpaceBeforeAssignmentOperators: true
 SpaceBeforeParens: true

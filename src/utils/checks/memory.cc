@@ -15,9 +15,7 @@ namespace checks {
 void memory::check(bool ignore) {
   static const uint64_t kMinMemory = 1 << 30;
   const auto            shard_mem  = seastar::memory::stats().total_memory();
-  if (shard_mem >= kMinMemory) {
-    return;
-  }
+  if (shard_mem >= kMinMemory) { return; }
 
   std::stringstream ss;
   ss << "Memory below recommended: `";

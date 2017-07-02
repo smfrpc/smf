@@ -3,23 +3,46 @@
 #pragma once
 // seastar
 #include <core/fstream.hh>
+#include <core/metrics_registration.hh>
 #include <core/semaphore.hh>
+#include <core/sstring.hh>
 // generated
 #include "flatbuffers/wal_generated.h"
 // smf
 #include "filesystem/wal_opts.h"
 #include "filesystem/wal_requests.h"
+#include "filesystem/wal_write_behind_utils.h"
+#include "filesystem/wal_write_projection.h"
 #include "filesystem/wal_writer_file_lease.h"
 #include "filesystem/wal_writer_utils.h"
+#include "utils/time_utils.h"
 
 namespace smf {
-// TODO(agallego) - use the stats internally now that you have them
 struct wal_writer_node_opts {
-  writer_stats *   wstats;
-  seastar::sstring prefix;
-  uint64_t         epoch                = 0;
-  const uint64_t   min_compression_size = 512;
-  const uint64_t   file_size            = wal_file_size_aligned();
+  SMF_DISALLOW_COPY_AND_ASSIGN(wal_writer_node_opts);
+  wal_writer_node_opts(const seastar::sstring &workdir,
+                       const seastar::sstring &_topic,
+                       uint32_t                _partition)
+    : work_directory(workdir), topic(_topic), partition(_partition) {}
+
+  wal_writer_node_opts(wal_writer_node_opts &&o) noexcept
+    : work_directory(std::move(o.work_directory))
+    , topic(std::move(o.topic))
+    , partition(std::move(o.partition))
+    , epoch(std::move(o.epoch))
+    , run_id(std::move(o.run_id))
+    , fstream(std::move(o.fstream))
+    , max_file_size(std::move(o.max_file_size)) {}
+
+  seastar::sstring work_directory;
+  seastar::sstring topic;
+  uint32_t         partition;
+  uint64_t         epoch = 0;
+  /// \brief each time we create a wal_writer_node_opts per topic partition
+  /// we want to know when we created it
+  const seastar::sstring run_id = seastar::to_sstring(time_now_micros());
+  seastar::file_output_stream_options fstream = default_file_ostream_options();
+  const uint64_t                      max_file_size = wal_file_size_aligned();
 };
 
 /// \brief - given a prefix and an epoch (monotinically increasing counter)
@@ -33,42 +56,43 @@ struct wal_writer_node_opts {
 ///
 class wal_writer_node {
  public:
+  struct wal_writer_node_stats {
+    uint64_t total_writes{0};
+    uint64_t total_bytes{0};
+    uint32_t total_rolls{0};
+  };
+
+ public:
   explicit wal_writer_node(wal_writer_node_opts &&opts);
-  /// \brief 0-copy append to buffer
-  /// \return the starting offset on file for this put
-  ///
-  /// breaks request into largest chunks possible for remaining space
-  /// writing at most opts.file_size on disk at each step.
-  /// once ALL chunks have been written, the original req is deallocatead
-  /// internally, we call temporary_buffer<T>::share(i,j) to create shallow
-  /// copies of the data deferring the deleter() function to deallocate buffer
-  ///
-  /// This is a recursive function
-  ///
-  seastar::future<uint64_t> append(wal_write_request req);
+
+  /// \brief writes the projection to disk ensuring file size capacity
+  seastar::future<wal_write_reply> append(
+    seastar::lw_shared_ptr<wal_write_projection> req);
   /// \brief flushes the file before closing
   seastar::future<> close();
   /// \brief opens the file w/ open_flags::rw | open_flags::create |
-  ///                          open_flags::truncate | open_flags::exclusive
+  ///                          open_flags::truncate
   /// the file should fail if it exists. It should not exist on disk, as
   /// we'll truncate them
   seastar::future<> open();
 
   ~wal_writer_node();
 
-  inline uint64_t space_left() const { return current_size_ - opts_.file_size; }
-  inline uint64_t min_entry_size() const {
-    return opts_.min_compression_size + sizeof(fbs::wal::wal_header);
-  }
+  uint64_t space_left() const { return opts_.max_file_size - current_size_; }
+  uint64_t current_offset() const { return opts_.epoch + current_size_; }
 
  private:
   seastar::future<> rotate_fstream();
   /// \brief 0-copy append to buffer
-  seastar::future<> do_append(wal_write_request);
-  seastar::future<> do_append_with_flags(wal_write_request,
-                                         fbs::wal::wal_entry_flags);
-  seastar::future<> do_append_with_header(fbs::wal::wal_header,
-                                          wal_write_request);
+  /// https://github.com/apache/kafka/blob/fb21209b5ad30001eeace56b3c8ab060e0ceb021/core/src/main/scala/kafka/log/Log.scala
+  /// do append has a similar logic as the kafka log.
+  /// effectively just check if there is enough space, if not rotate and then
+  /// write.
+  seastar::future<> do_append(
+    seastar::lw_shared_ptr<wal_write_projection::item> fragment);
+  seastar::future<> disk_write(
+    seastar::lw_shared_ptr<wal_write_projection::item> fragment);
+
 
  private:
   wal_writer_node_opts opts_;
@@ -80,6 +104,8 @@ class wal_writer_node {
   //
   seastar::lw_shared_ptr<wal_writer_file_lease> lease_ = nullptr;
   seastar::semaphore                            serialize_writes_{1};
+  wal_writer_node_stats                         stats_{};
+  seastar::metrics::metric_groups               metrics_{};
 };
 
 }  // namespace smf

@@ -4,8 +4,10 @@
 #include <limits>
 
 #include <core/app-template.hh>
+#include <fastrange/fastrange.h>
 
 #include "chain_replication/chain_replication_service.h"
+#include "flatbuffers/chain_replication.smf.fb.h"
 #include "hashing/hashing_utils.h"
 #include "histogram/histogram_seastar_utils.h"
 #include "rpc/load_gen/load_channel.h"
@@ -35,12 +37,11 @@ struct put_data_generator {
     const boost::program_options::variables_map &cfg) {
     // anti pattern w/ seastar, but boost ... has no conversion to
     // seastar::sstring
-
     std::string topic = cfg["topic"].as<std::string>();
     std::string key   = cfg["key"].as<std::string>();
     std::string value = cfg["value"].as<std::string>();
     uint32_t    max_rand_bytes =
-      static_cast<uint32_t>(std::numeric_limits<uint16_t>::max());
+      static_cast<uint32_t>(std::numeric_limits<uint8_t>::max());
 
     if (key == "random") {
       key = random().next_str(random().next() % max_rand_bytes).c_str();
@@ -52,28 +53,41 @@ struct put_data_generator {
       topic = random().next_str(random().next() % max_rand_bytes).c_str();
     }
 
-    smf::chains::tx_put_requestT native_req;
-    native_req.topic     = topic;
-    native_req.partition = static_cast<uint32_t>(random().next());
-    native_req.chain.push_back(uint32_t(2130706433) /*127.0.0.1*/);
+    smf::rpc_typed_envelope<smf::chains::chain_put_request> typed_env;
+    auto &p       = *typed_env.data.get();
+    p.chain_index = 0;
+    p.chain.push_back(uint32_t(2130706433) /*127.0.0.1*/);
+    p.put        = std::make_unique<smf::wal::tx_put_requestT>();
+    p.put->topic = topic;
 
-    for (auto i = 0u, max = cfg["batch-size"].as<uint32_t>(); i < max; ++i) {
-      auto frag         = std::make_unique<smf::chains::tx_fragmentT>();
-      frag->op          = smf::chains::tx_operation::tx_operation_full;
-      frag->id          = static_cast<uint32_t>(random().next());
-      frag->time_micros = smf::time_now_micros();
+    const uint32_t batch_size = cfg["batch-size"].as<uint32_t>();
+    const uint64_t fragment_count =
+      std::max(uint64_t(1), random().next() % batch_size);
+    const uint64_t puts_per_partition =
+      std::max(uint64_t(1),
+               static_cast<uint64_t>(std::ceil(batch_size / fragment_count)));
 
-      frag->key.reserve(key.size());
-      frag->value.reserve(value.size());
+    for (auto i = 0u; i < puts_per_partition; ++i) {
+      auto ptr       = std::make_unique<smf::wal::tx_put_partition_pairT>();
+      ptr->partition = fastrange32(static_cast<uint32_t>(random().next()), 8);
 
-      std::copy(key.begin(), key.end(), std::back_inserter(frag->key));
-      std::copy(value.begin(), value.end(), std::back_inserter(frag->key));
-
-      native_req.txs.push_back(std::move(frag));
+      for (auto j = 0u; j < fragment_count; ++j) {
+        auto f = std::make_unique<smf::wal::tx_put_fragmentT>();
+        // data + commit
+        f->op       = smf::wal::tx_put_operation::tx_put_operation_full;
+        f->epoch_ms = smf::lowres_time_now_millis();
+        f->type     = smf::wal::tx_put_fragment_type::tx_put_fragment_type_kv;
+        f->invalidation = nullptr;
+        f->kv           = std::make_unique<smf::wal::tx_put_kvT>();
+        f->kv->key.resize(key.size(), 0);
+        f->kv->value.resize(value.size(), 0);
+        std::memcpy(&f->kv->key[0], &key[0], key.size());
+        std::memcpy(&f->kv->value[0], &value[0], value.size());
+        ptr->txs.push_back(std::move(f));
+      }
+      p.put->data.push_back(std::move(ptr));
     }
-    return smf::rpc_envelope(
-      smf::rpc_letter::native_table_to_rpc_letter<smf::chains::tx_put_request>(
-        native_req));
+    return typed_env.serialize_data();
   }
 };
 
@@ -88,7 +102,7 @@ void cli_opts(boost::program_options::options_description_easy_init o) {
   o("req-num", po::value<uint32_t>()->default_value(1000),
     "number of request per concurrenct connection");
 
-  o("concurrency", po::value<uint32_t>()->default_value(10),
+  o("concurrency", po::value<uint32_t>()->default_value(3),
     "number of green threads per real thread (seastar::futures<>)");
 
   o("topic", po::value<std::string>()->default_value("dummy_topic"),
@@ -100,12 +114,13 @@ void cli_opts(boost::program_options::options_description_easy_init o) {
   o("value", po::value<std::string>()->default_value("dummy_value"),
     "value to enqueue on broker, set to `random' to auto gen");
 
-  o("batch-size", po::value<uint32_t>()->default_value(1000),
+  o("batch-size", po::value<uint32_t>()->default_value(1),
     "number of request per concurrenct connection");
 }
 
 
 int main(int argc, char **argv, char **env) {
+  std::setvbuf(stdout, nullptr, _IOLBF, 1024);
   seastar::distributed<load_gen_t> load;
   seastar::app_template            app;
 
@@ -134,7 +149,7 @@ int main(int argc, char **argv, char **env) {
             load_gen_t::generator_cb_t gen    = put_data_generator{};
 
             return server.benchmark(gen, method).then([](auto test) {
-              LOG_INFO("Test ran in:{}ms", test.duration_in_millis());
+              LOG_INFO("Test {}", test.as_sstring());
               return seastar::make_ready_future<>();
             });
           });

@@ -15,7 +15,7 @@ namespace smf {
 /// compression, etc. Send arbitrary byte arrays to remote host
 ///
 struct rpc_envelope {
-  constexpr static size_t  kHeaderSize = sizeof(fbs::rpc::Header);
+  constexpr static size_t  kHeaderSize = sizeof(rpc::header);
   static seastar::future<> send(seastar::output_stream<char> *out,
                                 rpc_envelope                  req);
 
@@ -35,12 +35,6 @@ struct rpc_envelope {
   ///
   void add_dynamic_header(const char *header, const char *value);
 
-  /// brief add a key=value pair. the value is always binary up to the user how
-  /// to represent
-  void add_dynamic_header(const char *   header,
-                          const uint8_t *value,
-                          const size_t & value_len);
-
   /// \brief used on the client-sender side
   void set_request_id(const uint32_t &service, const uint32_t method);
 
@@ -48,9 +42,7 @@ struct rpc_envelope {
   /// usually it acts like the HTTP status codes
   void set_status(const uint32_t &status);
 
-  /// \brief convenience method on the rpc_letter type
-  /// to set content and internal states
-  void set_compressed_payload(seastar::temporary_buffer<char> buf);
+  size_t size() const { return letter.size(); }
 
   rpc_letter letter;
 };

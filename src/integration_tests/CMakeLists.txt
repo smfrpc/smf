@@ -43,7 +43,7 @@ register_integration_test(rpc_recv_timeout ${IT_ROOT}/rpc_recv_timeout)
 
 
 add_executable(wal ${IT_ROOT}/wal/main.cc)
-target_link_libraries(wal smf_filesystem smf_rpc)
+target_link_libraries(wal smf_filesystem smf_rpc smf_cr)
 register_integration_test(wal ${IT_ROOT}/wal)
 
 add_executable(clock_pro ${IT_ROOT}/wal_clock_pro_cache/main.cc)

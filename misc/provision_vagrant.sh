@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Copyright 2017 Alexander Gallego
+#
+
+
 set -ex
 echo "usage: provision_vagrant.sh (debug|quiet)?"
 if [[ $1 == "debug" ]]; then

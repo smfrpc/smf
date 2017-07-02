@@ -3,6 +3,7 @@
 #pragma once
 
 #include <chrono>
+#include <sstream>
 
 #include "histogram/histogram.h"
 
@@ -14,11 +15,14 @@ struct generator_duration {
   generator_duration(generator_duration &&d) noexcept
     : num_of_req(std::move(d.num_of_req))
     , test_begin(std::move(d.test_begin))
-    , test_end(std::move(d.test_end)) {}
+    , test_end(std::move(d.test_end))
+    , total_bytes(std::move(d.total_bytes)) {}
 
   uint64_t                                       num_of_req;
   std::chrono::high_resolution_clock::time_point test_begin;
   std::chrono::high_resolution_clock::time_point test_end;
+
+  uint64_t total_bytes{0};
 
   void begin() { test_begin = std::chrono::high_resolution_clock::now(); }
   void end() { test_end = std::chrono::high_resolution_clock::now(); }
@@ -40,6 +44,13 @@ struct generator_duration {
     auto queries_per_milli = reqs / denom;
 
     return queries_per_milli * 1000.0;
+  }
+
+  seastar::sstring as_sstring() {
+    std::stringstream ss;
+    ss << "benchmark_stats={test_duration: " << duration_in_millis()
+       << "ms, qps: " << qps() << ", total_bytes: " << total_bytes << " }";
+    return ss.str();
   }
 };
 

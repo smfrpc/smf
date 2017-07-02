@@ -18,21 +18,10 @@ class rpc_handle_router {
   rpc_handle_router() {}
   ~rpc_handle_router() {}
   void register_service(std::unique_ptr<rpc_service> s);
+
   seastar::future<> stop();
-  /// \brief, MUST BE FAST - blocks the thread
-  /// there will be a header specifying the requested resource
-  /// use LookupByKey - as headers are guaranteed to be sorted
-  /// feel free to use std::binary_search otherwise
-  /// \code
-  ///     dynamic_headers()->LookupByKey("User-Agent")->value()->str()
-  /// \endcode
-  /// \param request_id - the request from the rpc_envelope&
-  /// \param hdrs - a pointer at the header metadata associated w/ this request
-  ///
-  virtual bool can_handle_request(
-    const uint32_t &request_id,
-    const flatbuffers::Vector<flatbuffers::Offset<fbs::rpc::DynamicHeader>>
-      *hdrs);
+
+  virtual bool can_handle_request(const uint32_t &request_id);
   /// \brief actually makes the router dispatch
   virtual seastar::future<rpc_envelope> handle(rpc_recv_context &&recv);
 

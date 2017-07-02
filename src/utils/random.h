@@ -15,6 +15,7 @@ class random {
   uint64_t next();
 
   seastar::sstring next_str(uint32_t size);
+  seastar::sstring next_alphanum(uint32_t size);
 
  private:
   std::mt19937 rand_;

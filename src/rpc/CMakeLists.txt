@@ -7,7 +7,6 @@ set(RPC_LIB_SOURCES
   ${PROJECT_SOURCE_DIR}/src/rpc/rpc_client_stats.cc
   ${PROJECT_SOURCE_DIR}/src/rpc/rpc_recv_context.cc
   ${PROJECT_SOURCE_DIR}/src/rpc/rpc_connection_limits.cc
-  ${PROJECT_SOURCE_DIR}/src/rpc/rpc_utils.cc
   ${PROJECT_SOURCE_DIR}/src/rpc/rpc_letter.cc
   ${PROJECT_SOURCE_DIR}/src/rpc/filters/zstd_filter.cc
   )

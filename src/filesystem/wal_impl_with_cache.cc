@@ -4,67 +4,72 @@
 // std
 #include <memory>
 #include <utility>
-// third party
+
 #include <core/reactor.hh>
-// smf
-#include "filesystem/wal_file_name_mender.h"
+
+// #include "filesystem/wal_file_name_mender.h"
+// TODO(need a parition scanner, etc)
 #include "filesystem/wal_requests.h"
 
 namespace smf {
 wal_impl_with_cache::wal_impl_with_cache(wal_opts _opts)
-  : wal(std::move(_opts)) {
-  writer_ = std::make_unique<wal_writer>(opts.directory, &opts.wstats);  // done
-  reader_ = std::make_unique<wal_reader>(opts.directory, &opts.rstats);  // wip
-  cache_  = std::make_unique<wal_mem_cache>(opts.cache_size, &opts.cstats);
+  : opts(std::move(_opts)), tm_(opts) {}
+
+seastar::future<wal_write_reply> wal_impl_with_cache::append(
+  wal_write_request r) {
+  // 1) Get projection
+  // 2) Write to disk
+  // 3) Write to to cache
+  // 4) Return reduced state
+
+  return seastar::map_reduce(
+    // for-all
+    r.begin(), r.end(),
+
+    // Mapper function
+    [this, r](auto it) {
+      auto topic = seastar::sstring(r.req->topic()->c_str());
+      return this->tm_.get_manager(topic, it->partition()).then([
+        this, topic, projection = wal_write_projection::translate(*it)
+      ](auto mngr) { return mngr->append(projection); });
+    },
+
+    // Initial State
+    wal_write_reply(0, 0),
+
+    // Reducer function
+    [this](auto acc, auto next) {
+      acc.data.start_offset =
+        std::min(acc.data.start_offset, next.data.start_offset);
+      acc.data.end_offset = std::max(acc.data.end_offset, next.data.end_offset);
+      return acc;
+    });
 }
 
-seastar::future<uint64_t> wal_impl_with_cache::append(wal_write_request req) {
-  return writer_->append(std::move(req)).then([
-    this, bufcpy = req.data.share()
-  ](uint64_t epoch) mutable { return cache_->put(epoch, std::move(bufcpy)); });
-}
-
-seastar::future<> wal_impl_with_cache::invalidate(uint64_t epoch) {
-  return cache_->remove(epoch).then(
-    [this, epoch] { return writer_->invalidate(epoch); });
-}
-
-seastar::future<wal_read_reply::maybe> wal_impl_with_cache::get(
-  wal_read_request req) {
-  uint64_t offset = req.offset;
-  return cache_->get(offset).then([this, req = std::move(req)](auto maybe_buf) {
-    if (!maybe_buf) {
-      return reader_->get(std::move(req));
-    }
-    return seastar::make_ready_future<wal_read_reply::maybe>(
-      std::move(maybe_buf));
+seastar::future<wal_read_reply> wal_impl_with_cache::get(wal_read_request r) {
+  auto t = seastar::sstring(r.req->topic()->c_str());
+  return tm_.get_manager(t, r.req->partition()).then([r](auto mngr) {
+    return mngr->get(r);
   });
 }
 
 seastar::future<> wal_impl_with_cache::open() {
   LOG_INFO("starting: {}", opts);
+  return seastar::make_ready_future<>();
   auto dir = opts.directory;
-  return file_exists(dir)
-    .then([dir](bool exists) {
-      if (exists) {
-        return seastar::make_ready_future<>();
-      }
-      return seastar::make_directory(dir);
-    })
-    .then([this, dir] {
-      return open_directory(dir).then([this](seastar::file f) {
-        auto l = seastar::make_lw_shared<wal_file_name_mender>(std::move(f));
-        return l->done().finally([l] {});
-      });
-    })
-    .then([this] {
-      return writer_->open().then([this] { return reader_->open(); });
-    });
+  // TODO(agallego)
+  // missing partition scanning
+  return file_exists(dir).then([dir](bool exists) {
+    if (exists) { return seastar::make_ready_future<>(); }
+    return seastar::make_directory(dir).then_wrapped(
+      [](auto _) { return seastar::make_ready_future<>(); });
+  });
 }
 
 seastar::future<> wal_impl_with_cache::close() {
   LOG_INFO("stopping: {}", opts);
-  return writer_->close().then([this] { return reader_->close(); });
+  // close all topic managers
+  return tm_.close();
 }
 
 }  // namespace smf

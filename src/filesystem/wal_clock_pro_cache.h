@@ -12,6 +12,8 @@
 #include "platform/macros.h"
 #include "utils/caching/clock_pro/clock_pro.h"
 
+// TODO(agallego) - pass metadata to wether or not enable systemwide page cache
+// eviction
 
 namespace smf {
 class wal_clock_pro_cache {
@@ -35,22 +37,33 @@ class wal_clock_pro_cache {
   wal_clock_pro_cache(seastar::lw_shared_ptr<seastar::file> f,
                       // size of the `f` file from the fstat() call
                       // need this to figure out how many pages to allocate
-                      int64_t size,
+                      int64_t initial_size,
                       // max_pages_in_memory = 0, allows us to make a decision
                       // impl defined. right now, it chooses the max of 10% of
                       // the file or 10 pages. each page is 4096 bytes
                       uint32_t max_pages_in_memory = 0);
 
-  const int64_t  file_size;
-  const uint32_t number_of_pages;
 
+  const uint64_t disk_dma_alignment;
+
+
+  /// \brief this is risky and is for performance reasons
+  /// we do not want to fs::stat files all the time.
+  /// This recomputes offsets of files that we want to read
+  void update_file_size_by(uint64_t delta);
+  int64_t  file_size() { return file_size_; }
+  uint32_t number_of_pages() { return number_of_pages_; }
   /// \brief - return buffer for offset with size
-  seastar::future<wal_read_reply> read(wal_read_request r);
+  seastar::future<wal_read_reply> read(wal_read_request r,
+                                       uint64_t         relative_offset);
 
   /// \brief - closes lw_share_ptr<file>
   seastar::future<> close();
 
  private:
+  int64_t  file_size_;
+  uint32_t number_of_pages_;
+
   /// \brief - returns a temporary buffer of size. similar to
   /// isotream.read_exactly()
   /// different than a wal_read_request for arguments since it returns **one**
@@ -58,10 +71,6 @@ class wal_clock_pro_cache {
   ///
   seastar::future<seastar::temporary_buffer<char>> read_exactly(
     int64_t offset, int64_t size, const seastar::io_priority_class &pc);
-  /// \brief actual reader func
-  /// recursive
-  seastar::future<seastar::lw_shared_ptr<wal_read_reply>> do_read(
-    wal_read_request r);
 
   /// \breif fetch exactly one page from disk w/ dma_alignment() so that
   /// we don't pay the penalty of fetching 2 pages and discarding one
@@ -78,8 +87,11 @@ class wal_clock_pro_cache {
 
  private:
   seastar::lw_shared_ptr<seastar::file> file_;  // uses direct io for fetching
-  uint32_t                              max_resident_pages_;
-  std::unique_ptr<cache_t>              cache_;
+  // This will be removed once we hookup to the seastar allocator for memory
+  // backpressure
+  //
+  uint32_t                 max_resident_pages_ = 10;
+  std::unique_ptr<cache_t> cache_;
 };
 
 

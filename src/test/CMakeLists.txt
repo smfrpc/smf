@@ -21,11 +21,6 @@ endfunction ()
 set(ALL_TESTS ${FAST_TESTS})
 
 
-
-add_executable (simple_flatbuffers_tests ${TEST_ROOT}/flatbuffers/simple.cc)
-target_link_libraries(simple_flatbuffers_tests -lgtest smf_rpc)
-register_fast_test (simple_flatbuffers_tests ${TEST_ROOT}/flatbuffers)
-
 add_executable(wal_epoch_extractor
   ${TEST_ROOT}/wal_epoch_extractor/wal_epoch_extractor_test.cc)
 target_link_libraries(wal_epoch_extractor -lgtest smf_filesystem)

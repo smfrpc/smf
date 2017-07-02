@@ -147,8 +147,8 @@ with a router.
 ```cpp
 class rpc_handle_router {
     bool can_handle_request(const uint32_t &request_id,
-                            const flatbuffers::Vector<flatbuffers::Offset<fbs::rpc::DynamicHeader>>);
-
+                            const flatbuffers::Vector<flatbuffers::Offset<rpc::dynamic_header>>);
+                            
     void register_service(std::unique_ptr<rpc_service> s);
 
     future<rpc_envelope> handle(rpc_recv_context recv);

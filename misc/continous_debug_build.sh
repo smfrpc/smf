@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Copyright 2017 Alexander Gallego
+#
+
+
 if [[ $(which inotifywait) == "" ]]; then
     echo "You do not have inotifywait installed."
     echo "In fedora builds you want to use: dnf install inotify-tools"
