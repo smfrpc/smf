@@ -1,16 +1,25 @@
 namespace smf.fbs.wal;
 
-enum wal_entry_flags:uint (bit_flags) {
+// TAG: alpha
+
+/// \brief whether it's 32 bits or 8 bits,
+/// flatbuffers will pad the struct, so for now we make it 8bits
+/// 
+enum wal_entry_fragment:byte (bit_flags) {
   partial_fragment,
-  full_frament,
-  /// \brief the payload is compressed using zstandrad 1.0
-  zstd
+  full_frament
+}
+enum wal_entry_compression_type:byte {
+  none,
+  zstd,
+  gzip
 }
 
 struct wal_header {
-  flags: wal_entry_flags = 0;
-  size: uint;
-  checksum: uint;
+  frag:        wal_entry_fragment = [full_fragment];
+  compression: wal_entry_compression_type = [none];
+  size:        uint = 0;
+  checksum:    uint = 0;
 }
 
 struct invalid_wal_entry {

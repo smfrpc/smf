@@ -1,12 +1,12 @@
 namespace smf.chains;
 
-enum tx_operation:short {
+enum tx_operation:byte {
   begin,
   data,
   commit,
   abort,
-  /// this is an optimization for a full transaction that is small
-  /// i.e.: one put. it is equivalent as (begin | data | commit)
+  /// \brief either the end of the txn OR a full transaction that is a small payload
+  /// i.e.: fits in one request
   full
 }
 
@@ -14,20 +14,20 @@ enum tx_operation:short {
 /// Please be tender while extending
 table tx_fragment {
   /// what should we do with this trasaction fragment
-  op: tx_operation;
+  op:           tx_operation;
   /// sequence id.. not sure if needed
-  id: uint;
-  time_micros: ulong;
-  key: [ubyte];
-  value: [ubyte];
+  id:           uint;
+  time_micros:  ulong;
+  key:          [ubyte];
+  value:        [ubyte];
 }
 
 /// brief - stores `puts` transactionally
 table tx_put_request {
-  topic: string;
-  partition: uint; // xxhash32(topic,key)
-  chain: [uint];
-  txs: [tx_fragment];
+  topic:       string;
+  partition:   uint; // xxhash32(topic,key)
+  chain:       [uint];
+  txs:         [tx_fragment];
 }
 table tx_put_reply {
   /// \brief the committed offset into the WAL
@@ -36,15 +36,37 @@ table tx_put_reply {
 
 
 table tx_get_request {
-  topic: string;
-  partition: uint;
-  offset: ulong;
-  max_bytes: uint = 1 << 30;
+  topic:      string;
+  partition:  uint;
+  offset:     ulong;
+  max_bytes:  uint = 1 << 30;
+}
+
+
+enum tx_compressed_fragment_flags:short (bit_flags) {
+  partial_fragment,
+  full_frament
+}
+enum tx_compression_type:byte {
+  none,
+  zstd,
+  gzip
+}
+
+struct tx_compressed_header {
+  frag:            wal_entry_flags = [full_fragment];
+  compression:     wal_entry_compression_type = [none];
+  size:            uint = 0;
+  checksum:        uint = 0;
+}
+table tx_compressed_fragment {
+  hdr:             tx_compressed_header;
+  compressed_txns: [ubyte]; 
 }
 
 table tx_get_reply {
   next_offset: ulong;
-  puts: [tx_fragment];
+  puts:        [tx_compressed_fragment];
 }
 
 rpc_service chain_replication {
