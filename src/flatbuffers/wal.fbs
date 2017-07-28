@@ -7,7 +7,7 @@ namespace smf.fbs.wal;
 /// 
 enum wal_entry_fragment:byte (bit_flags) {
   partial_fragment,
-  full_frament
+  full_fragment
 }
 enum wal_entry_compression_type:byte {
   none,

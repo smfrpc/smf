@@ -45,7 +45,7 @@ table tx_get_request {
 
 enum tx_compressed_fragment_flags:short (bit_flags) {
   partial_fragment,
-  full_frament
+  full_fragment
 }
 enum tx_compression_type:byte {
   none,
