@@ -1,0 +1,13 @@
+---
+
+- unarchive:
+    src: 'https://downloads.sourceforge.net/project/cppcheck/cppcheck/1.80/cppcheck-1.80.tar.bz2'
+    dest: '{{goobly_cache_dir}}/'
+    creates: '{{goobly_cache_dir}}/cppcheck-1.80'
+    remote_src: True
+
+- name: install cppcheck
+  shell: "make install -j$((({{ansible_processor_vcpus}}-1))) PREFIX={{third_party_dir}} CFGDIR={{third_party_dir}}"
+  args:
+    chdir: '{{goobly_cache_dir}}/cppcheck-1.80'
+    creates: '{{third_party_dir}}/bin/cppcheck'

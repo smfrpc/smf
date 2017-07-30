@@ -1,0 +1,20 @@
+---
+
+- name: Sync soure from google style CPPLINT
+  git:
+    repo='https://github.com/google/styleguide.git'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/google_styleguide'
+    update=yes
+    recursive=yes
+    force=yes
+    version='6c8669e'
+
+- name: setup symlink w/ thrid party bin
+  file:
+    src: '{{goobly_cache_dir}}/google_styleguide/cpplint/cpplint.py'
+    dest: "{{third_party_dir}}/bin/cpplint.py"
+    mode: u+rwx,g=r,o=r
+    state: link
+ 

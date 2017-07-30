@@ -5,3 +5,5 @@
   roles:
     - compilation_tooling
     - american_fuzzy_lop
+    - cppcheck
+    - cpplint
