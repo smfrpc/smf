@@ -47,7 +47,12 @@ for f in ${FILES}; do
         $file
 
     #echo "CPPLINT ${file}"
-    $cpp_lint_cmd --verbose=5 --counting=detailed ${file} > /dev/null
+    lint_output=$($cpp_lint_cmd --verbose=5 --counting=detailed ${file})
+    if [[ 0 != $(echo $lint_output | awk '{print $7}') ]]; then
+        echo "$lint_output"
+        exit 1
+    fi
+    exit 1
 done
 
 
