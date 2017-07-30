@@ -52,7 +52,6 @@ for f in ${FILES}; do
         echo "$lint_output"
         exit 1
     fi
-    exit 1
 done
 
 
