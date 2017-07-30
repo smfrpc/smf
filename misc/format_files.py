@@ -34,10 +34,7 @@ def get_git_user():
 def run_subprocess(cmd):
     logger.info("Executing command: %s" % cmd)
     proc = subprocess.Popen(
-        "exec %s" % cmd,
-        stdout=sys.stdout,
-        stderr=sys.stderr,
-        shell=True)
+        "exec %s" % cmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
     return_code = 0
     try:
         return_code = proc.wait()
@@ -73,14 +70,14 @@ def get_git_files():
 
 
 def is_clang_fmt_file(filename):
-    for ext in ["cc", "cpp", "h", "hpp", "proto", "java", "js"]:
+    for ext in [".cc", ".cpp", ".h", ".hpp", ".proto", ".java", ".js"]:
         if filename.endswith(ext): return True
     return False
 
 
 def is_double_slash(filename):
     if is_clang_fmt_file(filename): return True
-    for ext in ["scala"]:
+    for ext in [".scala", ".fbs"]:
         if filename.endswith(ext): return True
     return False
 
@@ -95,13 +92,12 @@ def get_legal_header(filename):
         if is_double_slash(filename): return "//"
         return "#"
 
-    return hdr % (comment_char(),
-                  datetime.date.today().year,
-                  get_git_user(), comment_char())
+    return hdr % (comment_char(), datetime.date.today().year, get_git_user(),
+                  comment_char())
 
 
 def is_script_file(filename):
-    for ext in ["sh", "bash", "py"]:
+    for ext in [".sh", ".bash", ".py"]:
         if filename.endswith(ext): return True
     return False
 
@@ -111,7 +107,7 @@ def insert_legal(filename):
         if is_double_slash(filename):
             last_pos = f.tell()
             line1 = f.readline()
-            if line1[0:12] != "// Copyright":
+            if "// Copyright" not in line1:
                 f.seek(last_pos)
                 content = f.read()
                 f.seek(0)
