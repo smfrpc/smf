@@ -83,11 +83,7 @@ def is_double_slash(filename):
 
 
 def get_legal_header(filename):
-    hdr = """
-    %s Copyright %s %s
-    %s
-    """
-
+    hdr = "%s Copyright %s %s\n%s"
     def comment_char():
         if is_double_slash(filename): return "//"
         return "#"
@@ -102,9 +98,9 @@ def is_script_file(filename):
     return False
 
 
-def insert_legal(filename):
-    with open(filename, "rw") as f:
-        if is_double_slash(filename):
+def double_slash_legal(filename):
+    if is_double_slash(filename):
+        with open(filename, "rw") as f:
             last_pos = f.tell()
             line1 = f.readline()
             if "// Copyright" not in line1:
@@ -113,17 +109,26 @@ def insert_legal(filename):
                 f.seek(0)
                 f.write(get_legal_header(filename))
                 f.write(content)
-        elif is_script_file(filename):
+
+
+def hash_legal(filename):
+    if is_script_file(filename):
+        with open(filename, "rw") as f:
             last_pos = f.tell()
             line1 = f.readline()
             if '#' == line1[0]:
                 # read the rest of the contents
                 content = f.read()
-                f.seek(last_pos + 1)
+                f.seek(0)
                 f.write(line1)
                 f.write("\n")
                 f.write(get_legal_header(filename))
-                f.write(content)
+                f.write(content[1:])
+
+
+def insert_legal(filename):
+    double_slash_legal(filename)
+    hash_legal(filename)
 
 
 def main():
