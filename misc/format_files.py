@@ -28,7 +28,7 @@ def get_git_root():
 def get_git_user():
     ret = str(subprocess.check_output("git config user.name", shell=True))
     assert ret is not None, "Failed getting git user"
-    return "".join(ret.split())
+    return "".join(ret.split("\n"))
 
 
 def run_subprocess(cmd):
