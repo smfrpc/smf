@@ -12,7 +12,7 @@ if [[ $1 != "quick" ]]; then
     $git_root/misc/version.sh
     cat $git_root/src/version.h
     echo "Formatting files"
-    $git_root/misc/format_files.sh
+    $git_root/misc/fmt.py
 fi
 
 mkdir -p $build_dir
