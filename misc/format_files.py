@@ -120,7 +120,8 @@ def hash_legal(filename):
             content = f.read()
             if "# Copyright" not in content:
                 f.seek(0)
-                f.write("%s\n" % line1)
+                f.write(line1)
+                f.write('\n')
                 f.write(get_legal_header(filename))
                 f.write(content)
 
