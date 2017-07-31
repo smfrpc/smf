@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# Copyright 2017 Alexander Gallego
+#
+
 #set -ex
 program_name="$1"
 if [[ $program_name == "" ]]; then

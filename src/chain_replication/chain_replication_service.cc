@@ -85,25 +85,26 @@ chain_replication_service::get(
                    for (auto it  = read_data.fragments.begin(),
                              end = read_data.fragments.end();
                         it != end; ++it) {
-                     const auto flags =it->hdr.wal_entry_flags();
-                     if(flags & smf::fbs::wal::wal_entry_flags::
-                        wal_entry_flags_partial_fagment){
-
+                     const auto flags = it->hdr.wal_entry_flags();
+                     if (flags & smf::fbs::wal::wal_entry_flags::
+                                   wal_entry_flags_partial_fagment) {
                      }
 
 
                      // THE PLAN
                      // 1) reconstruct the original payload
                      // 2) inflate the zstd buffer
-                     // 3) return the txns - already formatted correctly on input :)
-                     // 4) ensure that we do this PER full tx_op otherwise we have to read
+                     // 3) return the txns - already formatted correctly on
+                     // input :)
+                     // 4) ensure that we do this PER full tx_op otherwise we
+                     // have to read
                      //    more data until we hit this limit no?
                      // return the max bytes... and go home.
 
 
-
-
-                     if (flags & smf::fbs::wal::wal_entry_flags::wal_entry_flags_full_fagment){}
+                     if (flags & smf::fbs::wal::wal_entry_flags::
+                                   wal_entry_flags_full_fagment) {
+                     }
                      // convert wal::fragment -> chain::fragment
                      // TODO(agallego) - make this a util and add a unit tests
                      //

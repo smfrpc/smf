@@ -1,3 +1,6 @@
+// Copyright 2017 Alexander Gallego
+//
+
 namespace smf.fbs.rpc;
 
 /// \brief: headers that are stored in an int
