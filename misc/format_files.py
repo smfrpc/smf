@@ -122,7 +122,7 @@ def hash_legal(filename):
                 f.seek(0)
                 f.write("%s\n" % line1)
                 f.write(get_legal_header(filename))
-                f.write(content[1:])
+                f.write(content)
 
 
 def insert_legal(filename):
