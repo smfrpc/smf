@@ -1,6 +1,9 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #pragma once
+
+#include <boost/algorithm/string/join.hpp>
+
 #include <flatbuffers/idl.h>
 #include "hashing/hashing_utils.h"
 
@@ -25,7 +28,12 @@ class smf_method {
   std::string service_name() const { return service_name_; }
   uint32_t    service_id() const { return service_id_; }
 
-  std::string type(const flatbuffers::StructDef &sd) const { return sd.name; }
+  std::string type(const flatbuffers::StructDef &sd) const {
+    std::vector<std::string> tmp = sd.defined_namespace->components;
+    tmp.push_back(sd.name);
+    return boost::algorithm::join(tmp, "::");
+  }
+
   std::string input_type_name() const { return type(*method_->request); }
   std::string output_type_name() const { return type(*method_->response); }
 

@@ -1,7 +1,7 @@
 // Copyright 2017 Alexander Gallego
 //
 
-namespace smf.fbs.wal;
+namespace smf.wal;
 
 // TAG: alpha
 
@@ -14,17 +14,76 @@ enum wal_entry_fragment:byte (bit_flags) {
 }
 enum wal_entry_compression_type:byte {
   none,
-  zstd,
-  gzip
+  zstd
 }
 
 struct wal_header {
-  frag:        wal_entry_fragment = [full_fragment];
-  compression: wal_entry_compression_type = [none];
+  frag:        wal_entry_fragment = full_fragment;
+  compression: wal_entry_compression_type = none;
   size:        uint = 0;
   checksum:    uint = 0;
 }
 
-struct invalid_wal_entry {
+struct wal_invalid_entry {
   invalid_entry: ulong;
 }
+
+enum tx_put_operation:byte {
+  begin,
+  data,
+  commit,
+  abort,
+  /// \brief either the end of the txn OR a full transaction that is a small payload
+  /// i.e.: fits in one request
+  full
+}
+
+/// This is the datastructure that gets persisted on disk.
+/// Please be tender while extending
+table tx_put_fragment {
+  /// what should we do with this trasaction fragment
+  op:           tx_put_operation;
+  /// sequence id.. not sure if needed
+  id:           uint;
+  time_micros:  ulong;
+  key:          [ubyte];
+  value:        [ubyte];
+}
+
+/// brief - stores `puts` transactionally
+table tx_put_request {
+  topic:       string;
+  partition:   uint; // xxhash32(topic,key)
+  chain:       [uint];
+  txs:         [tx_put_fragment];
+}
+table tx_put_reply {
+  /// \brief the committed offset into the WAL
+  offset: ulong;
+}
+
+
+table tx_get_request {
+  topic:      string;
+  partition:  uint;
+  offset:     ulong;
+  /// (1 << 31) - 1 Max payload payload by flatbuffers 2GB-1
+  /// we decrease it by 100 bytes so we can stuff headers in there
+  /// plus plenty of room for growth
+  ///
+  /// >>> (2**31)-100
+  /// 2147483548
+  ///
+  max_bytes:  uint = 2147483548;
+}
+
+table tx_get_fragment {
+  hdr:             wal_header;
+  compressed_txns: [ubyte]; 
+}
+
+table tx_get_reply {
+  next_offset: ulong;
+  gets:        [tx_get_fragment];
+}
+

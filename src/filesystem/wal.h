@@ -5,9 +5,11 @@
 #include <memory>
 #include <ostream>
 #include <utility>
+
 // seastar
 #include <core/future.hh>
 #include <core/sstring.hh>
+
 // smf
 #include "filesystem/wal_opts.h"
 #include "filesystem/wal_requests.h"
