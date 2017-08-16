@@ -19,75 +19,38 @@ enum class wal_type : uint8_t {
   wal_type_disk_with_memory_cache,
   wal_type_memory_only
 };
-enum wal_read_request_flags : uint32_t {
-  wrrf_flags_no_decompression = 1,
-};
 
 struct wal_read_request {
-  wal_read_request(int64_t                             _offset,
-                   int64_t                             _size,
-                   uint32_t                            _flags,
-                   const ::seastar::io_priority_class &priority)
-    : offset(_offset), size(_size), flags(_flags), pc(priority) {}
+  using get_t     = smf::wal::tx_get_request;
+  using get_ptr_t = seastar::lw_shared_ptr<rpc_recv_typed_context<get_t>>;
 
-  int64_t                             offset;
-  int64_t                             size;
-  uint32_t                            flags;
+  wal_read_request(get_ptr_t ptr, ::seastar::io_priority_class &p)
+    : req(ptr), pc(p) {}
+  wal_read_request(wal_read_request &&o) noexcept
+    : req(std::move(o.req)), pc(std::move(o.pc)) {}
+
+
+  // need to use a shared_ptr to share around the multiple wal IO stuff
+  get_ptr_t                           req;
   const ::seastar::io_priority_class &pc;
 };
 
 
 struct wal_read_reply {
-  using maybe = std::experimental::optional<wal_read_reply>;
   wal_read_reply() {}
-  struct fragment {
-    fragment(fbs::wal::wal_header h, seastar::temporary_buffer<char> &&d)
-      : hdr(std::move(h)), data(std::move(d)) {
-      hdr.mutate_size(data.size());
-    }
-    explicit fragment(seastar::temporary_buffer<char> &&d)
-      : data(std::move(d)) {
-      hdr.mutate_size(data.size());
-      hdr.mutate_flags(fbs::wal::wal_entry_flags::wal_entry_flags_full_frament);
-    }
 
-    fragment(fragment &&f) noexcept : hdr(f.hdr), data(std::move(f.data)) {}
+  wal_read_reply(wal_read_reply &&r) noexcept : data(std::move(r.data)) {}
 
-    fbs::wal::wal_header            hdr;
-    seastar::temporary_buffer<char> data;
-    SMF_DISALLOW_COPY_AND_ASSIGN(fragment);
-  };
-
-  explicit wal_read_reply(fragment &&f) {
-    fragments.emplace_back(std::move(f));
-  }
-  wal_read_reply(wal_read_reply &&r) noexcept
-    : fragments(std::move(r.fragments)) {}
-  void merge(wal_read_reply &&r) {
-    fragments.splice(std::end(fragments), std::move(r.fragments));
-  }
   uint64_t size() {
-    return std::accumulate(fragments.begin(), fragments.end(), uint64_t(0),
+    return std::accumulate(data->gets.begin(), data->gets.end(), uint64_t(0),
                            [](uint64_t acc, const auto &it) {
-                             return acc + it.data.size()
-                                    + sizeof(fbs::wal::wal_header);
+                             return acc + it.compresed_txns.size()
+                                    + sizeof(wal::wal_header);
                            });
   }
-  inline bool empty() const { return fragments.empty(); }
-  std::list<wal_read_reply::fragment> &&move_fragments() {
-    return std::move(fragments);
-  }
-  void emplace_back(std::list<wal_read_reply::fragment> &&fs) {
-    this->fragments.splice(std::end(fragments), std::move(fs));
-  }
-  std::list<wal_read_reply::fragment> fragments{};
-  SMF_DISALLOW_COPY_AND_ASSIGN(wal_read_reply);
-};
+  inline bool empty() const { return data->gets.empty(); }
 
-enum wal_write_request_flags : uint32_t {
-  wwrf_no_compression     = 1,
-  wwrf_flush_immediately  = 1 << 1,
-  wwrf_invalidate_payload = 1 << 2
+  auto data = seastar::lw_make_shared<wal::tx_get_reply>();
 };
 
 struct wal_write_request {

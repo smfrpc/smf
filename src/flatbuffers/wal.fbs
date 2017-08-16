@@ -1,6 +1,6 @@
 // Copyright 2017 Alexander Gallego
 //
-
+include "timestamp.fbs";
 namespace smf.wal;
 
 // TAG: alpha
@@ -38,6 +38,14 @@ enum tx_put_operation:byte {
   full
 }
 
+enum tx_put_invalidation_reason {
+  server_connection_timeout,
+  client_connection_timeout
+}
+table tx_put_invalidation {
+  reason: tx_put_invalidation_reason;
+  offset: ulong;
+}
 /// This is the datastructure that gets persisted on disk.
 /// Please be tender while extending
 table tx_put_fragment {
@@ -45,9 +53,18 @@ table tx_put_fragment {
   op:           tx_put_operation;
   /// sequence id.. not sure if needed
   id:           uint;
-  time_micros:  ulong;
-  key:          [ubyte];
-  value:        [ubyte];
+
+  /// In seastar clients we will use a losely ticked timer which moves
+  /// every 10 micros.
+  /// This is needed for systems doing window aggregations, etc.
+  ///
+  epoch:            smf.timestamp;
+  key:              [ubyte];
+  value:            [ubyte];
+
+  /// iff this->op == tx_put_operation::abort
+  /// use to write an abort, for a specific offset
+  invalidation: tx_put_invalidation;
 }
 
 /// brief - stores `puts` transactionally
