@@ -13,11 +13,11 @@ class chain_replication_service : public chains::chain_replication {
     seastar::distributed<smf::write_ahead_log> *w)
     : wal_(w) {}
 
-  virtual seastar::future<smf::rpc_typed_envelope<tx_put_reply>> put(
-    smf::rpc_recv_typed_context<tx_put_request> &&) final;
+  virtual seastar::future<smf::rpc_typed_envelope<smf::wal::tx_put_reply>> put(
+    smf::rpc_recv_typed_context<smf::wal::tx_put_request> &&) final;
 
-  virtual seastar::future<smf::rpc_typed_envelope<tx_get_reply>> get(
-    smf::rpc_recv_typed_context<tx_get_request> &&) final;
+  virtual seastar::future<smf::rpc_typed_envelope<smf::wal::tx_get_reply>> get(
+    smf::rpc_recv_typed_context<smf::wal::tx_get_request> &&) final;
 
  private:
   seastar::distributed<smf::write_ahead_log> *wal_;

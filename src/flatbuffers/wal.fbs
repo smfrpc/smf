@@ -33,12 +33,13 @@ enum tx_put_operation:byte {
   data,
   commit,
   abort,
+
   /// \brief either the end of the txn OR a full transaction that is a small payload
   /// i.e.: fits in one request
   full
 }
 
-enum tx_put_invalidation_reason {
+enum tx_put_invalidation_reason:byte {
   server_connection_timeout,
   client_connection_timeout
 }

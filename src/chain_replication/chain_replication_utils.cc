@@ -20,10 +20,14 @@ requires(std::is_pointer<T>::value == true) uint32_t lcore_hash(T p) {
 }
 
 /** \brief map the request to the lcore that is going to handle the put */
-uint32_t put_to_lcore(const tx_put_request *p) { return lcore_hash(p); }
+uint32_t put_to_lcore(const smf::wal::tx_put_request *p) {
+  return lcore_hash(p);
+}
 
 /** \brief map the request to the lcore that is going to handle the put */
-uint32_t get_to_lcore(const tx_get_request *p) { return lcore_hash(p); }
+uint32_t get_to_lcore(const smf::wal::tx_get_request *p) {
+  return lcore_hash(p);
+}
 
 
 }  // end namespace chains
