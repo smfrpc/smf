@@ -28,6 +28,17 @@ template <typename T> class fbs_typed_buf {
     : buf_(std::move(o.buf_)), cache_(std::move(o.cache_)) {}
   inline T *operator->() { return cache_; }
   inline T *get() { return cache_; }
+
+  // needed to share the payload at specific ranges - i.e.: internal
+  // structures for saving to files, creating subranges for
+  // nested flatbuffers types,etc.
+  //
+  seastar::temporary_buffer<char> & buf() { return buf_; }
+  seastar::temporary_buffer<char> &&move_buf() {
+    cache_ = nullptr;
+    return std::move(buf_);
+  }
+
   SMF_DISALLOW_COPY_AND_ASSIGN(fbs_typed_buf);
 
  private:
