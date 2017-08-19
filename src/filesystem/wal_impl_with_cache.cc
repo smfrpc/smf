@@ -13,8 +13,8 @@
 namespace smf {
 wal_impl_with_cache::wal_impl_with_cache(wal_opts _opts)
   : wal(std::move(_opts)) {
-  writer_ = std::make_unique<wal_writer>(opts.directory, &opts.wstats);  // done
-  reader_ = std::make_unique<wal_reader>(opts.directory, &opts.rstats);  // wip
+  writer_ = std::make_unique<wal_writer>(opts.directory, &opts.wstats);
+  reader_ = std::make_unique<wal_reader>(opts.directory, &opts.rstats);
   cache_  = std::make_unique<wal_mem_cache>(opts.cache_size, &opts.cstats);
 }
 
@@ -33,9 +33,7 @@ seastar::future<wal_read_reply::maybe> wal_impl_with_cache::get(
   wal_read_request req) {
   uint64_t offset = req.offset;
   return cache_->get(offset).then([this, req = std::move(req)](auto maybe_buf) {
-    if (!maybe_buf) {
-      return reader_->get(std::move(req));
-    }
+    if (!maybe_buf) { return reader_->get(std::move(req)); }
     return seastar::make_ready_future<wal_read_reply::maybe>(
       std::move(maybe_buf));
   });
@@ -46,9 +44,7 @@ seastar::future<> wal_impl_with_cache::open() {
   auto dir = opts.directory;
   return file_exists(dir)
     .then([dir](bool exists) {
-      if (exists) {
-        return seastar::make_ready_future<>();
-      }
+      if (exists) { return seastar::make_ready_future<>(); }
       return seastar::make_directory(dir);
     })
     .then([this, dir] {

@@ -45,6 +45,8 @@ enum tx_put_invalidation_reason:byte {
 }
 table tx_put_invalidation {
   reason: tx_put_invalidation_reason;
+
+  /// This is the offset from the tx_put_reply.
   offset: ulong;
 }
 /// This is the datastructure that gets persisted on disk.
@@ -72,7 +74,6 @@ table tx_put_fragment {
 table tx_put_request {
   topic:       string;
   partition:   uint; // xxhash32(topic,key)
-  chain:       [uint];
   txs:         [tx_put_fragment];
 }
 table tx_put_reply {

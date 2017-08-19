@@ -4,8 +4,17 @@ include "wal.fbs";
 
 namespace smf.chains;
 
+// todo! wrap all types
+// we need a transaction manager that moves the pointer along
+// once all chain replicas have acknowledge write.
+
+table chain_put {
+  chain:       [uint];
+  chain_index: uint = 0;
+  put: smf.wal.tx_put_request;
+}
 
 rpc_service chain_replication {
-  put(smf.wal.tx_put_request): smf.wal.tx_put_reply;
+  put(chain_put): smf.wal.tx_put_reply;
   get(smf.wal.tx_get_request): smf.wal.tx_get_reply;
 }

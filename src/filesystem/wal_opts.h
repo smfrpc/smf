@@ -14,6 +14,10 @@
 
 namespace smf {
 
+// TODO(agallego) - all these reader stats are wrong.
+// we need to port over to the metrics collection part of seastar
+//
+
 struct reader_stats {
   reader_stats() {}
   reader_stats(reader_stats &&o) noexcept;
@@ -53,8 +57,10 @@ struct cache_stats {
 };
 std::ostream &operator<<(std::ostream &o, const cache_stats &s);
 
-// this should probably be a sharded<wal_otps> &
-// like the tcp server no?
+// TODO(agallego) - write and document that the default number of paritions
+// 'created' will be total number of cores. - that's by design - single reader/writer
+//
+
 struct wal_opts {
   explicit wal_opts(seastar::sstring log_directory);
   wal_opts(wal_opts &&o) noexcept;
