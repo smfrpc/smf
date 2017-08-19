@@ -7,8 +7,8 @@
 namespace smf {
 template <typename T> class rpc_recv_typed_context;
 
-template <typename T> auto to_lw_shared(rpc_recv_typed_context<T> &&c) {
-  return seastar::make_lw_shared<rpc_recv_typed_context<T>>(std::move(c));
+template <typename T> auto unwrap_to_lw_shared(rpc_recv_typed_context<T> &&c) {
+  return seastar::make_lw_shared<T>(std::move(c.ctx.value()));
 }
 
 template <typename T> class rpc_recv_typed_context {
