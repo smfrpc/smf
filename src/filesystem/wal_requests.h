@@ -16,8 +16,24 @@
 
 // Note that the put/get requests are pointers because they typically come from
 // an RPC call. it is the responsibility of the caller to ensure that the
-// requests
-// and pointers stay valid throughout the request lifecycle.
+// requests and pointers stay valid throughout the request lifecycle.
+//
+// In addition, they must be cheap to copy-construct - typically a couple of
+// pointer copy.
+//
+
+namespace smf {
+namespace details {
+template <typename T> priority_wrapper {
+  priority_wrapper(T * ptr, ::seastar::io_priority_class & p)
+    : req(THROW_IFNULL(ptr)), pc(p) {}
+  priority_wrapper(priority_wrapper && o) noexcept
+    : req(std::move(o.req)), pc(std::move(o.pc)) {}
+  T *                                 req;
+  const ::seastar::io_priority_class &pc;
+};
+}  // namespace details
+}  // namespace smf
 
 namespace smf {
 enum class wal_type : uint8_t {
@@ -26,17 +42,13 @@ enum class wal_type : uint8_t {
   wal_type_memory_only
 };
 
+
 // reads
 
-struct wal_read_request {
+struct wal_read_request : details::priority_wrapper<smf::wal::tx_get_request> {
   wal_read_request(smf::wal::tx_get_request *    ptr,
                    ::seastar::io_priority_class &p)
-    : req(THROW_IFNULL(ptr)), pc(p) {}
-  wal_read_request(wal_read_request &&o) noexcept
-    : req(std::move(o.req)), pc(std::move(o.pc)) {}
-
-  smf::wal::tx_get_request *          req;
-  const ::seastar::io_priority_class &pc;
+    : priority_wrapper(ptr, p) {}
 };
 struct wal_read_reply {
   wal_read_reply() {}
@@ -64,31 +76,21 @@ struct wal_read_reply {
 
 // writes
 
-struct wal_write_request {
+struct wal_write_request : details::priority_wrapper<smf::wal::tx_put_request> {
   wal_write_request(smf::wal::tx_put_request *          ptr,
                     const ::seastar::io_priority_class &p)
-    : req(THROW_IFNULL(ptr)), pc(p) {}
-
-  wal_write_request(wal_write_request &&o) noexcept
-    : req(std::move(o.ptr)), pc(o.pc) {}
-
-  smf::wal::tx_put_request *          ptr;
-  const ::seastar::io_priority_class &pc;
+    : priority_wrapper(ptr, p) {}
 };
 using wal_write_reply = smf::wal::tx_put_reply;
 
 
 // invalidations
 
-struct wal_write_invalidation {
-  wal_write_request(smf::wal::tx_put_invalidation *     ptr,
-                    const ::seastar::io_priority_class &p)
-    : req(THROW_IFNULL(ptr)), pc(p) {}
+struct wal_write_invalidation
+  : details::priority_wrapper<smf::wal::tx_put_invalidation> {
+  wal_write_invalidation(smf::wal::tx_put_invalidation *     ptr,
+                         const ::seastar::io_priority_class &p)
+    : priority_wrapper(ptr, p) {}
+};
 
-  wal_write_request(wal_write_request &&o) noexcept
-    : req(std::move(o.ptr)), pc(o.pc) {}
-
-  smf::wal::tx_put_invalidation *     ptr;
-  const ::seastar::io_priority_class &pc;
-}
 }  // namespace smf
