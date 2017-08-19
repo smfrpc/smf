@@ -6,6 +6,7 @@
 // seastar
 #include <core/iostream.hh>
 // smf
+#include "flatbuffers/fbs_typed_buf.h"
 #include "flatbuffers/rpc_generated.h"
 #include "hashing/hashing_utils.h"
 #include "platform/log.h"
@@ -30,8 +31,8 @@ struct rpc_recv_context {
   /// \brief default ctor
   /// moves in a hdr and body payload after verification. usually passed
   // in via the parse() function above
-  rpc_recv_context(seastar::temporary_buffer<char> &&hdr,
-                   seastar::temporary_buffer<char> &&body);
+  rpc_recv_context(fbs_typed_buf<rpc::header>  hdr,
+                   fbs_typed_buf<rpc::payload> body);
   rpc_recv_context(rpc_recv_context &&o) noexcept;
   ~rpc_recv_context();
   /// \brief used by the server side to determine the actual RPC
@@ -41,26 +42,8 @@ struct rpc_recv_context {
   /// follows the HTTP status codes
   uint32_t status() const;
 
-  seastar::temporary_buffer<char> header_buf;
-  seastar::temporary_buffer<char> body_buf;
-  /// Notice that this is safe. flatbuffers uses this internally via
-  /// `PushBytes()` which is nothing more than
-  /// \code
-  /// struct foo;
-  /// flatbuffers::PushBytes((uint8_t*)foo, sizeof(foo));
-  /// \endcode
-  /// because the flatbuffers compiler can force only primitive types that
-  /// are padded to the largest member size
-  /// This is the main reason we are using flatbuffers - no serialization cost
-  fbs::rpc::Header *header;
-  /// \bfief casts the byte buffer to a pointer of the payload type
-  /// This is what the root_type type; is with flatbuffers. if you
-  /// look at the generated code it just calls GetMutableRoot<>
-  ///
-  /// This is the main reason we are using flatbuffers - no serialization cost
-  ///
-  fbs::rpc::Payload *payload;
-
+  fbs_typed_buf<rpc::header>  header;
+  fbs_typed_buf<rpc::payload> payload;
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_recv_context);
 };
 }  // namespace smf

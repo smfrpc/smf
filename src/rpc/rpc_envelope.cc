@@ -50,9 +50,7 @@ rpc_envelope::~rpc_envelope() {}
 rpc_envelope::rpc_envelope() {}
 
 rpc_envelope &rpc_envelope::operator=(rpc_envelope &&o) noexcept {
-  if (this != &o) {
-    letter = std::move(o.letter);
-  }
+  if (this != &o) { letter = std::move(o.letter); }
   return *this;
 }
 
@@ -70,7 +68,7 @@ void rpc_envelope::add_dynamic_header(const char *   header,
                                       const size_t & value_len) {
   DLOG_THROW_IF(letter.dtype != rpc_letter_type::rpc_letter_type_payload,
                 "Bad Internal State: Not a rpc_letter_type_payload");
-  auto hdr = std::make_unique<fbs::rpc::DynamicHeaderT>();
+  auto hdr = std::make_unique<rpc::dynamic_headerT>();
   hdr->key = header;
   hdr->value.reserve(value_len);
   std::copy(value, value + value_len, &hdr->value[0]);
@@ -92,9 +90,10 @@ void rpc_envelope::set_status(const uint32_t &status) {
 }
 
 void rpc_envelope::set_compressed_payload(seastar::temporary_buffer<char> buf) {
-  letter.dtype  = rpc_letter_type::rpc_letter_type_binary;
-  letter.body   = std::move(buf);
-  letter.header = header_for_payload(letter.body.get(), letter.body.size(),
-                                     fbs::rpc::Flags::Flags_ZSTD);
+  letter.dtype = rpc_letter_type::rpc_letter_type_binary;
+  letter.body  = std::move(buf);
+  letter.header =
+    header_for_payload(letter.body.get(), letter.body.size(),
+                       rpc::compression_lags::compression_flags_zstd);
 }
 }  // namespace smf

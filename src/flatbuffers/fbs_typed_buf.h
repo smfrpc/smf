@@ -19,8 +19,18 @@ template <typename T> class fbs_typed_buf {
     // when we move to c++17 and gcc7.
     auto ptr = static_cast<void *>(buf_.get_write());
     if (std::is_base_of<flatbuffers::Table, T>::value) {
+      /// GetMutableRoot<> is designed for flatbuffers::Table types only
+      ///
       cache_ = flatbuffers::GetMutableRoot<T>(ptr);
     } else {
+      /// Notice that this is safe. flatbuffers uses this internally via
+      /// `PushBytes()` which is nothing more than
+      /// \code
+      ///   struct foo;
+      ///   flatbuffers::PushBytes((uint8_t*)foo, sizeof(foo));
+      /// \endcode
+      /// because the flatbuffers compiler can force only primitive types that
+      /// are padded to the largest member size
       cache_ = reinterpret_cast<T *>(ptr);
     }
   }
