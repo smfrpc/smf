@@ -1,27 +1,35 @@
 // Copyright 2017 Alexander Gallego
 //
 
-namespace smf.fbs.rpc;
+namespace smf.rpc;
 
 /// \brief: headers that are stored in an int
 /// so they need to be inclusive. That is, you can turn on
 /// many flags at the same time, i.e.: enable checksum and
 /// have the payload be zlib compressed.
 ///
-enum Flags:uint (bit_flags) {
+enum compression_flags:byte (bit_flags) {
+  /// brief uses zstandard 1.0
+  zstd,
+  /// lz4 is pending 
+  lz4
+}
+enum validation_flags:byte (bit_flags) {
   /// \brief check the compressed payload if enabled.
-  CHECKSUM,
-  /// \brief the payload is compressed using zstandrad 1.0
-  ZSTD
+  checksum,
+  /// \brief do a full flatbuffers type check on the received payload
+  /// by default gRPC does verification, but flatbuffers is opt-in
+  full_type_check
 }
 
 /// \brief: header parsed by rpc engine
 /// must be sizeof()'able
 /// that is, must be a struct in fbs language
 ///
-struct Header {
+struct header {
   size: uint = 0;
-  flags: Flags = CHECKSUM;
+  compression: compression_flags = zstd;
+  validation:  validation_flags = checksum;
   /// currently we use xxhash32
   checksum: uint = 0;
 }
@@ -29,7 +37,7 @@ struct Header {
 /// \brief used for extra headers, ala HTTP
 /// The use case for the core is to support
 /// zipkin/google-Dapper style tracing
-table DynamicHeader {
+table dynamic_header {
   /// alows for binary search lookup
   /// use with CreateVectorOfSortedTables<> instead of the CreateVector
   key: string (key);
@@ -47,7 +55,7 @@ table DynamicHeader {
 /// The idea here is that the `body' will actually be another flatbuffer
 /// or any other protocol, so a byte array is the lowest abstraction
 ///
-table Payload {
+table payload {
   /// \brief used for sending and receiving, read carefully.
   ///
   /// Receiving:
@@ -70,7 +78,7 @@ table Payload {
   /// cookie: [ubyte];
 
   /// Headers for forward compat.
-  dynamic_headers: [DynamicHeader];
+  dynamic_headers: [dynamic_header];
   body: [ubyte];
 }
 
