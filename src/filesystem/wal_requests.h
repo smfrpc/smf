@@ -81,7 +81,11 @@ struct wal_write_request : details::priority_wrapper<smf::wal::tx_put_request> {
                     const ::seastar::io_priority_class &p)
     : priority_wrapper(ptr, p) {}
 };
-using wal_write_reply = seastar::lw_shared_ptr<smf::wal::tx_put_reply>;
+struct wal_write_reply {
+  wal_write_reply(uint64_t offset) { data->offset = offset; }
+  seastar::lw_shared_ptr<smf::wal::tx_put_replyT> data =
+    seastar::lw_make_shared<wal::tx_put_replyT>();
+};
 
 
 // invalidations
