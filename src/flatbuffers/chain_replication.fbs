@@ -11,7 +11,12 @@ namespace smf.chains;
 table chain_put {
   chain:       [uint];
   chain_index: uint = 0;
-  put: smf.wal.tx_put_request;
+  /// brief each put is actually a put of a single: (Topic,Parition) tuple.
+  /// so you can produce many key=value items per topic,partition
+  /// ... in essence is an array of arrays. The first array is the topic, partition
+  /// grouping, and the second is just a set of key=value pairs.
+  ///
+  puts:        [smf.wal.tx_put_request];
 }
 
 rpc_service chain_replication {

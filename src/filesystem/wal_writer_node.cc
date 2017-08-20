@@ -34,14 +34,12 @@ wal_writer_node::wal_writer_node(wal_writer_node_opts &&opts)
 seastar::future<> wal_writer_node::open() {
   namespace sm = seastar::metrics;
   metrics_.add_group(
-    "smf::wal_writer_node",
+    "smf::wal_writer_node::" + opts_.topic + " ("
+      + seastar::to_sstring(opts_.partition) + ")",
     {sm::make_derive("total_writes", stats_->total_writes,
                      sm::description("Number of writes to disk")),
      sm::make_derive("total_bytes", stats_->total_bytes,
-                     sm::description("Number of bytes writen to disk")),
-     sm::make_derive(
-       "total_bytes", stats_->total_invalidations,
-       sm::description("Number of invalidstions writen to disk"))});
+                     sm::description("Number of bytes writen to disk"))});
 
   const auto name = wal_file_name(opts_.prefix, opts_.epoch);
   LOG_THROW_IF(lease_, "opening new file. Previous file is unclosed");

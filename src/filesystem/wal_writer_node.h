@@ -13,10 +13,9 @@
 #include "filesystem/wal_writer_utils.h"
 
 namespace smf {
-// TODO(agallego) - use the stats internally now that you have them
 struct wal_writer_node_opts {
-  writer_stats *                      wstats;
-  seastar::sstring                    prefix;
+  seastar::sstring                    topic;
+  uint32_t                            partition;
   uint64_t                            epoch = 0;
   seastar::file_output_stream_options fstream{
     // These are the seastar defaults
@@ -25,6 +24,8 @@ struct wal_writer_node_opts {
     // unsigned preallocation_size = 1024*1024; // 1MB
     // unsigned write_behind = 1; ///< Number of buffers to write in parallel
   };
+
+  // This no longer makes sense. this makes sense in the projection
   const uint64_t min_compression_size = 512;
   const uint64_t file_size            = wal_file_size_aligned();
 };
@@ -43,23 +44,15 @@ class wal_writer_node {
   struct wal_writer_node_stats {
     uint64_t total_writes{0};
     uint64_t total_bytes{0};
-    uint64_t total_invalidations{0};
+    // add more metrics!
   };
 
  public:
   explicit wal_writer_node(wal_writer_node_opts &&opts);
-  /// \brief 0-copy append to buffer
-  /// \return the starting offset on file for this put
-  ///
-  /// breaks request into largest chunks possible for remaining space
-  /// writing at most opts.file_size on disk at each step.
-  /// once ALL chunks have been written, the original req is deallocatead
-  /// internally, we call temporary_buffer<T>::share(i,j) to create shallow
-  /// copies of the data deferring the deleter() function to deallocate buffer
-  ///
-  /// This is a recursive function
-  ///
-  seastar::future<uint64_t> append(wal_write_request req);
+
+  /// \brief writes the projection to disk ensuring file size capacity
+  seastar::future<wal_write_reply> append(
+    seastar::lw_shared_ptr<wal_write_projection> req);
   /// \brief flushes the file before closing
   seastar::future<> close();
   /// \brief opens the file w/ open_flags::rw | open_flags::create |

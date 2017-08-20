@@ -37,29 +37,30 @@ enum tx_put_invalidation_reason:byte {
 }
 table tx_put_invalidation {
   reason: tx_put_invalidation_reason;
-
+  /// iff this->op == tx_put_operation::abort
+  /// use to write an abort, for a specific offset
   /// This is the offset from the tx_put_reply.
   offset: ulong;
 }
+table tx_put_kv {
+  key:              [ubyte];
+  value:            [ubyte];
+}
+
+union tx_put_data { tx_put_kv, tx_put_invalidation}
 /// This is the datastructure that gets persisted on disk.
 /// Please be tender while extending
 table tx_put_fragment {
   /// what should we do with this trasaction fragment
   op:           tx_put_operation;
-  /// sequence id.. not sure if needed
-  id:           uint;
-
+  /// sequence id
+  client_seq:   ulong;
   /// In seastar clients we will use a losely ticked timer which moves
   /// every 10 micros.
   /// This is needed for systems doing window aggregations, etc.
   ///
-  epoch:            smf.timestamp;
-  key:              [ubyte];
-  value:            [ubyte];
-
-  /// iff this->op == tx_put_operation::abort
-  /// use to write an abort, for a specific offset
-  invalidation: tx_put_invalidation;
+  epoch:        smf.timestamp;
+  data:         tx_put_data;
 }
 
 /// brief - stores `puts` transactionally

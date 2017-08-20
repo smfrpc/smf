@@ -18,19 +18,20 @@
 
 namespace smf {
 
-wal_writer::wal_writer(seastar::sstring _dir, writer_stats *s)
-  : directory(_dir), wstats_(s) {}
+wal_writer::wal_writer(seastar::sstring topic_dir, uint32_t topic_partition)
+  : directory(topic_dir), partition(topic_partition) {}
 
 wal_writer::wal_writer(wal_writer &&o) noexcept
   : directory(std::move(o.directory))
-  , wstats_(o.wstats_)
+  , partition(std::move(o.partition))
   , writer_(std::move(o.writer_)) {}
 
+seastar::sstring wal_writer::work_directory() const {
+  return directory + "." + seastar::to_sstring(partition);
+}
 
 seastar::future<> wal_writer::close() {
-  if (writer_) {
-    return writer_->close();
-  }
+  if (writer_) { return writer_->close(); }
   // writer can be null if after creation, but before open()
   // is called there is a system_error or an exception
   // so we never call open. We still need to wind down and close()
@@ -67,48 +68,31 @@ seastar::future<> wal_writer::open_non_empty_dir(seastar::sstring last_file,
 }
 
 seastar::future<> wal_writer::do_open() {
-  return seastar::open_directory(directory).then([this](seastar::file f) {
-    auto l = seastar::make_lw_shared<wal_head_file_max_functor>(std::move(f));
-    return l->done().then([l, this]() {
-      seastar::sstring run_prefix =
-        seastar::to_sstring(time_now_micros()) + ":";
-      if (l->last_file.empty()) {
-        return open_empty_dir(run_prefix);
-      }
-      return open_non_empty_dir(l->last_file, run_prefix);
+  return seastar::open_directory(work_directory())
+    .then([this](seastar::file f) {
+      auto l = seastar::make_lw_shared<wal_head_file_max_functor>(std::move(f));
+      return l->done().then([l, this]() {
+        seastar::sstring run_prefix =
+          seastar::to_sstring(time_now_micros()) + ":";
+        if (l->last_file.empty()) { return open_empty_dir(run_prefix); }
+        return open_non_empty_dir(l->last_file, run_prefix);
+      });
+    });
+}
+
+seastar::future<> wal_writer::open() {
+  return seastar::file_exists(work_directory()).then([this](bool dir_exists) {
+    if (dir_exists) { return do_open(); }
+    return seastar::make_directory(work_directory()).then([this] {
+      return do_open();
     });
   });
 }
 
-seastar::future<> wal_writer::open() {
-  return seastar::file_exists(directory).then([this](bool dir_exists) {
-    if (dir_exists) {
-      return do_open();
-    }
-    return seastar::make_directory(directory).then(
-      [this] { return do_open(); });
-  });
-}
-
-seastar::future<uint64_t> wal_writer::append(wal_write_request req) {
+seastar::future<wal_write_reply> wal_writer::append(
+  seastar::lw_shared_ptr<wal_write_projection> projection) {
   return writer_->append(std::move(req));
 }
 
-seastar::future<> wal_writer::invalidate(uint64_t epoch) {
-  ++wstats_->total_invalidations;
-  // write invalidation structure to WAL
-  fbs::wal::invalid_wal_entry     e{epoch};
-  seastar::temporary_buffer<char> data(sizeof(e));
-  std::copy(reinterpret_cast<char *>(&e),
-            reinterpret_cast<char *>(&e) + sizeof(e), data.get_write());
-
-  wal_write_request req(
-    wal_write_request_flags::wwrf_invalidate_payload, std::move(data),
-    priority_manager::thread_local_instance().commitlog_priority());
-
-  return append(std::move(req)).then([](auto _) {
-    return seastar::make_ready_future<>();
-  });
-}
 
 }  // namespace smf
