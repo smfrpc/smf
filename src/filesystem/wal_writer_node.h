@@ -14,6 +14,7 @@
 
 namespace smf {
 struct wal_writer_node_opts {
+  seastar::sstring                    work_directory;
   seastar::sstring                    topic;
   uint32_t                            partition;
   uint64_t                            epoch = 0;

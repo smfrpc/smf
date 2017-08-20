@@ -12,7 +12,7 @@
 namespace smf {
 class wal_writer {
  public:
-  wal_writer(seastar::sstring topic_dir, uint32_t topic_partition);
+  wal_writer(seastar::sstring topic, uint32_t topic_partition);
   wal_writer(wal_writer &&o) noexcept;
   ~wal_writer() {}
 
@@ -32,11 +32,12 @@ class wal_writer {
 
  private:
   seastar::sstring work_directory() const;
+  wal_writer_node_opts default_writer_opts() const;
 
   seastar::future<> do_open();
-  seastar::future<> open_empty_dir(seastar::sstring topic);
-  seastar::future<> open_non_empty_dir(seastar::sstring last_file,
-                                       seastar::sstring topic);
+  seastar::future<> open_empty_dir();
+  seastar::future<> open_non_empty_dir(seastar::sstring last_file);
+
 
  private:
   std::unique_ptr<wal_writer_node> writer_ = nullptr;

@@ -18,8 +18,8 @@
 
 namespace smf {
 
-wal_writer::wal_writer(seastar::sstring topic_dir, uint32_t topic_partition)
-  : directory(topic_dir), partition(topic_partition) {}
+wal_writer::wal_writer(seastar::sstring topic, uint32_t topic_partition)
+  : directory(topic), partition(topic_partition) {}
 
 wal_writer::wal_writer(wal_writer &&o) noexcept
   : directory(std::move(o.directory))
@@ -28,6 +28,12 @@ wal_writer::wal_writer(wal_writer &&o) noexcept
 
 seastar::sstring wal_writer::work_directory() const {
   return directory + "." + seastar::to_sstring(partition);
+}
+wal_writer_node_opts wal_writer::default_writer_opts() const {
+  wal_writer_node_opts wo;
+  wo.work_directory = work_directory();
+  wo.topic          = topic;
+  wo.partition      = partition;
 }
 
 seastar::future<> wal_writer::close() {
@@ -39,29 +45,21 @@ seastar::future<> wal_writer::close() {
   return seastar::make_ready_future<>();
 }
 
-seastar::future<> wal_writer::open_empty_dir(seastar::sstring prefix) {
-  auto                 id = seastar::to_sstring(seastar::engine().cpu_id());
-  wal_writer_node_opts wo;
-  wo.wstats = wstats_;
-  wo.prefix = prefix + id;
-  writer_   = std::make_unique<wal_writer_node>(std::move(wo));
+seastar::future<> wal_writer::open_empty_dir() {
+  writer_ = std::make_unique<wal_writer_node>(default_writer_opts());
   return writer_->open();
 }
 
-seastar::future<> wal_writer::open_non_empty_dir(seastar::sstring last_file,
-                                                 seastar::sstring prefix) {
+seastar::future<> wal_writer::open_non_empty_dir(seastar::sstring last_file) {
   auto epoch = wal_name_extractor_utils::extract_epoch(last_file);
   DLOG_TRACE("epoch extracted: {}, filename:{}", epoch, last_file);
   return seastar::open_file_dma(last_file, seastar::open_flags::ro)
     .then([this, prefix, epoch](seastar::file f) {
       auto last = seastar::make_lw_shared<seastar::file>(std::move(f));
       return last->size().then([this, prefix, last, epoch](uint64_t size) {
-        auto id = seastar::to_sstring(seastar::engine().cpu_id());
-        wal_writer_node_opts wo;
-        wo.wstats = wstats_;
-        wo.prefix = prefix + id;
-        wo.epoch  = epoch + size;
-        writer_   = std::make_unique<wal_writer_node>(std::move(wo));
+        auto wo  = default_writer_opts();
+        wo.epoch = epoch + size;
+        writer_  = std::make_unique<wal_writer_node>(std::move(wo));
         return last->close().then([last, this] { return writer_->open(); });
       });
     });
@@ -72,10 +70,8 @@ seastar::future<> wal_writer::do_open() {
     .then([this](seastar::file f) {
       auto l = seastar::make_lw_shared<wal_head_file_max_functor>(std::move(f));
       return l->done().then([l, this]() {
-        seastar::sstring run_prefix =
-          seastar::to_sstring(time_now_micros()) + ":";
-        if (l->last_file.empty()) { return open_empty_dir(run_prefix); }
-        return open_non_empty_dir(l->last_file, run_prefix);
+        if (l->last_file.empty()) { return open_empty_dir(); }
+        return open_non_empty_dir(l->last_file);
       });
     });
 }
