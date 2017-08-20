@@ -11,13 +11,12 @@ uint64_t wal_file_size_aligned() {
   static const uint64_t pz = ::sysconf(_SC_PAGESIZE);
   // same as hdfs, see package org.apache.hadoop.fs; - 64MB
   // 67108864
-  static const constexpr uint64_t kDefaultFileSize = 1 << 26;
-  const uint64_t                  extra_bytes      = kDefaultFileSize % pz;
+  static const constexpr uint64_t kDefaultFileSize =
+    static_cast<uint64_t>(std::numeric_limits<int>::max());
+  const uint64_t extra_bytes = kDefaultFileSize % pz;
 
   // account for page size bigger than 64MB
-  if (pz > kDefaultFileSize) {
-    return pz;
-  }
+  if (pz > kDefaultFileSize) { return pz; }
   return kDefaultFileSize - extra_bytes;
 }
 

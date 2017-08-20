@@ -15,11 +15,18 @@
 namespace smf {
 // TODO(agallego) - use the stats internally now that you have them
 struct wal_writer_node_opts {
-  writer_stats *   wstats;
-  seastar::sstring prefix;
-  uint64_t         epoch                = 0;
-  const uint64_t   min_compression_size = 512;
-  const uint64_t   file_size            = wal_file_size_aligned();
+  writer_stats *                      wstats;
+  seastar::sstring                    prefix;
+  uint64_t                            epoch = 0;
+  seastar::file_output_stream_options fstream{
+    // These are the seastar defaults
+    //
+    // unsigned buffer_size = 8192;
+    // unsigned preallocation_size = 1024*1024; // 1MB
+    // unsigned write_behind = 1; ///< Number of buffers to write in parallel
+  };
+  const uint64_t min_compression_size = 512;
+  const uint64_t file_size            = wal_file_size_aligned();
 };
 
 /// \brief - given a prefix and an epoch (monotinically increasing counter)
@@ -32,6 +39,13 @@ struct wal_writer_node_opts {
 /// to disk, so even during crash we are safe
 ///
 class wal_writer_node {
+ public:
+  struct wal_writer_node_stats {
+    uint64_t total_writes{0};
+    uint64_t total_bytes{0};
+    uint64_t total_invalidations{0};
+  };
+
  public:
   explicit wal_writer_node(wal_writer_node_opts &&opts);
   /// \brief 0-copy append to buffer
@@ -80,6 +94,8 @@ class wal_writer_node {
   //
   seastar::lw_shared_ptr<wal_writer_file_lease> lease_ = nullptr;
   seastar::semaphore                            serialize_writes_{1};
+  wal_writer_node_stats                         stats_{};
+  seastar::metrics::metric_groups               metrics_{};
 };
 
 }  // namespace smf

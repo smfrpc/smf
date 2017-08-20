@@ -5,20 +5,12 @@ namespace smf.wal;
 
 // TAG: alpha
 
-/// \brief whether it's 32 bits or 8 bits,
-/// flatbuffers will pad the struct, so for now we make it 8bits
-/// 
-enum wal_entry_fragment:byte (bit_flags) {
-  partial_fragment,
-  full_fragment
-}
 enum wal_entry_compression_type:byte {
   none,
   zstd
 }
 
 struct wal_header {
-  frag:        wal_entry_fragment = full_fragment;
   compression: wal_entry_compression_type = none;
   size:        uint = 0;
   checksum:    uint = 0;
@@ -96,9 +88,11 @@ table tx_get_request {
   max_bytes:  uint = 2147483548;
 }
 
+/// \brief the broker might have decided to compress the tx_put_fragment.
+/// 
 table tx_get_fragment {
   hdr:             wal_header;
-  compressed_txns: [ubyte]; 
+  fragment:        [ubyte]; 
 }
 
 table tx_get_reply {

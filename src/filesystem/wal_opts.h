@@ -14,10 +14,6 @@
 
 namespace smf {
 
-// TODO(agallego) - all these reader stats are wrong.
-// we need to port over to the metrics collection part of seastar
-//
-
 struct reader_stats {
   reader_stats() {}
   reader_stats(reader_stats &&o) noexcept;
@@ -31,20 +27,6 @@ struct reader_stats {
   std::unique_ptr<smf::histogram> hist = std::make_unique<histogram>();
 };
 std::ostream &operator<<(std::ostream &o, const reader_stats &s);
-
-struct writer_stats {
-  writer_stats() {}
-  writer_stats(writer_stats &&o) noexcept;
-  writer_stats(const writer_stats &o);
-  writer_stats &operator+=(const writer_stats &o) noexcept;
-  writer_stats &operator=(const writer_stats &o);
-
-  uint64_t                        total_writes{0};
-  uint64_t                        total_bytes{0};
-  uint64_t                        total_invalidations{0};
-  std::unique_ptr<smf::histogram> hist = std::make_unique<histogram>();
-};
-std::ostream &operator<<(std::ostream &o, const writer_stats &s);
 
 struct cache_stats {
   uint64_t total_reads{0};
@@ -66,12 +48,8 @@ struct wal_opts {
   wal_opts(wal_opts &&o) noexcept;
   wal_opts(const wal_opts &o);
   wal_opts &operator=(const wal_opts &o);
-
   const seastar::sstring directory;
-  const uint64_t         cache_size = wal_file_size_aligned() * 2;
-  reader_stats           rstats;
-  writer_stats           wstats;
-  cache_stats            cstats;
+  const uint64_t         cache_size = wal_file_size_aligned();
 };
 std::ostream &operator<<(std::ostream &o, const wal_opts &opts);
 

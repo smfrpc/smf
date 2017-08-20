@@ -15,13 +15,15 @@ wal_impl_with_cache::wal_impl_with_cache(wal_opts _opts)
   : wal(std::move(_opts)) {
   writer_ = std::make_unique<wal_writer>(opts.directory, &opts.wstats);
   reader_ = std::make_unique<wal_reader>(opts.directory, &opts.rstats);
+  // cache not needed w/ partition managers.
   cache_  = std::make_unique<wal_mem_cache>(opts.cache_size, &opts.cstats);
 }
 
-seastar::future<uint64_t> wal_impl_with_cache::append(wal_write_request req) {
-  return writer_->append(std::move(req)).then([
-    this, bufcpy = req.data.share()
-  ](uint64_t epoch) mutable { return cache_->put(epoch, std::move(bufcpy)); });
+seastar::future<wal_write_reply> wal_impl_with_cache::append(
+  wal_write_request req) {
+  return writer_->append(req).then([this, req](wal_write_reply entry) mutable {
+    return cache_->put(entry, req);
+  });
 }
 
 seastar::future<> wal_impl_with_cache::invalidate(uint64_t epoch) {
@@ -33,7 +35,9 @@ seastar::future<wal_read_reply::maybe> wal_impl_with_cache::get(
   wal_read_request req) {
   uint64_t offset = req.offset;
   return cache_->get(offset).then([this, req = std::move(req)](auto maybe_buf) {
+
     if (!maybe_buf) { return reader_->get(std::move(req)); }
+
     return seastar::make_ready_future<wal_read_reply::maybe>(
       std::move(maybe_buf));
   });

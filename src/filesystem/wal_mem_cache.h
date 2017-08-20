@@ -17,6 +17,12 @@ namespace smf {
 
 // TODO(agallego) define a memory cache interface, similar to wal.h
 // TODO(agallego) add wal_opts read and write stats here!
+// TODO(change interface w/ the new wal.fbs)
+// THIS is no longer needed because ...
+// we are going to implement file backed fetches only. yup. yup...
+
+// the reason we need this is because we can only read when we close a file.. which is just dumbsies.
+
 
 class wal_mem_cache {
  private:

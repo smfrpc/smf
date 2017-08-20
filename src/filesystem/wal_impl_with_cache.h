@@ -13,18 +13,17 @@ namespace smf {
 class wal_impl_with_cache : public wal {
  public:
   explicit wal_impl_with_cache(wal_opts opts);
+  virtual ~wal_impl_with_cache() {}
 
-  seastar::future<wal_write_reply> append(wal_write_request req) final;
-  seastar::future<> invalidate(wal_write_reply epoch) final;
+  virtual seastar::future<wal_write_reply> append(wal_write_request r) final;
+  virtual seastar::future<> invalidate(wal_write_invalidation r) final;
+  virtual seastar::future<wal_read_reply> get(wal_read_request r) final;
+  virtual seastar::future<> open() final;
+  virtual seastar::future<> close() final;
 
-  seastar::future<> open() final;
-  seastar::future<> close() final;
-
-  seastar::future<wal_read_reply> get(wal_read_request req) final;
 
  private:
-  std::unique_ptr<wal_writer>    writer_ = nullptr;
-  std::unique_ptr<wal_reader>    reader_ = nullptr;
-  std::unique_ptr<wal_mem_cache> cache_  = nullptr;
+  std::unordered_map<uint32_t, std::unique_ptr<wal_partition_manager>>
+    parition_map_{};
 };
 }  // namespace smf

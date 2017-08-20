@@ -18,14 +18,7 @@ namespace smf {
 
 static const size_t kWalHeaderSize = sizeof(fbs::wal::wal_header);
 
-seastar::file_output_stream_options fstream_opts(
-  const wal_writer_node_opts &opts) {
-  seastar::file_output_stream_options o;
-  o.buffer_size        = opts.file_size;
-  o.preallocation_size = opts.file_size;
-  return o;
-}
-
+// not true.
 uint64_t wal_write_request_size(const wal_write_request &req) {
   return kWalHeaderSize + req.data.size();
 }
@@ -39,10 +32,21 @@ wal_writer_node::wal_writer_node(wal_writer_node_opts &&opts)
 }
 
 seastar::future<> wal_writer_node::open() {
+  namespace sm = seastar::metrics;
+  metrics_.add_group(
+    "smf::wal_writer_node",
+    {sm::make_derive("total_writes", stats_->total_writes,
+                     sm::description("Number of writes to disk")),
+     sm::make_derive("total_bytes", stats_->total_bytes,
+                     sm::description("Number of bytes writen to disk")),
+     sm::make_derive(
+       "total_bytes", stats_->total_invalidations,
+       sm::description("Number of invalidstions writen to disk"))});
+
   const auto name = wal_file_name(opts_.prefix, opts_.epoch);
   LOG_THROW_IF(lease_, "opening new file. Previous file is unclosed");
-  lease_ = seastar::make_lw_shared<smf::wal_writer_file_lease>(
-    name, fstream_opts(opts_));
+  lease_ =
+    seastar::make_lw_shared<smf::wal_writer_file_lease>(name, opts_.fstream);
   return lease_->open();
 }
 
@@ -52,13 +56,13 @@ seastar::future<> wal_writer_node::do_append_with_header(
   h.mutate_checksum(xxhash_32(req.data.get(), req.data.size()));
   h.mutate_size(req.data.size());
   current_size_ += kWalHeaderSize;
-  ++opts_.wstats->total_writes;
-  opts_.wstats->total_bytes += kWalHeaderSize;
+  ++stats_.total_writes;
+  stats_.total_bytes += kWalHeaderSize;
   return lease_->append((const char *)&h, kWalHeaderSize).then([
     this, req = std::move(req)
   ]() mutable {
     current_size_ += req.data.size();
-    opts_.wstats->total_bytes += req.data.size();
+    stats_.total_bytes += req.data.size();
     return lease_->append(req.data.get(), req.data.size());
   });
 }
@@ -103,7 +107,7 @@ seastar::future<> wal_writer_node::do_append_with_flags(
 }
 
 seastar::future<uint64_t> wal_writer_node::append(wal_write_request req) {
-  auto measure = opts_.wstats->hist->auto_measure();
+  auto measure = stats_.hist->auto_measure();
   return serialize_writes_.wait(1)
     .then([this, req = std::move(req)]() mutable {
       const auto offset = opts_.epoch += current_size_;
