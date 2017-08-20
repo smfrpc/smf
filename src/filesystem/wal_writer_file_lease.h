@@ -40,7 +40,7 @@ class wal_writer_file_lease {
   static const seastar::sstring &lock_prefix();
 
  private:
-  const seastar::sstring              original_name_;
+  const seastar::sstring              filename_;
   seastar::file_output_stream_options opts_;
   seastar::output_stream<char>        fstream_;
   bool                                closed_{false};

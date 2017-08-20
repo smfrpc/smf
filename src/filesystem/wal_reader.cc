@@ -19,24 +19,20 @@ wal_reader_visitor::wal_reader_visitor(wal_reader *r, seastar::file dir)
   : wal_file_walker(std::move(dir)), reader(r) {}
 seastar::future<> wal_reader_visitor::visit(seastar::directory_entry de) {
   if (!wal_name_extractor_utils::is_name_locked(de.name)) {
-    auto original_core = wal_name_extractor_utils::extract_core(de.name);
-    auto moving_core = jump_consistent_hash(original_core, seastar::smp::count);
-    // only move iff* it matches our core. Every core is doing the same
-    if (seastar::engine().cpu_id() == moving_core) {
-      return reader->monitor_files(std::move(de));
-    }
+    return reader->monitor_files(std::move(de));
   }
   return seastar::make_ready_future<>();
 }
+
 }  // namespace smf
 
 namespace smf {
-wal_reader::wal_reader(seastar::sstring _dir, reader_stats *s)
-  : directory(_dir), rstats_(DTHROW_IFNULL(s)) {}
+wal_reader::wal_reader(seastar::sstring topic, uint32_t topic_partition)
+  : directory(topic), partition(topic_partition) {}
 
 wal_reader::wal_reader(wal_reader &&o) noexcept
   : directory(std::move(o.directory))
-  , rstats_(o.rstats_)
+  , partition(std::move(o.partition))
   , allocated_(std::move(o.allocated_))
   , buckets_(std::move(o.buckets_))
   , fs_observer_(std::move(o.fs_observer_)) {}
@@ -47,7 +43,7 @@ wal_reader::~wal_reader() {}
 seastar::future<> wal_reader::monitor_files(seastar::directory_entry entry) {
   auto e = wal_name_extractor_utils::extract_epoch(entry.name);
   if (buckets_.find(e) == buckets_.end()) {
-    auto n    = std::make_unique<wal_reader_node>(e, entry.name, rstats_);
+    auto n    = std::make_unique<wal_reader_node>(e, entry.name);
     auto copy = n.get();
     return copy->open().then([this, n = std::move(n)]() mutable {
       allocated_.emplace_back(std::move(n));
@@ -70,6 +66,12 @@ seastar::future<> wal_reader::open() {
     // api and it calls seastar::future<>monitor_files()...
     return fs_observer_->done();
   });
+}
+void update_file_size_by(int64_t node_epoch, uint64_t delta) {
+  auto it = buckets_.lower_bound(node_epoch);
+  if (it != buckets_.end()) {
+    it->node->update_file_size_by(delta);
+  }
 }
 
 seastar::future<wal_read_reply::maybe> wal_reader::get(wal_read_request r) {
@@ -97,12 +99,8 @@ seastar::future<wal_read_reply::maybe> wal_reader::get(wal_read_request r) {
              .then([this, ret, end_epoch, req](auto maybe) mutable {
                req->offset += end_epoch;
                req->size -= end_epoch;
-               if (maybe) {
-                 ret->emplace_back(maybe->move_fragments());
-               }
-               if (req->size <= 0) {
-                 return seastar::stop_iteration::yes;
-               }
+               if (maybe) { ret->emplace_back(maybe->move_fragments()); }
+               if (req->size <= 0) { return seastar::stop_iteration::yes; }
                return seastar::stop_iteration::no;
              })
              .handle_exception([req](auto eptr) {

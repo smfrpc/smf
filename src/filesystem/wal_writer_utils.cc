@@ -20,8 +20,12 @@ uint64_t wal_file_size_aligned() {
   return kDefaultFileSize - extra_bytes;
 }
 
-seastar::sstring wal_file_name(const seastar::sstring &prefix, uint64_t epoch) {
-  return prefix + ":" + seastar::to_sstring(epoch) + ".wal";
+seastar::sstring wal_file_name(const seastar::sstring  work_dir,
+                               const seastar::sstring &prefix,
+                               uint64_t                epoch) {
+  DLOG_THROW_IF(work_dir[work_dir.size() - 1] == "/",
+                "Work dirrectory cannot end in /");
+  return work_dir + "/" + prefix + ":" + seastar::to_sstring(epoch) + ".wal";
 }
 
 }  // namespace smf

@@ -13,19 +13,25 @@
 #include "platform/macros.h"
 
 namespace smf {
-wal_reader_node::wal_reader_node(uint64_t         epoch,
-                                 seastar::sstring _filename,
-                                 reader_stats *   s)
+wal_reader_node::wal_reader_node(uint64_t epoch, seastar::sstring _filename)
   // needed signed for comparisons
   : starting_epoch(static_cast<int64_t>(epoch)),
-    filename(_filename),
-    rstats_(DTHROW_IFNULL(s)) {}
+    filename(_filename) {
+  namespace sm = seastar::metrics;
+  metrics_.add_group(
+    "smf::wal_reader_node::" + opts_.topic + " ("
+      + seastar::to_sstring(opts_.partition) + ")",
+    {sm::make_derive("total_writes", stats_->total_writes,
+                     sm::description("Number of writes to disk")),
+     sm::make_derive("total_bytes", stats_->total_bytes,
+                     sm::description("Number of bytes writen to disk")),
+     sm::make_derive("total_rolls", stats_->total_rolls,
+                     sm::description("Number of times, we rolled the log"))});
+}
 wal_reader_node::~wal_reader_node() {}
 
 seastar::future<> wal_reader_node::close() {
-  if (io_) {
-    return io_->close();
-  }
+  if (io_) { return io_->close(); }
   return seastar::make_ready_future<>();
 }
 

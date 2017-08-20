@@ -43,7 +43,7 @@ wal_writer_node::wal_writer_node(wal_writer_node_opts &&opts)
 wal_writer_node::~wal_writer_node() {}
 
 seastar::future<> wal_writer_node::open() {
-  const auto name = wal_file_name(opts_.run_id, opts_.epoch);
+  const auto name = wal_file_name(opts_.work_dir, opts_.run_id, opts_.epoch);
   LOG_THROW_IF(lease_, "opening new file. Previous file is unclosed");
   ++stats_.total_rolls;
   lease_ =

@@ -57,7 +57,7 @@ class wal_writer_node {
   /// \brief flushes the file before closing
   seastar::future<> close();
   /// \brief opens the file w/ open_flags::rw | open_flags::create |
-  ///                          open_flags::truncate | open_flags::exclusive
+  ///                          open_flags::truncate
   /// the file should fail if it exists. It should not exist on disk, as
   /// we'll truncate them
   seastar::future<> open();

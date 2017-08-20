@@ -12,7 +12,7 @@
 #include "platform/macros.h"
 #include "utils/caching/clock_pro/clock_pro.h"
 
-
+// TODO(agallego) - change filesize to be uint64_t
 namespace smf {
 class wal_clock_pro_cache {
  public:
@@ -35,15 +35,22 @@ class wal_clock_pro_cache {
   wal_clock_pro_cache(seastar::lw_shared_ptr<seastar::file> f,
                       // size of the `f` file from the fstat() call
                       // need this to figure out how many pages to allocate
-                      int64_t size,
+                      int64_t initial_size,
                       // max_pages_in_memory = 0, allows us to make a decision
                       // impl defined. right now, it chooses the max of 10% of
                       // the file or 10 pages. each page is 4096 bytes
                       uint32_t max_pages_in_memory = 0);
 
-  const int64_t  file_size;
-  const uint32_t number_of_pages;
 
+  const uint64_t disk_dma_alignment;
+
+
+  /// \brief this is risky and is for performance reasons
+  /// we do not want to fs::stat files all the time.
+  /// This recomputes offsets of files that we want to read
+  void update_file_size_by(uint64_t delta);
+  int64_t  file_size() const { return file_size_; }
+  uint32_t number_of_pages const { return number_of_pages_; }
   /// \brief - return buffer for offset with size
   seastar::future<wal_read_reply> read(wal_read_request r);
 
@@ -51,6 +58,9 @@ class wal_clock_pro_cache {
   seastar::future<> close();
 
  private:
+  int64_t  file_size_;
+  uint32_t number_of_pages_;
+
   /// \brief - returns a temporary buffer of size. similar to
   /// isotream.read_exactly()
   /// different than a wal_read_request for arguments since it returns **one**
@@ -78,8 +88,11 @@ class wal_clock_pro_cache {
 
  private:
   seastar::lw_shared_ptr<seastar::file> file_;  // uses direct io for fetching
-  uint32_t                              max_resident_pages_;
-  std::unique_ptr<cache_t>              cache_;
+  // This will be removed once we hookup to the seastar allocator for memory
+  // backpressure
+  //
+  uint32_t                 max_resident_pages_ = 10;
+  std::unique_ptr<cache_t> cache_;
 };
 
 

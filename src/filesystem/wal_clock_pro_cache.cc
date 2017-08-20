@@ -16,26 +16,24 @@ namespace smf {
 
 static uint32_t round_up(int64_t file_size, size_t alignment) {
   uint32_t ret = file_size / alignment;
-  if (file_size % alignment != 0) {
-    ret += 1;
-  }
+  if (file_size % alignment != 0) { ret += 1; }
   return ret;
 }
 
 wal_clock_pro_cache::wal_clock_pro_cache(
   seastar::lw_shared_ptr<seastar::file> f,
-  int64_t                               size,
+  int64_t                               initial_size,
   uint32_t                              max_pages_in_memory)
-  : file_size(size)
-  , number_of_pages(round_up(file_size, f->disk_read_dma_alignment()))
+  : disk_dma_alignment(f->disk_read_dma_alignment())
+  , file_size_(initial_size)
+  , number_of_pages(round_up(file_size, disk_dma_alignment))
   , file_(std::move(f)) {
-  if (max_pages_in_memory == 0) {
-    const auto percent     = uint32_t(number_of_pages * .10);
-    const auto min_default = std::min<uint32_t>(10, number_of_pages);
-    max_resident_pages_    = std::max<uint32_t>(min_default, percent);
-  }
   using cache_t = smf::clock_pro_cache<uint64_t, page_data>;
-  cache_        = std::make_unique<cache_t>(max_pages_in_memory);
+  cache_        = std::make_unique<cache_t>(max_resident_pages_);
+}
+void wal_clock_pro_cache::update_file_size_by(uint64_t delta) {
+  file_size_ += delta;
+  number_of_pages_ = round_up(file_size_, disk_dma_alignment);
 }
 
 seastar::future<> wal_clock_pro_cache::close() {
@@ -141,9 +139,7 @@ wal_clock_pro_cache::read_exactly(int64_t                           offset,
            auto page = offset_to_page(req->offset, kAlignment);
            return this->clock_pro_get_page(page, req->pc)
              .then([buf, req](auto chunk) {
-               if (req->size <= 0) {
-                 return seastar::stop_iteration::yes;
-               }
+               if (req->size <= 0) { return seastar::stop_iteration::yes; }
                auto step = copy_page_data(buf.get(), req->offset, req->size,
                                           chunk, kAlignment);
                req->update_step(step);
@@ -224,9 +220,7 @@ wal_clock_pro_cache::do_read(wal_read_request r) {
                    validate_payload(hdr, buf);
                    wal_read_reply::fragment f(hdr, std::move(buf));
                    ret->fragments.emplace_back(std::move(f));
-                   if (req->size <= 0) {
-                     return seastar::stop_iteration::yes;
-                   }
+                   if (req->size <= 0) { return seastar::stop_iteration::yes; }
                    return seastar::stop_iteration::no;
                  })
                  .handle_exception([req](auto eptr) {

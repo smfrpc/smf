@@ -14,9 +14,14 @@
 namespace smf {
 class wal_reader_node {
  public:
-  wal_reader_node(uint64_t         epoch,
-                  seastar::sstring filename,
-                  reader_stats *   stats);
+  struct wal_reader_node_stats {
+    uint64_t total_reads{0};
+    uint64_t total_bytes{0};
+    uint64_t update_size{0};
+  };
+
+ public:
+  wal_reader_node(uint64_t starting_file_epoch, seastar::sstring filename);
   ~wal_reader_node();
 
   const int64_t          starting_epoch;
@@ -27,6 +32,11 @@ class wal_reader_node {
   seastar::future<> open();
 
   seastar::future<wal_read_reply::maybe> get(wal_read_request r);
+  void update_file_size_by(uint64_t delta) {
+    ++stats_.update_size;
+    file_size_ += delta;
+    io_->update_file_size_by(delta);
+  }
 
   inline int64_t file_size() const { return file_size_; }
   inline int64_t ending_epoch() const { return starting_epoch + file_size_; }
@@ -35,9 +45,10 @@ class wal_reader_node {
   seastar::future<> open_node();
 
  private:
-  reader_stats *                       rstats_;
   std::unique_ptr<wal_clock_pro_cache> io_;
   uint64_t                             file_size_;
+  wal_reader_node_stats                stats_{};
+  seastar::metrics::metric_groups      metrics_{};
 };
 
 }  // namespace smf
