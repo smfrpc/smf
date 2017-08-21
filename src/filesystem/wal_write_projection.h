@@ -1,5 +1,14 @@
 #pragma once
 
+#include <list>
+
+// seastar's lw_shared_ptr
+#include <core/shared_ptr.hh>
+
+#include "flatbuffers/fbs_typed_buf.h"
+#include "flatbuffers/wal_generated.h"
+#include "platform/macros.h"
+
 namespace smf {
 
 ///  \brief alternatives considered for the buf was to use the
@@ -15,80 +24,39 @@ struct wal_write_projection {
   std::list<seastar::lw_shared_ptr<fbs_typed_buf<wal::tx_get_fragment>>>
     projection;
   SMF_DISALLOW_COPY_AND_ASSIGN(wal_write_projection);
-  // This no longer makes sense. this makes sense in the projection
 
+  /// \brief takes in what the user expected to write, and converts it to a
+  /// format that will actually be flushed to disk, which may or may not
+  /// include compression, encryption, etc.
+  ///
+  /// Note: We ignore partial-fragments. That is, say that a WAL is of size 10,
+  /// and we are offset 8. The put that the user just sent us is of size 4 (a
+  /// big one). We have multiple options:
+  ///     a) Write a partial-fragment on the current WAL of size 2
+  ///        and then write a second partial-fragment into a new roll (log
+  ///        segment)
+  ///
+  ///     b) Allocate a log segment bigger than the largest possible payload
+  ///     (2GB) and simply close this current log segment and start a new one
+  ///     and write it.
+  ///
+  /// We chose (b) explicitly. If you look at the history of commits, you will
+  /// also see an implementation which did the 'correct' version (a), and it was
+  /// slow and  complex. It increases the complexity of clients and the server
+  /// code does a LOT more  memcpy.
+  ///
+  /// Kafka also does (b). and ppl don't run into this scenario in real life too
+  /// often.
+  ///
+  /// Usability Note: We use a write-behind queue as we are bypassing the kernel
+  /// page cache.  The default size is seastar's default 'write-behind' cache of
+  /// 1MB. That means that even after you write, your reads will *not* always be
+  /// avail. After you write them, just keep 1MB around of the latest writes.
+  /// the readers also implement a sophisticated cache with intelligent eviction
+  /// schemes, but you must cache the write-behind
+  ///
   static seastar::lw_shared_ptr<wal_write_projection> translate(
-    wal::tx_put_request *req) {
-    static const uint64_t kMinCompressionSize = 512;
-    // table tx_put_request static void add_binary_flags(fbs::wal::wal_header *
-    // o,
-    //     fbs::wal::wal_entry_flags f) {
-    //     auto b = static_cast<uint32_t>(o->flags()) |
-    //     static_cast<uint32_t>(f);
-    //     o->mutate_flags(static_cast<fbs::wal::wal_entry_flags>(b));
-    // }{
-    // topic:       string;
-    // partition:   uint; // xxhash32(topic,key)
-    // txs:         [tx_put_fragment];
-    // }
-
-
-
-  }
+    wal::tx_put_request *req);
 };
 
 }  // namespace smf
-
-/*
-
-seastar::future<wal_write_reply> wal_writer_node::do_append_with_header(
-  fbs::wal::wal_header h, wal_write_request req) {
-  h.mutate_checksum(xxhash_32(req.data.get(), req.data.size()));
-  h.mutate_size(req.data.size());
-  current_size_ += kWalHeaderSize;
-  ++stats_.total_writes;
-  stats_.total_bytes += kWalHeaderSize;
-  return lease_->append((const char *)&h, kWalHeaderSize).then([
-    this, req = std::move(req)
-  ]() mutable {
-    current_size_ += req.data.size();
-    stats_.total_bytes += req.data.size();
-    return lease_->append(req.data.get(), req.data.size());
-  });
-}
-
-seastar::future<> wal_writer_node::do_append_with_flags(
-  wal_write_request req, fbs::wal::wal_entry_flags flags) {
-  fbs::wal::wal_header hdr;
-  add_binary_flags(&hdr, flags);
-  auto const write_size = wal_write_request_size(req);
-  assert(write_size <= space_left());
-  if (write_size <= opts_.min_compression_size
-      || (req.flags & wal_write_request_flags::wwrf_no_compression)
-           == wal_write_request_flags::wwrf_no_compression) {
-    return do_append_with_header(hdr, std::move(req));
-  }
-
-  // bigger than compression size & has compression enabled
-  seastar::temporary_buffer<char> compressed_buf(req.data.size());
-  void *      dst = static_cast<void *>(compressed_buf.get_write());
-  const void *src = reinterpret_cast<const void *>(req.data.get());
-  // 3 - default compression level
-  auto zstd_compressed_size =
-    ZSTD_compress(dst, req.data.size(), src, req.data.size(), 3);
-
-  auto zstd_err = ZSTD_isError(zstd_compressed_size);
-  if (SMF_LIKELY(zstd_err == 0)) {
-    compressed_buf.trim(zstd_compressed_size);
-    add_binary_flags(&hdr, fbs::wal::wal_entry_flags::wal_entry_flags_zstd);
-    wal_write_request compressed_req(req.flags, std::move(compressed_buf),
-                                     req.pc);
-    return do_append_with_header(hdr, std::move(compressed_req));
-  }
-  LOG_THROW("Error compressing zstd buffer. defaulting to uncompressed. "
-            "Code: {}, Desciption: {}",
-            zstd_err, ZSTD_getErrorName(zstd_err));
-}
-
-
- */
