@@ -21,6 +21,12 @@ chain_replication_service::put(
   if (!record) {
     return futurize_status_for_type<tx_put_reply>(400);
   }
+
+  // Plan
+  // get a semaphore for all different partitions.
+  // get a list of cores affected - to write
+  // do_with(shared_ptr)
+
   auto core_to_handle = put_to_lcore(record.get());
   return seastar::smp::submit_to(
            core_to_handle, [this, p = std::move(record)]() mutable {

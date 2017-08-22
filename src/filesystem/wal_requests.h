@@ -77,10 +77,45 @@ struct wal_read_reply {
 // writes
 
 struct wal_write_request : details::priority_wrapper<smf::wal::tx_put_request> {
+  class write_request_iterator
+    : std::iterator<std::input_iterator_tag, wal::tx_put_partition_pair> {
+   public:
+    using iter_t =
+      typename flatbuffers::Vector<wal::tx_put_partition_pair>::iterator;
+
+    write_request_iterator(const std::set<uint32_t> &view,
+                           iter_t                    start,
+                           iter_t                    end)
+      : view_(view), start_(start), end_(end) {}
+    void operator++() {
+      if (start_ != end_) start_++;
+    }
+    iter_t operator*() { return start_; }
+    bool operator==(const write_request_iterator &o) {
+      return start_ == o.start_ && view_ == o.view_ && end_ == o.end_;
+    }
+    bool operator!=(const write_request_iterator &o) { return !(*this == o); }
+
+   private:
+    const std::set<uint32_t> &view_;
+    iter_t                    start_;
+    iter_t                    end_;
+  };
   wal_write_request(smf::wal::tx_put_request *          ptr,
-                    const ::seastar::io_priority_class &p)
-    : priority_wrapper(ptr, p) {}
+                    const ::seastar::io_priority_class &p,
+                    const std::set<uint32_t> &          partitions)
+    : priority_wrapper(ptr, p), partition_view(partitions) {}
+  write_request_iterator begin() {
+    return write_request_iterator(partition_view, req->data->begin(),
+                                  req->data->end());
+  }
+  write_request_iterator end() {
+    return write_request_iterator(partition_view, req->data->end(),
+                                  req->data->end());
+  }
+  const std::set<uint32_t> partition_view;
 };
+
 struct wal_write_reply {
   wal_write_reply(uint64_t offset) { data->offset = offset; }
   seastar::lw_shared_ptr<smf::wal::tx_put_replyT> data =
