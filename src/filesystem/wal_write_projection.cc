@@ -1,26 +1,12 @@
-#pragma once
+#include "filesystem/wal_write_projection.h"
 
 
 namespace smf {
-  seastar::lw_shared_ptr<wal_write_projection> wal_write_projection::translate(
-    wal::tx_put_request *req) {
-    static const uint64_t kMinCompressionSize = 512;
-    // table tx_put_request static void add_binary_flags(fbs::wal::wal_header *
-    // o,
-    //     fbs::wal::wal_entry_flags f) {
-    //     auto b = static_cast<uint32_t>(o->flags()) |
-    //     static_cast<uint32_t>(f);
-    //     o->mutate_flags(static_cast<fbs::wal::wal_entry_flags>(b));
-    // }{
-    // topic:       string;
-    // partition:   uint; // xxhash32(topic,key)
-    // txs:         [tx_put_fragment];
-    // }
+static const uint64_t kMinCompressionSize = 512;
 
-
-
-  }
-};
+seastar::lw_shared_ptr<wal_write_projection> wal_write_projection::translate(
+  wal::tx_put_request *req) {
+}
 
 }  // namespace smf
 

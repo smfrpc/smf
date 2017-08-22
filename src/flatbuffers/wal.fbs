@@ -63,12 +63,18 @@ table tx_put_fragment {
   data:         tx_put_data;
 }
 
-/// brief - stores `puts` transactionally
-table tx_put_request {
-  topic:       string;
-  partition:   uint; // xxhash32(topic,key)
+table tx_put_partition_pair {
+  /// xxhash32(topic, tx_put_fragment::data::key)
+  partition:   uint (key); 
   txs:         [tx_put_fragment];
 }
+
+/// brief - stores `puts` transactionally
+table tx_put_request {
+  topic:   string;
+  data:    [tx_put_partition_pair];
+}
+
 table tx_put_reply {
   /// \brief the committed offset into the WAL
   offset: ulong;
