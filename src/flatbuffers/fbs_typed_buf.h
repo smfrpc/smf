@@ -36,6 +36,11 @@ template <typename T> class fbs_typed_buf {
   }
   fbs_typed_buf(fbs_typed_buf &&o) noexcept
     : buf_(std::move(o.buf_)), cache_(std::move(o.cache_)) {}
+  fbs_typed_buf &operator=(fbs_typed_buf &&o) {
+    buf_   = std::move(o.buf_);
+    cache_ = std::move(o.cache_);
+    return *this;
+  }
   const T *operator->() const { return cache_; }
   const T *get() const { return cache_; }
   T *      mutable_ptr() { return cache_; }

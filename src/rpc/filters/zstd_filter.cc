@@ -43,7 +43,7 @@ seastar::future<rpc_envelope> zstd_compression_filter::operator()(
 
 seastar::future<rpc_recv_context> zstd_decompression_filter::operator()(
   rpc_recv_context &&ctx) {
-  if (ctx.header->compression_flags()
+  if (ctx.header->compression()
       == rpc::compression_flags::compression_flags_zstd) {
     auto zstd_size = ZSTD_getDecompressedSize(
       static_cast<const void *>(ctx.payload.buf().get()),
@@ -61,12 +61,11 @@ seastar::future<rpc_recv_context> zstd_decompression_filter::operator()(
     if (zstd_size == size_decompressed) {
       decompressed_body.trim(size_decompressed);
       // Recompute the header
-      *ctx.header->mutate_compression(
+      ctx.header.mutable_ptr()->mutate_compression(
         rpc::compression_flags::compression_flags_zstd);
-      checksum_rpc_payload(*ctx.header.get(), decompressed_body.get(),
+      checksum_rpc_payload(*ctx.header.mutable_ptr(), decompressed_body.get(),
                            decompressed_body.size());
-      ctx.payload =
-        fbs_typed_buf<decltype(ctx.payload)>(std::move(decompressed_body));
+      ctx.payload = fbs_typed_buf<rpc::payload>(std::move(decompressed_body));
     } else {
       LOG_ERROR(
         "zstd decompression failed. Size expected: {}, decompressed size: {}",

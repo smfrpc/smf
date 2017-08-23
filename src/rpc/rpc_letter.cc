@@ -8,7 +8,7 @@ namespace smf {
 
 rpc_letter::rpc_letter() {
   dtype   = rpc_letter_type::rpc_letter_type_payload;
-  payload = std::make_unique<smf::fbs::rpc::PayloadT>();
+  payload = std::make_unique<smf::rpc::payloadT>();
 }
 rpc_letter &rpc_letter::operator=(rpc_letter &&l) {
   dtype  = std::move(l.dtype);
@@ -41,13 +41,13 @@ void rpc_letter::mutate_payload_to_binary() {
   // buffer
   //
   builder.Clear();
-  builder.Finish(smf::fbs::rpc::Payload::Pack(builder, payload.get()));
+  builder.Finish(smf::rpc::payload::Pack(builder, payload.get()));
 
   // setup the body before
   seastar::temporary_buffer<char> tmp(builder.GetSize());
   const char *p = reinterpret_cast<const char *>(builder.GetBufferPointer());
   std::copy(p, p + builder.GetSize(), tmp.get_write());
-  header  = header_for_payload(tmp.get(), tmp.size());
+  checksum_rpc_payload(header, tmp.get(), tmp.size());
   dtype   = rpc_letter_type::rpc_letter_type_binary;
   body    = std::move(tmp);
   payload = nullptr;
