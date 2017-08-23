@@ -31,8 +31,7 @@ class rpc_handle_router {
   ///
   virtual bool can_handle_request(
     const uint32_t &request_id,
-    const flatbuffers::Vector<flatbuffers::Offset<fbs::rpc::DynamicHeader>>
-      *hdrs);
+    const flatbuffers::Vector<flatbuffers::Offset<rpc::dynamic_header>> *hdrs);
   /// \brief actually makes the router dispatch
   virtual seastar::future<rpc_envelope> handle(rpc_recv_context &&recv);
 

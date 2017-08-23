@@ -15,7 +15,7 @@ namespace smf {
 /// compression, etc. Send arbitrary byte arrays to remote host
 ///
 struct rpc_envelope {
-  constexpr static size_t  kHeaderSize = sizeof(fbs::rpc::Header);
+  constexpr static size_t  kHeaderSize = sizeof(rpc::header);
   static seastar::future<> send(seastar::output_stream<char> *out,
                                 rpc_envelope                  req);
 

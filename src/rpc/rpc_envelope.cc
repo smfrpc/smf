@@ -10,7 +10,7 @@
 
 // smf
 #include "platform/log.h"
-#include "rpc/rpc_utils.h"
+#include "rpc/rpc_header_utils.h"
 
 
 namespace smf {
@@ -92,8 +92,8 @@ void rpc_envelope::set_status(const uint32_t &status) {
 void rpc_envelope::set_compressed_payload(seastar::temporary_buffer<char> buf) {
   letter.dtype = rpc_letter_type::rpc_letter_type_binary;
   letter.body  = std::move(buf);
-  letter.header =
-    header_for_payload(letter.body.get(), letter.body.size(),
-                       rpc::compression_lags::compression_flags_zstd);
+  checksum_rpc_payload(letter.header, letter.body.get(), letter.body.size());
+  letter.header.mutate_compression(
+    rpc::compression_flags::compression_flags_zstd);
 }
 }  // namespace smf

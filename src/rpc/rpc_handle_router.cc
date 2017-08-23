@@ -20,11 +20,8 @@ std::ostream &operator<<(std::ostream &o, const smf::rpc_handle_router &r) {
 
 bool rpc_handle_router::can_handle_request(
   const uint32_t &request_id,
-  const flatbuffers::Vector<flatbuffers::Offset<fbs::rpc::DynamicHeader>>
-    *hdrs) {
-  if (dispatch_.find(request_id) == dispatch_.end()) {
-    return false;
-  }
+  const flatbuffers::Vector<flatbuffers::Offset<rpc::dynamic_header>> *hdrs) {
+  if (dispatch_.find(request_id) == dispatch_.end()) { return false; }
   return true;
 }
 
