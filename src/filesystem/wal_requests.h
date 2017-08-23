@@ -78,41 +78,46 @@ struct wal_read_reply {
 // writes
 
 struct wal_write_request : details::priority_wrapper<smf::wal::tx_put_request> {
-  class write_request_iterator
-    : std::iterator<std::input_iterator_tag, wal::tx_put_partition_pair> {
-   public:
-    using iter_t =
-      typename flatbuffers::Vector<wal::tx_put_partition_pair>::iterator;
+  using fb_const_iter_t = typename flatbuffers::
+    Vector<flatbuffers::Offset<smf::wal::tx_put_partition_pair>>::
+      const_iterator;
 
+  class write_request_iterator
+    : std::iterator<std::input_iterator_tag, fb_const_iter_t> {
+   public:
+    using const_iter_t = fb_const_iter_t;
     write_request_iterator(const std::set<uint32_t> &view,
-                           iter_t                    start,
-                           iter_t                    end)
+                           const_iter_t              start,
+                           const_iter_t              end)
       : view_(view), start_(start), end_(end) {}
     void operator++() {
-      if (start_ != end_) start_++;
+      while (start_ != end_) {
+        start_++;
+        if (view_.find(start_->partition()) != view_.end()) { break; }
+      }
     }
-    iter_t operator*() { return start_; }
+    const_iter_t operator*() { return start_; }
     bool operator==(const write_request_iterator &o) {
-      return start_ == o.start_ && view_ == o.view_ && end_ == o.end_;
+      return start_ == o.start_ && end_ == o.end_ && view_ == o.view_;
     }
     bool operator!=(const write_request_iterator &o) { return !(*this == o); }
 
    private:
     const std::set<uint32_t> &view_;
-    iter_t                    start_;
-    iter_t                    end_;
+    const_iter_t              start_;
+    const_iter_t              end_;
   };
   wal_write_request(smf::wal::tx_put_request *          ptr,
                     const ::seastar::io_priority_class &p,
                     const std::set<uint32_t> &          partitions)
     : priority_wrapper(ptr, p), partition_view(partitions) {}
   write_request_iterator begin() {
-    return write_request_iterator(partition_view, req->data->begin(),
-                                  req->data->end());
+    return write_request_iterator(partition_view, req->data()->begin(),
+                                  req->data()->end());
   }
   write_request_iterator end() {
-    return write_request_iterator(partition_view, req->data->end(),
-                                  req->data->end());
+    return write_request_iterator(partition_view, req->data()->end(),
+                                  req->data()->end());
   }
   const std::set<uint32_t> partition_view;
 };
