@@ -82,4 +82,4 @@ table payload {
   body: [ubyte];
 }
 
-root_type Payload;
+root_type payload;

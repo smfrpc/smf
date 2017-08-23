@@ -8,12 +8,11 @@
 #include <core/sstring.hh>
 #include <core/temporary_buffer.hh>
 
-#include "rpc/rpc_letter_concepts.h"
-
 #include "flatbuffers/rpc_generated.h"
 #include "platform/log.h"
 #include "platform/macros.h"
-#include "rpc/rpc_utils.h"
+#include "rpc/rpc_header_utils.h"
+#include "rpc/rpc_letter_concepts.h"
 
 namespace smf {
 
@@ -25,14 +24,14 @@ enum rpc_letter_type : uint8_t {
 
 
 struct rpc_letter {
-  rpc_letter_type  dtype;
-  fbs::rpc::Header header = {0, fbs::rpc::Flags::Flags_NONE, 0};
+  rpc_letter_type dtype;
+  rpc::header     header{};
   // used by HTTP-like payloads. get the builder, set the headers, etc
   // This is the normal use case.
   // eventually this will turn into the `this->body`
   // by the RPC before sending it over the wire
   //
-  std::unique_ptr<smf::fbs::rpc::PayloadT> payload;
+  std::unique_ptr<rpc::payloadT> payload;
   // Used by filters / automation / etc
   // contains ALL the body of the data. That is to say
   // smf.fbs.rpc.Payload data type.
@@ -84,8 +83,8 @@ struct rpc_letter {
     let->payload->body.reserve(builder.GetSize());
     const char *p = reinterpret_cast<const char *>(builder.GetBufferPointer());
     std::copy(p, p + builder.GetSize(), std::back_inserter(let->payload->body));
-    let->header = header_for_payload(
-      reinterpret_cast<const char *>(let->payload->body.data()),
+    checksum_rpc_payload(
+      let->header, reinterpret_cast<const char *>(let->payload->body.data()),
       let->payload->body.size());
     DLOG_THROW_IF(builder.GetSize() != let->payload->body.size(),
                   "Error coyping types into envelope");
