@@ -36,9 +36,9 @@ template <typename T> class fbs_typed_buf {
   }
   fbs_typed_buf(fbs_typed_buf &&o) noexcept
     : buf_(std::move(o.buf_)), cache_(std::move(o.cache_)) {}
-  inline T *operator->() { return cache_; }
-  inline T *get() { return cache_; }
-
+  const T *operator->() const { return cache_; }
+  const T *get() const { return cache_; }
+  T *      mutable_ptr() { return cache_; }
   // needed to share the payload at specific ranges - i.e.: internal
   // structures for saving to files, creating subranges for
   // nested flatbuffers types,etc.

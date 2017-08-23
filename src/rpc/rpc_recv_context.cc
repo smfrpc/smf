@@ -6,8 +6,10 @@
 #include "platform/log.h"
 
 namespace std {
-ostream &operator<<(ostream &o, const smf::rpc::Header &h) {
-  o << "rpc::Header {size:" << h.size() << ", flags:" << h.flags()
+ostream &operator<<(ostream &o, const smf::rpc::header &h) {
+  o << "rpc::header {size:" << h.size()
+    << ", verification:" << smf::rpc::EnumNamevalidation_flags(h.validation())
+    << ", compression:" << smf::rpc::EnumNamecompression_flags(h.compression())
     << ", checksum:" << h.checksum() << "}";
   return o;
 }
@@ -19,7 +21,7 @@ namespace exp = std::experimental;
 rpc_recv_context::rpc_recv_context(fbs_typed_buf<rpc::header>  hdr,
                                    fbs_typed_buf<rpc::payload> body)
   : header(std::move(hdr)), payload(std::move(body)) {
-  assert(header.buf().size() == sizeof(rpc::Header));
+  assert(header.buf().size() == sizeof(rpc::header));
   assert(header->size() == payload.buf().size());
 }
 
@@ -75,7 +77,7 @@ seastar::future<exp::optional<rpc_recv_context>> process_payload(
   rpc_connection_limits *         limits,
   seastar::temporary_buffer<char> header) {
   using ret_type = exp::optional<rpc_recv_context>;
-  auto hdr       = reinterpret_cast<const rpc::Header *>(header.get());
+  auto hdr       = reinterpret_cast<const rpc::header *>(header.get());
   return read_payload(conn, limits, hdr->size())
     .then([header_buf =
              std::move(header)](seastar::temporary_buffer<char> body) mutable {
@@ -104,9 +106,10 @@ seastar::future<exp::optional<rpc_recv_context>> process_payload(
       fbs_typed_buf<rpc::payload> payload(std::move(body));
       if (hdr->validation()
           & rpc::validation_flags::validation_flags_full_type_check) {
-        auto verifier =
-          flatbuffers::Verifier(payload.buf().get(), payload.buf().size());
-        if (rpc::VerifyPayloadBuffer(verifier)) {
+        auto verifier = flatbuffers::Verifier(
+          reinterpret_cast<const uint8_t *>(payload.buf().get()),
+          payload.buf().size());
+        if (rpc::VerifypayloadBuffer(verifier)) {
           LOG_ERROR("Payload flatbuffers verification failed. Payload size:{}",
                     payload.buf().size());
           return seastar::make_ready_future<ret_type>();
@@ -123,7 +126,7 @@ seastar::future<exp::optional<rpc_recv_context>> rpc_recv_context::parse(
   rpc_connection *conn, rpc_connection_limits *limits) {
   using ret_type = exp::optional<rpc_recv_context>;
 
-  static constexpr size_t kRPCHeaderSize = sizeof(rpc::Header);
+  static constexpr size_t kRPCHeaderSize = sizeof(rpc::header);
 
   /// serializes access to the input_stream
   /// without this line you can have interleaved reads on the buffer
@@ -137,7 +140,7 @@ seastar::future<exp::optional<rpc_recv_context>> rpc_recv_context::parse(
                      header.size(), kRPCHeaderSize);
         return seastar::make_ready_future<ret_type>();
       }
-      auto hdr = reinterpret_cast<const rpc::Header *>(header.get());
+      auto hdr = reinterpret_cast<const rpc::header *>(header.get());
 
       if (hdr->size() == 0) {
         LOG_ERROR("Emty body to parse. skipping");

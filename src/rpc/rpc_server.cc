@@ -101,9 +101,7 @@ seastar::future<> rpc_server::stop() {
   LOG_WARN("Stopping rpc server: aborting future accept() calls");
   listener_->abort_accept();
   return limits_->reply_gate.close().then([admin = admin_ ? admin_ : nullptr] {
-    if (!admin) {
-      return seastar::make_ready_future<>();
-    }
+    if (!admin) { return seastar::make_ready_future<>(); }
     return admin->stop().handle_exception([](auto ep) {
       LOG_WARN("Error (ignoring...) shutting down HTTP server: {}", ep);
       return seastar::make_ready_future<>();
@@ -126,7 +124,7 @@ seastar::future<> rpc_server::handle_client_connection(
           return smf::rpc_filter_apply(&in_filters_,
                                        std::move(recv_ctx.value()))
             .then([this, conn, metric = std::move(metric)](auto ctx) mutable {
-              auto payload_size = ctx.body_buf.size();
+              auto payload_size = ctx.payload.buf().size();
               return this->dispatch_rpc(conn, std::move(ctx)).finally([
                 this, conn, metric = std::move(metric), payload_size
               ] {
@@ -168,7 +166,7 @@ seastar::future<> rpc_server::dispatch_rpc(
     conn->set_error("Can't find route for request. Invalid");
     return seastar::make_ready_future<>();
   }
-  stats_->in_bytes += ctx.header_buf.size() + ctx.body_buf.size();
+  stats_->in_bytes += ctx.header.buf().size() + ctx.payload.buf().size();
 
 
   /// the request follow [filters] -> handle -> [filters]
