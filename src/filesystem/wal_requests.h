@@ -7,6 +7,7 @@
 
 #include <core/fair_queue.hh>
 #include <core/file.hh>
+#include <core/shared_ptr.hh>
 
 #include "flatbuffers/wal_generated.h"
 #include "platform/log.h"
@@ -24,10 +25,10 @@
 
 namespace smf {
 namespace details {
-template <typename T> priority_wrapper {
-  priority_wrapper(T * ptr, ::seastar::io_priority_class & p)
+template <typename T> struct priority_wrapper {
+  priority_wrapper(T *ptr, const ::seastar::io_priority_class &p)
     : req(THROW_IFNULL(ptr)), pc(p) {}
-  priority_wrapper(priority_wrapper && o) noexcept
+  priority_wrapper(priority_wrapper &&o) noexcept
     : req(std::move(o.req)), pc(std::move(o.pc)) {}
   T *                                 req;
   const ::seastar::io_priority_class &pc;
@@ -71,7 +72,7 @@ struct wal_read_reply {
   inline bool empty() const { return data->gets.empty(); }
 
   seastar::lw_shared_ptr<wal::tx_get_replyT> data =
-    seastar::lw_make_shared<wal::tx_get_replyT>();
+    seastar::make_lw_shared<wal::tx_get_replyT>();
 };
 
 // writes
