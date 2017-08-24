@@ -15,12 +15,14 @@ namespace chains {
 using namespace smf;
 using namespace smf::wal;
 
-seastar::future<rpc_typed_envelope<tx_put_reply>>
+seastar::future<rpc_typed_envelope<chain_put_reply>>
 chain_replication_service::put(
-  rpc_recv_typed_context<tx_put_request> &&record) {
-  if (!record) {
-    return futurize_status_for_type<tx_put_reply>(400);
-  }
+  rpc_recv_typed_context<chain_put_request> &&record) {
+
+  if (!record) { return futurize_status_for_type<chain_put_reply>(400); }
+  return futurize_status_for_type<chain_put_reply>(500);
+
+  /*
 
   // Plan
   // get a semaphore for all different partitions.
@@ -54,17 +56,23 @@ chain_replication_service::put(
       LOG_ERROR("Error saving chains::put(): {}", eptr);
       return futurize_status_for_type<tx_put_reply>(501);
     });
+
+
+
+
+  */
 }
 
 
-seastar::future<rpc_typed_envelope<tx_get_reply>>
+seastar::future<rpc_typed_envelope<chain_get_reply>>
 chain_replication_service::get(
-  rpc_recv_typed_context<tx_get_request> &&record) {
-  rpc_typed_envelope<tx_get_reply> data;
+  rpc_recv_typed_context<chain_get_request> &&record) {
 
-  if (!record) {
-    return futurize_status_for_type<tx_get_reply>(400);
-  }
+  if (!record) { return futurize_status_for_type<chain_get_reply>(400); }
+  return futurize_status_for_type<chain_get_reply>(500);
+
+  /*
+
 
   auto core_to_handle = get_to_lcore(record.get());
   return seastar::smp::submit_to(
@@ -93,8 +101,7 @@ chain_replication_service::get(
                         it != end; ++it) {
                      const auto flags = it->hdr.wal_entry_flags();
                      if (flags & fbs::wal::wal_entry_flags::
-                                   wal_entry_flags_partial_fagment) {
-                     }
+                                   wal_entry_flags_partial_fagment) {}
 
 
                      // THE PLAN
@@ -109,8 +116,7 @@ chain_replication_service::get(
 
 
                      if (flags & fbs::wal::wal_entry_flags::
-                                   wal_entry_flags_full_fagment) {
-                     }
+                                   wal_entry_flags_full_fagment) {}
                      // convert wal::fragment -> chain::fragment
                      // TODO(agallego) - make this a util and add a unit tests
                      //
@@ -131,6 +137,11 @@ chain_replication_service::get(
       LOG_ERROR("Error getting data chains::get(): {}", eptr);
       return futurize_status_for_type<tx_get_reply>(501);
     });
+
+
+
+
+  */
 }
 }  // end namespace chains
 }  // end namespace smf
