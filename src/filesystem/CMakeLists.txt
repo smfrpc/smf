@@ -1,7 +1,7 @@
 add_library (smf_filesystem STATIC
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_writer_node.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_writer.cc
-  ${PROJECT_SOURCE_DIR}/src/filesystem/wal.cc
+  ${PROJECT_SOURCE_DIR}/src/filesystem/write_ahead_log.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_clock_pro_cache.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_reader.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_reader_node.cc
