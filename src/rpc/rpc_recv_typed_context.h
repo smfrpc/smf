@@ -21,7 +21,7 @@ template <typename T> class rpc_recv_typed_context {
   explicit rpc_recv_typed_context(opt_recv_ctx_t t) : ctx(std::move(t)) {
     if (SMF_LIKELY(ctx)) {
       cache_ = flatbuffers::GetMutableRoot<T>(
-        ctx.value().payload.mutable_ptr()->body()->Data());
+        ctx.value().payload.mutable_ptr()->mutable_body()->Data());
     }
   }
 

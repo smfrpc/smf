@@ -23,7 +23,7 @@ class write_ahead_log_proxy;
 ///
 using distributed_write_ahead_log = seastar::distributed<write_ahead_log_proxy>;
 
-static std::unique_ptr<write_ahead_log> make_unique_wal(wal_opts opts);
+std::unique_ptr<write_ahead_log> make_unique_wal(wal_opts opts);
 
 /// brief - write ahead log
 class write_ahead_log {

@@ -39,7 +39,6 @@ template <typename T> struct priority_wrapper {
 namespace smf {
 
 
-
 // reads
 
 struct wal_read_request : details::priority_wrapper<smf::wal::tx_get_request> {
@@ -51,18 +50,15 @@ struct wal_read_reply {
   wal_read_reply() {}
   wal_read_reply(wal_read_reply &&r) noexcept : data(std::move(r.data)) {}
 
-  // This needs a unit tests and integration tests
-  // TODO(agallego) -
-  // The reason is that every time we modify the wal.fbs schema we have to add
-  // sizeof(structs) for all structs +
-  // add all dynamic sizes
-  //
+  /// \brief needed to make sure we don't exceed number of bytes read
+  ///
   uint64_t size() {
-    return std::accumulate(data->gets.begin(), data->gets.end(), uint64_t(0),
-                           [](uint64_t acc, const auto &it) {
-                             return acc + it.compresed_txns.size()
-                                    + sizeof(wal::wal_header);
-                           });
+    return uint64_t(sizeof(data->next_offset))
+           + std::accumulate(data->gets.begin(), data->gets.end(), uint64_t(0),
+                             [](uint64_t acc, const auto &it) {
+                               return acc + it->fragment.size()
+                                      + sizeof(wal::wal_header);
+                             });
   }
 
   inline bool empty() const { return data->gets.empty(); }
