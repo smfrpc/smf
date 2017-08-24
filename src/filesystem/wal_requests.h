@@ -37,11 +37,7 @@ template <typename T> struct priority_wrapper {
 }  // namespace smf
 
 namespace smf {
-enum class wal_type : uint8_t {
-  wal_type_disk_with_memory_cache,
-  // for testing only
-  wal_type_memory_only
-};
+
 
 
 // reads
@@ -90,12 +86,14 @@ struct wal_write_request : details::priority_wrapper<smf::wal::tx_put_request> {
                            const_iter_t              start,
                            const_iter_t              end)
       : view_(view), start_(start), end_(end) {}
-    void operator++() {
+    write_request_iterator &operator++() {
       while (start_ != end_) {
         start_++;
         if (view_.find(start_->partition()) != view_.end()) { break; }
       }
+      return *this;
     }
+    const_iter_t operator->() { return start_; }
     const_iter_t operator*() { return start_; }
     bool operator==(const write_request_iterator &o) {
       return start_ == o.start_ && end_ == o.end_ && view_ == o.view_;
@@ -125,7 +123,7 @@ struct wal_write_request : details::priority_wrapper<smf::wal::tx_put_request> {
 struct wal_write_reply {
   wal_write_reply(uint64_t offset) { data->offset = offset; }
   seastar::lw_shared_ptr<smf::wal::tx_put_replyT> data =
-    seastar::lw_make_shared<wal::tx_put_replyT>();
+    seastar::make_lw_shared<wal::tx_put_replyT>();
 };
 
 

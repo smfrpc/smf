@@ -4,13 +4,13 @@
 // std
 #include <memory>
 // smf
-#include "filesystem/wal.h"
 #include "filesystem/wal_mem_cache.h"
 #include "filesystem/wal_reader.h"
 #include "filesystem/wal_writer.h"
+#include "filesystem/write_ahead_log.h"
 
 namespace smf {
-class wal_impl_with_cache : public wal {
+class wal_impl_with_cache : public write_ahead_log {
  public:
   explicit wal_impl_with_cache(wal_opts opts);
   virtual ~wal_impl_with_cache() {}
