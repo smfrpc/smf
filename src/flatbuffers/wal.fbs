@@ -99,6 +99,8 @@ table tx_get_request {
 /// 
 table tx_get_fragment {
   hdr:             wal_header;
+  /// \brief nothing more than a byte array of a possibly compressed
+  /// tx_put_fragment
   fragment:        [ubyte]; 
 }
 

@@ -2,7 +2,6 @@
 
 #include <list>
 
-// seastar's lw_shared_ptr
 #include <core/shared_ptr.hh>
 
 #include "flatbuffers/fbs_typed_buf.h"
@@ -21,8 +20,18 @@ namespace smf {
 /// underlying array, minimizing memory consumption
 ///
 struct wal_write_projection {
-  std::list<seastar::lw_shared_ptr<fbs_typed_buf<wal::tx_get_fragment>>>
-    projection;
+  // This is ALMOST identical to the wal_generated.h
+  // HOWEVER - a set of major improvements - it works with seastar IO subsystem.
+  // Which means we can share this all we want and we'll get the most memory
+  // friendlyness
+  struct item {
+    fbs_typed_buf<fbs::wal::wal_header> hdr(
+      seastar::temporary_buffer<char>(sizeof(fbs::wal::wal_header)));
+    seastar::temporary_buffer<char> fragment;
+    SMF_DISALLOW_COPY_AND_ASSIGN(item);
+  };
+
+  std::list<seastar::lw_shared_ptr<item>> projection{};
   SMF_DISALLOW_COPY_AND_ASSIGN(wal_write_projection);
 
   /// \brief takes in what the user expected to write, and converts it to a

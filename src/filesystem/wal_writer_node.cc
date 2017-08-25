@@ -51,13 +51,16 @@ seastar::future<> wal_writer_node::open() {
   return lease_->open();
 }
 
-// this might not be needed. hehe.
 seastar::future<> wal_writer_node::disk_write(
   seastar::lw_shared_ptr<fbs_typed_buf<wal::tx_get_fragment>> frag) {
-  current_size_ += frag->buf().size();
-  ++stats_.total_writes;
-  stats_.total_bytes += frag->buf().size();
-  return lease_->append(frag->buf().get(), frag->buf().size());
+  stats_.total_bytes += sizeof(frag->hdr);
+  lease_->append(static_cast<const char *>(&(frag->hdr)), sizeof(frag->hdr))
+    .then([frag] {
+      current_size_ += frag->fragment().size();
+      ++stats_.total_writes;
+      stats_.total_bytes += frag->fragment.size();
+      return lease_->append(frag->fragment.data(), frag->fragment().size());
+    });
 }
 
 seastar::future<wal_write_reply> wal_writer_node::append(

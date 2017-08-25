@@ -4,6 +4,7 @@
 // seastar
 #include <core/fstream.hh>
 #include <core/semaphore.hh>
+#include <core/sstring.hh>
 // generated
 #include "flatbuffers/wal_generated.h"
 // smf
@@ -11,6 +12,9 @@
 #include "filesystem/wal_requests.h"
 #include "filesystem/wal_writer_file_lease.h"
 #include "filesystem/wal_writer_utils.h"
+#include "filesystem/wal_write_projection.h"
+#include "utils/time_utils.h"
+
 
 namespace smf {
 struct wal_writer_node_opts {
@@ -20,7 +24,7 @@ struct wal_writer_node_opts {
   uint64_t         epoch = 0;
   /// \brief each time we create a wal_writer_node_opts per topic partition
   /// we want to know when we created it
-  const seastar::string run_id = seastar::to_sstring(time_now_micros());
+  const seastar::sstring run_id = seastar::to_sstring(time_now_micros());
   seastar::file_output_stream_options fstream{
     // These are the seastar defaults
     //

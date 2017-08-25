@@ -1,38 +1,47 @@
 #include "filesystem/wal_write_projection.h"
 
+#include "platform/macros.h"
 
 namespace smf {
+using namespace smf::wal;
 static const uint64_t kMinCompressionSize = 512;
+
+seastar::lw_shared_ptr<wal_write_projection::item> xform(tx_put_fragment *f) {
+  static thread_local flatbuffers::FlatBufferBuilder fbb{};
+  // unfortunatealy, we need to copy mem, then compress it :( - so 2 memcpy.
+  fbb.Clear();
+  // fbb.Finish(fbb);
+  auto retval      = seastar::make_lw_shared<wal_write_projection::item>();
+  retval->fragment = std::move(seastar::temporary_buffer<char>(fbb.GetSize()));
+  const uint8_t *source     = fbb.GetBufferPointer();
+  const uint8_t *source_end = source + fbb.GetSize();
+  const uint8_t *dest       = (uint8_t *)retval->fragment.get_write();
+
+  if (fbb.GetSize() > kMinCompressionSize) {
+    auto zstd_compressed_size =
+      ZSTD_compress(dest, fbb.GetSize(), source, fbb.GetSize(), 3);
+    auto zstd_err = ZSTD_isError(zstd_compressed_size);
+    if (SMF_LIKELY(zstd_err == 0)) {
+      retval->fragment.trim(zstd_compressed_size);
+      retval->hdr->mutate_compression(
+        wal::wal_entry_compression_flags::wal_entry_compression_flags_zstd);
+    } else {
+      LOG_THROW("Error compressing zstd buffer. Code: {}, Desciption: {}",
+                zstd_err, ZSTD_getErrorName(zstd_err));
+    }
+  }
+
+  retval->hdr->mutate_size(retval->fragment.size());
+  retval->hdr->mutate_checksum(
+    xxhash_32(retval->fragment.get(), retval->fragment.size()));
+  std::copy(source, source_end, dest);
+  return retval;
+}
 
 seastar::lw_shared_ptr<wal_write_projection> wal_write_projection::translate(
   wal::tx_put_request *req) {
-}
-
-}  // namespace smf
-
-/*
-
-seastar::future<wal_write_reply> wal_writer_node::do_append_with_header(
-  fbs::wal::wal_header h, wal_write_request req) {
-  h.mutate_checksum(xxhash_32(req.data.get(), req.data.size()));
-  h.mutate_size(req.data.size());
-  current_size_ += kWalHeaderSize;
-  ++stats_.total_writes;
-  stats_.total_bytes += kWalHeaderSize;
-  return lease_->append((const char *)&h, kWalHeaderSize).then([
-    this, req = std::move(req)
-  ]() mutable {
-    current_size_ += req.data.size();
-    stats_.total_bytes += req.data.size();
-    return lease_->append(req.data.get(), req.data.size());
-  });
-}
-
-seastar::future<> wal_writer_node::do_append_with_flags(
-  wal_write_request req, fbs::wal::wal_entry_flags flags) {
+  auto                 retval = seastar::make_lw_shared<wal_write_projection>();
   fbs::wal::wal_header hdr;
-  add_binary_flags(&hdr, flags);
-  auto const write_size = wal_write_request_size(req);
   assert(write_size <= space_left());
   if (write_size <= opts_.min_compression_size
       || (req.flags & wal_write_request_flags::wwrf_no_compression)
@@ -40,26 +49,7 @@ seastar::future<> wal_writer_node::do_append_with_flags(
     return do_append_with_header(hdr, std::move(req));
   }
 
-  // bigger than compression size & has compression enabled
-  seastar::temporary_buffer<char> compressed_buf(req.data.size());
-  void *      dst = static_cast<void *>(compressed_buf.get_write());
-  const void *src = reinterpret_cast<const void *>(req.data.get());
-  // 3 - default compression level
-  auto zstd_compressed_size =
-    ZSTD_compress(dst, req.data.size(), src, req.data.size(), 3);
-
-  auto zstd_err = ZSTD_isError(zstd_compressed_size);
-  if (SMF_LIKELY(zstd_err == 0)) {
-    compressed_buf.trim(zstd_compressed_size);
-    add_binary_flags(&hdr, fbs::wal::wal_entry_flags::wal_entry_flags_zstd);
-    wal_write_request compressed_req(req.flags, std::move(compressed_buf),
-                                     req.pc);
-    return do_append_with_header(hdr, std::move(compressed_req));
-  }
-  LOG_THROW("Error compressing zstd buffer. defaulting to uncompressed. "
-            "Code: {}, Desciption: {}",
-            zstd_err, ZSTD_getErrorName(zstd_err));
+  return retval;
 }
 
-
- */
+}  // namespace smf
