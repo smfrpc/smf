@@ -14,9 +14,10 @@
 #include "platform/macros.h"
 
 namespace smf {
-// The cache should be the size of the write-behind log of the actual file.
-//
-// Note that we keep 1MB of write behind data before flushing to disk. SO we
+
+// TODO(agallego) - split into .cc too
+
+// We keep 1MB of write behind data before flushing to disk. SO we
 // MUST take this into account before we yield true. i.e.: we have to keep 1MB
 // of data in memory so you can have deterministic readers.
 class wal_write_behind_cache {
