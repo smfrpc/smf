@@ -13,6 +13,8 @@
 #include "utils/caching/clock_pro/clock_pro.h"
 
 // TODO(agallego) - change filesize to be uint64_t
+// TODO(agallego) - pass metadata to wether or not enable systemwide page cache eviction
+
 namespace smf {
 class wal_clock_pro_cache {
  public:
@@ -50,7 +52,7 @@ class wal_clock_pro_cache {
   /// This recomputes offsets of files that we want to read
   void update_file_size_by(uint64_t delta);
   int64_t  file_size() const { return file_size_; }
-  uint32_t number_of_pages const { return number_of_pages_; }
+  uint32_t number_of_pages() const { return number_of_pages_; }
   /// \brief - return buffer for offset with size
   seastar::future<wal_read_reply> read(wal_read_request r);
 

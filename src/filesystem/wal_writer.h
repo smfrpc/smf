@@ -27,7 +27,7 @@ class wal_writer {
   /// \brief closes current file
   seastar::future<> close();
 
-  const seastar::sstring directory;
+  const seastar::sstring topic;
   const uint32_t partition;
 
  private:

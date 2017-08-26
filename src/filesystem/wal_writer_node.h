@@ -3,6 +3,7 @@
 #pragma once
 // seastar
 #include <core/fstream.hh>
+#include <core/metrics_registration.hh>
 #include <core/semaphore.hh>
 #include <core/sstring.hh>
 // generated
@@ -10,9 +11,9 @@
 // smf
 #include "filesystem/wal_opts.h"
 #include "filesystem/wal_requests.h"
+#include "filesystem/wal_write_projection.h"
 #include "filesystem/wal_writer_file_lease.h"
 #include "filesystem/wal_writer_utils.h"
-#include "filesystem/wal_write_projection.h"
 #include "utils/time_utils.h"
 
 
@@ -78,9 +79,9 @@ class wal_writer_node {
   /// effectively just check if there is enough space, if not rotate and then
   /// write.
   seastar::future<> do_append(
-    seastar::lw_shared_ptr<fbs_typed_buf<wal::tx_get_fragment>> fragment);
+    seastar::lw_shared_ptr<wal_write_projection::item> fragment);
   seastar::future<> disk_write(
-    seastar::lw_shared_ptr<fbs_typed_buf<wal::tx_get_fragment>> fragment);
+    seastar::lw_shared_ptr<wal_write_projection::item> fragment);
 
 
  private:

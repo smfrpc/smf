@@ -20,10 +20,9 @@ namespace smf {
 // TODO(change interface w/ the new wal.fbs)
 // THIS is no longer needed because ...
 // we are going to implement file backed fetches only. yup. yup...
+struct wal_mem_cache {};
 
-// the reason we need this is because we can only read when we close a file.. which is just dumbsies.
-
-
+/*
 class wal_mem_cache {
  private:
   struct mem_put : public boost::intrusive::set_base_hook<>,
@@ -100,4 +99,5 @@ class wal_mem_cache {
   std::list<mem_put> allocated_;
   intrusive_map      puts_;
 };
+*/
 }  // namespace smf

@@ -31,7 +31,7 @@ class wal_reader_node {
   seastar::future<> close();
   seastar::future<> open();
 
-  seastar::future<wal_read_reply::maybe> get(wal_read_request r);
+  seastar::future<wal_read_reply> get(wal_read_request r);
   void update_file_size_by(uint64_t delta) {
     ++stats_.update_size;
     file_size_ += delta;

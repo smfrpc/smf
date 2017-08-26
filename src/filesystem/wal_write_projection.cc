@@ -10,7 +10,8 @@ seastar::lw_shared_ptr<wal_write_projection::item> xform(tx_put_fragment *f) {
   static thread_local flatbuffers::FlatBufferBuilder fbb{};
   // unfortunatealy, we need to copy mem, then compress it :( - so 2 memcpy.
   fbb.Clear();
-  // fbb.Finish(fbb);
+  fbb.Finish(Createtx_put_fragment(fbb, f->op(), f->client_seq(),
+                                   f->epoch() f->data_type(), f->data()));
   auto retval      = seastar::make_lw_shared<wal_write_projection::item>();
   retval->fragment = std::move(seastar::temporary_buffer<char>(fbb.GetSize()));
   const uint8_t *source     = fbb.GetBufferPointer();
@@ -24,7 +25,7 @@ seastar::lw_shared_ptr<wal_write_projection::item> xform(tx_put_fragment *f) {
     if (SMF_LIKELY(zstd_err == 0)) {
       retval->fragment.trim(zstd_compressed_size);
       retval->hdr->mutate_compression(
-        wal::wal_entry_compression_flags::wal_entry_compression_flags_zstd);
+        wal_entry_compression_flags::wal_entry_compression_flags_zstd);
     } else {
       LOG_THROW("Error compressing zstd buffer. Code: {}, Desciption: {}",
                 zstd_err, ZSTD_getErrorName(zstd_err));

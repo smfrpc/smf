@@ -25,9 +25,14 @@ struct wal_write_projection {
   // Which means we can share this all we want and we'll get the most memory
   // friendlyness
   struct item {
-    fbs_typed_buf<fbs::wal::wal_header> hdr(
-      seastar::temporary_buffer<char>(sizeof(fbs::wal::wal_header)));
+    static constexpr uint32_t kWalHeaderSize = sizeof(wal::wal_header);
+
+    item() : hdr(seastar::temporary_buffer<char>(kWalHeaderSize)) {}
+
+    fbs_typed_buf<wal::wal_header>  hdr;
     seastar::temporary_buffer<char> fragment;
+
+    uint32_t size() { return hdr.buf().size() + fragment.size(); }
     SMF_DISALLOW_COPY_AND_ASSIGN(item);
   };
 

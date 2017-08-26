@@ -48,8 +48,14 @@ table tx_put_kv {
 }
 
 union tx_put_data { tx_put_kv, tx_put_invalidation}
-/// This is the datastructure that gets persisted on disk.
+
+/// \brief This is the datastructure that gets persisted on disk.
 /// Please be tender while extending
+/// When you extend this, please don't forget to change
+/// \code
+///    filesystem/wal_write_projection.cc::xform() method
+/// \endcode
+///
 table tx_put_fragment {
   /// what should we do with this trasaction fragment
   op:           tx_put_operation;

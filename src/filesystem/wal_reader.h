@@ -7,7 +7,7 @@
 // generated
 #include "flatbuffers/wal_generated.h"
 // smf
-#include "filesystem/wal.h"
+//#include "filesystem/wal.h"
 #include "filesystem/wal_file_walker.h"
 #include "filesystem/wal_reader_node.h"
 #include "filesystem/wal_requests.h"

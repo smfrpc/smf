@@ -18,22 +18,23 @@
 
 namespace smf {
 
-wal_writer::wal_writer(seastar::sstring topic, uint32_t topic_partition)
-  : directory(topic), partition(topic_partition) {}
+wal_writer::wal_writer(seastar::sstring _topic, uint32_t topic_partition)
+  : topic(_topic), partition(topic_partition) {}
 
 wal_writer::wal_writer(wal_writer &&o) noexcept
-  : directory(std::move(o.directory))
+  : topic(std::move(o.topic))
   , partition(std::move(o.partition))
   , writer_(std::move(o.writer_)) {}
 
 seastar::sstring wal_writer::work_directory() const {
-  return directory + "." + seastar::to_sstring(partition);
+  return topic + "." + seastar::to_sstring(partition);
 }
 wal_writer_node_opts wal_writer::default_writer_opts() const {
   wal_writer_node_opts wo;
   wo.work_directory = work_directory();
   wo.topic          = topic;
   wo.partition      = partition;
+  return wo;
 }
 
 seastar::future<> wal_writer::close() {
@@ -54,9 +55,9 @@ seastar::future<> wal_writer::open_non_empty_dir(seastar::sstring last_file) {
   auto epoch = wal_name_extractor_utils::extract_epoch(last_file);
   DLOG_TRACE("epoch extracted: {}, filename:{}", epoch, last_file);
   return seastar::open_file_dma(last_file, seastar::open_flags::ro)
-    .then([this, prefix, epoch](seastar::file f) {
+    .then([this, epoch](seastar::file f) {
       auto last = seastar::make_lw_shared<seastar::file>(std::move(f));
-      return last->size().then([this, prefix, last, epoch](uint64_t size) {
+      return last->size().then([this, last, epoch](uint64_t size) {
         auto wo  = default_writer_opts();
         wo.epoch = epoch + size;
         writer_  = std::make_unique<wal_writer_node>(std::move(wo));
@@ -86,7 +87,7 @@ seastar::future<> wal_writer::open() {
 }
 
 seastar::future<wal_write_reply> wal_writer::append(
-  seastar::lw_shared_ptr<wal_write_projection> projection) {
+  seastar::lw_shared_ptr<wal_write_projection> req) {
   return writer_->append(std::move(req));
 }
 

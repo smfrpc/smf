@@ -100,7 +100,7 @@ chain_replication_service::get(
                              end = read_data.fragments.end();
                         it != end; ++it) {
                      const auto flags = it->hdr.wal_entry_flags();
-                     if (flags & fbs::wal::wal_entry_flags::
+                     if (flags & wal::wal_entry_flags::
                                    wal_entry_flags_partial_fagment) {}
 
 
@@ -115,7 +115,7 @@ chain_replication_service::get(
                      // return the max bytes... and go home.
 
 
-                     if (flags & fbs::wal::wal_entry_flags::
+                     if (flags & wal::wal_entry_flags::
                                    wal_entry_flags_full_fagment) {}
                      // convert wal::fragment -> chain::fragment
                      // TODO(agallego) - make this a util and add a unit tests
