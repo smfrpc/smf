@@ -64,8 +64,34 @@ table tx_put_fragment {
 }
 
 table tx_put_partition_pair {
-  /// xxhash32(topic, tx_put_fragment::data::key)
+  /// hashing_utils::xxhash_32( topic +  tx_put_fragment::data::key )
   partition:   uint (key); 
+
+  // 
+  // TODO(agallego) - optimize to a union - so that the client may be allowed to send bytes
+  // requires a bit more sophisticated client. but probably worth it.
+  //
+
+  /// \brief - this could be optimized further if we make the client send bytes instead.
+  /// currently kafka and other brokers do many re-compression
+  ///   1) form the transport RPC mechanism
+  ///   2) from the disk format and ultimate disk layout
+  /// There is also at least one memcpy of all bytes into the caches:
+  ///   1) To the disk cache - we keep a 1MB write-behind cache if the direct io
+  ///      is catching behind
+  ///   2) To the internal - page cache - since we don't use the operating system
+  ///      which must keep 1MB per open file.
+  ///
+  /// We have locks, and many other mem copies the java.nio.channels.FileChannel
+  /// uses for example https://goo.gl/hrTnjY
+  /// since we don't then again copy into the page cache.
+  ///
+  /// Last, we don't keep any logs. Currently the kafka path is synchronized 3 times.
+  /// 1) To get the leader & append the writes for the log section.
+  /// 1.1) Roll the file - which happens under a relatively big critical region inside Log.scala
+  /// 2) Into the operating system page cache
+  /// 3) Into the java nio channel FileChannel since it 'guarantees' concurrent friendly updates
+  ///
   txs:         [tx_put_fragment];
 }
 
