@@ -9,13 +9,16 @@
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive/unordered_set.hpp>
 // smf
-#include "filesystem/wal_opts.h"
-#include "filesystem/write_ahead_log.h"
+#include "filesystem/wal_requests.h"
 #include "platform/log.h"
 #include "platform/macros.h"
 
-
 namespace smf {
+// The cache should be the size of the write-behind log of the actual file.
+//
+// Note that we keep 1MB of write behind data before flushing to disk. SO we
+// MUST take this into account before we yield true. i.e.: we have to keep 1MB
+// of data in memory so you can have deterministic readers.
 class wal_write_behind_cache {
  public:
   struct mem_put : public boost::intrusive::set_base_hook<>,
@@ -68,7 +71,7 @@ class wal_write_behind_cache {
     allocated_.emplace_back(std::move(p));
     puts_.insert(allocated_.back());
 
-    if (current_size_ > opts.preallocation_size) {
+    while (current_size_ > opts.preallocation_size) {
       ++stats_.evicted_puts;
       uint64_t virtual_offset = allocated_.front().offset;
       auto     it             = puts_.find(virtual_offset);
