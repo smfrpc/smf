@@ -11,9 +11,14 @@ class wal_partition_manager : public write_ahead_log {
                         uint32_t topic_partition)
     : topic(topic_name), partition(topic_partition) {}
   virtual ~wal_partition_manager() {}
+  wal_partition_manager(wal_partition_manager &&o) noexcept
+    : topic(std::move(o.topic))
+    , partition(std::move(o.parition))
+    , writer_(std::move(o.writer_))
+    , reader_(std::move(o.reader_))
+    , cache_(std::move(o.cache_)) {}
 
   virtual seastar::future<wal_write_reply> append(wal_write_request r) = 0;
-  virtual seastar::future<> invalidate(wal_write_invalidation r)       = 0;
   virtual seastar::future<wal_read_reply> get(wal_read_request r)      = 0;
   virtual seastar::future<> open();
   virtual seastar::future<> close();

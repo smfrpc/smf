@@ -26,11 +26,6 @@ seastar::future<wal_write_reply> wal_impl_with_cache::append(
   });
 }
 
-seastar::future<> wal_impl_with_cache::invalidate(uint64_t epoch) {
-  return cache_->remove(epoch).then(
-    [this, epoch] { return writer_->invalidate(epoch); });
-}
-
 seastar::future<wal_read_reply::maybe> wal_impl_with_cache::get(
   wal_read_request req) {
   uint64_t offset = req.offset;

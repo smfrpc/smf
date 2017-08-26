@@ -17,7 +17,6 @@ class wal_impl_with_cache : public write_ahead_log {
   virtual ~wal_impl_with_cache() {}
 
   virtual seastar::future<wal_write_reply> append(wal_write_request r) final;
-  virtual seastar::future<> invalidate(wal_write_invalidation r) final;
   virtual seastar::future<wal_read_reply> get(wal_read_request r) final;
   virtual seastar::future<> open() final;
   virtual seastar::future<> close() final;

@@ -109,7 +109,10 @@ table tx_put_request {
 
 table tx_put_reply {
   /// \brief the committed offset into the WAL
-  offset: ulong;
+  ///  clients can monitor how much disk was consumed by the puts
+  ///  and we need this for cache eviction and management.
+  start_offset: ulong;
+  end_offset: ulong;
 }
 
 
@@ -124,7 +127,8 @@ table tx_get_request {
   /// >>> (2**31)-100
   /// 2147483548
   ///
-  max_bytes:  uint = 2147483548;
+  /// default is 2MB -> 2048 * 1024
+  max_bytes:  uint = 2097152;
 }
 
 /// \brief the broker might have decided to compress the tx_put_fragment.

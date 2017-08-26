@@ -122,14 +122,4 @@ struct wal_write_reply {
     seastar::make_lw_shared<wal::tx_put_replyT>();
 };
 
-
-// invalidations
-
-struct wal_write_invalidation
-  : details::priority_wrapper<smf::wal::tx_put_invalidation> {
-  wal_write_invalidation(smf::wal::tx_put_invalidation *     ptr,
-                         const ::seastar::io_priority_class &p)
-    : priority_wrapper(ptr, p) {}
-};
-
 }  // namespace smf

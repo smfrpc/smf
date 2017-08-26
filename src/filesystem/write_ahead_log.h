@@ -31,7 +31,6 @@ class write_ahead_log {
   write_ahead_log() {}
   /// \brief returns starting offset off a successful write
   virtual seastar::future<wal_write_reply> append(wal_write_request r) = 0;
-  virtual seastar::future<> invalidate(wal_write_invalidation r)       = 0;
   virtual seastar::future<wal_read_reply> get(wal_read_request r)      = 0;
 
   // \brief filesystem monitoring
@@ -50,9 +49,6 @@ class write_ahead_log_proxy : public write_ahead_log {
   explicit write_ahead_log_proxy(wal_opts  o) : wal_(make_unique_wal(o)) {}
   virtual seastar::future<wal_write_reply> append(wal_write_request r) final {
     return wal_->append(std::move(r));
-  }
-  virtual seastar::future<> invalidate(wal_write_invalidation r) final {
-    return wal_->invalidate(std::move(r));
   }
   virtual seastar::future<wal_read_reply> get(wal_read_request r) final {
     return wal_->get(std::move(r));

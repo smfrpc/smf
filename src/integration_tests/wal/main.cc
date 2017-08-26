@@ -76,19 +76,7 @@ int main(int args, char **argv, char **env) {
                   });
                 });
               })
-            .then([&w](reducible_append &&ra) {
-              DLOG_DEBUG("got value: {}",
-                         std::vector<uint64_t>(ra.v.begin(), ra.v.end()));
-              return seastar::do_for_each(
-                ra.v.begin(), ra.v.end(), [&w](uint64_t i) {
-                  DLOG_DEBUG("About to invalidate epoch: {}", i);
-                  return w.invoke_on_all(&smf::shardable_wal::invalidate, i)
-                    .then([i]() {
-                      DLOG_DEBUG("Invalidated epoch `{}' on all cores", i);
-                      return seastar::make_ready_future<>();
-                    });
-                });
-            });
+            .then([](auto &_) { return std::make_ready_future<>(); });
         })
         .then([] { return seastar::make_ready_future<int>(0); });
     });
