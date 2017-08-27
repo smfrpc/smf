@@ -1,6 +1,9 @@
 #include "filesystem/wal_write_projection.h"
 
+#include <zstd.h>
+
 #include "platform/macros.h"
+#include "platform/log.h"
 
 namespace smf {
 using namespace smf::wal;
@@ -10,8 +13,13 @@ seastar::lw_shared_ptr<wal_write_projection::item> xform(tx_put_fragment *f) {
   static thread_local flatbuffers::FlatBufferBuilder fbb{};
   // unfortunatealy, we need to copy mem, then compress it :( - so 2 memcpy.
   fbb.Clear();
-  fbb.Finish(Createtx_put_fragment(fbb, f->op(), f->client_seq(),
-                                   f->epoch() f->data_type(), f->data()));
+  tx_put_dataUnion du;
+  du.value = (void *)f->data();
+  du.type  = f->data_type();
+
+  fbb.Finish(Createtx_put_fragment(fbb, f->op(), f->client_seq(), f->epoch(),
+                                   f->data_type(), du.Pack(fbb)));
+
   auto retval      = seastar::make_lw_shared<wal_write_projection::item>();
   retval->fragment = std::move(seastar::temporary_buffer<char>(fbb.GetSize()));
   const uint8_t *source     = fbb.GetBufferPointer();
@@ -19,13 +27,13 @@ seastar::lw_shared_ptr<wal_write_projection::item> xform(tx_put_fragment *f) {
   const uint8_t *dest       = (uint8_t *)retval->fragment.get_write();
 
   if (fbb.GetSize() > kMinCompressionSize) {
-    auto zstd_compressed_size =
-      ZSTD_compress(dest, fbb.GetSize(), source, fbb.GetSize(), 3);
+    auto zstd_compressed_size = ZSTD_compress((void *)dest, fbb.GetSize(),
+                                              (void *)source, fbb.GetSize(), 3);
     auto zstd_err = ZSTD_isError(zstd_compressed_size);
     if (SMF_LIKELY(zstd_err == 0)) {
       retval->fragment.trim(zstd_compressed_size);
-      retval->hdr->mutate_compression(
-        wal_entry_compression_flags::wal_entry_compression_flags_zstd);
+      retval->hdr.mutable_ptr()->mutate_compression(
+        wal_entry_compression_type::wal_entry_compression_type_zstd);
     } else {
       LOG_THROW("Error compressing zstd buffer. Code: {}, Desciption: {}",
                 zstd_err, ZSTD_getErrorName(zstd_err));

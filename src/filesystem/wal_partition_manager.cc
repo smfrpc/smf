@@ -1,4 +1,4 @@
-#include "filesystem/wal_parition_manager.h"
+#include "filesystem/wal_partition_manager.h"
 
 #include "filesystem/wal_write_behind_utils.h"
 #include "filesystem/wal_write_projection.h"

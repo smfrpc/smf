@@ -12,6 +12,7 @@
 #include "flatbuffers/wal_generated.h"
 #include "platform/log.h"
 #include "platform/macros.h"
+#include "seastar_io/priority_manager.h"
 
 // class seastar::io_priority_class;
 
@@ -30,12 +31,8 @@ template <typename T> struct priority_wrapper {
     : req(THROW_IFNULL(ptr)), pc(p) {}
   priority_wrapper(priority_wrapper &&o) noexcept
     : req(std::move(o.req)), pc(std::move(o.pc)) {}
-  priority_wrapper(priority_wrapper &o) {
-    req = o.req;
-    pc  = o.pc;
-  }
-
-  T *                                 req;
+  priority_wrapper(const priority_wrapper &o) : req(o.req), pc(o.pc) {}
+  const T *                           req;
   const ::seastar::io_priority_class &pc;
 };
 }  // namespace details
@@ -54,6 +51,7 @@ struct wal_read_request : details::priority_wrapper<smf::wal::tx_get_request> {
 struct wal_read_reply {
   wal_read_reply() {}
   wal_read_reply(wal_read_reply &&r) noexcept : data(std::move(r.data)) {}
+  wal_read_reply(const wal_read_reply &o) { data = o.data; }
 
   /// \brief needed to make sure we don't exceed number of bytes read
   ///

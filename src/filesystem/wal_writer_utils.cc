@@ -4,6 +4,7 @@
 #include <chrono>
 #include <unistd.h>
 
+#include "platform/log.h"
 #include "utils/time_utils.h"
 
 namespace smf {
@@ -23,7 +24,7 @@ uint64_t wal_file_size_aligned() {
 seastar::sstring wal_file_name(const seastar::sstring  work_dir,
                                const seastar::sstring &prefix,
                                uint64_t                epoch) {
-  DLOG_THROW_IF(work_dir[work_dir.size() - 1] == "/",
+  DLOG_THROW_IF(work_dir[work_dir.size() - 1] == '/',
                 "Work dirrectory cannot end in /");
   return work_dir + "/" + prefix + ":" + seastar::to_sstring(epoch) + ".wal";
 }

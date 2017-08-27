@@ -1,12 +1,13 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #include "filesystem/wal_clock_pro_cache.h"
-// std
+
 #include <algorithm>
+#include <iterator>
 #include <utility>
-// third party
+
 #include <boost/iterator/counting_iterator.hpp>
-// smf
+
 #include "filesystem/file_size_utils.h"
 #include "filesystem/wal_pretty_print_utils.h"
 #include "hashing/hashing_utils.h"
@@ -152,12 +153,12 @@ wal_clock_pro_cache::read_exactly(int64_t                           offset,
     });
 }
 
-static void validate_header(const wal::wal_header &hdr,
-                            const int64_t &        file_size) {
-  LOG_THROW_IF(hdr.checksum() == 0 || hdr.size() == 0,
-               "Could not read header from file");
-  LOG_THROW_IF(hdr.size() > file_size,
-               "Header asked for more data than file_size. Header:{}", hdr);
+static void debug_only_validate_header(const wal::wal_header &hdr,
+                                       const int64_t &        file_size) {
+  DLOG_THROW_IF(hdr.checksum() == 0 || hdr.size() == 0,
+                "Could not read header from file");
+  DLOG_THROW_IF(hdr.size() > file_size,
+                "Header asked for more data than file_size. Header:{}", hdr);
 }
 
 static wal::wal_header get_header(const seastar::temporary_buffer<char> &buf) {
@@ -170,47 +171,46 @@ static wal::wal_header get_header(const seastar::temporary_buffer<char> &buf) {
   return hdr;
 }
 
-static void validate_payload(const wal::wal_header &                hdr,
-                             const seastar::temporary_buffer<char> &buf) {
-  LOG_THROW_IF(buf.size() != hdr.size(),
-               "Could not read header. Only read {} bytes", buf.size());
-  uint32_t checksum = xxhash_32(buf.get(), buf.size());
-  LOG_THROW_IF(checksum != hdr.checksum(),
-               "bad header: {}, missmatching checksums. "
-               "expected checksum: {}",
-               hdr, checksum);
+static void debug_only_validate_payload(
+  const wal::wal_header &hdr, const seastar::temporary_buffer<char> &buf) {
+  DLOG_THROW_IF(buf.size() != hdr.size(),
+                "Could not read header. Only read {} bytes", buf.size());
+  DLOG_THROW_IF(xxhash_32(buf.get(), buf.size()) != hdr.checksum(),
+                "bad header: {}, missmatching checksums. "
+                "expected checksum: {}",
+                hdr, xxhash_32(buf.get(), buf.size()));
 }
 
 seastar::future<wal_read_reply> wal_clock_pro_cache::read(wal_read_request r) {
   wal_read_reply retval;
-  LOG_THROW_IF(r.data->offset > file_size_, "Invalid offset range for file");
+  LOG_THROW_IF(r.req->offset() > static_cast<uint64_t>(file_size_),
+               "Invalid offset range for file");
   static const uint32_t kHeaderSize = sizeof(wal::wal_header);
   auto logerr                       = [r, retval](auto eptr) {
     LOG_ERROR("Caught exception: {}. Request: {}, Reply:{}", eptr, r, retval);
-    return seastar::stop_iteration::no;
+    return seastar::stop_iteration::yes;
   };
   return seastar::repeat([r, this, retval, logerr]() mutable {
-           if (retval.size() >= r.data->max_size()) {
+           if (retval.size() >= r.req->max_bytes()) {
              return seastar::make_ready_future<seastar::stop_iteration>(
                seastar::stop_iteration::yes);
            }
-           auto next_offset = r.data->offset() + retval.data->next_offset();
-           return this->read_exactly(next_offset, kHeaderSize, req->pc)
+           uint64_t next_offset = r.req->offset() + retval.size();
+           return this->read_exactly(next_offset, kHeaderSize, r.pc)
              .then([this, r, retval, next_offset, logerr](auto buf) mutable {
                auto hdr = get_header(buf);
                next_offset += kHeaderSize;
-               validate_header(hdr, file_size_);
-               return this->read_exactly(next_offset, hdr.size(), r->pc)
+               debug_only_validate_header(hdr, file_size_);
+               return this->read_exactly(next_offset, hdr.size(), r.pc)
                  .then([retval, hdr, this, r, logerr](auto buf) mutable {
-                   validate_payload(hdr, buf);
-
+                   debug_only_validate_payload(hdr, buf);
                    auto ptr = std::make_unique<wal::tx_get_fragmentT>();
                    ptr->hdr = std::make_unique<wal::wal_header>(std::move(hdr));
                    // copy to the std::vector
                    ptr->fragment.reserve(buf.size());
                    std::copy(buf.get(), buf.get() + buf.size(),
-                             std::back_inserster(ptr->fragment));
-                   retval.data.gets.push_back(std::move(ptr));
+                             std::back_inserter(ptr->fragment));
+                   retval.data->gets.push_back(std::move(ptr));
                    return seastar::stop_iteration::no;
                  })
                  .handle_exception(logerr);

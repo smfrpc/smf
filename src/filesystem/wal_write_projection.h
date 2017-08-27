@@ -2,6 +2,7 @@
 
 #include <list>
 
+#include <core/sstring.hh>
 #include <core/shared_ptr.hh>
 
 #include "flatbuffers/fbs_typed_buf.h"
