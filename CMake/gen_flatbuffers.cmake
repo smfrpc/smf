@@ -3,6 +3,8 @@ set(FLATBUFFERS_FLATC_EXECUTABLE
 set(FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS
   --gen-name-strings
   --gen-object-api
+  --cpp
+  --json
   --defaults-json
   -I ${PROJECT_SOURCE_DIR}/src
   --cpp-str-type 'seastar::sstring'
