@@ -1,13 +1,12 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #pragma once
-// std
+
 #include <memory>
-// smf
-#include "filesystem/wal_mem_cache.h"
+#include <unordered_map>
+
+#include "filesystem/wal_opts.h"
 #include "filesystem/wal_partition_manager.h"
-#include "filesystem/wal_reader.h"
-#include "filesystem/wal_writer.h"
 #include "filesystem/write_ahead_log.h"
 
 namespace smf {

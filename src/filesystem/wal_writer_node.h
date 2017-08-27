@@ -70,6 +70,7 @@ class wal_writer_node {
   ~wal_writer_node();
 
   inline uint64_t space_left() const { return opts_.file_size - current_size_; }
+  inline uint64_t current_offset() const { return opts_.epoch + current_size_;}
 
  private:
   seastar::future<> rotate_fstream();

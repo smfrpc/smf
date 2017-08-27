@@ -1,7 +1,10 @@
 #pragma once
 
+#include "filesystem/wal_reader.h"
+#include "filesystem/wal_write_behind_cache.h"
+#include "filesystem/wal_writer.h"
+#include "filesystem/write_ahead_log.h"
 #include "platform/macros.h"
-#include "wal/write_ahead_log.h"
 
 namespace smf {
 class wal_partition_manager : public write_ahead_log {

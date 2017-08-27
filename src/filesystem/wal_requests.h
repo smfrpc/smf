@@ -117,7 +117,10 @@ struct wal_write_request : details::priority_wrapper<smf::wal::tx_put_request> {
 };
 
 struct wal_write_reply {
-  wal_write_reply(uint64_t offset) { data->offset = offset; }
+  wal_write_reply(uint64_t start_offset, uint64_t end_offset) {
+    data->start_offset = start_offset;
+    data->end_offset   = end_offset;
+  }
   seastar::lw_shared_ptr<smf::wal::tx_put_replyT> data =
     seastar::make_lw_shared<wal::tx_put_replyT>();
 };

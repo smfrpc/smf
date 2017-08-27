@@ -65,13 +65,14 @@ seastar::future<> wal_writer_node::disk_write(
 seastar::future<wal_write_reply> wal_writer_node::append(
   seastar::lw_shared_ptr<wal_write_projection> req) {
   return serialize_writes_.wait(1)
-    .then([this, req]() mutable {
-      auto const write_size = wal_write_request_size(req);
+    .then([this, req, start_offset = current_offset()]() mutable {
+      uint64_t write_size = wal_write_request_size(req);
       return seastar::do_for_each(
                req->projection.begin(), req->projection.end(),
                [this](auto &i) mutable { return this->do_append(i); })
-        .then([write_size] {
-          return seastar::make_ready_future<wal_write_reply>(write_size);
+        .then([write_size, start_offset] {
+          return seastar::make_ready_future<wal_write_reply>(
+            wal_write_reply(start_offset, start_offset + write_size));
         });
     })
     .finally([this] { serialize_writes_.signal(1); });

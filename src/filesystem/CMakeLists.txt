@@ -15,6 +15,7 @@ add_library (smf_filesystem STATIC
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_writer_file_lease.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_write_projection.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_partition_manager.cc
+  ${PROJECT_SOURCE_DIR}/src/filesystem/wal_write_behind_cache.cc
   )
 
 # add_dependencies(smf_filesystem
