@@ -70,10 +70,6 @@ class wal_clock_pro_cache {
   ///
   seastar::future<seastar::temporary_buffer<char>> read_exactly(
     int64_t offset, int64_t size, const seastar::io_priority_class &pc);
-  /// \brief actual reader func
-  /// recursive
-  seastar::future<seastar::lw_shared_ptr<wal_read_reply>> do_read(
-    wal_read_request r);
 
   /// \breif fetch exactly one page from disk w/ dma_alignment() so that
   /// we don't pay the penalty of fetching 2 pages and discarding one

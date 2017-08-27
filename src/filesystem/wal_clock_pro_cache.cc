@@ -26,7 +26,7 @@ wal_clock_pro_cache::wal_clock_pro_cache(
   uint32_t                              max_pages_in_memory)
   : disk_dma_alignment(f->disk_read_dma_alignment())
   , file_size_(initial_size)
-  , number_of_pages_(round_up(file_size, disk_dma_alignment))
+  , number_of_pages_(round_up(initial_size, disk_dma_alignment))
   , file_(std::move(f)) {
   using cache_t = smf::clock_pro_cache<uint64_t, page_data>;
   cache_        = std::make_unique<cache_t>(max_resident_pages_);
@@ -152,26 +152,17 @@ wal_clock_pro_cache::read_exactly(int64_t                           offset,
     });
 }
 
-seastar::future<wal_read_reply> wal_clock_pro_cache::read(wal_read_request r) {
-  return this->do_read(r).then([](auto ret) {
-    wal_read_reply reply;
-    reply.emplace_back(ret->move_fragments());
-    return seastar::make_ready_future<wal_read_reply>(std::move(reply));
-  });
-}
-
-static void validate_header(const fbs::wal::wal_header &hdr,
-                            const int64_t &             file_size) {
-  LOG_THROW_IF(hdr.flags() == 0 || hdr.checksum() == 0 || hdr.size() == 0,
+static void validate_header(const wal::wal_header &hdr,
+                            const int64_t &        file_size) {
+  LOG_THROW_IF(hdr.checksum() == 0 || hdr.size() == 0,
                "Could not read header from file");
   LOG_THROW_IF(hdr.size() > file_size,
                "Header asked for more data than file_size. Header:{}", hdr);
 }
 
-static fbs::wal::wal_header get_header(
-  const seastar::temporary_buffer<char> &buf) {
-  static const uint32_t kHeaderSize = sizeof(fbs::wal::wal_header);
-  fbs::wal::wal_header  hdr;
+static wal::wal_header get_header(const seastar::temporary_buffer<char> &buf) {
+  static const uint32_t kHeaderSize = sizeof(wal::wal_header);
+  wal::wal_header       hdr;
   LOG_THROW_IF(buf.size() < kHeaderSize, "Could not read header. Only read",
                buf.size());
   char *hdr_ptr = reinterpret_cast<char *>(&hdr);
@@ -179,10 +170,10 @@ static fbs::wal::wal_header get_header(
   return hdr;
 }
 
-static void validate_payload(const fbs::wal::wal_header &           hdr,
+static void validate_payload(const wal::wal_header &                hdr,
                              const seastar::temporary_buffer<char> &buf) {
-  LOG_THROW_IF(buf.size() != hdr.size(), "Could not read header. Only read",
-               buf.size());
+  LOG_THROW_IF(buf.size() != hdr.size(),
+               "Could not read header. Only read {} bytes", buf.size());
   uint32_t checksum = xxhash_32(buf.get(), buf.size());
   LOG_THROW_IF(checksum != hdr.checksum(),
                "bad header: {}, missmatching checksums. "
@@ -190,52 +181,46 @@ static void validate_payload(const fbs::wal::wal_header &           hdr,
                hdr, checksum);
 }
 
-seastar::future<seastar::lw_shared_ptr<wal_read_reply>>
-wal_clock_pro_cache::do_read(wal_read_request r) {
-  using ret_type = seastar::lw_shared_ptr<wal_read_reply>;
-  LOG_THROW_IF(r.offset + r.size > file_size,
-               "Expected normalized offsets. Invalid range."
-               "see wal_reader_node.cc?");
-  static const uint32_t kHeaderSize = sizeof(fbs::wal::wal_header);
-
-  auto ret = seastar::make_lw_shared<wal_read_reply>();
-  auto req = seastar::make_lw_shared<wal_read_request>(r);
-  return seastar::repeat([ret, this, req]() mutable {
-           if (req->size <= 0) {
+seastar::future<wal_read_reply> wal_clock_pro_cache::read(wal_read_request r) {
+  wal_read_reply retval;
+  LOG_THROW_IF(r.data->offset > file_size_, "Invalid offset range for file");
+  static const uint32_t kHeaderSize = sizeof(wal::wal_header);
+  auto logerr                       = [r, retval](auto eptr) {
+    LOG_ERROR("Caught exception: {}. Request: {}, Reply:{}", eptr, r, retval);
+    return seastar::stop_iteration::no;
+  };
+  return seastar::repeat([r, this, retval, logerr]() mutable {
+           if (retval.size() >= r.data->max_size()) {
              return seastar::make_ready_future<seastar::stop_iteration>(
                seastar::stop_iteration::yes);
            }
-           return this->read_exactly(req->offset, kHeaderSize, req->pc)
-             .then([this, ret, req](auto buf) mutable {
+           auto next_offset = r.data->offset() + retval.data->next_offset();
+           return this->read_exactly(next_offset, kHeaderSize, req->pc)
+             .then([this, r, retval, next_offset, logerr](auto buf) mutable {
                auto hdr = get_header(buf);
-               req->offset += kHeaderSize;
-               req->size -= kHeaderSize;
-               // must come after moving ptrs ahead
-               validate_header(hdr, file_size);
-               return this->read_exactly(req->offset, hdr.size(), req->pc)
-                 .then([ret, hdr, this, req](auto buf) mutable {
-                   req->offset += hdr.size();
-                   req->size -= hdr.size();
-                   // must come after moving ptrs ahead
+               next_offset += kHeaderSize;
+               validate_header(hdr, file_size_);
+               return this->read_exactly(next_offset, hdr.size(), r->pc)
+                 .then([retval, hdr, this, r, logerr](auto buf) mutable {
                    validate_payload(hdr, buf);
-                   wal_read_reply::fragment f(hdr, std::move(buf));
-                   ret->fragments.emplace_back(std::move(f));
-                   if (req->size <= 0) { return seastar::stop_iteration::yes; }
+
+                   auto ptr = std::make_unique<wal::tx_get_fragmentT>();
+                   ptr->hdr = std::make_unique<wal::wal_header>(std::move(hdr));
+                   // copy to the std::vector
+                   ptr->fragment.reserve(buf.size());
+                   std::copy(buf.get(), buf.get() + buf.size(),
+                             std::back_inserster(ptr->fragment));
+                   retval.data.gets.push_back(std::move(ptr));
                    return seastar::stop_iteration::no;
                  })
-                 .handle_exception([req](auto eptr) {
-                   LOG_ERROR("Caught exception: {}. Offset:{}, size:{}", eptr,
-                             req->offset, req->size);
-                   return seastar::stop_iteration::no;
-                 });
+                 .handle_exception(logerr);
              })
-             .handle_exception([req](auto eptr) {
-               LOG_ERROR("Caught exception: {}. Offset:{}, size:{}", eptr,
-                         req->offset, req->size);
-               return seastar::stop_iteration::no;
-             });
+             .handle_exception(logerr);
          })
-    .then([ret] { return seastar::make_ready_future<ret_type>(ret); });
+    .then([retval] {
+      // retval keeps a lw_shared_ptr
+      return seastar::make_ready_future<wal_read_reply>(retval);
+    });
 }
 
 }  // namespace smf

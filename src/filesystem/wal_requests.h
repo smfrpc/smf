@@ -30,6 +30,11 @@ template <typename T> struct priority_wrapper {
     : req(THROW_IFNULL(ptr)), pc(p) {}
   priority_wrapper(priority_wrapper &&o) noexcept
     : req(std::move(o.req)), pc(std::move(o.pc)) {}
+  priority_wrapper(priority_wrapper &o) {
+    req = o.req;
+    pc  = o.pc;
+  }
+
   T *                                 req;
   const ::seastar::io_priority_class &pc;
 };

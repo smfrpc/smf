@@ -45,10 +45,10 @@ seastar::future<wal_write_reply> wal_partition_manager::append(
       },
       wal_write_reply(0, 0),
       [this](auto acc, auto next) {
-        if (acc.data->start_offset == 0) {
-          acc.data->start_offset = next.data->start_offset;
-        }
-        acc.data->end_offset = next.data->end_offset;
+        acc.data->start_offset =
+          std::min(acc.data->start_offset, next.data->start_offset);
+        acc.data->end_offset =
+          std::max(acc.data->end_offset, next.data->end_offset);
         return acc;
       });
 }
