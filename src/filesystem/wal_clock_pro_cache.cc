@@ -26,7 +26,7 @@ wal_clock_pro_cache::wal_clock_pro_cache(
   uint32_t                              max_pages_in_memory)
   : disk_dma_alignment(f->disk_read_dma_alignment())
   , file_size_(initial_size)
-  , number_of_pages(round_up(file_size, disk_dma_alignment))
+  , number_of_pages_(round_up(file_size, disk_dma_alignment))
   , file_(std::move(f)) {
   using cache_t = smf::clock_pro_cache<uint64_t, page_data>;
   cache_        = std::make_unique<cache_t>(max_resident_pages_);
@@ -56,7 +56,7 @@ wal_clock_pro_cache::clock_pro_get_page(uint32_t                          page,
   // if we just let the clock-pro work w/out pre-allocating, you end up w/ one
   // or 2 pages that you are moving between hot and cold and test
   //
-  if (cache_->size() < number_of_pages) {
+  if (cache_->size() < number_of_pages_) {
     return fetch_page(page, pc).then([this, page](auto chunk) {
       cache_->set(std::move(chunk));
       return seastar::make_ready_future<chunk_t_ptr>(
@@ -133,7 +133,7 @@ wal_clock_pro_cache::read_exactly(int64_t                           offset,
   auto buf = seastar::make_lw_shared<seastar::temporary_buffer<char>>(size);
   auto req = seastar::make_lw_shared<buf_req>(offset, size, pc);
   auto max_pages = 1 + (req->size / kAlignment);
-  LOG_THROW_IF(max_pages > number_of_pages,
+  LOG_THROW_IF(max_pages > number_of_pages_,
                "Request asked to read more pages, than available on disk");
   return seastar::repeat([buf, this, req]() mutable {
            auto page = offset_to_page(req->offset, kAlignment);

@@ -11,6 +11,7 @@
 #include <core/metrics_registration.hh>
 // smf
 #include "filesystem/wal_requests.h"
+#include "filesystem/wal_write_projection.h"
 #include "platform/macros.h"
 
 namespace smf {
@@ -47,7 +48,7 @@ class wal_write_behind_cache {
     uint64_t hits{0};
     uint64_t bytes_read{0};
     uint64_t evicted_puts{0};
-    uint64_t bytes_written(0);
+    uint64_t bytes_written{0};
   };
 
   wal_write_behind_cache(seastar::file_output_stream_options o);

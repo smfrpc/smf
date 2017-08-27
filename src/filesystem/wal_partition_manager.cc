@@ -35,11 +35,11 @@ seastar::future<wal_write_reply> wal_partition_manager::append(
     auto p = wal_write_projection::translate(&(*it));
     return writer_->append(p).then(
       [this, p](auto reply) {
-        auto idx = reply.start_offset;
+        auto idx = reply.data->start_offset;
         std::foreach (p->projection.begin(), p->projection.end(),
                       [&idx, this](auto it) {
-                        idx += it->size();
                         cache_->put({idx, it->fragment});
+                        idx += it->size();
                       });
         return seastar::make_ready_future<decltype(reply)>(std::move(reply));
       },

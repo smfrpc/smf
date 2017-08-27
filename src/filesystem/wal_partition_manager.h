@@ -9,9 +9,9 @@
 namespace smf {
 class wal_partition_manager : public write_ahead_log {
  public:
-  wal_partition_manager(wal_opts otps,
-                        sstring  topic_name,
-                        uint32_t topic_partition);
+  wal_partition_manager(wal_opts         otps,
+                        seastar::sstring topic_name,
+                        uint32_t         topic_partition);
   wal_partition_manager(wal_partition_manager &&o) noexcept;
   virtual ~wal_partition_manager();
 
