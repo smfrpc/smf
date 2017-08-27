@@ -1,15 +1,24 @@
 #include "filesystem/wal_parition_manager.h"
 
+#include "filesystem/wal_write_behind_utils.h"
+#include "filesystem/wal_write_projection.h"
+
 namespace smf {
-wal_partition_manager::wal_partition_manager(wal_opts otps,
+wal_partition_manager::wal_partition_manager(wal_opts o,
                                              sstring  topic_name,
                                              uint32_t topic_partition)
-  : topic(topic_name), partition(topic_partition) {}
+  : opts(o), topic(topic_name), partition(topic_partition) {
+  cache_ =
+    std::make_unique<wal_write_behind_cache>(default_file_ostream_options());
+  writer_ = std::make_unique<wal_writer>(topic_name, topic_partition);
+  reader_ = std::make_unique<wal_writer>(topic_name, topic_partition);
+}
 
 wal_partition_manager::~wal_partition_manager() {}
 
 wal_partition_manager::wal_partition_manager(wal_partition_manager &&o) noexcept
-  : topic(std::move(o.topic))
+  : opts(std::move(o.opts))
+  , topic(std::move(o.topic))
   , partition(std::move(o.parition))
   , writer_(std::move(o.writer_))
   , reader_(std::move(o.reader_))

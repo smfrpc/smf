@@ -2,23 +2,9 @@
 //
 #pragma once
 
-#include <experimental/optional>
-#include <memory>
-#include <utility>
-
-#include <boost/filesystem.hpp>
-#include <core/temporary_buffer.hh>
-
-#include "filesystem/wal_writer_utils.h"
-#include "histogram/histogram.h"
+#include <core/sstring.hh>
 
 namespace smf {
-// struct cache_stats {
-//   uint64_t total_reads{0};
-//   uint64_t total_writes{0};
-//   uint64_t total_bytes_written{0};
-//   uint64_t total_bytes_read{0};
-// };
 struct wal_opts {
   enum class log_type {
     disk_with_memory_cache,
@@ -32,9 +18,7 @@ struct wal_opts {
 
   /// \brief root dir of the WAL
   const seastar::sstring directory;
-
-  uint64_t cache_size = wal_file_size_aligned();
-  log_type type       = log_type::disk_with_memory_cache;
+  log_type               type = log_type::disk_with_memory_cache;
 };
 std::ostream &operator<<(std::ostream &o, const wal_opts &opts);
 

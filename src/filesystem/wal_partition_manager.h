@@ -11,32 +11,27 @@ class wal_partition_manager : public write_ahead_log {
  public:
   wal_partition_manager(wal_opts otps,
                         sstring  topic_name,
-                        uint32_t topic_partition)
-    : topic(topic_name), partition(topic_partition) {}
-  virtual ~wal_partition_manager() {}
-  wal_partition_manager(wal_partition_manager &&o) noexcept
-    : topic(std::move(o.topic))
-    , partition(std::move(o.parition))
-    , writer_(std::move(o.writer_))
-    , reader_(std::move(o.reader_))
-    , cache_(std::move(o.cache_)) {}
+                        uint32_t topic_partition);
+  wal_partition_manager(wal_partition_manager &&o) noexcept;
+  virtual ~wal_partition_manager();
 
-  virtual seastar::future<wal_write_reply> append(wal_write_request r) = 0;
-  virtual seastar::future<wal_read_reply> get(wal_read_request r)      = 0;
-  virtual seastar::future<> open();
-  virtual seastar::future<> close();
+  virtual seastar::future<wal_write_reply> append(wal_write_request r) final;
+  virtual seastar::future<wal_read_reply> get(wal_read_request r) final;
+  virtual seastar::future<> open() final;
+  virtual seastar::future<> close() final;
 
 
   SMF_DISALLOW_COPY_AND_ASSIGN(wal_partition_manager);
 
  public:
+  const wal_opts opts;
   const uint32_t topic;
   const uint32_t partition;
 
  private:
-  std::unique_ptr<wal_writer>            writer_ = nullptr;
-  std::unique_ptr<wal_reader>            reader_ = nullptr;
-  std::unique_ptr<wal_writ_behind_cache> cache_  = nullptr;
+  std::unique_ptr<wal_writer>             writer_ = nullptr;
+  std::unique_ptr<wal_reader>             reader_ = nullptr;
+  std::unique_ptr<wal_write_behind_cache> cache_  = nullptr;
 };
 
 }  // namespace smf

@@ -11,11 +11,11 @@
 // smf
 #include "filesystem/wal_opts.h"
 #include "filesystem/wal_requests.h"
+#include "filesystem/wal_write_behind_utils.h"
 #include "filesystem/wal_write_projection.h"
 #include "filesystem/wal_writer_file_lease.h"
 #include "filesystem/wal_writer_utils.h"
 #include "utils/time_utils.h"
-
 
 namespace smf {
 struct wal_writer_node_opts {
@@ -26,14 +26,8 @@ struct wal_writer_node_opts {
   /// \brief each time we create a wal_writer_node_opts per topic partition
   /// we want to know when we created it
   const seastar::sstring run_id = seastar::to_sstring(time_now_micros());
-  seastar::file_output_stream_options fstream{
-    // These are the seastar defaults
-    //
-    // unsigned buffer_size = 8192;
-    // unsigned preallocation_size = 1024*1024; // 1MB
-    // unsigned write_behind = 1; ///< Number of buffers to write in parallel
-  };
-  const uint64_t file_size = wal_file_size_aligned();
+  seastar::file_output_stream_options fstream = default_file_ostream_options();
+  const uint64_t                      file_size = wal_file_size_aligned();
 };
 
 /// \brief - given a prefix and an epoch (monotinically increasing counter)
@@ -70,7 +64,7 @@ class wal_writer_node {
   ~wal_writer_node();
 
   inline uint64_t space_left() const { return opts_.file_size - current_size_; }
-  inline uint64_t current_offset() const { return opts_.epoch + current_size_;}
+  inline uint64_t current_offset() const { return opts_.epoch + current_size_; }
 
  private:
   seastar::future<> rotate_fstream();
