@@ -16,7 +16,8 @@
 
 - name: cmake configure
   shell:
-    cmake -DCMAKE_CXX_FLAGS="-O2 -fPIC" \
+    cmake -DCMAKE_BUILD_TYPE=Release \ 
+      -DCMAKE_CXX_FLAGS="-O2 -fPIC" \
       -DCMAKE_INSTALL_PREFIX:PATH='{{third_party_dir}}' \
       '{{goobly_cache_dir}}/flatbuffers'
   args:
