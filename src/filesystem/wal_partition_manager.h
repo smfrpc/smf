@@ -7,18 +7,20 @@
 #include "platform/macros.h"
 
 namespace smf {
-class wal_partition_manager : public write_ahead_log {
+class wal_partition_manager {
  public:
   wal_partition_manager(wal_opts         otps,
                         seastar::sstring topic_name,
                         uint32_t         topic_partition);
   wal_partition_manager(wal_partition_manager &&o) noexcept;
-  virtual ~wal_partition_manager();
+  ~wal_partition_manager();
 
-  virtual seastar::future<wal_write_reply> append(wal_write_request r) final;
-  virtual seastar::future<wal_read_reply> get(wal_read_request r) final;
-  virtual seastar::future<> open() final;
-  virtual seastar::future<> close() final;
+  seastar::future<wal_write_reply> append(
+    seastar::lw_shared_ptr<wal_write_projection> projection);
+
+  seastar::future<wal_read_reply> get(wal_read_request r);
+  seastar::future<> open();
+  seastar::future<> close();
 
 
   SMF_DISALLOW_COPY_AND_ASSIGN(wal_partition_manager);

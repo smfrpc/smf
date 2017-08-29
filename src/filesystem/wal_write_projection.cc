@@ -49,9 +49,9 @@ seastar::lw_shared_ptr<wal_write_projection::item> xform(tx_put_fragment *f) {
 }
 
 seastar::lw_shared_ptr<wal_write_projection> wal_write_projection::translate(
-  wal_write_request *req) {
+  tx_put_partition_pair *req) {
   auto ret = seastar::make_lw_shared<wal_write_projection>();
-  std::for_each(req->begin(), req->end(), [ret](auto it) {
+  std::for_each(req->txns().begin(), req->txns().end(), [ret](auto it) {
     // even though it's a list, push_back is O( 1 )
     ret->projection.push_back(xform(&(*it)));
   });

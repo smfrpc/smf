@@ -71,7 +71,7 @@ struct wal_write_projection {
   /// schemes, but you must cache the write-behind
   ///
   static seastar::lw_shared_ptr<wal_write_projection> translate(
-    wal_write_request *req);
+    wal::wx_put_parition_par *req);
 };
 
 }  // namespace smf

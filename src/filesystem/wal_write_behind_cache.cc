@@ -20,56 +20,45 @@ wal_write_behind_cache::wal_write_behind_cache(
                      sm::description("Number of evicted tx_put_fragments")),
      sm::make_derive(
        "bytes_written", stats_.bytes_written,
-       sm::description("Number of bytes writen to this page cache"))
-    });
+       sm::description("Number of bytes writen to this page cache"))});
 }
 
 uint64_t wal_write_behind_cache::min_offset() {
   if (puts_.empty()) { return 0; }
-  return puts_.begin()->offset;
+  return puts_.begin()->first;
 }
 uint64_t wal_write_behind_cache::max_offset() {
   if (puts_.empty()) { return 0; }
-  return puts_.end()->offset;
+  return puts_.rbegin()->first;
 }
 
-void wal_write_behind_cache::put(wal_write_behind_cache::mem_put p) {
-  current_size_ += p.fragment->size.size();
-  stats_.bytes_written += p.fragment->size();
-
-  // update intrusive indexes
-  allocated_.emplace_back(std::move(p));
-  puts_.insert(allocated_.back());
-
-  while (current_size_ > opts.preallocation_size) {
-    ++stats_.evicted_puts;
-    uint64_t virtual_offset = allocated_.front().offset;
-    auto     it             = puts_.find(virtual_offset);
-    if (it != puts_.end()) { puts_.erase(it); }
-    current_size_ -= allocated_.front().data.size();
-    allocated_.pop_front();
+void wal_write_behind_cache::put(uint64_t offset, value_type data) {
+  current_size_ += data->size();
+  stats_.bytes_written += data->size();
+  puts_.insert({offset, std::move(p)});
+  while (current_size_ > opts.preallocation_size && !puts_.empty()) {
+    puts_.erase(puts_.begin());
   }
 }
 
 wal_read_reply wal_write_behind_cache::get(const wal_read_request &req) {
   wal_read_reply r;
-
   auto     offset     = req.req->offset();
   uint32_t bytes_left = req.req->max_bytes();
   while (offset < max_offset() && bytes_left > 0) {
     auto it = puts_.find(offset);
     if (it == puts_.end()) { break; }
-    if (bytes_left - it->fragment.size() <= 0) { break; }
-
-    bytes_left -= it->fragment.size();
-    offset += it->offset;
+    if (bytes_left - it->second->size() <= 0) { break; }
+    bytes_left -= it->second->size();
+    offset += it->first;
     ++stats_.hits;
-    stats_.bytes_read += it->fragment.size();
+    stats_.bytes_read += it->second->size();
     auto f = std::make_unique<wal::tx_get_fragmentT>();
     // MUST use copy constructor here
-    f->hdr = std::make_unique<wal::header>(*(it->fragment->hdr.get()));
-    f->fragment.reserve(it->fragment->fragment.size());
-    std::copy(it->fragment->fragment.begin(), it->fragment->fragment.end(),
+    f->hdr = std::make_unique<wal::header>(*(it->second->hdr.get()));
+    f->fragment.reserve(it->second->fragment.size());
+    std::copy(it->second->fragment.get(),
+              it->second->fragment.get() + it->second->fragment.size(),
               std::back_inserter(f->fragment));
     r.gets.push_back(std::move(f));
   }

@@ -25,56 +25,49 @@ wal_partition_manager::wal_partition_manager(wal_partition_manager &&o) noexcept
   , cache_(std::move(o.cache_)) {}
 
 seastar::future<wal_write_reply> wal_partition_manager::append(
-  wal_write_request r) {
-  // 1) Get projection
-  // 2) Write to disk
-  // 3) Write to to cache
-  // 4) Return reduced state
-  return seastar::map_reduce(r.begin(), r.end(), [this](auto it) {
-    // get the iterator, and get the address of the deref type
-    auto p = wal_write_projection::translate(&(*it));
-    return writer_->append(p).then(
-      [this, p](auto reply) {
-        auto idx = reply.data->start_offset;
-        std::foreach (p->projection.begin(), p->projection.end(),
-                      [&idx, this](auto it) {
-                        cache_->put({idx, it->fragment});
-                        idx += it->size();
-                      });
-        return seastar::make_ready_future<decltype(reply)>(std::move(reply));
-      },
-      wal_write_reply(0, 0),
-      [this](auto acc, auto next) {
-        acc.data->start_offset =
-          std::min(acc.data->start_offset, next.data->start_offset);
-        acc.data->end_offset =
-          std::max(acc.data->end_offset, next.data->end_offset);
-        return acc;
-      });
+  seastar::lw_shared_ptr<wal_write_projection> projection) {
+  return writer_->append(p).then(
+    [this, p](auto reply) {
+      auto idx = reply.data->start_offset;
+      std::foreach (p->projection.begin(), p->projection.end(),
+                    [&idx, this](auto it) {
+                      cache_->put({idx, it->fragment});
+                      idx += it->size();
+                    });
+      return seastar::make_ready_future<decltype(reply)>(std::move(reply));
+    },
+    wal_write_reply(0, 0),
+    [this](auto acc, auto next) {
+      acc.data->start_offset =
+        std::min(acc.data->start_offset, next.data->start_offset);
+      acc.data->end_offset =
+        std::max(acc.data->end_offset, next.data->end_offset);
+      return acc;
+    });
 }
 
 
 seastar::future<wal_read_reply> get(wal_read_request r) {
-    if (r.req->offset() >= cache_->min_offset()
-        && r.req->offset() <= cache_->max_offset()) {
-      return seastar::make_ready_future<wal_write_reply>(cache_->get(r));
-    }
-    return reader_->get(r);
+  if (r.req->offset() >= cache_->min_offset()
+      && r.req->offset() <= cache_->max_offset()) {
+    return seastar::make_ready_future<wal_write_reply>(cache_->get(r));
+  }
+  return reader_->get(r);
 }
 seastar::future<> wal_partition_manager::open() {
-    LOG_DEBUG("Opening parition manager with: opts={}, topic={}, parition={}",
-              opts, topic, partition);
-    return writer_->open().then([this] { return reader_->open(); });
+  LOG_DEBUG("Opening parition manager with: opts={}, topic={}, parition={}",
+            opts, topic, partition);
+  return writer_->open().then([this] { return reader_->open(); });
 }
 seastar::future<> wal_partition_manager::close() {
-    LOG_DEBUG("Closing parition manager with: opts={}, topic={}, parition={}",
-              opts, topic, partition);
-    auto elogger = [](auto eptr) {
-      LOG_ERROR("Ignoring error closing partition manager: {}", eptr);
-      return seastar::make_ready_future<>();
-    };
-    return writer_->close().handle_exception(elogger).then(
-      [this] { return reader_->close().handle_exception(elogger); });
+  LOG_DEBUG("Closing parition manager with: opts={}, topic={}, parition={}",
+            opts, topic, partition);
+  auto elogger = [](auto eptr) {
+    LOG_ERROR("Ignoring error closing partition manager: {}", eptr);
+    return seastar::make_ready_future<>();
+  };
+  return writer_->close().handle_exception(elogger).then(
+    [this] { return reader_->close().handle_exception(elogger); });
 }
 
 
