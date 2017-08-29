@@ -5,7 +5,6 @@
 #include <utility>
 // third party
 #include <core/reactor.hh>
-#include <core/sstring.hh>
 // smf
 #include "filesystem/wal_head_file_functor.h"
 #include "filesystem/wal_name_extractor_utils.h"

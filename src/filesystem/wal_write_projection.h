@@ -2,8 +2,8 @@
 
 #include <list>
 
-#include <core/sstring.hh>
 #include <core/shared_ptr.hh>
+#include <core/sstring.hh>
 
 #include "flatbuffers/fbs_typed_buf.h"
 #include "flatbuffers/wal_generated.h"
@@ -71,7 +71,7 @@ struct wal_write_projection {
   /// schemes, but you must cache the write-behind
   ///
   static seastar::lw_shared_ptr<wal_write_projection> translate(
-    wal::tx_put_request *req);
+    wal_write_request *req);
 };
 
 }  // namespace smf

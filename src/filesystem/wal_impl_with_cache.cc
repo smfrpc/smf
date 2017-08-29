@@ -4,19 +4,15 @@
 // std
 #include <memory>
 #include <utility>
-// third party
+
 #include <core/reactor.hh>
-// smf
-#include "filesystem/wal_file_name_mender.h"
+
+// #include "filesystem/wal_file_name_mender.h" TODO(need a parition scanner, etc)
 #include "filesystem/wal_requests.h"
 
 namespace smf {
 wal_impl_with_cache::wal_impl_with_cache(wal_opts _opts)
-  : wal(std::move(_opts)) {
-  writer_ = std::make_unique<wal_writer>(opts.directory, &opts.wstats);
-  reader_ = std::make_unique<wal_reader>(opts.directory, &opts.rstats);
-  // cache not needed w/ partition managers.
-  cache_  = std::make_unique<wal_mem_cache>(opts.cache_size, &opts.cstats);
+  : opts(std::move(_opts)) {
 }
 
 seastar::future<wal_write_reply> wal_impl_with_cache::append(

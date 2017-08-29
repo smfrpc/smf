@@ -21,7 +21,7 @@ class write_ahead_log_proxy;
 
 /// \brief main interface while using seastar.
 ///
-using distributed_write_ahead_log = seastar::distributed<write_ahead_log_proxy>;
+using sharded_write_ahead_log = seastar::distributed<write_ahead_log_proxy>;
 
 std::unique_ptr<write_ahead_log> make_unique_wal(wal_opts opts);
 

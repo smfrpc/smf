@@ -4,10 +4,10 @@
 #include <list>
 #include <memory>
 #include <utility>
-// generated
+
+#include <core/sstring.hh>
+
 #include "flatbuffers/wal_generated.h"
-// smf
-//#include "filesystem/wal.h"
 #include "filesystem/wal_file_walker.h"
 #include "filesystem/wal_reader_node.h"
 #include "filesystem/wal_requests.h"

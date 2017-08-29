@@ -2,8 +2,9 @@
 
 #include <zstd.h>
 
-#include "platform/macros.h"
+#include "hashing/hashing_utils.h"
 #include "platform/log.h"
+#include "platform/macros.h"
 
 namespace smf {
 using namespace smf::wal;
@@ -40,25 +41,21 @@ seastar::lw_shared_ptr<wal_write_projection::item> xform(tx_put_fragment *f) {
     }
   }
 
-  retval->hdr->mutate_size(retval->fragment.size());
-  retval->hdr->mutate_checksum(
+  retval->hdr.mutable_ptr()->mutate_size(retval->fragment.size());
+  retval->hdr.mutable_ptr()->mutate_checksum(
     xxhash_32(retval->fragment.get(), retval->fragment.size()));
   std::copy(source, source_end, dest);
   return retval;
 }
 
 seastar::lw_shared_ptr<wal_write_projection> wal_write_projection::translate(
-  wal::tx_put_request *req) {
-  auto                 retval = seastar::make_lw_shared<wal_write_projection>();
-  fbs::wal::wal_header hdr;
-  assert(write_size <= space_left());
-  if (write_size <= opts_.min_compression_size
-      || (req.flags & wal_write_request_flags::wwrf_no_compression)
-           == wal_write_request_flags::wwrf_no_compression) {
-    return do_append_with_header(hdr, std::move(req));
-  }
-
-  return retval;
+  wal_write_request *req) {
+  auto ret = seastar::make_lw_shared<wal_write_projection>();
+  std::for_each(req->begin(), req->end(), [ret](auto it) {
+    // even though it's a list, push_back is O( 1 )
+    ret->projection.push_back(xform(&(*it)));
+  });
+  return ret;
 }
 
 }  // namespace smf
