@@ -67,11 +67,9 @@ seastar::future<> wal_reader::open() {
     return fs_observer_->done();
   });
 }
-void update_file_size_by(int64_t node_epoch, uint64_t delta) {
+void wal_reader::update_file_size_by(int64_t node_epoch, uint64_t delta) {
   auto it = buckets_.lower_bound(node_epoch);
-  if (it != buckets_.end()) {
-    it->node->update_file_size_by(delta);
-  }
+  if (it != buckets_.end()) { it->node->update_file_size_by(delta); }
 }
 
 seastar::future<wal_read_reply::maybe> wal_reader::get(wal_read_request r) {

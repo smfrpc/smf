@@ -5,6 +5,8 @@
 #include <map>
 #include <utility>
 
+#include <core/fstream.hh>
+#include <core/sstring.hh>
 #include <core/metrics_registration.hh>
 
 #include "filesystem/wal_requests.h"
@@ -24,8 +26,8 @@ class wal_write_behind_cache {
 
   using value_type = seastar::lw_shared_ptr<wal_write_projection::item>;
 
-  wal_write_behind_cache(seastar::file_output_stream_options o);
-  SMF_DISALLOW_COPY_AND_ASSIGN(write_behind_cache);
+  explicit wal_write_behind_cache(seastar::file_output_stream_options o);
+  SMF_DISALLOW_COPY_AND_ASSIGN(wal_write_behind_cache);
 
   const seastar::file_output_stream_options opts;
 

@@ -37,6 +37,9 @@ struct wal_write_projection {
     SMF_DISALLOW_COPY_AND_ASSIGN(item);
   };
 
+  wal_write_projection() {}
+  wal_write_projection(wal_write_projection &&o) noexcept
+    : projection(std::move(o.projection)) {}
   std::list<seastar::lw_shared_ptr<item>> projection{};
   SMF_DISALLOW_COPY_AND_ASSIGN(wal_write_projection);
 
@@ -71,7 +74,7 @@ struct wal_write_projection {
   /// schemes, but you must cache the write-behind
   ///
   static seastar::lw_shared_ptr<wal_write_projection> translate(
-    wal::wx_put_parition_par *req);
+    wal::tx_put_partition_pair *req);
 };
 
 }  // namespace smf

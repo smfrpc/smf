@@ -17,7 +17,7 @@ class wal_reader_node {
   struct wal_reader_node_stats {
     uint64_t total_reads{0};
     uint64_t total_bytes{0};
-    uint64_t update_size{0};
+    uint64_t update_size_count{0};
   };
 
  public:
@@ -33,7 +33,7 @@ class wal_reader_node {
 
   seastar::future<wal_read_reply> get(wal_read_request r);
   void update_file_size_by(uint64_t delta) {
-    ++stats_.update_size;
+    ++stats_.update_size_count;
     file_size_ += delta;
     io_->update_file_size_by(delta);
   }

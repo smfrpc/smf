@@ -6,7 +6,7 @@
 #include <core/prometheus.hh>
 
 #include "chain_replication/chain_replication_service.h"
-#include "filesystem/wal.h"
+#include "filesystem/write_ahead_log.h"
 #include "histogram/histogram_seastar_utils.h"
 #include "platform/log.h"
 #include "rpc/rpc_server.h"
@@ -28,7 +28,7 @@ int main(int argc, char **argv, char **env) {
   std::setvbuf(stdout, nullptr, _IOLBF, 1024);
 
   seastar::distributed<smf::rpc_server>      rpc;
-  seastar::distributed<smf::write_ahead_log> log;
+  smf::sharded_write_ahead_log log;
 
   seastar::app_template app;
 

@@ -10,22 +10,23 @@ namespace smf {
 using namespace smf::wal;
 static const uint64_t kMinCompressionSize = 512;
 
-seastar::lw_shared_ptr<wal_write_projection::item> xform(tx_put_fragment *f) {
+seastar::lw_shared_ptr<wal_write_projection::item> xform(
+  const tx_put_fragment &f) {
   static thread_local flatbuffers::FlatBufferBuilder fbb{};
   // unfortunatealy, we need to copy mem, then compress it :( - so 2 memcpy.
   fbb.Clear();
   tx_put_dataUnion du;
-  du.value = (void *)f->data();
-  du.type  = f->data_type();
+  du.value = (void *)f.data();
+  du.type  = f.data_type();
 
-  fbb.Finish(Createtx_put_fragment(fbb, f->op(), f->client_seq(), f->epoch(),
-                                   f->data_type(), du.Pack(fbb)));
+  fbb.Finish(Createtx_put_fragment(fbb, f.op(), f.client_seq(), f.epoch(),
+                                   f.data_type(), du.Pack(fbb)));
 
   auto retval      = seastar::make_lw_shared<wal_write_projection::item>();
   retval->fragment = std::move(seastar::temporary_buffer<char>(fbb.GetSize()));
-  const uint8_t *source     = fbb.GetBufferPointer();
-  const uint8_t *source_end = source + fbb.GetSize();
-  const uint8_t *dest       = (uint8_t *)retval->fragment.get_write();
+  const char *source     = (const char *)fbb.GetBufferPointer();
+  const char *source_end = source + fbb.GetSize();
+  char *      dest       = (char *)retval->fragment.get_write();
 
   if (fbb.GetSize() > kMinCompressionSize) {
     auto zstd_compressed_size = ZSTD_compress((void *)dest, fbb.GetSize(),
@@ -51,9 +52,9 @@ seastar::lw_shared_ptr<wal_write_projection::item> xform(tx_put_fragment *f) {
 seastar::lw_shared_ptr<wal_write_projection> wal_write_projection::translate(
   tx_put_partition_pair *req) {
   auto ret = seastar::make_lw_shared<wal_write_projection>();
-  std::for_each(req->txns().begin(), req->txns().end(), [ret](auto it) {
+  std::for_each(req->txs()->begin(), req->txs()->end(), [ret](auto it) {
     // even though it's a list, push_back is O( 1 )
-    ret->projection.push_back(xform(&(*it)));
+    ret->projection.push_back(xform(*it));
   });
   return ret;
 }

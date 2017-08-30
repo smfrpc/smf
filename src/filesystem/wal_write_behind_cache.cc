@@ -35,7 +35,7 @@ uint64_t wal_write_behind_cache::max_offset() {
 void wal_write_behind_cache::put(uint64_t offset, value_type data) {
   current_size_ += data->size();
   stats_.bytes_written += data->size();
-  puts_.insert({offset, std::move(p)});
+  puts_.insert({offset, std::move(data)});
   while (current_size_ > opts.preallocation_size && !puts_.empty()) {
     puts_.erase(puts_.begin());
   }

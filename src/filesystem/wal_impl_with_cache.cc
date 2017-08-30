@@ -45,18 +45,10 @@ seastar::future<wal_write_reply> wal_impl_with_cache::append(
 
 }
 
-seastar::future<wal_read_reply::maybe> wal_impl_with_cache::get(
+seastar::future<wal_read_reply> wal_impl_with_cache::get(
   wal_read_request req) {
-    uint64_t offset = req.offset;
-    return cache_->get(offset).then(
-      [this, req = std::move(req)](auto maybe_buf) {
 
-        if (!maybe_buf) { return reader_->get(std::move(req)); }
-
-        return seastar::make_ready_future<wal_read_reply::maybe>(
-          std::move(maybe_buf));
-      });
-}
+ }
 
 seastar::future<> wal_impl_with_cache::open() {
     LOG_INFO("starting: {}", opts);

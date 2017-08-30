@@ -6,6 +6,7 @@
 #include <system_error>
 #include <utility>
 // third party
+#include <core/metrics.hh>
 #include <core/reactor.hh>
 #include <core/seastar.hh>
 // smf
@@ -19,14 +20,13 @@ wal_reader_node::wal_reader_node(uint64_t epoch, seastar::sstring _filename)
     filename(_filename) {
   namespace sm = seastar::metrics;
   metrics_.add_group(
-    "smf::wal_reader_node::" + opts_.topic + " ("
-      + seastar::to_sstring(opts_.partition) + ")",
-    {sm::make_derive("total_writes", stats_->total_writes,
-                     sm::description("Number of writes to disk")),
-     sm::make_derive("total_bytes", stats_->total_bytes,
-                     sm::description("Number of bytes writen to disk")),
-     sm::make_derive("total_rolls", stats_->total_rolls,
-                     sm::description("Number of times, we rolled the log"))});
+    "smf::wal_reader_node::" + filename,
+    {sm::make_derive("bytes_read", stats_.total_bytes,
+                     sm::description("bytes read from disk")),
+     sm::make_derive("total_reads", stats_.total_reads,
+                     sm::description("Number of read ops")),
+     sm::make_derive("update_size_count", stats_.update_size_count,
+                     sm::description("Number of times file was expanded"))});
 }
 wal_reader_node::~wal_reader_node() {}
 
@@ -43,20 +43,25 @@ seastar::future<> wal_reader_node::open_node() {
       return seastar::make_ready_future<>();
     });
 }
-
-seastar::future<wal_read_reply::maybe> wal_reader_node::get(
+  // need to copy the logic from cache
+seastar::future<wal_read_reply> wal_reader_node::get(
   wal_read_request r) {
   if (SMF_UNLIKELY(io_ == nullptr)) {
     return open_node().then([this, r = std::move(r)] { return this->get(r); });
   }
   if (r.offset >= starting_epoch) {
     r.offset -= starting_epoch;
+    // this should substract the difference.
+    // or rather
+
+    ;;; foo-bar-break();//ugh i'm bored.....
+
     r.size = std::min(r.size, ending_epoch());
     return io_->read(r).then([](auto buf) {
-      return seastar::make_ready_future<wal_read_reply::maybe>(std::move(buf));
+      return seastar::make_ready_future<wal_read_reply>(std::move(buf));
     });
   }
-  return seastar::make_ready_future<wal_read_reply::maybe>();
+  return seastar::make_ready_future<wal_read_reply>();
 }
 
 seastar::future<> wal_reader_node::open() {
