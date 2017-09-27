@@ -6,7 +6,7 @@ $provision_smf = <<SCRIPT
 echo Provisioning SMF
 
 export PYTHONUNBUFFERED=1
-
+echo '/swapfile none swap defaults 0 0' | sudo tee -a /etc/fstab
 sudo dnf upgrade -y
 sudo dnf install -y git htop
 

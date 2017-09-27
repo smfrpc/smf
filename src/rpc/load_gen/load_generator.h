@@ -25,7 +25,8 @@ namespace load_gen {
 /// In effect, you need a socket per concurrency item in the command line
 /// flags
 ///
-template <typename ClientService> class load_generator {
+template <typename ClientService>
+class __attribute__((visibility("default"))) load_generator {
  public:
   using channel_t     = load_channel<ClientService>;
   using channel_t_ptr = std::unique_ptr<channel_t>;
