@@ -49,9 +49,7 @@ class __attribute__((visibility("default"))) load_generator {
 
   smf::histogram copy_histogram() const {
     smf::histogram h;
-    for (auto &c : channels_) {
-      h += *c->get_histogram();
-    }
+    for (auto &c : channels_) { h += *c->get_histogram(); }
     return std::move(h);
   }
 
@@ -75,14 +73,14 @@ class __attribute__((visibility("default"))) load_generator {
                duration->begin();
                return seastar::do_for_each(
                         channels_.begin(), channels_.end(),
-                        [this, &limit, gen, method_cb,
-                         reqs_per_channel](auto &c) mutable {
+                        [this, &limit, gen, method_cb, reqs_per_channel,
+                         duration](auto &c) mutable {
                           return limit.wait(1).then([this, gen, &c, &limit,
-                                                     reqs_per_channel,
+                                                     reqs_per_channel, duration,
                                                      method_cb]() mutable {
                             // notice that this does not return, hence
                             // executing concurrently
-                            c->invoke(reqs_per_channel, args.cfg, gen,
+                            c->invoke(reqs_per_channel, args.cfg, duration, gen,
                                       method_cb)
                               .finally([&limit] { limit.signal(1); });
                           });

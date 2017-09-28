@@ -74,9 +74,7 @@ template <typename Key, typename Value> struct clock_list {
   /// cold-non-resident list
   std::experimental::optional<chunk_t> hand_cold() {
     std::experimental::optional<chunk_t> ret;
-    if (allocated.empty()) {
-      return ret;
-    }
+    if (allocated.empty()) { return ret; }
     if (clock_hand == allocated.end()) {
       clock_hand = allocated.begin();  // loop the hand
     }
@@ -112,9 +110,7 @@ template <typename Key, typename Value> struct clock_list {
   std::experimental::optional<chunk_t> hand_hot() {
     std::experimental::optional<chunk_t> ret;
 
-    if (allocated.empty()) {
-      return ret;
-    }
+    if (allocated.empty()) { return ret; }
     for (auto total = allocated.size(); total > 0; --total, ++clock_hand) {
       if (clock_hand == allocated.end()) {
         clock_hand = allocated.begin();  // loop the hand

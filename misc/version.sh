@@ -1,5 +1,9 @@
 #!/usr/bin/bash
 
+# Copyright 2017 Alexander Gallego
+#
+
+
 git_root=$(git rev-parse --show-toplevel)
 function print_smf_version() {
     git_hash=$(git log -1 --pretty=format:"%H")

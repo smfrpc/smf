@@ -1,18 +1,160 @@
-namespace smf.fbs.wal;
+// Copyright 2017 Alexander Gallego
+//
+namespace smf.wal;
 
-enum wal_entry_flags:uint (bit_flags) {
-  partial_fragment,
-  full_frament,
-  /// \brief the payload is compressed using zstandrad 1.0
-  zstd
+// TAG: alpha
+
+enum wal_entry_compression_type:byte {
+  none,
+  zstd,
+  lz4
 }
 
 struct wal_header {
-  flags: wal_entry_flags = 0;
-  size: uint;
-  checksum: uint;
+  compression: wal_entry_compression_type = none;
+  size:        uint = 0;
+  checksum:    uint = 0;
 }
 
-struct invalid_wal_entry {
+struct wal_invalid_entry {
   invalid_entry: ulong;
+}
+
+enum tx_put_operation:byte {
+  none,
+  begin,
+  data,
+  commit,
+  abort,
+
+  /// \brief either the end of the txn OR a full transaction that is a small payload
+  /// i.e.: fits in one request
+  full
+}
+
+enum tx_put_invalidation_reason:byte {
+  server_connection_timeout,
+  client_connection_timeout
+}
+table tx_put_invalidation {
+  reason: tx_put_invalidation_reason;
+  /// iff this->op == tx_put_operation::abort
+  /// use to write an abort, for a specific offset
+  /// This is the offset from the tx_put_reply.
+  offset: ulong;
+}
+table tx_put_kv {
+  key:              [ubyte];
+  value:            [ubyte];
+}
+
+enum tx_put_fragment_type:byte {
+  none,
+  kv,
+  invalidation
+}
+
+/// \brief This is the datastructure that gets persisted on disk.
+/// Please be tender while extending
+/// When you extend this, please don't forget to change
+/// \code
+///    filesystem/wal_write_projection.cc::xform() method
+/// \endcode
+///
+table tx_put_fragment {
+  /// what should we do with this trasaction fragment
+  op:           tx_put_operation = none;
+  /// holds what kind of data we expect in the payload
+  type:         tx_put_fragment_type = none;
+  /// In seastar clients we will use a losely ticked timer which moves
+  /// every 10 micros.
+  /// This is needed for systems doing window aggregations, etc.
+  /// expected resolution is milliseconds
+  epoch_ms:     ulong = 0;
+
+  kv:           tx_put_kv;
+  invalidation: tx_put_invalidation;
+}
+
+table tx_put_partition_pair {
+  /// hashing_utils::xxhash_32( topic +  tx_put_fragment::data::key )
+  partition:   uint (key); 
+
+  // 
+  // TODO(agallego) - optimize to a union - so that the client may be allowed to send bytes
+  // requires a bit more sophisticated client. but probably worth it.
+  //
+
+  /// \brief - this could be optimized further if we make the client send bytes instead.
+  /// currently kafka and other brokers do many re-compression
+  ///   1) form the transport RPC mechanism
+  ///   2) from the disk format and ultimate disk layout
+  /// There is also at least one memcpy of all bytes into the caches:
+  ///   1) To the disk cache - we keep a 1MB write-behind cache if the direct io
+  ///      is catching behind
+  ///   2) To the internal - page cache - since we don't use the operating system
+  ///      which must keep 1MB per open file.
+  ///
+  /// We have locks, and many other mem copies the java.nio.channels.FileChannel
+  /// uses for example https://goo.gl/hrTnjY
+  /// since we don't then again copy into the page cache.
+  ///
+  /// Last, we don't keep any logs. Currently the kafka path is synchronized 3 times.
+  /// 1) To get the leader & append the writes for the log section.
+  /// 1.1) Roll the file - which happens under a relatively big critical region inside Log.scala
+  /// 2) Into the operating system page cache
+  /// 3) Into the java nio channel FileChannel since it 'guarantees' concurrent friendly updates
+  ///
+  txs:         [tx_put_fragment];
+}
+
+/// brief - stores `puts` transactionally
+table tx_put_request {
+  topic:   string;
+  data:    [tx_put_partition_pair];
+}
+
+table tx_put_reply {
+  /// \brief the committed offset into the WAL
+  ///  clients can monitor how much disk was consumed by the puts
+  ///  and we need this for cache eviction and management.
+  start_offset: ulong;
+  end_offset: ulong;
+}
+
+
+table tx_get_request {
+  topic:      string;
+  partition:  uint;
+  offset:     ulong;
+  /// (1 << 31) - 1 Max payload payload by flatbuffers 2GB-1
+  /// we decrease it by 100 bytes so we can stuff headers in there
+  /// plus plenty of room for growth
+  ///
+  /// >>> (2**31)-100
+  /// 2147483548
+  ///
+  /// default is 2MB -> 2048 * 1024
+  max_bytes:  uint = 2097152;
+}
+
+/// \brief the broker might have decided to compress the tx_put_fragment.
+/// 
+table tx_get_fragment {
+  hdr:             wal_header;
+  /// \brief nothing more than a byte array of a possibly compressed
+  /// tx_put_fragment
+  fragment:        [ubyte]; 
+}
+
+table tx_get_reply {
+  next_offset: ulong;
+  gets:        [tx_get_fragment];
+}
+
+table wal_watermark {
+  topic:          string;
+  partition:      uint;
+  low_watermark:  ulong;
+  high_watermark: ulong;
 }

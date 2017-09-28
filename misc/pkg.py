@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+
+# Copyright 2017 Alexander Gallego
+#
+
 import sys
 import os
 import logging

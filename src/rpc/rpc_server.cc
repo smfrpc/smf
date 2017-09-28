@@ -101,9 +101,7 @@ seastar::future<> rpc_server::stop() {
   LOG_WARN("Stopping rpc server: aborting future accept() calls");
   listener_->abort_accept();
   return limits_->reply_gate.close().then([admin = admin_ ? admin_ : nullptr] {
-    if (!admin) {
-      return seastar::make_ready_future<>();
-    }
+    if (!admin) { return seastar::make_ready_future<>(); }
     return admin->stop().handle_exception([](auto ep) {
       LOG_WARN("Error (ignoring...) shutting down HTTP server: {}", ep);
       return seastar::make_ready_future<>();
@@ -126,7 +124,7 @@ seastar::future<> rpc_server::handle_client_connection(
           return smf::rpc_filter_apply(&in_filters_,
                                        std::move(recv_ctx.value()))
             .then([this, conn, metric = std::move(metric)](auto ctx) mutable {
-              auto payload_size = ctx.body_buf.size();
+              auto payload_size = ctx.payload.size();
               return this->dispatch_rpc(conn, std::move(ctx)).finally([
                 this, conn, metric = std::move(metric), payload_size
               ] {
@@ -162,13 +160,12 @@ seastar::future<> rpc_server::dispatch_rpc(
     conn->set_error("Missing request_id. Invalid request");
     return seastar::make_ready_future<>();
   }
-  if (!routes_.can_handle_request(ctx.request_id(),
-                                  ctx.payload->dynamic_headers())) {
+  if (!routes_.can_handle_request(ctx.request_id())) {
     stats_->no_route_requests++;
     conn->set_error("Can't find route for request. Invalid");
     return seastar::make_ready_future<>();
   }
-  stats_->in_bytes += ctx.header_buf.size() + ctx.body_buf.size();
+  stats_->in_bytes += ctx.header.size() + ctx.payload.size();
 
 
   /// the request follow [filters] -> handle -> [filters]
@@ -183,12 +180,7 @@ seastar::future<> rpc_server::dispatch_rpc(
                  return rpc_filter_apply(&out_filters_, std::move(e));
                })
                .then([this, conn](rpc_envelope &&e) {
-                 if (e.letter.dtype
-                     == rpc_letter_type::rpc_letter_type_payload) {
-                   e.letter.mutate_payload_to_binary();
-                 }
-                 stats_->out_bytes +=
-                   e.letter.body.size() + rpc_envelope::kHeaderSize;
+                 stats_->out_bytes += e.letter.size();
                  return smf::rpc_envelope::send(&conn->ostream, std::move(e));
                });
            })

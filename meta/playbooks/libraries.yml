@@ -1,8 +1,12 @@
 ---
 
+# We have this role but haven't integrated the lib yet
+# - range_v3          # ranges concept library
+
 - name: Install & build all development dependencies
   hosts: localhost
   roles:
+    - fastrange         # very fast hash-mod
     - libboost          # utilities & needed by ALL projects
     - seastar           # futures/tasks/filesystem lib
     - flatbuffers       # serialization lib

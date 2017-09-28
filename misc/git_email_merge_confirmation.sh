@@ -1,4 +1,8 @@
 #!/bin/bash --login
+
+# Copyright 2017 Alexander Gallego
+#
+
 set -x
 set -e
 patch_file=$1

@@ -1,50 +1,44 @@
-namespace smf.fbs.rpc;
+// Copyright 2017 Alexander Gallego
+//
+
+namespace smf.rpc;
 
 /// \brief: headers that are stored in an int
 /// so they need to be inclusive. That is, you can turn on
 /// many flags at the same time, i.e.: enable checksum and
 /// have the payload be zlib compressed.
 ///
-enum Flags:uint (bit_flags) {
-  /// \brief check the compressed payload if enabled.
-  CHECKSUM,
-  /// \brief the payload is compressed using zstandrad 1.0
-  ZSTD
+enum compression_flags:byte {
+  none,
+  /// brief uses zstandard 1.0
+  zstd,
+  /// lz4 is pending 
+  lz4
 }
+enum header_bit_flags:byte (bit_flags) {
+  has_payload_headers
+}
+
+
 
 /// \brief: header parsed by rpc engine
 /// must be sizeof()'able
 /// that is, must be a struct in fbs language
 ///
-struct Header {
-  size: uint = 0;
-  flags: Flags = CHECKSUM;
+/// layout
+/// [ 8bits(compression) + 8bits(bitflags) + 16bits(session) + 32bits(size) + 32bits(checksum) + 32bits(meta) ]
+/// total = 128bits == 16bytes
+///
+struct header {
+  compression:    compression_flags = none;
+  bitflags:       header_bit_flags = 0;
+  /// 16 bits for storing the actual session id.
+  /// used for streaming client and slot allocation
+  session:        short = 0;
+  /// size of the next payload
+  size:           uint = 0;
   /// currently we use xxhash32
-  checksum: uint = 0;
-}
-
-/// \brief used for extra headers, ala HTTP
-/// The use case for the core is to support
-/// zipkin/google-Dapper style tracing
-table DynamicHeader {
-  /// alows for binary search lookup
-  /// use with CreateVectorOfSortedTables<> instead of the CreateVector
-  key: string (key);
-  /// allows full embedding of other flatbuffers structs, such as tracing
-  /// extra modules, sampling, etc
-  value: [ubyte];
-}
-
-/// \brief: Payload needs to be a table because internally
-/// we actually don't hold a pointer to the RPC table, we
-/// construct the header from the socket and then construct
-/// the payload from the socket. So we need a fbs table to wrap
-/// the byte array of the body of the request.
-///
-/// The idea here is that the `body' will actually be another flatbuffer
-/// or any other protocol, so a byte array is the lowest abstraction
-///
-table Payload {
+  checksum:       uint = 0;
   /// \brief used for sending and receiving, read carefully.
   ///
   /// Receiving:
@@ -61,14 +55,23 @@ table Payload {
   /// to call
   ///
   meta: uint = 0;
-
-  /// cookies are a state that is shared between client and server.
-  /// server can send arbitrary state back to the client for subsequent posts
-  /// cookie: [ubyte];
-
-  /// Headers for forward compat.
-  dynamic_headers: [DynamicHeader];
-  body: [ubyte];
 }
 
-root_type Payload;
+/// \brief used for extra headers, ala HTTP
+/// The use case for the core is to support
+/// zipkin/google-Dapper style tracing
+table dynamic_header {
+  /// alows for binary search lookup
+  /// use with CreateVectorOfSortedTables<> instead of the CreateVector
+  key: string (key);
+  value: string;
+}
+
+table payload_headers {
+  /// Headers for forward compat.
+  dynamic_headers: [dynamic_header];
+  /// We need to chain the actual payload
+  size: uint = 0;
+  checksum: uint = 0;
+  compression: compression_flags = none;
+}

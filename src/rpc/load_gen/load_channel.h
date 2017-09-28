@@ -7,6 +7,7 @@
 #include "platform/log.h"
 #include "platform/macros.h"
 #include "rpc/filters/zstd_filter.h"
+#include "rpc/load_gen/generator_duration.h"
 #include "rpc/rpc_envelope.h"
 
 namespace smf {
@@ -39,6 +40,7 @@ template <typename ClientService> struct load_channel {
 
   seastar::future<> invoke(uint32_t                                     reqs,
                            const boost::program_options::variables_map &opts,
+                           seastar::lw_shared_ptr<generator_duration>   stats,
                            generator_t                                  gen,
                            func_t                                       func) {
     LOG_THROW_IF(reqs == 0, "bad number of requests");
@@ -46,11 +48,14 @@ template <typename ClientService> struct load_channel {
     // explicitly make copies of opts, gen, and func
     // happens once per reqs call
     //
-    return seastar::do_for_each(boost::counting_iterator<uint32_t>(0),
-                                boost::counting_iterator<uint32_t>(reqs),
-                                [this, opts, gen, func](uint32_t i) mutable {
-                                  return func(client.get(), gen(opts));
-                                });
+    return seastar::do_for_each(
+      boost::counting_iterator<uint32_t>(0),
+      boost::counting_iterator<uint32_t>(reqs),
+      [this, opts, stats, gen, func](uint32_t i) mutable {
+        auto e = gen(opts);
+        stats->total_bytes += e.size();
+        return func(client.get(), std::move(e));
+      });
   }
 
   SMF_DISALLOW_COPY_AND_ASSIGN(load_channel);

@@ -1,5 +1,5 @@
-add_executable (smfb_client
-  ${PROJECT_SOURCE_DIR}/src/smfb/client/main.cc
+add_executable (smfb_low_level_client
+  ${PROJECT_SOURCE_DIR}/src/smfb/client/low_level_client.cc
   )
-target_link_libraries (smfb_client smf_rpc smf_cr)
-install(TARGETS smfb_client RUNTIME DESTINATION bin)
+target_link_libraries (smfb_low_level_client smf_rpc smf_cr)
+install(TARGETS smfb_low_level_client RUNTIME DESTINATION bin)

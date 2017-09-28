@@ -1,0 +1,33 @@
+---
+- name: Sync soure from git
+  git:
+    repo='https://github.com/ericniebler/range-v3.git'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/range-v3'
+    update=yes
+    recursive=yes
+    force=yes
+    version='db3a6fb'
+    
+- file:
+    path='{{goobly_cache_dir}}/range-v3/build'
+    state=directory
+
+
+- name: cmake configure
+  shell:
+    cmake -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_CXX_FLAGS="-O2 -fPIC" \
+      -DCMAKE_INSTALL_PREFIX:PATH='{{third_party_dir}}' \
+      '{{goobly_cache_dir}}/range-v3'
+  args:
+    chdir: '{{goobly_cache_dir}}/range-v3/build'
+    creates: '{{goobly_cache_dir}}/range-v3/build/Makefile'
+
+- name: Install
+  shell:
+    make install CXXFLAGS="-fPIC -O3" -j{{ansible_processor_vcpus}}
+  args:
+    chdir: '{{goobly_cache_dir}}/range-v3/build'
+    creates: '{{third_party_dir}}/include/range/v3/view.hpp'

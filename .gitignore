@@ -34,12 +34,8 @@ bazel-*
 # Vagrant
 .vagrant/
 
-src/third_party/bin/
-src/third_party/include/
-src/third_party/lib/
-src/third_party/etc/
-src/third_party/lib64/
-src/third_party/share/
+src/third_party/*
+!src/third_party/.gitignore
 .gdb_history
 *.smf.fb.h*
 build_debug/

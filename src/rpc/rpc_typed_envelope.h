@@ -2,23 +2,24 @@
 //
 #pragma once
 
-#include "rpc/rpc_letter_concepts.h"
-
+#include "flatbuffers/native_type_utils.h"
 #include "platform/macros.h"
 #include "rpc/rpc_envelope.h"
+#include "rpc/rpc_header_utils.h"
 
 namespace smf {
 template <typename RootType>
 requires FlatBuffersNativeTable<RootType> struct rpc_typed_envelope {
-  using type = typename RootType::NativeTableType;
+  using type        = RootType;
+  using native_type = typename RootType::NativeTableType;
 
-  rpc_envelope          envelope;
-  std::unique_ptr<type> data;
+  rpc_envelope                 envelope;
+  std::unique_ptr<native_type> data;
 
 
-  rpc_typed_envelope() : data(std::make_unique<type>()) {}
+  rpc_typed_envelope() : data(std::make_unique<native_type>()) {}
   ~rpc_typed_envelope() {}
-  rpc_typed_envelope(std::unique_ptr<type> &&ptr) noexcept
+  rpc_typed_envelope(std::unique_ptr<native_type> &&ptr) noexcept
     : data(std::move(ptr)) {}
   rpc_typed_envelope &operator=(rpc_typed_envelope<RootType> &&te) noexcept {
     envelope = std::move(te.envelope);
@@ -32,8 +33,11 @@ requires FlatBuffersNativeTable<RootType> struct rpc_typed_envelope {
   /// and retuns a *moved* copy of the envelope. That is
   /// the envelope will be invalid after this method call
   rpc_envelope &&serialize_data() {
-    rpc_letter::serialize_type_into_letter<RootType>(*(data.get()),
-                                                     &envelope.letter);
+    envelope.letter.body =
+      std::move(smf::native_table_as_buffer<RootType>(*(data.get())));
+    smf::checksum_rpc(envelope.letter.header, envelope.letter.body.get(),
+                      envelope.letter.body.size());
+    data = nullptr;
     return std::move(envelope);
   }
   /// \brief copy ctor deleted

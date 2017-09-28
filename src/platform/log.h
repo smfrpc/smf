@@ -101,41 +101,41 @@ static seastar::logger _smf_log("smf");
   _smf_log.debug("{}:{}] " format, __FILENAME__, __LINE__, ##args)
 #define DLOG_TRACE(format, args...) \
   _smf_log.trace("{}:{}] " format, __FILENAME__, __LINE__, ##args)
-#define DLOG_INFO_IF(condition, format, args...)                              \
-  do {                                                                        \
-    if (condition) {                                                          \
-      _smf_log.info("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, \
-                    ##args);                                                  \
-    }                                                                         \
-  } while (0)
-#define DLOG_ERROR_IF(condition, format, args...)                              \
+#define DLOG_INFO_IF(condition, format, args...)                               \
   do {                                                                         \
     if (condition) {                                                           \
-      _smf_log.error("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, \
-                     ##args);                                                  \
+      _smf_log.info("{}:{}] (" #condition ") " format, __FILENAME__, __LINE__, \
+                    ##args);                                                   \
     }                                                                          \
   } while (0)
-#define DLOG_DEBUG_IF(condition, format, args...)                              \
-  do {                                                                         \
-    if (condition) {                                                           \
-      _smf_log.debug("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, \
-                     ##args);                                                  \
-    }                                                                          \
+#define DLOG_ERROR_IF(condition, format, args...)                     \
+  do {                                                                \
+    if (condition) {                                                  \
+      _smf_log.error("{}:{}] (" #condition ") " format, __FILENAME__, \
+                     __LINE__, ##args);                               \
+    }                                                                 \
+  } while (0)
+#define DLOG_DEBUG_IF(condition, format, args...)                     \
+  do {                                                                \
+    if (condition) {                                                  \
+      _smf_log.debug("{}:{}] (" #condition ") " format, __FILENAME__, \
+                     __LINE__, ##args);                               \
+    }                                                                 \
   } while (0)
 
-#define DLOG_WARN_IF(condition, format, args...)                              \
-  do {                                                                        \
-    if (condition) {                                                          \
-      _smf_log.warn("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, \
-                    ##args);                                                  \
-    }                                                                         \
-  } while (0)
-#define DLOG_TRACE_IF(condition, format, args...)                              \
+#define DLOG_WARN_IF(condition, format, args...)                               \
   do {                                                                         \
     if (condition) {                                                           \
-      _smf_log.trace("{}:{}] (" #condition ")" format, __FILENAME__, __LINE__, \
-                     ##args);                                                  \
+      _smf_log.warn("{}:{}] (" #condition ") " format, __FILENAME__, __LINE__, \
+                    ##args);                                                   \
     }                                                                          \
+  } while (0)
+#define DLOG_TRACE_IF(condition, format, args...)                     \
+  do {                                                                \
+    if (condition) {                                                  \
+      _smf_log.trace("{}:{}] (" #condition ") " format, __FILENAME__, \
+                     __LINE__, ##args);                               \
+    }                                                                 \
   } while (0)
 #define DLOG_THROW_IF(condition, format, args...)                            \
   do {                                                                       \

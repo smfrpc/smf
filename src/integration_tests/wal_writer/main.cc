@@ -1,5 +1,8 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
+
+/*
+
 // seastar
 #include <core/app-template.hh>
 #include <core/distributed.hh>
@@ -36,11 +39,7 @@ int main(int args, char **argv, char **env) {
           DLOG_INFO("Writing payload: {}", req.data.size());
           return writer->append(std::move(req)).then([writer](auto epoch) {
             DLOG_INFO("Wrote payload at epoch: {}", epoch);
-            DLOG_INFO("Invalidating epoch: {}", epoch);
-            return writer->invalidate(epoch).then([epoch] {
-              DLOG_INFO("finished invalidating epoch: {}", epoch);
               return seastar::make_ready_future<int>(0);
-            });
           });
         });
       });  // app.run
@@ -48,3 +47,5 @@ int main(int args, char **argv, char **env) {
     std::cerr << "Fatal exception: " << e.what() << std::endl;
   }
 }
+*/
+int main(int argc, char **argv) { return 0; }

@@ -154,12 +154,8 @@ template <typename Key, typename Value> class clock_pro_cache {
     return mhot_->contains(k) || mcold_->contains(k);
   }
   page_ptr get_chunk_ptr(Key k) {
-    if (mhot_->contains(k)) {
-      return mhot_->get_chunk_ptr(k);
-    }
-    if (mcold_->contains(k)) {
-      return mcold_->get_chunk_ptr(k);
-    }
+    if (mhot_->contains(k)) { return mhot_->get_chunk_ptr(k); }
+    if (mcold_->contains(k)) { return mcold_->get_chunk_ptr(k); }
     LOG_THROW("Please check clock_pro_cache::contains({}) before getting", k);
   }
   page_ptr get_page(Key k) {

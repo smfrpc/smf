@@ -95,9 +95,7 @@ class rpc_client {
   bool is_histogram_enabled() { return hist_.operator bool(); }
 
   histogram *get_histogram() {
-    if (hist_) {
-      return hist_.get();
-    }
+    if (hist_) { return hist_.get(); }
     return nullptr;
   }
 
@@ -140,6 +138,9 @@ class rpc_client {
 
   std::vector<in_filter_t>  in_filters_;
   std::vector<out_filter_t> out_filters_;
+
+
+  // TODO( NEED SESSION ID ) - ASAP
 };
 
 

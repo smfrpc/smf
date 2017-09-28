@@ -6,7 +6,7 @@
 #include <core/prometheus.hh>
 
 #include "chain_replication/chain_replication_service.h"
-#include "filesystem/wal.h"
+#include "filesystem/write_ahead_log.h"
 #include "histogram/histogram_seastar_utils.h"
 #include "platform/log.h"
 #include "rpc/rpc_server.h"
@@ -27,8 +27,8 @@ void base_init(const boost::program_options::variables_map &config) {
 int main(int argc, char **argv, char **env) {
   std::setvbuf(stdout, nullptr, _IOLBF, 1024);
 
-  seastar::distributed<smf::rpc_server>      rpc;
-  seastar::distributed<smf::write_ahead_log> log;
+  seastar::distributed<smf::rpc_server> rpc;
+  smf::sharded_write_ahead_log          log;
 
   seastar::app_template app;
 
@@ -76,10 +76,11 @@ int main(int argc, char **argv, char **env) {
         .then([&log, &config] {
           auto dir = config["write-ahead-log-dir"].as<std::string>();
           LOG_INFO("Starting write-ahead-log in: `{}`", dir);
-          return log.start(smf::wal_type::wal_type_disk_with_memory_cache,
-                           smf::wal_opts(dir.c_str()));
+          return log.start(smf::wal_opts(dir.c_str()));
         })
-        .then([&log] { return log.invoke_on_all(&smf::write_ahead_log::open); })
+        .then([&log] {
+          return log.invoke_on_all(&smf::write_ahead_log_proxy::open);
+        })
         .then([&rpc, &config] {
           smf::rpc_server_args args;
           args.rpc_port = config["port"].as<uint16_t>();

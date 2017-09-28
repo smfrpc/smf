@@ -42,9 +42,7 @@ template <typename Comparator> struct wal_head_file_functor : wal_file_walker {
   explicit wal_head_file_functor(seastar::file dir)
     : wal_file_walker(std::move(dir)) {}
   seastar::future<> visit(seastar::directory_entry de) final {
-    if (comparator(last_file, de.name)) {
-      last_file = de.name;
-    }
+    if (comparator(last_file, de.name)) { last_file = de.name; }
     return seastar::make_ready_future<>();
   }
   seastar::sstring last_file;

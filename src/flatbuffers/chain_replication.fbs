@@ -1,50 +1,45 @@
+// Copyright 2017 Alexander Gallego
+//
+include "wal.fbs";
+
 namespace smf.chains;
 
-enum tx_operation:short {
-  begin,
-  data,
-  commit,
-  abort,
-  /// this is an optimization for a full transaction that is small
-  /// i.e.: one put. it is equivalent as (begin | data | commit)
-  full
+// todo! wrap all types
+// we need a transaction manager that moves the pointer along
+// once all chain replicas have acknowledge write.
+
+table chain_put_request {
+  chain:       [uint];
+  chain_index: uint = 0;
+  /// only supports puts for ONE topic atm. Tx'al cross topic puts need
+  /// more infrastructure. 
+  put:        smf.wal.tx_put_request;
 }
 
-/// This is the datastructure that gets persisted on disk.
-/// Please be tender while extending
-table tx_fragment {
-  /// what should we do with this trasaction fragment
-  op: tx_operation;
-  /// sequence id.. not sure if needed
-  id: uint;
-  time_micros: ulong;
-  key: [ubyte];
-  value: [ubyte];
+table chain_put_reply {
+  put: smf.wal.tx_put_reply;
 }
 
-/// brief - stores `puts` transactionally
-table tx_put_request {
+table chain_get_request {
+  get: smf.wal.tx_get_request;
+}
+table chain_get_reply {
+  get: smf.wal.tx_get_reply;
+}
+
+table chain_discover_request {
   topic: string;
-  partition: uint; // xxhash32(topic,key)
-  chain: [uint];
-  txs: [tx_fragment];
 }
-table tx_put_reply {}
-
-
-table tx_get_request {
-  topic: string;
-  partition: uint;
-  offset: ulong;
-  max_bytes: uint;
+table chain_discover_reply {
+  watermarks: [smf.wal.wal_watermark];
 }
+/// TODO(agallego) right now the wal write part is sophisticated
+/// we need to introduce a session manager for the reads and the rebalancing
+/// of topics - i.e.: what consumers get what. 
 
-table tx_get_reply {
-  next_offset: ulong;
-  puts: [tx_fragment];
-}
 
 rpc_service chain_replication {
-  put(tx_put_request): tx_put_reply;
-  get(tx_get_request): tx_get_reply;
+  put(chain_put_request): chain_put_reply;
+  get(chain_get_request): chain_get_reply;
+  discover(chain_discover_request): chain_discover_reply;
 }

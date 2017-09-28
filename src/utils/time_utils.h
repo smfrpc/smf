@@ -2,7 +2,8 @@
 //
 #pragma once
 #include <chrono>
-// third party
+
+#include <core/lowres_clock.hh>
 #include <core/sstring.hh>
 
 namespace smf {
@@ -18,6 +19,11 @@ inline uint64_t time_now_micros() {
     .count();
 }
 
+inline uint64_t lowres_time_now_millis() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+           seastar::lowres_clock::now().time_since_epoch())
+    .count();
+}
 // Extracted out of gmock
 // Converts the given epoch time in milliseconds to a date string in the ISO
 // 8601 format, without the timezone information.

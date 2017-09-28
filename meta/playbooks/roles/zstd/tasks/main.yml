@@ -16,7 +16,7 @@
     dest='{{goobly_cache_dir}}/zstd'
     update=yes
     recursive=yes
-    version='4798793'
+    version='824f75e'
     force=yes
 
 - shell: "make install -j$((({{ansible_processor_vcpus}}-1))) PREFIX='{{third_party_dir}}'"

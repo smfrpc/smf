@@ -8,24 +8,31 @@
     update=yes
     recursive=yes
     force=yes
-    version='b0fa5e0'
+    version='7a6b2bf'
 
 - file:
     path='{{goobly_cache_dir}}/flatbuffers/build'
     state=directory
 
-- command: cmake -DCMAKE_INSTALL_PREFIX:PATH='{{third_party_dir}}' '{{goobly_cache_dir}}/flatbuffers'
+- name: cmake configure
+  shell:
+    cmake -DCMAKE_BUILD_TYPE=Release \ 
+      -DCMAKE_CXX_FLAGS="-O2 -fPIC" \
+      -DCMAKE_INSTALL_PREFIX:PATH='{{third_party_dir}}' \
+      '{{goobly_cache_dir}}/flatbuffers'
   args:
     chdir: '{{goobly_cache_dir}}/flatbuffers/build'
     creates: '{{goobly_cache_dir}}/flatbuffers/build/Makefile'
 
-- shell: "make install -j$((({{ansible_processor_vcpus}}-1)))"
+- name: install
+  shell: "make install -j$((({{ansible_processor_vcpus}}-1)))"
   args:
     chdir: '{{goobly_cache_dir}}/flatbuffers/build'
     creates: '{{third_party_dir}}/lib/libflatbuffers.a'
 
 - file: path='{{cmake_dir}}' state=directory
 
-- copy:
+- name: copy the flatbuffers cmake generator
+  copy:
     src='{{goobly_cache_dir}}/flatbuffers/CMake/BuildFlatBuffers.cmake'
     dest='{{cmake_dir}}/BuildFlatBuffers.cmake'

@@ -73,11 +73,11 @@ int main(int args, char **argv, char **env) {
             auto conn =
               seastar::make_lw_shared<smf::rpc_connection>(std::move(skt));
 
-            uint32_t kHeaderSize = sizeof(smf::fbs::rpc::Header);
+            uint32_t kHeaderSize = sizeof(smf::rpc::header);
 
-            smf::fbs::rpc::Header header(300 /* 300 bytes*/,
-                                         smf::fbs::rpc::Flags::Flags_NONE,
-                                         1234234 /*random checksum*/);
+            smf::rpc::header header;
+            header.mutate_size(300);
+            header.mutate_checksum(1234234);
             seastar::temporary_buffer<char> header_buf(kHeaderSize);
             std::copy(reinterpret_cast<char *>(&header),
                       reinterpret_cast<char *>(&header) + kHeaderSize,

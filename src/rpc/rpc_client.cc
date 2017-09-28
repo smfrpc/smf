@@ -31,9 +31,7 @@ rpc_client::~rpc_client() {}
 
 void rpc_client::enable_histogram_metrics(bool enable) {
   if (enable) {
-    if (!hist_) {
-      hist_ = std::make_unique<histogram>();
-    }
+    if (!hist_) { hist_ = std::make_unique<histogram>(); }
   } else {
     hist_ = nullptr;
   }

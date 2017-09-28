@@ -19,12 +19,10 @@ class smf_printer {
       // Found an escape char, must also find the closing one.
       size_t pos2 = s.find(escape_char_, pos + 1);
       // If placeholder not closed, ignore.
-      if (pos2 == std::string::npos)
-        break;
+      if (pos2 == std::string::npos) break;
       auto it = vars.find(s.substr(pos + 1, pos2 - pos - 1));
       // If unknown placeholder, ignore.
-      if (it == vars.end())
-        break;
+      if (it == vars.end()) break;
       // Subtitute placeholder.
       s.replace(pos, pos2 - pos + 1, it->second);
     }
@@ -41,8 +39,7 @@ class smf_printer {
       if (lf) {
         (*str_) += std::string(s, lf + 1);
         s = lf + 1;
-        if (!*s)
-          break;  // Only continue if there's more lines.
+        if (!*s) break;  // Only continue if there's more lines.
       } else {
         (*str_) += s;
         break;

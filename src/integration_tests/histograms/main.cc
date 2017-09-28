@@ -13,9 +13,7 @@ int main(int args, char **argv, char **env) {
   try {
     return app.run(args, argv, [&app]() -> seastar::future<int> {
       smf::histogram h;
-      for (auto i = 0u; i < 1000; i++) {
-        h.record(i * i);
-      }
+      for (auto i = 0u; i < 1000; i++) { h.record(i * i); }
       LOG_DEBUG("Writing histogram");
       return smf::histogram_seastar_utils::write_histogram("hist.testing.hgrm",
                                                            std::move(h))
