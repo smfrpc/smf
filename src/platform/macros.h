@@ -35,3 +35,11 @@
 #define SMF_UNLIKELY(x) (x)
 #define SMF_LIKELY(x) (x)
 #endif
+
+
+
+#ifndef SMF_GCC_CONCEPTS
+#define SMF_CONCEPT(x...)
+#else
+#define SMF_CONCEPT(x...) x
+#endif

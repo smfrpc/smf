@@ -2,7 +2,8 @@ DIR=$(git rev-parse --show-toplevel)/meta
 if [[ -e ${DIR}/tmp/bin/activate ]]; then
     source ${DIR}/tmp/bin/activate
 else
-    if [[ $(which apt) != "" ]]; then
+    os=$(lsb_release -si | tr '[:upper:]' '[:lower:]')
+    if [[ ${os} == "ubuntu" ]]; then
         sudo apt-get update
         sudo apt-get install -y \
              software-properties-common \

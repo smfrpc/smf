@@ -7,11 +7,12 @@
   hosts: localhost
   roles:
     - fastrange         # very fast hash-mod
+    - gflags            # flag parsing for code generator
+    - glog              # logging for code generator
     - libboost          # utilities & needed by ALL projects
     - seastar           # futures/tasks/filesystem lib
     - flatbuffers       # serialization lib
     - xxhash            # fast hashing
-    - smf_gen_libs      # libs for codegen
     - hdrhistogram      # gil-tene's histograms
     - zstd              # compression
     - roaring_bitmap    # bitmap but faster than std::lib

@@ -5,8 +5,8 @@ set(SMF_GEN_SOURCES
   )
 set(SMF_GEN_LIBS
   flatbuffers.a
-  glog
   gflags
+  glog
   pthread
   )
 # generator

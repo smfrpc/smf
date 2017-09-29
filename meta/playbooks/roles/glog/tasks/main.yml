@@ -1,0 +1,35 @@
+---
+
+- name: Sync soure from git
+  git:
+    repo='https://github.com/google/glog.git'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/glog'
+    update=yes
+    recursive=yes
+    version='2a6df66'
+    force=yes
+
+- name: auto glog
+  shell:
+    ./autogen.sh
+  args:
+    chdir: '{{goobly_cache_dir}}/glog'
+    creates: '{{goobly_cache_dir}}/glog/configure'
+
+
+- name: configure glog
+  shell:
+    ./configure --prefix={{third_party_dir}} \
+    --enable-shared=yes \
+    --enable-static=yes \
+    --with-gflags={{third_party_dir}}
+  args:
+    chdir: '{{goobly_cache_dir}}/glog'
+    creates: '{{goobly_cache_dir}}/glog/Makefile'
+
+- shell: "make install -j$((({{ansible_processor_vcpus}}-1))) PREFIX='{{third_party_dir}}'"
+  args:
+    chdir: '{{goobly_cache_dir}}/glog'
+    creates: '{{third_party_dir}}/lib/libglog.a'

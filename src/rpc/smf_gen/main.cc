@@ -12,8 +12,8 @@ DEFINE_string(filename, "", "filename to parse");
 DEFINE_string(include_dirs, "", "extra include directories: not supported yet");
 
 int main(int argc, char **argv, char **env) {
-  gflags::SetUsageMessage("Generate smf services");
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
+  google::SetUsageMessage("Generate smf services");
+  google::ParseCommandLineFlags(&argc, &argv, true);
   google::InstallFailureSignalHandler();
   google::InitGoogleLogging(argv[0]);
 

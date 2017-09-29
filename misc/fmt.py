@@ -56,9 +56,17 @@ def get_cpplint():
 
 
 def get_clang_format():
-    ret = str(subprocess.check_output("which clang-format", shell=True))
-    assert ret is not None, "Failed getting clang-format binary"
-    return "".join(ret.split())
+    ret = subprocess.check_output("which clang-format", shell=True)
+    if ret != None:
+        original = "".join(str(ret).split())
+        if "".join(
+                str(
+                    subprocess.check_output(
+                        "%s --version | awk \'{print $3}\'" % original,
+                        shell=True))) != "3.9.1":
+            return None
+        return original
+    return None
 
 
 def get_git_files():
@@ -157,7 +165,8 @@ def main():
         insert_legal(f)
         try:
             if is_clang_fmt_file(f):
-                run_subprocess("%s -i %s" % (clang_fmt, f))
+                if clang_fmt != None:
+                    run_subprocess("%s -i %s" % (clang_fmt, f))
                 cpplint_process("%s --verbose=5 --counting=detailed" % cpplint,
                                 f)
         except Exception as e:
@@ -165,6 +174,7 @@ def main():
             sys.exit(1)
 
     sys.stdout.write("\nDone\n")
+
 
 if __name__ == '__main__':
     main()

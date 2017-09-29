@@ -1,0 +1,36 @@
+---
+
+- name: Sync soure from git
+  git:
+    repo='https://github.com/gflags/gflags.git'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/gflags'
+    update=yes
+    recursive=yes
+    version='60784b5'
+    force=yes
+
+- file:
+    path='{{goobly_cache_dir}}/gflags/build'
+    state=directory
+
+- name: cmake configure
+  shell:
+    cmake -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_CXX_FLAGS="-O2 -fPIC" \
+      -DGFLAGS_BUILD_SHARED_LIBS=ON \
+      -DGFLAGS_BUILD_STATIC_LIBS=ON \
+      -DGFLAGS_NAMESPACE=google \
+      -DGFLAGS_BUILD_TESTING=OFF \
+      -DCMAKE_INSTALL_PREFIX:PATH='{{third_party_dir}}' \
+      '{{goobly_cache_dir}}/gflags'
+  args:
+    chdir: '{{goobly_cache_dir}}/gflags/build'
+    creates: '{{goobly_cache_dir}}/gflags/build/Makefile'
+
+
+- shell: "make install -j$((({{ansible_processor_vcpus}}-1))) PREFIX='{{third_party_dir}}'"
+  args:
+    chdir: '{{goobly_cache_dir}}/gflags/build'
+    creates: '{{third_party_dir}}/lib/libgflags.a'

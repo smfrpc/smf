@@ -14,8 +14,9 @@ namespace smf {
 /// then it gets memcpy into a seastar returned value
 ///
 template <typename RootType>
-requires FlatBuffersNativeTable<RootType> seastar::temporary_buffer<char>
-native_table_as_buffer(const typename RootType::NativeTableType &t) {
+SMF_CONCEPT(requires FlatBuffersNativeTable<RootType>)
+seastar::temporary_buffer<char> native_table_as_buffer(
+  const typename RootType::NativeTableType &t) {
   flatbuffers::FlatBufferBuilder builder;
   builder.Finish(RootType::Pack(builder, &t, nullptr));
   seastar::temporary_buffer<char> retval(builder.GetSize());
