@@ -1,4 +1,4 @@
-# [smf](http://senior7515.github.io/smf/)
+# [smf](http://senior7515.github.io/smf/)[![Travis Build Status](https://travis-ci.org/senior7515/smf.svg?branch=master)](https://travis-ci.org/senior7515/smf) 
 
 **smf** is pronounced **/smɝf/**
 

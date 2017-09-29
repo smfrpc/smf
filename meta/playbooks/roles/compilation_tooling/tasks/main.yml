@@ -12,3 +12,25 @@
     - clang
     - doxygen
     - gtest-devel
+  when: ansible_os_family == "RedHat"
+
+- name: ubuntu add tools repo
+  become: yes
+  apt_repository:
+    repo: 'ppa:ubuntu-toolchain-r/test'
+  when: ansible_os_family == "Debian"
+
+- name: Install all dev system tools
+  become: yes
+  apt: name='{{item}}'
+  with_items:
+    - g++
+    - ccache
+    - cmake
+    - make
+    - git
+    - binutils
+    - clang
+    - doxygen
+    - libgtest-dev
+  when: ansible_os_family == "Debian"

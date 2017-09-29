@@ -6,3 +6,12 @@
   with_items:
     - gflags-devel
     - glog-devel
+  when: ansible_os_family == "RedHat"
+
+- name: libraries for the rpc generator programs
+  become: yes
+  dnf: name='{{item}}'
+  with_items:
+    - libgflags-dev
+    - libgoogle-glog-dev
+  when: ansible_os_family == "Debian"
