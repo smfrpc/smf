@@ -7,6 +7,16 @@
   with_items:
     - zlib-devel
     - zlib-static
+  when: ansible_os_family == "RedHat"
+
+- name: install deps
+  become: yes
+  apt:
+    name='{{item}}'
+  with_items:
+    - zlib1g-dev
+  when: ansible_os_family == "Debian"
+
 
 - name: Sync soure from git
   git:

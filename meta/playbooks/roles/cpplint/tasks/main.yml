@@ -11,6 +11,10 @@
     force=yes
     version='6c8669e'
 
+- file:
+    path: "{{third_party_dir}}/bin"
+    state: directory
+
 - name: setup symlink w/ thrid party bin
   file:
     src: '{{goobly_cache_dir}}/google_styleguide/cpplint/cpplint.py'

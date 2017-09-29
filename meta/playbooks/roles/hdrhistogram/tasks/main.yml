@@ -2,7 +2,7 @@
 
 - name: install analysis deps
   become: yes
-  dnf:
+  package:
     name='{{item}}'
   with_items:
     - gnuplot

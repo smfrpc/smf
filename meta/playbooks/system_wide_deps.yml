@@ -1,8 +1,9 @@
 ---
 
+# enable later when we finish the tests - american_fuzzy_lop
+
 - name: Install & build all development dependencies
   hosts: localhost
   roles:
     - compilation_tooling
-    - american_fuzzy_lop
     - cpplint

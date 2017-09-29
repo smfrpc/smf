@@ -26,7 +26,10 @@ cmake --graphviz=$build_dir/dependencies.dot \
 if [[ $1 != "quick" ]]; then
     cmake --build $build_dir --target doc
 fi
-
-ninja-build -v
+os=$(lsb_release -si | tr '[:upper:]' '[:lower:]')
+if [[ ${os} == "ubuntu" ]]; then
+    ninja -v
+else
+    ninja-build -v
+fi
 ctest -V -j$nprocs --force-new-ctest-process
-

@@ -10,7 +10,12 @@ cmake -Wdev \
       -DCMAKE_BUILD_TYPE=Debug $git_root
 
 nprocs=$(grep -c ^processor /proc/cpuinfo)
-ninja-build -v
+os=$(lsb_release -si | tr '[:upper:]' '[:lower:]')
+if [[ ${os} == "ubuntu" ]]; then
+    ninja -v
+else
+    ninja-build -v
+fi
 ctest --output-on-failure \
       --force-new-ctest-process \
       --schedule-random \

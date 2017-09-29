@@ -1,0 +1,16 @@
+dist: trusty
+sudo: required
+language: cpp
+compiler: gcc
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-5
+
+before_script: cd meta && source source_ansible_bash && travis_wait 30 ansible-playbook playbooks/devbox_all.yml
+
+script:
+  - ./debug
+  - ./release

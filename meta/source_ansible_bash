@@ -2,15 +2,22 @@ DIR=$(git rev-parse --show-toplevel)/meta
 if [[ -e ${DIR}/tmp/bin/activate ]]; then
     source ${DIR}/tmp/bin/activate
 else
-    sudo dnf install -y \
-         python-devel \
-         python-pip \
-         libffi-devel \
-         openssl-devel \
-         redhat-rpm-config \
-         python-dnf \
-         libselinux-python
-
+    if [[ $(which apt) != "" ]]; then
+        sudo apt-get update
+        sudo apt-get install -y \
+             software-properties-common \
+             python-dev \
+             python-pip
+    else
+        sudo dnf install -y \
+             python-devel \
+             python-pip \
+             libffi-devel \
+             openssl-devel \
+             redhat-rpm-config \
+             python-dnf \
+             libselinux-python
+    fi
     sudo pip install pip --upgrade
     sudo pip install virtualenv
     echo "Creating work directory ${PWD}/tmp"
@@ -25,9 +32,9 @@ fi
 
 # check if git config stuff is set, ansible needs it
 if [[ $(git config --global user.email) == "" ]]; then
-  git config --global user.email "commitbot@smf.unset"
+    git config --global user.email "commitbot@smf.unset"
 fi
 
 if [[ $(git config --global user.name) == "" ]]; then
-  git config --global user.name "commitbot"
+    git config --global user.name "commitbot"
 fi
