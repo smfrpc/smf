@@ -29,7 +29,7 @@ struct rpc_connection_limits {
     uint64_t basic_req_size = 256,
     double   bloat_mult     = 1.57,  // same as folly::vector
     uint64_t max_mem =
-      std::max<uint64_t>(0.08 * seastar::memory::stats().total_memory(),
+      std::max<uint64_t>(seastar::memory::stats().total_memory(),
                          uint64_t(1) << 32 /*4GB per core*/),
     timer_duration_t body_timeout_duration = std::chrono::minutes(1));
 

@@ -9,6 +9,7 @@
     - cmake
     - git
     - binutils
+    - libtool
     - clang
     - doxygen
     - gtest-devel
@@ -29,6 +30,7 @@
     - cmake
     - make
     - git
+    - libtool
     - binutils
     - clang
     - doxygen

@@ -14,7 +14,7 @@
 namespace smf {
 
 std::ostream &operator<<(std::ostream &o, const smf::rpc_server &s) {
-  o << "rpc_server{args.flags=" << s.args_.flags
+  o << "rpc_server{args.ip=" << s.args_.ip << ", args.flags=" << s.args_.flags
     << ", args.rpc_port=" << s.args_.rpc_port
     << ", args.http_port=" << s.args_.http_port << ", rpc_routes=" << s.routes_
     << ", limits=" << *s.limits_.get() << "}";
@@ -80,7 +80,8 @@ void rpc_server::start() {
   LOG_INFO("Starting RPC Server...");
   seastar::listen_options lo;
   lo.reuse_address = true;
-  listener_ = seastar::listen(seastar::make_ipv4_address({args_.rpc_port}), lo);
+  listener_ =
+    seastar::listen(seastar::make_ipv4_address({args_.ip, args_.rpc_port}), lo);
   seastar::keep_doing([this] {
     return listener_->accept().then([this](
       seastar::connected_socket fd, seastar::socket_address addr) mutable {
