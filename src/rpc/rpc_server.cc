@@ -68,9 +68,12 @@ void rpc_server::start() {
     conf.prefix      = "smf";
     // start on background co-routine
     seastar::prometheus::add_prometheus_routes(*admin_, conf).then([
-      http_port = args_.http_port, admin = admin_
+      http_port = args_.http_port, admin = admin_, ip = args_.ip
     ]() {
-      return admin->listen(seastar::ipv4_addr{"127.0.0.1", http_port})
+      return admin
+        ->listen(seastar::make_ipv4_address(
+          ip.empty() ? seastar::ipv4_addr{http_port} :
+                       seastar::ipv4_addr{ip, http_port}))
         .handle_exception([](auto ep) {
           LOG_ERROR("Exception on HTTP Admin: {}", ep);
           return seastar::make_exception_future<>(ep);
@@ -80,8 +83,11 @@ void rpc_server::start() {
   LOG_INFO("Starting RPC Server...");
   seastar::listen_options lo;
   lo.reuse_address = true;
-  listener_ =
-    seastar::listen(seastar::make_ipv4_address({args_.ip, args_.rpc_port}), lo);
+  listener_        = seastar::listen(
+    seastar::make_ipv4_address(args_.ip.empty() ?
+                                 seastar::ipv4_addr{args_.rpc_port} :
+                                 seastar::ipv4_addr{args_.ip, args_.rpc_port}),
+    lo);
   seastar::keep_doing([this] {
     return listener_->accept().then([this](
       seastar::connected_socket fd, seastar::socket_address addr) mutable {
