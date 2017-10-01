@@ -2,8 +2,10 @@ add_library(smf_tracing STATIC
   ${PROJECT_SOURCE_DIR}/src/histogram/histogram.cc
   ${PROJECT_SOURCE_DIR}/src/histogram/histogram_seastar_utils.cc
   )
+target_compile_options(smf_tracing PUBLIC ${SEASTAR_CFLAGS})
 target_link_libraries(smf_tracing
   hdr_histogram_static
   ${SEASTAR_LDFLAGS}
   )
+
 install(TARGETS smf_tracing DESTINATION lib)
