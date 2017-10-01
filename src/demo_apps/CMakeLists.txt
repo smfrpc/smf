@@ -18,8 +18,12 @@ add_dependencies(
   generated_demo_service
   )
 
-target_link_libraries (demo_server smf_rpc)
-target_link_libraries (demo_client smf_rpc)
+target_link_libraries (demo_server
+   ${SEASTAR_DPDK_LIBS}
+   smf_rpc)
+target_link_libraries (demo_client
+   ${SEASTAR_DPDK_LIBS}
+  smf_rpc)
 
 install(TARGETS demo_server DESTINATION bin)
 install(TARGETS demo_client DESTINATION bin)

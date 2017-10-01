@@ -49,7 +49,7 @@ struct rpc_server_args {
   /// \brief 4GB usually. After this limit, each connection to this server-core
   /// will block until there are enough bytes free in memory to continue
   ///
-  uint64_t memory_avail_per_core = uint64_t(1) << 32 /*4GB per core*/;
+  uint64_t memory_avail_per_core = uint64_t(1) << 31 /*2GB per core*/;
 };
 
 class rpc_server {
