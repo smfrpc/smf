@@ -77,7 +77,7 @@
     update=yes
     recursive=yes
     force=yes
-    version='0ab7ae5'
+    version='c62bbf9'
 
 - name: configure sources with dpdk enabled
   shell:

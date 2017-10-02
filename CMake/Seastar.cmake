@@ -6,7 +6,6 @@ else()
 endif()
 
 pkg_search_module(SEASTAR REQUIRED seastar)
-link_directories(${SEASTAR_LIBRARY_DIRS})
 
 
 function (seastar_rte_libs OUTPUT)
@@ -22,6 +21,7 @@ endfunction()
 
 seastar_rte_libs(SEASTAR_DPDK_LIBS)
 
+# link_directories(${SEASTAR_LIBRARY_DIRS})
 # message(STATUS "SEASTAR_DPDK_LIBS:\t ${SEASTAR_DPDK_LIBS}")
 # message(STATUS "SEASTAR SEASTAR_FOUND:\t ${SEASTAR_FOUND} \n")
 # message(STATUS "SEASTAR SEASTAR_LIBRARIES:\t ${SEASTAR_LIBRARIES}\n")
@@ -35,6 +35,6 @@ seastar_rte_libs(SEASTAR_DPDK_LIBS)
 function(smf_seastar_target TARGET)
   target_compile_options(${TARGET} PUBLIC ${SEASTAR_CFLAGS})
   target_include_directories(${TARGET} PUBLIC SYSTEM ${SEASTAR_INCLUDE_DIRS})
-  target_link_libraries(${TARGET} ${SEASTAR_LDFLAGS_OTHER})
+  target_link_libraries(${TARGET} -Wl,--whole-archive,-lseastar,--no-whole-archive;)
   target_link_libraries(${TARGET} ${SEASTAR_LIBRARIES})
 endfunction()
