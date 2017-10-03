@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.3)
 project(SMF VERSION "0.0.1")
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -v" )
+# https://cmake.org/cmake/help/v3.4/policy/CMP0065.html
+cmake_policy(SET CMP0065 NEW)
 include(CMake/Seastar.cmake)
 include(CMake/git_version.cmake)
 include(CMake/includes.cmake)
