@@ -93,6 +93,7 @@ void rpc_server::start() {
       seastar::connected_socket fd, seastar::socket_address addr) mutable {
       auto conn = seastar::make_lw_shared<rpc_server_connection>(
         std::move(fd), std::move(addr), stats_);
+
       // DO NOT return the future. Need to execute in parallel
       handle_client_connection(conn);
     });

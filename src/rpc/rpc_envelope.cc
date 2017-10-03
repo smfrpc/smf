@@ -50,10 +50,7 @@ rpc_envelope::rpc_envelope(rpc_envelope &&o) noexcept
 void rpc_envelope::add_dynamic_header(const char *header, const char *value) {
   DLOG_THROW_IF(header != nullptr, "Cannot add header with empty key");
   DLOG_THROW_IF(value != nullptr, "Cannot add header with empty value");
-  auto hdr   = std::make_unique<rpc::dynamic_headerT>();
-  hdr->key   = header;
-  hdr->value = value;
-  letter.dynamic_headers.dynamic_headers.emplace_back(std::move(hdr));
+  letter.dynamic_headers.emplace(header, value);
 }
 
 void rpc_envelope::set_request_id(const uint32_t &service,

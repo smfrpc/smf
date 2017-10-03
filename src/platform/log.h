@@ -29,8 +29,6 @@ T *throw_if_null(const char *file, int line, const char *names, T *t) {
   }
   return t;
 }
-inline void noop(...) { /*silences compiler errors*/
-}
 }  // namespace log_detail
 }  // namespace smf
 
@@ -175,24 +173,18 @@ inline void noop(...) { /*silences compiler errors*/
   } while (0)
 
 #else
-#define DTHROW_IFNULL(x) true ? x : throw /*make compiler happy*/
-#define DLOG_INFO(format, args...) smf::log_detail::noop(format, ##args)
-#define DLOG_ERROR(format, args...) smf::log_detail::noop(format, ##args)
-#define DLOG_WARN(format, args...) smf::log_detail::noop(format, ##args)
-#define DLOG_DEBUG(format, args...) smf::log_detail::noop(format, ##args)
-#define DLOG_TRACE(format, args...) smf::log_detail::noop(format, ##args)
-#define DLOG_INFO_IF(condition, format, args...) \
-  smf::log_detail::noop(condition, format, ##args)
-#define DLOG_ERROR_IF(condition, format, args...) \
-  smf::log_detail::noop(condition, format, ##args)
-#define DLOG_DEBUG_IF(condition, format, args...) \
-  smf::log_detail::noop(condition, format, ##args)
-#define DLOG_WARN_IF(condition, format, args...) \
-  smf::log_detail::noop(condition, format, ##args)
-#define DLOG_TRACE_IF(condition, format, args...) \
-  smf::log_detail::noop(condition, format, ##args)
-#define DLOG_THROW_IF(condition, format, args...) \
-  smf::log_detail::noop(condition, format, ##args)
+#define DTHROW_IFNULL(x) ((void)0)
+#define DLOG_INFO(format, args...) ((void)0)
+#define DLOG_ERROR(format, args...) ((void)0)
+#define DLOG_WARN(format, args...) ((void)0)
+#define DLOG_DEBUG(format, args...) ((void)0)
+#define DLOG_TRACE(format, args...) ((void)0)
+#define DLOG_INFO_IF(condition, format, args...) ((void)0)
+#define DLOG_ERROR_IF(condition, format, args...) ((void)0)
+#define DLOG_DEBUG_IF(condition, format, args...) ((void)0)
+#define DLOG_WARN_IF(condition, format, args...) ((void)0)
+#define DLOG_TRACE_IF(condition, format, args...) ((void)0)
+#define DLOG_THROW_IF(condition, format, args...) ((void)0)
 #endif
 
 

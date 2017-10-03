@@ -63,18 +63,12 @@ int main(int args, char **argv, char **env) {
     args.bloat_mult     = 1;  // no bloat
     args.memory_avail_per_core =
       static_cast<uint64_t>(0.9 * seastar::memory::stats().total_memory());
-    args.flags |= smf::rpc_server_flags::rpc_server_flags_disable_http_server;
 
     return rpc.start(args)
       .then([&rpc] {
         LOG_INFO("Registering smf_gen::demo::storage_service");
         return rpc.invoke_on_all(
           &smf::rpc_server::register_service<storage_service>);
-      })
-      .then([&rpc] {
-        return rpc.invoke_on_all(
-          &smf::rpc_server::
-            register_incoming_filter<smf::zstd_decompression_filter>);
       })
       .then([&rpc] {
         LOG_INFO("Invoking rpc start on all cores");

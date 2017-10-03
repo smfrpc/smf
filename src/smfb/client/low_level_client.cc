@@ -69,7 +69,7 @@ struct put_data_generator {
 
     for (auto i = 0u; i < puts_per_partition; ++i) {
       auto ptr       = std::make_unique<smf::wal::tx_put_partition_pairT>();
-      ptr->partition = fastrange32(static_cast<uint32_t>(random().next()), 8);
+      ptr->partition = fastrange32(static_cast<uint32_t>(random().next()), 32);
 
       for (auto j = 0u; j < fragment_count; ++j) {
         auto f = std::make_unique<smf::wal::tx_put_fragmentT>();

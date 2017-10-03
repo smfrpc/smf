@@ -84,6 +84,7 @@ int main(int argc, char **argv, char **env) {
         .then([&rpc, &config] {
           smf::rpc_server_args args;
           args.rpc_port = config["port"].as<uint16_t>();
+          args.ip       = config["ip"].as<std::string>().c_str();
           return rpc.start(args);
         })
         .then([&rpc, &log] {

@@ -17,7 +17,8 @@ template <typename RootType>
 SMF_CONCEPT(requires FlatBuffersNativeTable<RootType>)
 seastar::temporary_buffer<char> native_table_as_buffer(
   const typename RootType::NativeTableType &t) {
-  flatbuffers::FlatBufferBuilder builder;
+  static thread_local flatbuffers::FlatBufferBuilder builder;
+  builder.Clear();
   builder.Finish(RootType::Pack(builder, &t, nullptr));
   seastar::temporary_buffer<char> retval(builder.GetSize());
   std::memcpy(retval.get_write(),

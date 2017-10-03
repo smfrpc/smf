@@ -20,6 +20,8 @@ void smfb_command_line_options::add(
 
   o("port", po::value<uint16_t>()->default_value(11201), "rpc port");
 
+  o("ip", po::value<std::string>()->default_value(""), "ip");
+
   o("write-ahead-log-dir", po::value<std::string>(), "log directory");
 
   o("log-level", po::value<std::string>()->default_value("info"),

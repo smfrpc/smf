@@ -44,6 +44,11 @@ struct rpc_envelope {
 
   size_t size() const { return letter.size(); }
 
+  /// \brief, sometimes you know/understand the lifecycle and want a read
+  /// only copy of this rpc_envelope - note that headers are 'copied', the
+  /// payload, however is 'shared()'
+  rpc_envelope share() { return rpc_envelope(letter.share()); }
+
   rpc_letter letter;
 };
 }  // namespace smf

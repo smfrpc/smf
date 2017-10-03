@@ -9,10 +9,8 @@
 
 #include "histogram/histogram_seastar_utils.h"
 #include "platform/log.h"
-#include "rpc/filters/zstd_filter.h"
 #include "rpc/load_gen/load_channel.h"
 #include "rpc/load_gen/load_generator.h"
-#include "rpc/rpc_filter.h"
 
 // templates
 #include "flatbuffers/demo_service.smf.fb.h"
