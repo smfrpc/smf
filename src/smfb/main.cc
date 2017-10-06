@@ -8,6 +8,7 @@
 #include "chain_replication/chain_replication_service.h"
 #include "filesystem/write_ahead_log.h"
 #include "histogram/histogram_seastar_utils.h"
+#include "histogram/unique_histogram_adder.h"
 #include "platform/log.h"
 #include "rpc/rpc_server.h"
 #include "smfb/smfb_command_line_options.h"
@@ -57,11 +58,11 @@ int main(int argc, char **argv, char **env) {
         seastar::engine().at_exit([&rpc] {
           LOG_INFO("Writing rpc_server histograms");
           return rpc
-            .map_reduce(seastar::adder<smf::histogram>(),
+            .map_reduce(smf::unique_histogram_adder(),
                         &smf::rpc_server::copy_histogram)
-            .then([](smf::histogram h) {
-              return smf::histogram_seastar_utils::write_histogram(
-                "server_hdr.hgrm", std::move(h));
+            .then([](auto h) {
+              return smf::histogram_seastar_utils::write("server_hdr.hgrm",
+                                                         std::move(h));
             });
         });
       }

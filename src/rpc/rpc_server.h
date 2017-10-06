@@ -60,9 +60,10 @@ class rpc_server {
   void              start();
   seastar::future<> stop();
 
-  seastar::future<smf::histogram> copy_histogram() {
-    smf::histogram h(hist_->get());
-    return seastar::make_ready_future<smf::histogram>(std::move(h));
+  seastar::future<std::unique_ptr<smf::histogram>> copy_histogram() {
+    auto h = smf::histogram::make_unique(hist_->get());
+    return seastar::make_ready_future<std::unique_ptr<smf::histogram>>(
+      std::move(h));
   }
 
   template <typename T, typename... Args>
@@ -85,11 +86,21 @@ class rpc_server {
 
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_server);
 
+  seastar::future<rpc_recv_context> apply_incoming_filters(rpc_recv_context);
+  seastar::future<rpc_envelope>     apply_outgoing_filters(rpc_envelope);
+
+
  private:
   seastar::future<> handle_client_connection(
     seastar::lw_shared_ptr<rpc_server_connection> conn);
   seastar::future<> dispatch_rpc(
     seastar::lw_shared_ptr<rpc_server_connection> conn, rpc_recv_context &&ctx);
+
+  // SEDA piplines
+  seastar::future<rpc_recv_context> stage_apply_incoming_filters(
+    rpc_recv_context);
+  seastar::future<rpc_envelope> stage_apply_outgoing_filters(rpc_envelope);
+
 
  private:
   const rpc_server_args args_;
@@ -104,10 +115,10 @@ class rpc_server {
     std::function<seastar::future<rpc_envelope>(rpc_envelope)>;
   std::vector<out_filter_t> out_filters_;
 
-  std::unique_ptr<histogram> hist_ = std::make_unique<histogram>();
-  uint32_t                   flags_;
+  seastar::lw_shared_ptr<histogram> hist_ = histogram::make_lw_shared();
+  uint32_t                          flags_;
 
-  std::unique_ptr<rpc_connection_limits> limits_ = nullptr;
+  seastar::lw_shared_ptr<rpc_connection_limits> limits_ = nullptr;
 
   seastar::lw_shared_ptr<seastar::http_server> admin_ = nullptr;
 
@@ -116,6 +127,11 @@ class rpc_server {
   // must survive this instance
   seastar::lw_shared_ptr<rpc_server_stats> stats_ =
     seastar::make_lw_shared<rpc_server_stats>();
+
+  // this is needed for shutdown procedures
+  uint64_t connection_idx_{0};
+  std::unordered_map<uint64_t, seastar::lw_shared_ptr<rpc_server_connection>>
+    open_connections_;
 
  private:
   friend std::ostream &operator<<(std::ostream &, const smf::rpc_server &);

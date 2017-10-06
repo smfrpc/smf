@@ -89,7 +89,7 @@ int main(int args, char **argv, char **env) {
                 // exception with a timeout!
 
                 // block reading the input
-                return smf::rpc_recv_context::parse(conn.get(), nullptr)
+                return smf::rpc_recv_context::parse(conn.get())
                   .then([conn](auto x) {
                     if (x) {
                       throw std::runtime_error(

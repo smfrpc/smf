@@ -9,27 +9,34 @@
 #include <iostream>
 
 namespace smf {
+seastar::lw_shared_ptr<histogram> histogram::make_lw_shared(
+  const hdr_histogram *o) {
+  auto x = seastar::make_lw_shared<histogram>(histogram{});
+  assert(x->hist_->hist);
+  if (o != nullptr) { ::hdr_add(x->hist_->hist, o); }
+  return x;
+}
+std::unique_ptr<histogram> histogram::make_unique(
+  const hdr_histogram *o) {
+  std::unique_ptr<histogram> p(new histogram());
+  assert(p->hist_->hist);
+  if (o != nullptr) { ::hdr_add(p->hist_->hist, o); }
+  return std::move(p);
+}
 
 histogram::histogram() {}
 histogram::histogram(histogram &&o) noexcept : hist_(std::move(o.hist_)) {}
-histogram::histogram(const struct hdr_histogram *copy) noexcept {
-  ::hdr_add(hist_->hist, copy);
-}
 
-histogram &histogram::operator+=(const histogram &o) noexcept {
-  ::hdr_add(hist_->hist, o.get());
+histogram &histogram::operator+=(const histogram &o) {
+  ::hdr_add(hist_->hist, o.hist_->hist);
   return *this;
 }
 
-histogram &histogram::operator=(histogram &&o) noexcept {
+histogram &histogram::operator=(histogram &&o) {
   hist_ = std::move(o.hist_);
   return *this;
 }
 
-histogram &histogram::operator=(const histogram &o) noexcept {
-  *this += o;
-  return *this;
-}
 void histogram::record(const uint64_t &v) {
   ::hdr_record_value(hist_->hist, v);
 }
@@ -52,10 +59,13 @@ size_t histogram::memory_size() const {
   return ::hdr_get_memory_size(hist_->hist);
 }
 
-const struct hdr_histogram *histogram::get() const { return hist_->hist; }
+hdr_histogram *histogram::get() {
+  assert(hist_);
+  return hist_->hist;
+}
 
-std::unique_ptr<struct histogram_measure> histogram::auto_measure() {
-  return std::make_unique<struct histogram_measure>(this);
+std::unique_ptr<histogram_measure> histogram::auto_measure() {
+  return std::make_unique<histogram_measure>(shared_from_this());
 }
 
 std::ostream &operator<<(std::ostream &o, const smf::histogram &h) {

@@ -10,6 +10,7 @@
 #include "flatbuffers/chain_replication.smf.fb.h"
 #include "hashing/hashing_utils.h"
 #include "histogram/histogram_seastar_utils.h"
+#include "histogram/unique_histogram_adder.h"
 #include "rpc/load_gen/load_channel.h"
 #include "rpc/load_gen/load_generator.h"
 #include "utils/random.h"
@@ -133,7 +134,9 @@ int main(int argc, char **argv, char **env) {
 
       ::smf::load_gen::generator_args largs(
         cfg["ip"].as<std::string>().c_str(), cfg["port"].as<uint16_t>(),
-        cfg["req-num"].as<uint32_t>(), cfg["concurrency"].as<uint32_t>(), cfg);
+        cfg["req-num"].as<uint32_t>(), cfg["concurrency"].as<uint32_t>(),
+        static_cast<uint64_t>(0.9 * seastar::memory::stats().total_memory()),
+        smf::rpc::compression_flags::compression_flags_none, cfg);
 
       LOG_INFO("Preparing load of test: {}", largs);
 
@@ -158,12 +161,12 @@ int main(int argc, char **argv, char **env) {
           LOG_INFO("Requesting load histogram from all cores");
           return load
             .map_reduce(
-              seastar::adder<smf::histogram>(),
+              smf::unique_histogram_adder(),
               [](load_gen_t &shard) { return shard.copy_histogram(); })
-            .then([](smf::histogram h) {
+            .then([](auto h) {
               LOG_INFO("Writing histogram: load_hdr.hgrm");
-              return smf::histogram_seastar_utils::write_histogram(
-                "load_hdr.hgrm", std::move(h));
+              return smf::histogram_seastar_utils::write("load_hdr.hgrm",
+                                                         std::move(h));
             });
         })
         .then([] {

@@ -9,7 +9,7 @@ if [[ $(which inotifywait) == "" ]]; then
     echo "In fedora builds you want to use: dnf install inotify-tools"
 fi
 system="darwin"
-if [[ $(which lsb_release) != "" ]]; then
+if [[ $(which lsb_release 2> /dev/null) != "" ]]; then
     system=$(lsb_release -si | tr '[:upper:]' '[:lower:]' )
 fi
 

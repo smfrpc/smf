@@ -142,12 +142,17 @@ void print_header_service_index(smf_printer *      printer,
                    "seastar::future<smf::rpc_envelope> {\n");
     printer->indent();
     printer->print(vars, "using t = smf::rpc_recv_typed_context<$InType$>;\n");
-    printer->print(vars,
-                   "return $MethodName$(t(std::move(c))).then([](auto te){\n");
+    printer->print("auto session_id = c.session();\n");
+    printer->print(vars, "return $MethodName$(t(std::move(c))).then(\n");
+    printer->indent();
+    printer->print("[session_id](auto typed_env){\n");
     printer->print(
-      "  return "
-      "seastar::make_ready_future<smf::rpc_envelope>(te.serialize_data());"
-      "\n});\n");
+      "typed_env.envelope.letter.header.mutate_session(session_id);\n");
+    printer->print("return "
+                   "seastar::make_ready_future<smf::rpc_envelope>(typed_env."
+                   "serialize_data());\n");
+    printer->outdent();
+    printer->print("});\n");
     printer->outdent();
     printer->outdent();
     printer->print("});\n");
@@ -258,41 +263,11 @@ void print_header_client_method(smf_printer *     printer,
   printer->print(vars, "$MethodName$(smf::rpc_envelope e) {\n");
   printer->indent();
   printer->print(vars, "e.set_request_id($ServiceID$, $MethodID$);\n");
-  printer->print(vars, "return send<$OutType$>(std::move(e),false);\n");
+  printer->print(vars, "return send<$OutType$>(std::move(e));\n");
   printer->outdent();
   printer->print("}\n");
 }
 
-void print_safe_header_client_method(smf_printer *     printer,
-                                     const smf_method *method) {
-  std::map<std::string, std::string> vars;
-  vars["MethodName"]       = method->name();
-  vars["SafeMethodPrefix"] = std::islower(method->name()[0]) ? "safe_" : "Safe";
-  vars["MethodID"]         = std::to_string(method->method_id());
-  vars["ServiceID"]        = std::to_string(method->service_id());
-  vars["ServiceName"]      = method->service_name();
-  vars["InType"]           = method->input_type_name();
-  vars["OutType"]          = method->output_type_name();
-
-  printer->print(vars,
-                 "seastar::future<smf::rpc_recv_typed_context<$OutType$>>\n");
-  printer->print(vars,
-                 "$SafeMethodPrefix$$MethodName$(smf::rpc_envelope e) {\n");
-  printer->indent();
-  printer->print(
-    "return limit_.wait(1).then([this, e=std::move(e)]() mutable {\n");
-  printer->indent();
-  printer->print(vars,
-                 "return this->$MethodName$(std::move(e)).finally([this](){\n");
-  printer->indent();
-  printer->print("limit_.signal(1);\n");
-  printer->outdent();
-  printer->print("});\n");
-  printer->outdent();
-  printer->print("});\n");
-  printer->outdent();
-  printer->print("}\n");
-}
 void print_header_client(smf_printer *printer, const smf_service *service) {
   // print the client rpc code
   VLOG(1) << "print_header_client for service: " << service->name();
@@ -300,26 +275,80 @@ void print_header_client(smf_printer *printer, const smf_service *service) {
   vars["ClientName"] = proper_postfix_token(service->name(), "client");
   vars["ServiceID"]  = std::to_string(service->service_id());
 
-  printer->print(vars, "class $ClientName$: public smf::rpc_client {\n"
-                       " public:\n");
+  printer->print(vars, "class $ClientName$:\n");
   printer->indent();
-
-  // print ctor
-  printer->print(vars, "$ClientName$(seastar::ipv4_addr "
-                       "server_addr)\n:smf::rpc_client(std::move(server_addr))"
-                       " {}\n");
-
+  printer->print("public smf::rpc_client,\n");
+  printer->print(vars,
+                 "public seastar::enable_shared_from_this<$ClientName$> {\n");
   printer->outdent();
   printer->print("\n");
   printer->indent();
+  printer->print("private:\n");
+  printer->indent();
+  // print ctor
+  printer->print(vars, "$ClientName$(seastar::ipv4_addr "
+                       "server_addr)\n:smf::rpc_client(std::move("
+                       "server_addr)) {}\n");
+  // print ctor2
+  printer->print(vars, "$ClientName$(smf::rpc_client_opts o)"
+                       "\n:smf::rpc_client(std::move(o)) {}\n");
+  printer->outdent();
+  printer->outdent();
+  printer->print("\n");
+
+  printer->indent();
+  printer->print("public:\n");
+  printer->indent();
+
+  // print make1
+  printer->print(vars, "static seastar::shared_ptr<$ClientName$>\n");
+  printer->print("make_shared(seastar::ipv4_addr addr) {\n");
+  printer->indent();
+  printer->print(vars, "$ClientName$ c(std::move(addr));\n");
+  printer->print(vars,
+                 "return seastar::make_shared<$ClientName$>(std::move(c));\n");
+  printer->outdent();
+  printer->print("}\n");
+
+  // print make2
+  printer->print(vars, "static seastar::shared_ptr<$ClientName$>\n");
+  printer->print("make_shared(smf::rpc_client_opts o) {\n");
+  printer->indent();
+  printer->print(vars, "$ClientName$ c(std::move(o));\n");
+  printer->print(vars,
+                 "return seastar::make_shared<$ClientName$>(std::move(c));\n");
+  printer->outdent();
+  printer->print("}\n");
+
+  // move ctor
+  printer->print(vars, "$ClientName$($ClientName$ &&o) = default;\n");
+
+  // print ctor2
+  printer->print(vars, "~$ClientName$() {}\n");
+
+  // name
+  printer->print("virtual const char *name() const final {\n");
+  printer->indent();
+  printer->print(vars, "return \"$ClientName$\";\n");
+  printer->outdent();
+  printer->print("}\n");
+
+  // shared_form_from this method
+  printer->print("virtual seastar::shared_ptr<rpc_client> "
+                 "parent_shared_from_this() final {\n");
+  printer->indent();
+  printer->print(vars, "return shared_from_this();\n");
+  printer->outdent();
+  printer->print("}\n");
+
 
   for (int i = 0; i < service->method_count(); ++i) {
     print_header_client_method(printer, service->method(i).get());
-    print_safe_header_client_method(printer, service->method(i).get());
   }
 
   printer->outdent();
   printer->print(vars, "}; // end of rpc client: $ClientName$\n");
+  printer->outdent();
 }
 
 std::string get_header_services(smf_file *file) {

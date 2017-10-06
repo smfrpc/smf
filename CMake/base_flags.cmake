@@ -17,9 +17,8 @@ set(BASE_FLAGS
   "-Wdelete-non-virtual-dtor"
   )
 
-# require at least gcc 6.1 for -lasan
+# Require at least gcc 6.1 for -lasan
 # ubuntu errors
-
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.1)
     set(BASE_FLAGS

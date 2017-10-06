@@ -13,7 +13,7 @@ fi
 export PYTHONUNBUFFERED=1
 
 system="darwin"
-if [[ $(which lsb_release) != "" ]]; then
+if [[ $(which lsb_release 2> /dev/null) != "" ]]; then
     system=$(lsb_release -si | tr '[:upper:]' '[:lower:]' )
 fi
 

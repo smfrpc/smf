@@ -1,16 +1,15 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #pragma once
-#include <hdr/hdr_histogram.h>
-// c++ header
 #include <cassert>
 #include <chrono>
 #include <memory>
 #include <utility>
 
-/// NOTE: This is not a seastar backed histogram
-/// please link against the histogram_seastar_utils.h
-/// the idea of this is to use with the wangle rpc as well
+#include <core/shared_ptr.hh>
+#include <hdr/hdr_histogram.h>
+
+#include "platform/macros.h"
 
 namespace smf {
 class histogram;
@@ -18,29 +17,46 @@ struct histogram_measure;
 }
 
 namespace smf {
+// VERY Expensive object. At this granularity is about 185KB
+// per instance
 struct hist_t {
   hist_t() {
-    ::hdr_init(1,                    // Minimum value
-               INT64_C(3600000000),  // Maximum value
+    ::hdr_init(1,                    // 1 microsec - minimum value
+               INT64_C(3600000000),  // 1 hour in microsecs - max value
                3,                    // Number of significant figures
-               &hist);               // Pointer to initialise
+               &hist);               // Pointer to initialize
   }
-  ~hist_t() { free(hist); }
-  struct hdr_histogram *hist;
+
+  hist_t(hist_t &&o) noexcept : hist(std::move(o.hist)) {}
+
+  SMF_DISALLOW_COPY_AND_ASSIGN(hist_t);
+
+  ~hist_t() {
+    if (hist) {
+      free(hist);
+      hist = nullptr;
+    }
+  }
+  hdr_histogram *hist = nullptr;
 };
 
 /// brief - simple wrapper for hdr_histogram_c project
 ///
-class histogram {
+class histogram : public seastar::enable_lw_shared_from_this<histogram> {
  public:
-  histogram();
-  histogram(const histogram &o) = delete;
-  explicit histogram(const struct hdr_histogram *copy) noexcept;
-  histogram &operator+=(const histogram &o) noexcept;
-  histogram &operator=(histogram &&o) noexcept;
-  histogram &operator=(const histogram &o) noexcept;
+  static seastar::lw_shared_ptr<histogram> make_lw_shared(
+    const hdr_histogram *copy = nullptr);
+
+  static std::unique_ptr<histogram> make_unique(
+    const hdr_histogram *copy = nullptr);
+
+  SMF_DISALLOW_COPY_AND_ASSIGN(histogram);
 
   histogram(histogram &&o) noexcept;
+
+  histogram &operator=(histogram &&o);
+  histogram &operator+=(const histogram &o);
+
   void record(const uint64_t &v);
 
   void record_multiple_times(const uint64_t &v, const uint32_t &times);
@@ -50,13 +66,17 @@ class histogram {
   double mean() const;
   size_t memory_size() const;
 
-  const struct hdr_histogram *get() const;
+  hdr_histogram *get();
 
-  std::unique_ptr<struct histogram_measure> auto_measure();
+  std::unique_ptr<histogram_measure> auto_measure();
 
   int print(FILE *fp) const;
 
   ~histogram();
+
+ private:
+  histogram();
+  friend seastar::lw_shared_ptr<histogram>;
 
  private:
   std::unique_ptr<hist_t> hist_ = std::make_unique<hist_t>();
@@ -66,13 +86,15 @@ std::ostream &operator<<(std::ostream &, const smf::histogram &h);
 /// simple struct that records the measurement at the dtor
 /// similar to boost_scope_exit;
 struct histogram_measure {
-  explicit histogram_measure(histogram *hist)
-    : h(hist), begin_t(std::chrono::high_resolution_clock::now()) {
-    assert(h != nullptr);
-  }
-  histogram_measure(const histogram_measure &o) = delete;
+  explicit histogram_measure(seastar::lw_shared_ptr<histogram> ptr)
+    : h(ptr), begin_t(std::chrono::high_resolution_clock::now()) {}
+
+  SMF_DISALLOW_COPY_AND_ASSIGN(histogram_measure);
+
   histogram_measure(histogram_measure &&o) noexcept
-    : h(o.h), begin_t(std::move(o.begin_t)) {}
+    : trace_(std::move(trace_))
+    , h(std::move(o.h))
+    , begin_t(std::move(o.begin_t)) {}
 
   void set_trace(bool b) { trace_ = b; }
 
@@ -85,9 +107,8 @@ struct histogram_measure {
     }
   }
 
-  bool       trace_ = true;
-  histogram *h;
-
+  bool                                           trace_ = true;
+  seastar::lw_shared_ptr<histogram>              h      = nullptr;
   std::chrono::high_resolution_clock::time_point begin_t;
 };
 }  // namespace smf

@@ -77,7 +77,7 @@
     update=yes
     recursive=yes
     force=yes
-    version='c62bbf9'
+    version='e60afd2'
 
 - name: configure sources with dpdk enabled
   shell:
@@ -101,14 +101,16 @@
   when: ansible_os_family == "Debian"
 
 - name: build with ninja
-  shell: "ninja-build -j$((({{ansible_processor_vcpus}}-1)))"
+  shell:
+    "ninja-build -j$((({{ansible_processor_vcpus}}-1)))"
   args:
     chdir: '{{goobly_cache_dir}}/seastar'
     creates: '{{goobly_cache_dir}}/seastar/build/release/libseastar.a'
   when: ansible_os_family == "RedHat"
 
 - name: build with ninja
-  shell: "ninja -j$((({{ansible_processor_vcpus}}-1)))"
+  shell:
+    "ninja -j$((({{ansible_processor_vcpus}}-1)))"
   args:
     chdir: '{{goobly_cache_dir}}/seastar'
     creates: '{{goobly_cache_dir}}/seastar/build/release/libseastar.a'

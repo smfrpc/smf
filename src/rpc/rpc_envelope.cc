@@ -18,13 +18,14 @@ namespace smf {
 seastar::future<> rpc_envelope::send(seastar::output_stream<char> *out,
                                      rpc_envelope                  e) {
   seastar::temporary_buffer<char> header_buf(kHeaderSize);
-  DLOG_THROW_IF(e.letter.header.size() == 0, "Invalid computed header");
+  DLOG_THROW_IF(e.letter.header.size() == 0, "Invalid header size");
+  DLOG_THROW_IF(e.letter.header.session() == 0, "Invalid session");
+  DLOG_ERROR_IF(e.letter.body.size() == 0, "Invalid payload. 0-size");
   // use 0 copy iface in seastar
   // prepare the header locally
   //
-  std::copy(reinterpret_cast<char *>(&e.letter.header),
-            reinterpret_cast<char *>(&e.letter.header) + kHeaderSize,
-            header_buf.get_write());
+  std::memcpy(header_buf.get_write(),
+              reinterpret_cast<char *>(&e.letter.header), header_buf.size());
 
   // needs to be moved so we can do zero copy output buffer
   return out->write(std::move(header_buf))

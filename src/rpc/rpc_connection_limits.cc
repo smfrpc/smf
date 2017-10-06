@@ -56,7 +56,7 @@ std::ostream &operator<<(std::ostream &o, const rpc_connection_limits &l) {
   human_bytes::print(o, l.max_memory);
   o << ",'res_avail':";
   human_bytes::print(o, l.resources_available.current());
-  o << "}";
+  o << "( " << l.resources_available.current() << " )}";
   return o;
 }
 }  // namespace smf

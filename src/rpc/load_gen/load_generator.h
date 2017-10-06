@@ -7,11 +7,11 @@
 
 #include <core/shared_ptr.hh>
 
-#include "rpc/rpc_envelope.h"
-
+#include "platform/macros.h"
 #include "rpc/load_gen/generator_args.h"
 #include "rpc/load_gen/generator_duration.h"
-
+#include "rpc/rpc_envelope.h"
+#include "utils/random.h"
 
 namespace smf {
 namespace load_gen {
@@ -38,23 +38,35 @@ class __attribute__((visibility("default"))) load_generator {
 
 
   explicit load_generator(generator_args _args) : args(_args) {
+    random rand;
     channels_.reserve(args.concurrency);
     for (uint32_t i = 0u; i < args.concurrency; ++i) {
-      channels_.push_back(std::make_unique<channel_t>(args.ip, args.port));
+      channels_.push_back(std::make_unique<channel_t>(
+        rand.next(), args.ip, args.port,
+        args.memory_per_core / args.concurrency, args.compression));
     }
   }
   ~load_generator() {}
 
+  SMF_DISALLOW_COPY_AND_ASSIGN(load_generator);
+
   const generator_args args;
 
-  smf::histogram copy_histogram() const {
-    smf::histogram h;
-    for (auto &c : channels_) { h += *c->get_histogram(); }
+  std::unique_ptr<smf::histogram> copy_histogram() const {
+    auto h = smf::histogram::make_unique();
+    for (auto &c : channels_) {
+      auto p = c->get_histogram();
+      *h += *p;
+    }
     return std::move(h);
   }
 
-  seastar::future<> stop() { return seastar::make_ready_future<>(); }
+  seastar::future<> stop() {
+    return seastar::do_for_each(channels_.begin(), channels_.end(),
+                                [](auto &c) { return c->stop(); });
+  }
   seastar::future<> connect() {
+    LOG_INFO("Making {} connections on this core.", channels_.size());
     return seastar::do_for_each(channels_.begin(), channels_.end(),
                                 [](auto &c) { return c->connect(); });
   }

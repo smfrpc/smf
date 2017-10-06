@@ -4,23 +4,29 @@
 #include <utility>
 // seastar
 #include <core/iostream.hh>
+#include <core/shared_ptr.hh>
 #include <net/api.hh>
 
 #include "platform/macros.h"
+#include "rpc/rpc_connection_limits.h"
 
 namespace smf {
 
 class rpc_connection {
  public:
-  explicit rpc_connection(seastar::connected_socket fd)
+  explicit rpc_connection(
+    seastar::connected_socket                     fd,
+    seastar::lw_shared_ptr<rpc_connection_limits> conn_limits = nullptr)
     : socket(std::move(fd))
     , istream(socket.input())
-    , ostream(socket.output()) {}
+    , ostream(socket.output())
+    , limits(conn_limits) {}
 
-  seastar::connected_socket    socket;
-  seastar::input_stream<char>  istream;
-  seastar::output_stream<char> ostream;
-  uint32_t                     istream_active_parser{0};
+  seastar::connected_socket                     socket;
+  seastar::input_stream<char>                   istream;
+  seastar::output_stream<char>                  ostream;
+  seastar::lw_shared_ptr<rpc_connection_limits> limits;
+  uint32_t                                      istream_active_parser{0};
 
   void disable() { enabled_ = false; }
   bool is_enabled() const { return enabled_; }
@@ -28,7 +34,9 @@ class rpc_connection {
   bool has_error() const { return error_.operator bool(); }
   void set_error(const char *e) { error_ = seastar::sstring(e); }
 
-  seastar::sstring get_error() const { return error_.value(); }
+  virtual seastar::sstring get_error() const { return error_.value(); }
+
+  virtual ~rpc_connection() {}
 
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_connection);
 

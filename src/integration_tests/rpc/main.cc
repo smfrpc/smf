@@ -8,6 +8,7 @@
 #include <core/distributed.hh>
 // smf
 #include "histogram/histogram_seastar_utils.h"
+#include "histogram/unique_histogram_adder.h"
 #include "platform/log.h"
 #include "rpc/filters/zstd_filter.h"
 #include "rpc/load_gen/load_channel.h"
@@ -19,6 +20,36 @@
 #include "utils/random.h"
 // templates
 #include "flatbuffers/demo_service.smf.fb.h"
+
+
+static const char *kPoem = "How do I love thee? Let me count the ways."
+                           "I love thee to the depth and breadth and height"
+                           "My soul can reach, when feeling out of sight"
+                           "For the ends of being and ideal grace."
+                           "I love thee to the level of every day's"
+                           "Most quiet need, by sun and candle-light."
+                           "I love thee freely, as men strive for right."
+                           "I love thee purely, as they turn from praise."
+                           "I love thee with the passion put to use"
+                           "In my old griefs, and with my childhood's faith."
+                           "I love thee with a love I seemed to lose"
+                           "With my lost saints. I love thee with the breath,"
+                           "Smiles, tears, of all my life; and, if God choose,"
+                           "I shall but love thee better after death."
+                           "How do I love thee? Let me count the ways."
+                           "I love thee to the depth and breadth and height"
+                           "My soul can reach, when feeling out of sight"
+                           "For the ends of being and ideal grace."
+                           "I love thee to the level of every day's"
+                           "Most quiet need, by sun and candle-light."
+                           "I love thee freely, as men strive for right."
+                           "I love thee purely, as they turn from praise."
+                           "I love thee with the passion put to use"
+                           "In my old griefs, and with my childhood's faith."
+                           "I love thee with a love I seemed to lose"
+                           "With my lost saints. I love thee with the breath,"
+                           "Smiles, tears, of all my life; and, if God choose,"
+                           "I shall but love thee better after death.";
 
 using client_t   = smf_gen::demo::SmfStorageClient;
 using load_gen_t = smf::load_gen::load_generator<client_t>;
@@ -35,35 +66,7 @@ struct generator {
   smf::rpc_envelope operator()(
     const boost::program_options::variables_map &cfg) {
     smf::rpc_typed_envelope<smf_gen::demo::Request> req;
-    req.data->name = "How do I love thee? Let me count the ways."
-                     "I love thee to the depth and breadth and height"
-                     "My soul can reach, when feeling out of sight"
-                     "For the ends of being and ideal grace."
-                     "I love thee to the level of every day's"
-                     "Most quiet need, by sun and candle-light."
-                     "I love thee freely, as men strive for right."
-                     "I love thee purely, as they turn from praise."
-                     "I love thee with the passion put to use"
-                     "In my old griefs, and with my childhood's faith."
-                     "I love thee with a love I seemed to lose"
-                     "With my lost saints. I love thee with the breath,"
-                     "Smiles, tears, of all my life; and, if God choose,"
-                     "I shall but love thee better after death."
-                     "How do I love thee? Let me count the ways."
-                     "I love thee to the depth and breadth and height"
-                     "My soul can reach, when feeling out of sight"
-                     "For the ends of being and ideal grace."
-                     "I love thee to the level of every day's"
-                     "Most quiet need, by sun and candle-light."
-                     "I love thee freely, as men strive for right."
-                     "I love thee purely, as they turn from praise."
-                     "I love thee with the passion put to use"
-                     "In my old griefs, and with my childhood's faith."
-                     "I love thee with a love I seemed to lose"
-                     "With my lost saints. I love thee with the breath,"
-                     "Smiles, tears, of all my life; and, if God choose,"
-                     "I shall but love thee better after death.";
-
+    req.data->name = kPoem;
     return req.serialize_data();
   }
 };
@@ -106,8 +109,8 @@ void cli_opts(boost::program_options::options_description_easy_init o) {
 
 
 int main(int args, char **argv, char **env) {
-  // SET_LOG_LEVEL(seastar::log_level::debug);
-  DLOG_DEBUG("About to start the RPC test");
+  SET_LOG_LEVEL(seastar::log_level::trace);
+  LOG_INFO("About to start the RPC test");
   seastar::distributed<smf::rpc_server> rpc;
   seastar::distributed<load_gen_t>      load;
 
@@ -116,9 +119,9 @@ int main(int args, char **argv, char **env) {
   cli_opts(app.add_options());
 
   return app.run(args, argv, [&]() -> seastar::future<int> {
-    DLOG_DEBUG("Setting up at_exit hooks");
-    seastar::engine().at_exit([&] { return rpc.stop(); });
+    LOG_INFO("Setting up at_exit hooks");
     seastar::engine().at_exit([&] { return load.stop(); });
+    seastar::engine().at_exit([&] { return rpc.stop(); });
 
     auto &cfg = app.configuration();
 
@@ -126,9 +129,14 @@ int main(int args, char **argv, char **env) {
     args.rpc_port  = cfg["port"].as<uint16_t>();
     args.http_port = cfg["httpport"].as<uint16_t>();
     args.flags |= smf::rpc_server_flags::rpc_server_flags_disable_http_server;
+    args.basic_req_size = std::strlen(kPoem);
+    args.bloat_mult     = 1;
+    args.memory_avail_per_core =
+      static_cast<uint64_t>(0.4 * seastar::memory::stats().total_memory());
+
     return rpc.start(args)
       .then([&rpc] {
-        DLOG_DEBUG("Registering smf_gen::demo::storage_service");
+        LOG_INFO("Registering smf_gen::demo::storage_service");
         return rpc.invoke_on_all(
           &smf::rpc_server::register_service<storage_service>);
       })
@@ -138,57 +146,59 @@ int main(int args, char **argv, char **env) {
             register_incoming_filter<smf::zstd_decompression_filter>);
       })
       .then([&rpc] {
-        DLOG_DEBUG("Invoking rpc start on all cores");
+        LOG_INFO("Invoking rpc start on all cores");
         return rpc.invoke_on_all(&smf::rpc_server::start);
       })
       .then([&load, &cfg] {
-        DLOG_DEBUG("About to start the client");
+        LOG_INFO("About to start the client");
 
         ::smf::load_gen::generator_args largs(
           cfg["ip"].as<std::string>().c_str(), cfg["port"].as<uint16_t>(),
           cfg["req-num"].as<uint32_t>(), cfg["concurrency"].as<uint32_t>(),
-          cfg);
-        DLOG_DEBUG("Load args: {}", largs);
+          static_cast<uint64_t>(0.4 * seastar::memory::stats().total_memory()),
+          smf::rpc::compression_flags::compression_flags_none, cfg);
+
+        LOG_INFO("Load args: {}", largs);
         return load.start(std::move(largs));
       })
       .then([&load] {
-        DLOG_DEBUG("Connecting to server");
+        LOG_INFO("Connecting to server");
         return load.invoke_on_all(&load_gen_t::connect);
       })
       .then([&load] {
-        DLOG_DEBUG("Benchmarking server");
+        LOG_INFO("Benchmarking server");
         return load.invoke_on_all([](load_gen_t &server) {
           load_gen_t::generator_cb_t gen    = generator{};
           load_gen_t::method_cb_t    method = method_callback{};
           return server.benchmark(gen, method).then([](auto test) {
-            DLOG_DEBUG("Test ran in:{}ms", test.duration_in_millis());
+            LOG_INFO("Test ran in:{}ms", test.duration_in_millis());
             return seastar::make_ready_future<>();
           });
         });
       })
       .then([&load] {
-        DLOG_DEBUG("MapReducing stats");
+        LOG_INFO("MapReducing stats");
         return load
-          .map_reduce(seastar::adder<smf::histogram>(),
+          .map_reduce(smf::unique_histogram_adder(),
                       [](load_gen_t &shard) { return shard.copy_histogram(); })
-          .then([](smf::histogram h) {
-            DLOG_DEBUG("Writing client histograms");
-            return smf::histogram_seastar_utils::write_histogram(
-              "clients_hdr.hgrm", std::move(h));
+          .then([](auto h) {
+            LOG_INFO("Writing client histograms");
+            return smf::histogram_seastar_utils::write("clients_hdr.hgrm",
+                                                       std::move(h));
           });
       })
       .then([&] {
         return rpc
-          .map_reduce(seastar::adder<smf::histogram>(),
+          .map_reduce(smf::unique_histogram_adder(),
                       &smf::rpc_server::copy_histogram)
-          .then([](smf::histogram h) {
-            DLOG_DEBUG("Writing server histograms");
-            return smf::histogram_seastar_utils::write_histogram(
-              "server_hdr.hgrm", std::move(h));
+          .then([](auto h) {
+            LOG_INFO("Writing server histograms");
+            return smf::histogram_seastar_utils::write("server_hdr.hgrm",
+                                                       std::move(h));
           });
       })
       .then([] {
-        DLOG_DEBUG("Exiting");
+        LOG_INFO("Exiting");
         return seastar::make_ready_future<int>(0);
       });
   });

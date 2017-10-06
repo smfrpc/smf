@@ -34,7 +34,7 @@ struct header {
   bitflags:       header_bit_flags = 0;
   /// 16 bits for storing the actual session id.
   /// used for streaming client and slot allocation
-  session:        short = 0;
+  session:        ushort = 0;
   /// size of the next payload
   size:           uint = 0;
   /// currently we use xxhash32

@@ -27,7 +27,7 @@ cmake --graphviz=$build_dir/dependencies.dot \
 if [[ $1 != "quick" ]]; then
     cmake --build $build_dir --target doc
 fi
-os=$(lsb_release -si | tr '[:upper:]' '[:lower:]')
+os=$(lsb_release 2> /dev/null -si | tr '[:upper:]' '[:lower:]')
 if [[ ${os} == "ubuntu" ]]; then
     ninja -v
 else

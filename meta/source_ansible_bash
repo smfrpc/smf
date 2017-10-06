@@ -2,7 +2,10 @@ DIR=$(git rev-parse --show-toplevel)/meta
 if [[ -e ${DIR}/tmp/bin/activate ]]; then
     source ${DIR}/tmp/bin/activate
 else
-    os=$(lsb_release -si | tr '[:upper:]' '[:lower:]')
+    os="fedora"
+    if [[ $(which lsb_release 2> /dev/null) != "" ]]; then
+        os=$(lsb_release -si | tr '[:upper:]' '[:lower:]' )
+    fi
     if [[ ${os} == "ubuntu" ]]; then
         sudo apt-get update
         sudo apt-get install -y \

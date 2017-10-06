@@ -63,31 +63,36 @@ struct rpc_server_connection_options {
 
 class rpc_server_connection : public rpc_connection {
  public:
-  rpc_server_connection(seastar::connected_socket                sock,
-                        seastar::socket_address                  address,
-                        seastar::lw_shared_ptr<rpc_server_stats> stats,
-                        rpc_server_connection_options            opts = {})
-    : rpc_connection(std::move(sock))
+  rpc_server_connection(
+    seastar::connected_socket                     sock,
+    seastar::lw_shared_ptr<rpc_connection_limits> conn_limits,
+    seastar::socket_address                       address,
+    seastar::lw_shared_ptr<rpc_server_stats>      _stats,
+    uint64_t                                      connection_id,
+    rpc_server_connection_options                 opts = {})
+    : rpc_connection(std::move(sock), conn_limits)
     , remote_address(std::move(address))
-    , stats_(stats)
+    , id(connection_id)
+    , stats(_stats)
     , opts_(std::move(opts)) {
     socket.set_nodelay(opts_.nodelay);
     if (opts_.enable_keepalive) {
       socket.set_keepalive(true);
       socket.set_keepalive_parameters(opts_.keepalive);
     }
-    stats_->active_connections++;
-    stats_->total_connections++;
+    stats->active_connections++;
+    stats->total_connections++;
   }
 
-  ~rpc_server_connection() { stats_->active_connections--; }
+  ~rpc_server_connection() { stats->active_connections--; }
 
-  const seastar::socket_address remote_address;
+  const seastar::socket_address            remote_address;
+  const uint64_t                           id;
+  seastar::lw_shared_ptr<rpc_server_stats> stats;
 
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_server_connection);
 
  private:
-  seastar::lw_shared_ptr<rpc_server_stats> stats_;
-  rpc_server_connection_options            opts_;
+  rpc_server_connection_options opts_;
 };
 }  // namespace smf

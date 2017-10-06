@@ -3,6 +3,7 @@
 #include "rpc/rpc_server.h"
 
 // seastar
+#include <core/execution_stage.hh>
 #include <core/metrics.hh>
 #include <core/prometheus.hh>
 
@@ -12,6 +13,7 @@
 
 
 namespace smf {
+namespace stdx = std::experimental;
 
 std::ostream &operator<<(std::ostream &o, const smf::rpc_server &s) {
   o << "rpc_server{args.ip=" << s.args_.ip << ", args.flags=" << s.args_.flags
@@ -23,10 +25,11 @@ std::ostream &operator<<(std::ostream &o, const smf::rpc_server &s) {
 
 rpc_server::rpc_server(rpc_server_args args)
   : args_(args)
-  , limits_(new rpc_connection_limits(args.basic_req_size,
-                                      args.bloat_mult,
-                                      args.memory_avail_per_core,
-                                      args.recv_timeout)) {
+  , limits_(
+      seastar::make_lw_shared<rpc_connection_limits>(args.basic_req_size,
+                                                     args.bloat_mult,
+                                                     args.memory_avail_per_core,
+                                                     args.recv_timeout)) {
   namespace sm = seastar::metrics;
   metrics_.add_group(
     "smf::rpc_server",
@@ -89,10 +92,12 @@ void rpc_server::start() {
                                  seastar::ipv4_addr{args_.ip, args_.rpc_port}),
     lo);
   seastar::keep_doing([this] {
-    return listener_->accept().then([this](
+    return listener_->accept().then([this, stats = stats_, limits = limits_](
       seastar::connected_socket fd, seastar::socket_address addr) mutable {
       auto conn = seastar::make_lw_shared<rpc_server_connection>(
-        std::move(fd), std::move(addr), stats_);
+        std::move(fd), limits, std::move(addr), stats, ++connection_idx_);
+
+      open_connections_.insert({connection_idx_, conn});
 
       // DO NOT return the future. Need to execute in parallel
       handle_client_connection(conn);
@@ -108,6 +113,11 @@ void rpc_server::start() {
 seastar::future<> rpc_server::stop() {
   LOG_WARN("Stopping rpc server: aborting future accept() calls");
   listener_->abort_accept();
+
+  std::for_each(
+    open_connections_.begin(), open_connections_.end(),
+    [](auto &client_conn) { client_conn.second->socket.shutdown_input(); });
+
   return limits_->reply_gate.close().then([admin = admin_ ? admin_ : nullptr] {
     if (!admin) { return seastar::make_ready_future<>(); }
     return admin->stop().handle_exception([](auto ep) {
@@ -122,43 +132,51 @@ seastar::future<> rpc_server::handle_client_connection(
   return seastar::do_until(
     [conn] { return !conn->is_valid(); },
     [this, conn]() mutable {
-      return rpc_recv_context::parse(conn.get(), limits_.get())
-        .then([this, conn](auto recv_ctx) mutable {
-          if (!recv_ctx) {
-            conn->set_error("Could not parse the request");
-            return seastar::make_ready_future<>();
-          }
-          auto metric = hist_->auto_measure();
-          return smf::rpc_filter_apply(&in_filters_,
-                                       std::move(recv_ctx.value()))
-            .then([this, conn, metric = std::move(metric)](auto ctx) mutable {
-              auto payload_size = ctx.payload.size();
-              return this->dispatch_rpc(conn, std::move(ctx)).finally([
-                this, conn, metric = std::move(metric), payload_size
-              ] {
-                limits_->release_payload_resources(payload_size);
-                return conn->ostream.flush().finally([this, conn] {
-                  if (conn->has_error()) {
-                    LOG_ERROR("There was an error with the connection: {}",
-                              conn->get_error());
-                    stats_->bad_requests++;
-                    stats_->active_connections--;
-                    LOG_INFO("Closing connection for client: {}",
-                             conn->remote_address);
-                    return conn->ostream.close();
-                  } else {
-                    stats_->completed_requests++;
-                    return seastar::make_ready_future<>();
+      return rpc_recv_context::parse(conn.get()).then([
+        this, conn, h = hist_
+      ](stdx::optional<rpc_recv_context> recv_ctx) mutable {
+        if (!recv_ctx) {
+          conn->set_error("Could not parse the request");
+          return seastar::make_ready_future<>();
+        }
+        auto metric = h->auto_measure();
+        return stage_apply_incoming_filters(std::move(recv_ctx.value()))
+          .then([this, conn,
+                 metric = std::move(metric)](rpc_recv_context ctx) mutable {
+            auto payload_size = ctx.payload.size();
+            return this->dispatch_rpc(conn, std::move(ctx)).finally([
+              this, conn, metric = std::move(metric), payload_size
+            ] {
+              conn->limits->release_payload_resources(payload_size);
+              return conn->ostream.flush().finally([this, conn] {
+                if (conn->has_error()) {
+                  LOG_ERROR("There was an error with the connection: {}",
+                            conn->get_error());
+                  conn->stats->bad_requests++;
+                  conn->stats->active_connections--;
+                  LOG_INFO("Closing connection for client: {}",
+                           conn->remote_address);
+                  if (open_connections_.find(conn->id)
+                      != open_connections_.end()) {
+                    open_connections_.erase(conn->id);
                   }
-                });
-              });  // end finally()
-            })     //  parse_rpc_recv_context.then()
-            .handle_exception([this, conn](auto eptr) {
-              LOG_ERROR("Caught exception dispatching rpc: {}", eptr);
-              conn->set_error("Exception parsing request ");
-              return conn->ostream.close();
-            });
-        });
+                  return conn->ostream.close();
+                } else {
+                  conn->stats->completed_requests++;
+                  return seastar::make_ready_future<>();
+                }
+              });
+            });  // end finally()
+          })     //  parse_rpc_recv_context.then()
+          .handle_exception([this, conn](auto eptr) {
+            LOG_ERROR("Caught exception dispatching rpc: {}", eptr);
+            conn->set_error("Exception parsing request ");
+            if (open_connections_.find(conn->id) != open_connections_.end()) {
+              open_connections_.erase(conn->id);
+            }
+            return conn->ostream.close().then_wrapped([](auto _) {});
+          });
+      });
     });
 }
 
@@ -169,11 +187,11 @@ seastar::future<> rpc_server::dispatch_rpc(
     return seastar::make_ready_future<>();
   }
   if (!routes_.can_handle_request(ctx.request_id())) {
-    stats_->no_route_requests++;
+    conn->stats->no_route_requests++;
     conn->set_error("Can't find route for request. Invalid");
     return seastar::make_ready_future<>();
   }
-  stats_->in_bytes += ctx.header.size() + ctx.payload.size();
+  conn->stats->in_bytes += ctx.header.size() + ctx.payload.size();
 
 
   /// the request follow [filters] -> handle -> [filters]
@@ -182,13 +200,14 @@ seastar::future<> rpc_server::dispatch_rpc(
   /// to it, or they throw an exception if they wish to interrupt the entire
   /// connection
   return seastar::with_gate(
-           limits_->reply_gate, [this, ctx = std::move(ctx), conn]() mutable {
+           conn->limits->reply_gate,
+           [this, ctx = std::move(ctx), conn]() mutable {
              return routes_.handle(std::move(ctx))
-               .then([this](rpc_envelope &&e) {
-                 return rpc_filter_apply(&out_filters_, std::move(e));
+               .then([this](rpc_envelope e) {
+                 return stage_apply_outgoing_filters(std::move(e));
                })
-               .then([this, conn](rpc_envelope &&e) {
-                 stats_->out_bytes += e.letter.size();
+               .then([this, conn](rpc_envelope e) {
+                 conn->stats->out_bytes += e.letter.size();
                  return smf::rpc_envelope::send(&conn->ostream, std::move(e));
                });
            })
@@ -198,5 +217,28 @@ seastar::future<> rpc_server::dispatch_rpc(
       return seastar::make_ready_future<>();
     });
 }
+static thread_local auto incoming_stage = seastar::make_execution_stage(
+  "smf::rpc_server::incoming::filter", &rpc_server::apply_incoming_filters);
 
+static thread_local auto outgoing_stage = seastar::make_execution_stage(
+  "smf::rpc_server::outgoing::filter", &rpc_server::apply_outgoing_filters);
+
+
+seastar::future<rpc_recv_context> rpc_server::apply_incoming_filters(
+  rpc_recv_context ctx) {
+  return rpc_filter_apply(&in_filters_, std::move(ctx));
+}
+seastar::future<rpc_envelope> rpc_server::apply_outgoing_filters(
+  rpc_envelope e) {
+  return rpc_filter_apply(&out_filters_, std::move(e));
+}
+
+seastar::future<rpc_recv_context> rpc_server::stage_apply_incoming_filters(
+  rpc_recv_context ctx) {
+  return incoming_stage(this, std::move(ctx));
+}
+seastar::future<rpc_envelope> rpc_server::stage_apply_outgoing_filters(
+  rpc_envelope e) {
+  return outgoing_stage(this, std::move(e));
+}
 }  // namespace smf

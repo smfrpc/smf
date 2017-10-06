@@ -26,7 +26,7 @@ struct rpc_recv_context {
   /// we parse the body of the request
   ///
   static seastar::future<exp::optional<rpc_recv_context>> parse(
-    rpc_connection *conn, rpc_connection_limits *limits);
+    rpc_connection *conn);
 
   rpc_recv_context(rpc::header hdr, seastar::temporary_buffer<char> body);
   rpc_recv_context(rpc_recv_context &&o) noexcept;
@@ -38,6 +38,8 @@ struct rpc_recv_context {
   /// \brief used by the client side to determine the status from the server
   /// follows the HTTP status codes
   uint32_t status() const;
+
+  uint16_t session() const { return header.session(); }
 
   rpc::header                     header;
   seastar::temporary_buffer<char> payload;

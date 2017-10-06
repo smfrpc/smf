@@ -146,8 +146,6 @@ int main(int args, char **argv, char **env) {
   distributed<smf::rpc_server> rpc;
   smf::rpc_server_stats_printer stats_printer(stats);
   app_template app;
-  // TODO(agallego) -
-  // add options for printer frequency, etc
   app.add_options()("rpc_port", bpo::value<uint16_t>()->default_value(11225),
                     "rpc port");
   return app.run_deprecated(args, argv, [&] {

@@ -8,12 +8,12 @@
 #include <core/distributed.hh>
 
 #include "histogram/histogram_seastar_utils.h"
+#include "histogram/unique_histogram_adder.h"
 #include "platform/log.h"
 #include "rpc/filters/zstd_filter.h"
 #include "rpc/rpc_filter.h"
 #include "rpc/rpc_server.h"
 
-// templates - service
 #include "flatbuffers/demo_service.smf.fb.h"
 
 class storage_service : public smf_gen::demo::SmfStorage {
@@ -49,7 +49,18 @@ int main(int args, char **argv, char **env) {
   cli_opts(app.add_options());
 
   return app.run_deprecated(args, argv, [&] {
-    seastar::engine().at_exit([&] { return rpc.stop(); });
+    seastar::engine().at_exit([&] {
+      return rpc
+        .map_reduce(smf::unique_histogram_adder(),
+                    &smf::rpc_server::copy_histogram)
+        .then([](auto h) {
+          LOG_INFO("Writing server histograms");
+          return smf::histogram_seastar_utils::write("server_hdr.hgrm",
+                                                     std::move(h));
+        })
+        .then([&rpc] { return rpc.stop(); });
+    });
+
     auto &cfg = app.configuration();
 
     smf::rpc_server_args args;

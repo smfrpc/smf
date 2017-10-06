@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+
 git_root=$(git rev-parse --show-toplevel)
 build_dir=$git_root/build_debug
 mkdir -p $build_dir
@@ -11,7 +12,7 @@ cmake -Wdev \
       -DCMAKE_BUILD_TYPE=Debug $git_root
 
 nprocs=$(grep -c ^processor /proc/cpuinfo)
-os=$(lsb_release -si | tr '[:upper:]' '[:lower:]')
+os=$(lsb_release 2> /dev/null -si | tr '[:upper:]' '[:lower:]')
 if [[ ${os} == "ubuntu" ]]; then
     ninja -v
 else
