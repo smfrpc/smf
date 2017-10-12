@@ -1,0 +1,27 @@
+# Dependencies
+markdown:         kramdown
+highlighter:      rouge
+
+plugins: ['jekyll-paginate', 'jekyll-gist', 'jemoji']
+
+# Permalinks
+permalink:        pretty
+
+# Setup
+title:            'smf'
+tagline:          'smf - **/smɝf/** - the fastest durable log broker in the West'
+description:      ''
+url:              'https://senior7515.github.io/smf'
+baseurl:          /
+
+author:
+  name:           'emaxerrno'
+  url:            'https://twitter.com/emaxerrno'
+
+paginate:         5
+
+# Custom vars
+version:          2.1.0
+
+github:
+  repo:           'https://github.com/senior7515/smf'

@@ -1,0 +1,6 @@
+source 'https://rubygems.org'
+gem 'jemoji'
+gem 'jekyll-gist'
+gem 'jekyll-paginate'
+gem 'kramdown'
+gem 'rouge'
