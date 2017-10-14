@@ -84,8 +84,11 @@ int main(int argc, char **argv, char **env) {
         })
         .then([&rpc, &config] {
           smf::rpc_server_args args;
-          args.rpc_port = config["port"].as<uint16_t>();
-          args.ip       = config["ip"].as<std::string>().c_str();
+          args.rpc_port              = config["port"].as<uint16_t>();
+          args.ip                    = config["ip"].as<std::string>().c_str();
+          args.memory_avail_per_core = static_cast<uint64_t>(
+            0.8 * seastar::memory::stats().total_memory());
+
           return rpc.start(args);
         })
         .then([&rpc, &log] {
@@ -95,12 +98,12 @@ int main(int argc, char **argv, char **env) {
             server.register_service<cr>(&log);
           });
         })
-        .then([&rpc] {
-          LOG_INFO("Adding zstd compressor to rpc service");
-          using zstd_t = smf::zstd_decompression_filter;
-          return rpc.invoke_on_all(
-            &smf::rpc_server::register_incoming_filter<zstd_t>);
-        })
+        // .then([&rpc] {
+        //   LOG_INFO("Adding zstd compressor to rpc service");
+        //   using zstd_t = smf::zstd_decompression_filter;
+        //   return rpc.invoke_on_all(
+        //     &smf::rpc_server::register_incoming_filter<zstd_t>);
+        // })
         .then([&rpc] {
           LOG_INFO("Starting RPC");
           return rpc.invoke_on_all(&smf::rpc_server::start);

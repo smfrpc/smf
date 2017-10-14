@@ -67,7 +67,7 @@ class rpc_client {
  public:
   struct work_item {
     using promise_t = seastar::promise<stdx::optional<rpc_recv_context>>;
-    work_item(uint16_t idx) : session(idx) {}
+    explicit work_item(uint16_t idx) : session(idx) {}
     ~work_item() {}
 
     SMF_DISALLOW_COPY_AND_ASSIGN(work_item);

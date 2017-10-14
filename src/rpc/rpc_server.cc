@@ -140,7 +140,7 @@ seastar::future<> rpc_server::handle_client_connection(
           return seastar::make_ready_future<>();
         }
         auto metric = h->auto_measure();
-        return stage_apply_incoming_filters(std::move(recv_ctx.value()))
+        /*return*/ stage_apply_incoming_filters(std::move(recv_ctx.value()))
           .then([this, conn,
                  metric = std::move(metric)](rpc_recv_context ctx) mutable {
             auto payload_size = ctx.payload.size();
@@ -176,6 +176,7 @@ seastar::future<> rpc_server::handle_client_connection(
             }
             return conn->ostream.close().then_wrapped([](auto _) {});
           });
+        return seastar::make_ready_future<>();
       });
     });
 }
@@ -208,7 +209,13 @@ seastar::future<> rpc_server::dispatch_rpc(
                })
                .then([this, conn](rpc_envelope e) {
                  conn->stats->out_bytes += e.letter.size();
-                 return smf::rpc_envelope::send(&conn->ostream, std::move(e));
+                 return conn->serialize_writes.wait(1)
+                   .then([conn, ee = std::move(e)]() mutable {
+                     return smf::rpc_envelope::send(&conn->ostream,
+                                                    std::move(ee));
+
+                   })
+                   .finally([conn] { conn->serialize_writes.signal(1); });
                });
            })
     .handle_exception([this, conn](auto ptr) {
