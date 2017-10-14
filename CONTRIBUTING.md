@@ -137,4 +137,3 @@ and see steps above for doing a
 
 
 
-[![Analytics](https://ga-beacon.appspot.com/UA-99983285-1/chromeskel_a/readme?pixel)]()

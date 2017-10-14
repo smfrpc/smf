@@ -40,3 +40,5 @@ src/third_party/*
 *.smf.fb.h*
 build_debug/
 build_release/
+
+.DS_Store

@@ -190,4 +190,3 @@ Please help with these!
 
 
 
-[![Analytics](https://ga-beacon.appspot.com/UA-99983285-1/chromeskel_a/readme?pixel)]()
