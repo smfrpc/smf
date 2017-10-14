@@ -14,7 +14,7 @@ for its networking and thread model.
 
 ### bottom line up front: per node overhead
 
-![alt text](/public/annotated_rpc.png)
+![alt text]({{ site.baseurl }}public/annotated_rpc.png)
 
 <br />
 
@@ -278,7 +278,7 @@ In practice this lookup never shows up in any `perf` output - very fast.
   };
 ```
 
-![alt text](/public/services.png "Service architecture")
+![alt text]({{ site.baseurl }}public/services.png "Service architecture")
 
 
 Earlier we mentioned how **smf** is inspired by

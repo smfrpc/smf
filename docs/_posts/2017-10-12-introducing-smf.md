@@ -8,11 +8,10 @@ title: Introducing smf
 
 --- 
 
-| Site        | Link
-| ------------ | --------
-| Mailing List | https://groups.google.com/forum/#!forum/smf-dev
-| Documentation | https://senior7515.github.io/smf/
-
+| Important Links
+| ---------------- 
+| [Mailing List](https://groups.google.com/forum/#!forum/smf-dev)
+| [Documentation](https://senior7515.github.io/smf/)
 
 
 **smf** is a set of mechanically friendly subsystems
@@ -20,22 +19,22 @@ that run under the [seastar](http://www.seastar-project.org/)
 share-nothing paradigm.
 
 
-## [RPC](/rpc)
+## [RPC]({{site.baseurl}}rpc)
 
 * Code generation compiler for RPC
 * Load testing framework for RPC subsystem 
 * Kernel-bypass RPC via DPDK
 * 0-copy Serialization framework based on Google's Flatbuffers project
-* Arbitrary filter chaning on incoming and outgoing channels (like twitter's Finagle)
+* Arbitrary filter chaining on incoming and outgoing channels (like twitter's Finagle)
 * Small 16byte overhead
 * Binary with pluggable compressors
 
-## [WAL - Write Ahead Log](/write_ahead_log)
+## [WAL - Write Ahead Log]({{site.baseurl}}write_ahead_log)
 
 * Write-Ahead-Log - WAL abstraction w/ IO_DIRECT support
 * Write behind writers (configurable)
 * Sharded (ability to run on every core efficiently)
-* Paritioned (like Apache Pulsar or Apache Kafka)
+* Partitioned (like Apache Pulsar or Apache Kafka)
 
 ## In the works:
 
@@ -47,9 +46,9 @@ share-nothing paradigm.
 We have a lot of issues marked as [good first issue](https://github.com/senior7515/smf/labels/good%20first%20issue)
 
 Look at the [contributing](https://github.com/senior7515/smf/blob/master/CONTRIBUTING.md) 
-guideline, for more details. 
+guideline for more details. 
 
-Take a look at the issue list, or send an email to the
+Take a look at the issue list or send an email to the
 [smf-dev mailing List](https://groups.google.com/forum/#!forum/smf-dev)
 to get started. 
 

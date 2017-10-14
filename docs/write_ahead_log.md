@@ -25,7 +25,7 @@ O_DIRECT capabilities of the seastar filesystem API for both reads and writes.
 It also provides hooks into the IO Scheduler of seastar to prioritize 
 write requests, invalidations & reads. 
 
-You can find examples in our chain-replication subsystem. Here is a gist:
+You can find examples in our chain-replication subsystem. Here is the gist:
 
 ```cpp
 
@@ -67,12 +67,12 @@ Although configurable, the expected memory footprint per **file** is this:
 **NOTE:** We will be changing the read strategy to use all of the freely 
 available memory using the seastar allocator hooks
 
-![alt text](/public/smf_wal_filesystem.png "Intended WAL architecture")
+![alt text]({{ site.baseurl }}public/smf_wal_filesystem.png "Intended WAL architecture")
 
 The page caching and eviction algorithm can be succinctly described from the
 authors (Feng Chen and Xiaodong Zhang) paper:
 
-![alt text](/public/clock_pro_cache.png "The Clock: clock pro cache")
+![alt text]({{ site.baseurl }}public/clock_pro_cache.png "The Clock: clock pro cache")
 
 Note: since we don't use the OS page cache, we MUST do page caching at the
 application level.
@@ -124,19 +124,20 @@ seastar::future<wal_write_reply> wal_impl_with_cache::append(
 Each l-core will get an instance of the write_ahead_log that is local
 to the core. This is a common seastar paradigm for sharded<T> types.
 
-On each core the strategy is to **simultaneous** dispatch IO to different 
+On each core the strategy is to **simultaneously** dispatch IO to different 
 files. Typically each SSD device will have a series of queues, say **44**
-and each queue will have a depth of say **11** 4K page writes. If your
-goal is to saturate the disk from the NIC as fast as possible, your 
+and each queue will have a depth of **11** 4K pages. If your
+goal is to saturate the disk from the NIC as fast as possible, you 
 need to dispatch them concurrently. Seastar's IO will handle backpressure
-until all the requests are satified.
+until all the requests are satified (use iotune from the seastar folder to find out
+the actual numer for each device).
 
-Our **write_ahead_log** uses a **single reader/writer per topic/parition pair**. 
+Our **write_ahead_log** uses a **single reader/writer per topic/partition pair**. 
 This means that there is only one core responsible for reading / writing
 one file. There are no locks, atomics or shared state anywhere. Each 
-topic/patition pair will satisfy all reads and writes to a particular file.
+topic/partition pair will satisfy all reads and writes to a particular file.
 
 Each core can, of course, handle multiple read/write requests to different
 topic/partitions. 
 
-![alt text](/public/smf_write_ahead_log.png "distributed write ahead log")
+![alt text]({{ site.baseurl }}public/smf_write_ahead_log.png "distributed write ahead log")

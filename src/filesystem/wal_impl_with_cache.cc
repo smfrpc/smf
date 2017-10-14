@@ -8,7 +8,7 @@
 #include <core/reactor.hh>
 
 // #include "filesystem/wal_file_name_mender.h"
-// TODO(need a parition scanner, etc)
+// TODO(need a partition scanner, etc)
 #include "filesystem/wal_requests.h"
 
 namespace smf {
