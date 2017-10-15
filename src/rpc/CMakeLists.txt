@@ -9,6 +9,7 @@ set(RPC_LIB_SOURCES
   ${PROJECT_SOURCE_DIR}/src/rpc/rpc_connection_limits.cc
   ${PROJECT_SOURCE_DIR}/src/rpc/rpc_letter.cc
   ${PROJECT_SOURCE_DIR}/src/rpc/filters/zstd_filter.cc
+  ${PROJECT_SOURCE_DIR}/src/rpc/filters/lz4_filter.cc
   )
 add_library(smf_rpc STATIC ${RPC_LIB_SOURCES})
 target_link_libraries(smf_rpc smf_utils smf_tracing)

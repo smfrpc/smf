@@ -22,11 +22,7 @@
 class storage_service : public smf_gen::demo::SmfStorage {
   virtual seastar::future<smf::rpc_typed_envelope<smf_gen::demo::Response>> Get(
     smf::rpc_recv_typed_context<smf_gen::demo::Request> &&rec) final {
-    smf::rpc_typed_envelope<smf_gen::demo::Response> data;
-    data.envelope.set_status(200);
-    return seastar::
-      make_ready_future<smf::rpc_typed_envelope<smf_gen::demo::Response>>(
-        std::move(data));
+    LOG_THROW("SHOULD NOT REACH THIS W/ A TIMEOUT");
   }
 };
 
@@ -85,18 +81,7 @@ int main(int args, char **argv, char **env) {
             return conn->ostream.write(std::move(header_buf))
               .then([conn] { return conn->ostream.flush(); })
               .then([conn] {
-                // NOTE: This test will block forever until there is an
-                // exception with a timeout!
-
-                // block reading the input
-                return smf::rpc_recv_context::parse(conn.get())
-                  .then([conn](auto x) {
-                    if (x) {
-                      throw std::runtime_error(
-                        "THE SERVER DID NOT CLOSE the timeout connection");
-                    }
-                    return seastar::make_ready_future<>();
-                  });
+                  return seastar::sleep(std::chrono::milliseconds(10));
               })
               .finally([conn] {});
           });

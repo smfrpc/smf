@@ -17,6 +17,8 @@
 #define LZ4_MAX_INPUT_SIZE 0x7E000000
 #endif
 
+#include <core/byteorder.hh>
+
 #include "platform/log.h"
 #include "platform/macros.h"
 
@@ -87,7 +89,9 @@ class zstd_codec : public codec {
   }
 };
 
+
 // Note lz4 funcs are opposite from zstd function on input->output args
+// encodes 4 bytes first
 class lz4_fast_codec : public codec {
  public:
   ~lz4_fast_codec() {}
@@ -102,11 +106,12 @@ class lz4_fast_codec : public codec {
 
   virtual seastar::temporary_buffer<char> compress(const char *data,
                                                    size_t      size) {
-    const int                       max_dst_size = LZ4_compressBound(size);
-    seastar::temporary_buffer<char> buf(max_dst_size);
+    const int max_dst_size = LZ4_compressBound(size);
+
+    seastar::temporary_buffer<char> buf(max_dst_size + 4);
 
     const int compressed_data_size =
-      LZ4_compress_default(data, buf.get_write(), size, max_dst_size);
+      LZ4_compress_default(data, buf.get_write() + 4, size, max_dst_size);
 
     LOG_THROW_IF(compressed_data_size < 0, ,
                  "A negative result from LZ4_compress_default indicates a "
@@ -119,21 +124,33 @@ class lz4_fast_codec : public codec {
                  "because the destination buffer couldn't hold all the "
                  "information.");
 
+    seastar::write_le<uint32_t>(buf.get_write(), size);
+
+    DLOG_THROW_IF(deserialize_uint32_t(buf.get()) != size,
+                  "Could not read/write the buffer well. Serialized memory "
+                  "was: {}, but expected: {}",
+                  deserialize_uint32_t(buf.get()), size);
+
+    buf.trim(compressed_data_size + 4);
     return std::move(buf);
   }
 
 
   virtual seastar::temporary_buffer<char> uncompress(
     const seastar::temporary_buffer<char> &data) {
-    seastar::temporary_buffer<char> buf(data.size());
-    const int                       decompressed_size =
-      LZ4_decompress_safe(data.get(), buf.get_write(), data.size(), buf.size());
+    uint32_t orig = seastar::read_le<uint32_t>(data.get());
 
-    LOG_THROW_IF(decompressed_size < 0,
-                 "A negative result from LZ4_decompress_safe indicates a "
-                 "failure trying to decompress the data.  See exit code "
-                 "{} for value returned.",
-                 decompressed_size);
+    seastar::temporary_buffer<char> buf(orig);
+
+    const int decompressed_size = LZ4_decompress_safe(
+      data.get() + 4 /*src*/, buf.get_write() /*dest*/,
+      data.size() - 4 /*compressed size*/, orig /*max decompressed size*/);
+    LOG_THROW_IF(
+      decompressed_size < 0,
+      "A negative result from LZ4_decompress_safe indicates a "
+      "failure trying to decompress the data.  See exit code "
+      "{} for value returned. Expected original size: {}, compressed size: {}",
+      decompressed_size, orig, data.size() - 4);
     LOG_THROW_IF(decompressed_size == 0,
                  "I'm not sure this function can ever return 0.  "
                  "Documentation in lz4.h doesn't indicate so.");
