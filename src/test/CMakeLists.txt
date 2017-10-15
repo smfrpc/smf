@@ -35,3 +35,10 @@ smf_test(
   SOURCE_DIRECTORY ${TEST_ROOT}/clock_pro
   LIBRARIES gtest smf_filesystem
   )
+smf_test(
+  UNIT_TEST
+  BINARY_NAME compressors
+  SOURCES ${TEST_ROOT}/compressor/main.cc
+  SOURCE_DIRECTORY ${TEST_ROOT}/compressor
+  LIBRARIES gtest smf_utils
+  )

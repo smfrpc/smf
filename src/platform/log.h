@@ -51,11 +51,12 @@ T *throw_if_null(const char *file, int line, const char *names, T *t) {
 #define LOG_TRACE(format, args...)                                            \
   smf::internal_logger::get().trace("{}:{}] " format, __FILENAME__, __LINE__, \
                                     ##args)
-#define LOG_THROW(format, args...)                                           \
-  do {                                                                       \
-    auto s = fmt::sprintf("{}:{}] " format, __FILENAME__, __LINE__, ##args); \
-    smf::internal_logger::get().error(s.c_str());                            \
-    throw std::runtime_error(s.c_str());                                     \
+#define LOG_THROW(format, args...)                             \
+  do {                                                         \
+    fmt::MemoryWriter w;                                       \
+    w.write("{}:{}] " format, __FILENAME__, __LINE__, ##args); \
+    smf::internal_logger::get().error(w.data());               \
+    throw std::runtime_error(w.data());                        \
   } while (0)
 
 #define THROW_IFNULL(val)                            \
@@ -96,14 +97,15 @@ T *throw_if_null(const char *file, int line, const char *names, T *t) {
                                         __FILENAME__, __LINE__, ##args);   \
     }                                                                      \
   } while (0)
-#define LOG_THROW_IF(condition, format, args...)                             \
-  do {                                                                       \
-    if (SMF_UNLIKELY(condition)) {                                           \
-      auto s = fmt::sprintf("{}:{}] (" #condition ") " format, __FILENAME__, \
-                            __LINE__, ##args);                               \
-      smf::internal_logger::get().error(s.c_str());                          \
-      throw std::runtime_error(s.c_str());                                   \
-    }                                                                        \
+#define LOG_THROW_IF(condition, format, args...)                         \
+  do {                                                                   \
+    if (SMF_UNLIKELY(condition)) {                                       \
+      fmt::MemoryWriter w;                                               \
+      w.write("{}:{}] (" #condition ") " format, __FILENAME__, __LINE__, \
+              ##args);                                                   \
+      smf::internal_logger::get().error(w.data());                       \
+      throw std::runtime_error(w.data());                                \
+    }                                                                    \
   } while (0)
 
 
@@ -162,14 +164,15 @@ T *throw_if_null(const char *file, int line, const char *names, T *t) {
                                         __FILENAME__, __LINE__, ##args);   \
     }                                                                      \
   } while (0)
-#define DLOG_THROW_IF(condition, format, args...)                            \
-  do {                                                                       \
-    if (SMF_UNLIKELY(condition)) {                                           \
-      auto s = fmt::sprintf("{}:{}] (" #condition ") " format, __FILENAME__, \
-                            __LINE__, ##args);                               \
-      smf::internal_logger::get().error(s.c_str());                          \
-      throw std::runtime_error(s.c_str());                                   \
-    }                                                                        \
+#define DLOG_THROW_IF(condition, format, args...)                        \
+  do {                                                                   \
+    if (SMF_UNLIKELY(condition)) {                                       \
+      fmt::MemoryWriter w;                                               \
+      w.write("{}:{}] (" #condition ") " format, __FILENAME__, __LINE__, \
+              ##args);                                                   \
+      smf::internal_logger::get().error(w.data());                       \
+      throw std::runtime_error(w.data());                                \
+    }                                                                    \
   } while (0)
 
 #else

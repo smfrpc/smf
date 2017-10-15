@@ -136,7 +136,7 @@ int main(int argc, char **argv, char **env) {
         cfg["ip"].as<std::string>().c_str(), cfg["port"].as<uint16_t>(),
         cfg["req-num"].as<uint32_t>(), cfg["concurrency"].as<uint32_t>(),
         static_cast<uint64_t>(0.9 * seastar::memory::stats().total_memory()),
-        smf::rpc::compression_flags::compression_flags_none, cfg);
+        smf::rpc::compression_flags::compression_flags_lz4, cfg);
 
       LOG_INFO("Preparing load of test: {}", largs);
 

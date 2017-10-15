@@ -10,6 +10,7 @@
 #include "histogram/histogram_seastar_utils.h"
 #include "histogram/unique_histogram_adder.h"
 #include "platform/log.h"
+#include "rpc/filters/lz4_filter.h"
 #include "rpc/rpc_server.h"
 #include "smfb/smfb_command_line_options.h"
 #include "utils/checks/cpu.h"
@@ -98,12 +99,19 @@ int main(int argc, char **argv, char **env) {
             server.register_service<cr>(&log);
           });
         })
-        // .then([&rpc] {
-        //   LOG_INFO("Adding zstd compressor to rpc service");
-        //   using zstd_t = smf::zstd_decompression_filter;
-        //   return rpc.invoke_on_all(
-        //     &smf::rpc_server::register_incoming_filter<zstd_t>);
-        // })
+        .then([&rpc] {
+          LOG_INFO("Adding lz4 de-compressor to rpc service");
+          using lz4_t = smf::lz4_decompression_filter;
+          return rpc.invoke_on_all(
+            &smf::rpc_server::register_incoming_filter<lz4_t>);
+        })
+        .then([&rpc] {
+          LOG_INFO("Adding lz4 compressor to rpc service");
+          return rpc.invoke_on_all([](smf::rpc_server &server) {
+            using lz4_t = smf::lz4_compression_filter;
+            server.register_outgoing_filter<lz4_t>(1024);
+          });
+        })
         .then([&rpc] {
           LOG_INFO("Starting RPC");
           return rpc.invoke_on_all(&smf::rpc_server::start);

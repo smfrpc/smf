@@ -6,6 +6,7 @@
 
 #include "platform/log.h"
 #include "platform/macros.h"
+#include "rpc/filters/lz4_filter.h"
 #include "rpc/filters/zstd_filter.h"
 #include "rpc/load_gen/generator_duration.h"
 #include "rpc/rpc_client.h"
@@ -33,7 +34,11 @@ template <typename ClientService> struct load_channel {
     client->enable_histogram_metrics();
     if (compression == smf::rpc::compression_flags::compression_flags_zstd) {
       client->incoming_filters().push_back(smf::zstd_decompression_filter());
-      client->outgoing_filters().push_back(smf::zstd_compression_filter(1000));
+      client->outgoing_filters().push_back(smf::zstd_compression_filter(1024));
+    } else if (compression
+               == smf::rpc::compression_flags::compression_flags_lz4) {
+      client->incoming_filters().push_back(smf::lz4_decompression_filter());
+      client->outgoing_filters().push_back(smf::lz4_compression_filter(1024));
     }
   }
 
