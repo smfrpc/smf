@@ -3,6 +3,65 @@ layout: page
 title: write ahead log 
 ---
 
+We are fast!
+
+# Latency benchmark vs Kafka
+## 10x lower latency
+
+![alt text]({{ site.baseurl }}public/kafka_vs_smf_latency.png "Latency comparison vs Kafka")
+
+<br />
+
+
+| Single Producer (left image)
+| -------------
+| percentile | 	millis kafka | millis smf
+| p50   	 | 411		     | 12
+| p95	     | 921		     | 19
+| p99	     | 980		     | 23
+| p999	     | 993		     | 23
+| p100	     | 995		     | 23
+
+
+| 3 Producers  (right image) 
+| -------------
+| percentile | 	millis kafka | millis smf
+| p50	     | 878		     | 21
+| p95	     | 1340		     | 36
+| p99	     | 1814		     | 49
+| p999	     | 1896		     | 54
+| p100	     | 1930		     | 54 
+
+<br />
+
+# QPS benchmark vs Kafka
+## 4x more throughput 
+
+![alt text]({{ site.baseurl }}public/kafka_vs_smf_qps.png "QPS comparison vs Kafka")
+
+<br />
+
+
+| QPS in millions (left image)
+| -------------
+| Kafka: 1 producer	| 0.423908
+| smf: 1 producer	| 1.712
+
+
+| QPS in millions (right image)
+| -------------          |          |
+| Kafka: 3 producers	 | 0.955888 |
+| smf: 3 producers	     | 2.269661 |
+
+
+
+<br />
+
+**NOTE:** I have not finished the reader part yet. This is only the writer path.
+The **smf** server was running DPDK but the clients were running libevent.
+See benchmark details at the bottom.
+
+
 <br />
 
 **smf**'s write ahead log is typically used to provide atomicity and
@@ -141,3 +200,91 @@ Each core can, of course, handle multiple read/write requests to different
 topic/partitions. 
 
 ![alt text]({{ site.baseurl }}public/smf_write_ahead_log.png "distributed write ahead log")
+
+
+### Details about benchmark
+
+* end-to-end latency measured (client's perspective)
+* XFS filesystem
+* Fedora 25
+* Latest kafka source code (kafka_2.11-0.11.0.1.tgz)
+* Latest smf master branch (381fa7d)
+* 2 isolated servers:
+    * 120G ram
+    * 32cores - dual socket Intel(R) Xeon(R) CPU E5-2640 v3 @ 2.60GHz 
+    * 10Gbps NIC - SPF+
+    * 1SSD hard drive - SanDisk CloudSpeed Eco Gen II SDLF1DAR-480G 480GB SATA SSD 
+    * no VM's, bare metal
+* Both are running w/ lz4 encoding
+* Benchmarks were ran 3 times. Took best time out of both. 
+For example, I discarded runs where kafka took 15s the first time it created a topic, etc.
+
+
+Kafka producers were launched like this:
+
+```bash
+
+
+/bin/kafka-run-class.sh org.apache.kafka.tools.ProducerPerformance --topic test --num-records 10000000 --record-size 100 --throughput -1 --producer-props acks=1 bootstrap.servers=x.x.x.x:9092
+
+```
+
+**smfb** brokers were launched like this:
+
+```bash
+
+# Bring down the NIC for DPDK
+ifconfig ens3f1 down
+
+# Load up UIO drivers
+modprobe uio_pci_generic
+
+# Reserve 50G per CPU socket - Node 1
+echo 50 >  /sys/devices/system/node/node1/hugepages/hugepages-1048576kB/nr_hugepages 
+
+# Reserve 50G per CPU socket - Node 0
+echo 50 >  /sys/devices/system/node/node0/hugepages/hugepages-1048576kB/nr_hugepages
+
+# Bind the NIC w/ DPDK
+/smf/meta/tmp/seastar/scripts/dpdk_nic_bind.py --bind=uio_pci_generic ens3f1
+
+# Show the status of the NIC and ensure that DPDK owns it
+/smf/meta/tmp/seastar/scripts/dpdk_nic_bind.py --status
+
+
+# Run the server
+sudo /smf/build_release/src/smfb/smfb --ip x.x.x.x \ 
+                                      --num-io-queues  11 \
+                                      --max-io-requests 44 \
+                                      --poll-mode \
+                                      --write-ahead-log-dir . \
+                                      --host-ipv4-addr x.x.x.x \
+                                      --netmask-ipv4-addr 255.255.255.0 \
+                                      --gw-ipv4-addr x.x.x.1 \
+                                      --dhcp 0 \
+                                      --dpdk-pmd \
+                                      --network-stack native
+```
+
+**smfb** clients were launched like this:
+
+```cpp
+
+# cpu set is used so that you don't get your threads moved around
+# SMP means the number of cores
+# Number of actual messages was 122 * 8196 == 999912 
+# This was for the 3 producers
+#
+# Note the client was launched w/ regular libevent and NOT DPDK
+# although we *do* have a DPDK enabled client, we think most ppl won't
+# actually use a DPDK-NIC-owning client, but will likely have a DPDK NIC owning service
+#
+#
+sudo /smf/build_release/src/smfb/client/smfb_low_level_client \ 
+                                 --ip x.x.x.x \
+                                 --poll-mode \
+                                 --req-num 122 \
+                                 --batch-size 8196 \
+                                 --cpuset 8,10,12 --smp 3
+
+```
