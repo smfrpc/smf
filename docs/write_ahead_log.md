@@ -184,8 +184,8 @@ Each l-core will get an instance of the write_ahead_log that is local
 to the core. This is a common seastar paradigm for sharded<T> types.
 
 On each core the strategy is to **simultaneously** dispatch IO to different 
-files. Typically each SSD device will have a series of queues, say **44**
-and each queue will have a depth of **11** 4K pages. If your
+files. Typically each SSD device will have a series of queues with a maximum
+number of total **concurrent IO** globally, say **33**. If your
 goal is to saturate the disk from the NIC as fast as possible, you 
 need to dispatch them concurrently. Seastar's IO will handle backpressure
 until all the requests are satified (use iotune from the seastar folder to find out
