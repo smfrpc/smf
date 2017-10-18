@@ -8,14 +8,14 @@
 
 - name: Bootstrap
   shell:
-    ./bootstrap.sh --prefix="{{third_party_dir}}" 
+    ./bootstrap.sh --prefix="{{third_party_dir}}" --without-libraries=python
   args:
     chdir: '{{goobly_cache_dir}}/boost_1_64_0'
     creates: '{{goobly_cache_dir}}/boost_1_64_0/b2'
 
 - name: build and install
   shell:
-    ./b2 toolset=gcc variant=release link=static -j"{{ansible_processor_vcpus}}" install
+    ./b2 toolset=gcc variant=release link=static -j"{{ansible_processor_vcpus}}" install --without-python
   args:
     chdir: '{{goobly_cache_dir}}/boost_1_64_0'
     creates: '{{third_party_dir}}/lib/libboost_filesystem.a'
