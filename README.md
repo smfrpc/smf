@@ -32,12 +32,13 @@ Apache Thrift, etc, but designed for
 
 Current benchmarks in microseconds
 
-| 60 byte payload | latency |
-| p50             | 7us     |
-| p90             | 8us     |
-| p99             | 8us     |
-| p9999           | 15us    |
-| p100            | 26us    |
+| 60 byte payload  | latency   |
+| ---------------- | --------- |
+| p50              | 7us       |
+| p90              | 8us       |
+| p99              | 8us       |
+| p9999            | 15us      |
+| p100             | 26us      |
 
 ## Write Ahead Log (WAL) subsystem
 
@@ -47,15 +48,15 @@ single reader/writer per topic/partition.
 
 Current benchmarks in milliseconds ==> 41X faster 
 
+3 Producers latency vs Apache Kafka
 
-| 3 Producers latency vs Apache Kafka 
-| --------------------------------------- 
-| percentile | Apache Kafka   | smf WAL | speedup |
-| p50	    | 878ms		  | 21ms    |     41X |
-| p95	    | 1340ms		 | 36ms    |     37x |
-| p99	    | 1814ms		 | 49ms    |     37x |
-| p999	   | 1896ms		 | 54ms    |     35x |
-| p100	   | 1930ms		 | 54ms    |     35x |
+| percentile  | Apache Kafka      | smf WAL  | speedup |
+| ----------- | ----------------- | -------- |     --- |
+| p50	     | 878ms		     | 21ms     |     41X |
+| p95	     | 1340ms		    | 36ms     |     37x |
+| p99	     | 1814ms		    | 49ms     |     37x |
+| p999	    | 1896ms		    | 54ms     |     35x |
+| p100	    | 1930ms		    | 54ms     |     35x |
 
 
 
