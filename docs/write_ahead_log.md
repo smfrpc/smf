@@ -8,24 +8,31 @@ We are fast!
 # Latency benchmark vs Kafka
 ## 34x to 48x lower latency!
 
-![alt text]({{ site.baseurl }}public/kafka_vs_smf_latency.png "Latency comparison vs Kafka")
+![alt text]({{ site.baseurl }}public/wal_kafka_latency_vs_1producer.png "Latency comparison vs Kafka")
 
 <br />
 
 
-| Single Producer (left image) |
-| -------------                |                  |         |         |
-| percentile                   | 	Apache Kafka | smf WAL | speedup |
-| p50   	                   | 411		      |      12 | 34x     |
-| p95	                      | 921		      |      19 | 48x     |
-| p99	                      | 980		      |      23 | 42x     |
-| p999	                     | 993		      |      23 | 43x     |
-| p100	                     | 995		      |      23 | 43x     |
+| Single Producer |
+| -------------   |
+| percentile | 	Apache Kafka | smf WAL | speedup |
+| ---        | ---              |     --- |     --- |
+| p50   	 | 411		      |      12 |     34x |
+| p95	    | 921		      |      19 |     48x |
+| p99	    | 980		      |      23 |     42x |
+| p999	   | 993		      |      23 |     43x |
+| p100	   | 995		      |      23 |     43x |
 
 
-| 3 Producers latency vs Apache Kafka (right image) 
-| --------------------------------------- 
+![alt text]({{ site.baseurl }}public/wal_kafka_latency_vs_3producers.png "Latency comparison vs Kafka")
+
+<br />
+
+
+| 3 Producers latency vs Apache Kafka     |
+| --------------------------------------- |
 | percentile | Apache Kafka   | smf WAL | speedup |
+| ---        | ---            | ---     |     --- |
 | p50	    | 878ms		  | 21ms    |     41X |
 | p95	    | 1340ms		 | 36ms    |     37x |
 | p99	    | 1814ms		 | 49ms    |     37x |
