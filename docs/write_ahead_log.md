@@ -8,7 +8,7 @@ We are fast!
 # Latency benchmark vs Kafka
 ## 34x to 48x lower latency!
 
-![alt text]({{ site.baseurl }}public/wal_kafka_latency_vs_1producer.png "Latency comparison vs Kafka")
+![alt text]({{ site.baseurl }}public/wal_kafka_latency_vs_smf_1producer.png "Latency comparison vs Kafka")
 
 <br />
 
@@ -24,7 +24,7 @@ We are fast!
 | p100	   | 995		      |      23 |     43x |
 
 
-![alt text]({{ site.baseurl }}public/wal_kafka_latency_vs_3producers.png "Latency comparison vs Kafka")
+![alt text]({{ site.baseurl }}public/wal_kafka_latency_vs_smf_3producers.png "Latency comparison vs Kafka")
 
 <br />
 
