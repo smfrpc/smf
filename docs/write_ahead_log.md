@@ -6,31 +6,33 @@ title: write ahead log
 We are fast!
 
 # Latency benchmark vs Kafka
-## 10x lower latency
+## 34x to 48x lower latency!
 
 ![alt text]({{ site.baseurl }}public/kafka_vs_smf_latency.png "Latency comparison vs Kafka")
 
 <br />
 
 
-| Single Producer (left image)
-| -------------
-| percentile | 	millis kafka | millis smf
-| p50   	 | 411		     | 12
-| p95	     | 921		     | 19
-| p99	     | 980		     | 23
-| p999	     | 993		     | 23
-| p100	     | 995		     | 23
+| Single Producer (left image) |
+| -------------                |                  |         |         |
+| percentile                   | 	Apache Kafka | smf WAL | speedup |
+| p50   	                   | 411		      |      12 | 34x     |
+| p95	                      | 921		      |      19 | 48x     |
+| p99	                      | 980		      |      23 | 42x     |
+| p999	                     | 993		      |      23 | 43x     |
+| p100	                     | 995		      |      23 | 43x     |
 
 
-| 3 Producers  (right image) 
-| -------------
-| percentile | 	millis kafka | millis smf
-| p50	     | 878		     | 21
-| p95	     | 1340		     | 36
-| p99	     | 1814		     | 49
-| p999	     | 1896		     | 54
-| p100	     | 1930		     | 54 
+| 3 Producers latency vs Apache Kafka (right image) 
+| --------------------------------------- 
+| percentile | Apache Kafka   | smf WAL | speedup |
+| p50	    | 878ms		  | 21ms    |     41X |
+| p95	    | 1340ms		 | 36ms    |     37x |
+| p99	    | 1814ms		 | 49ms    |     37x |
+| p999	   | 1896ms		 | 54ms    |     35x |
+| p100	   | 1930ms		 | 54ms    |     35x |
+
+
 
 <br />
 
