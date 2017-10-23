@@ -22,8 +22,7 @@ designed to be the building blocks of your next distributed systems.
 
 
 It is a new RPC system and code generation like gRPC, Cap n Proto,
-Apache Thrift, etc, but designed for 
-**low double digit microseconds on the tail latency**.
+Apache Thrift, etc, but designed for **microsecond tail latency**.
 
 Current benchmarks in microseconds
 
