@@ -31,7 +31,7 @@ else
     pip install paramiko PyYAML Jinja2 httplib2 yapf futures
     pip install ansible==2.3.1.0
     echo "Successfully installed ansible!"
-    echo "Next: ansible-playbook playbooks/devbox_all.yml"
+    echo "Next: ansible-playbook -K playbooks/devbox_all.yml"
 fi
 
 # check if git config stuff is set, ansible needs it
