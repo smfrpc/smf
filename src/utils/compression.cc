@@ -35,11 +35,10 @@ class zstd_codec : public codec {
     auto zstd_size = ZSTD_findDecompressedSize(
       static_cast<const void *>(data.get()), data.size());
 
-    if (zstd_size == ZSTD_CONTENTSIZE_ERROR) {
-      LOG_THROW("Cannot decompress. Not compressed by zstd");
-    } else if (zstd_size == ZSTD_CONTENTSIZE_UNKNOWN) {
-      LOG_THROW("Cannot decompress. Unknown payload size");
-    }
+    LOG_THROW_IF(zstd_size == ZSTD_CONTENTSIZE_ERROR,
+                 "Cannot decompress. Not compressed by zstd");
+    LOG_THROW_IF(zstd_size == ZSTD_CONTENTSIZE_UNKNOWN,
+                 "Cannot decompress. Unknown payload size");
 
     seastar::temporary_buffer<char> new_body(zstd_size);
 
@@ -47,13 +46,11 @@ class zstd_codec : public codec {
       ZSTD_decompress(static_cast<void *>(new_body.get_write()), zstd_size,
                       static_cast<const void *>(data.get()), data.size());
 
-    if (zstd_size == size_decompressed) {
-      new_body.trim(size_decompressed);
-    } else {
-      LOG_THROW(
-        "zstd decompression failed. Size expected: {}, decompressed size: {}",
-        zstd_size, size_decompressed);
-    }
+    LOG_THROW_IF(
+      zstd_size != size_decompressed,
+      "zstd decompression failed. Size expected: {}, decompressed size: {}",
+      zstd_size, size_decompressed);
+
     return std::move(new_body);
   }
 
@@ -74,17 +71,16 @@ class zstd_codec : public codec {
     const void *src = reinterpret_cast<const void *>(data);
 
     // create compressed buffers
-    auto zstd_compressed_size = ZSTD_compress(dst, buf.size(), src, body_size,
+    auto zstd_compressed_size = ZSTD_compress(dst, buf.size(), src, size,
                                               3 /*default compression level*/);
     // check erros
     auto zstd_err = ZSTD_isError(zstd_compressed_size);
-    if (SMF_LIKELY(zstd_err == 0)) {
-      buf.trim(zstd_compressed_size);
-    } else {
-      LOG_THROW("Error compressing zstd buffer. defaulting to uncompressed. "
-                "Code: {}, Desciption: {}",
-                zstd_err, ZSTD_getErrorName(zstd_err));
-    }
+    LOG_THROW_IF(zstd_err != 0,
+                 "Error compressing zstd buffer. defaulting to uncompressed. "
+                 "Code: {}, Desciption: {}",
+                 zstd_err, ZSTD_getErrorName(zstd_err));
+
+    buf.trim(zstd_compressed_size);
     return std::move(buf);
   }
 };
