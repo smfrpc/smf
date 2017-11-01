@@ -40,15 +40,9 @@ rpc_client::rpc_client(rpc_client &&o) noexcept
 
 seastar::future<> rpc_client::stop() {
   if (conn) {
-    auto c = conn;
-    c->socket.shutdown_input();
-    return c->istream.close().then_wrapped([c](auto _i) {
-      return c->ostream.flush().then_wrapped([c](auto _j) {
-        return c->ostream.close()
-          .then_wrapped([](auto _k) { return seastar::make_ready_future<>(); })
-          .finally([c] { c->socket.shutdown_output(); });
-      });
-    });
+    // proper way of closing connection that is safe
+    // of concurrency bugs
+    conn->socket.shutdown_input();
   }
   return seastar::make_ready_future<>();
 }
