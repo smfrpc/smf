@@ -10,6 +10,7 @@ namespace smf.rpc;
 ///
 enum compression_flags:byte {
   none,
+  disabled,
   /// brief uses zstandard 1.0
   zstd,
   /// lz4 is pending 
