@@ -125,12 +125,6 @@ class lz4_fast_codec : public codec {
                  "information.");
 
     seastar::write_le<uint32_t>(buf.get_write(), size);
-
-    DLOG_THROW_IF(deserialize_uint32_t(buf.get()) != size,
-                  "Could not read/write the buffer well. Serialized memory "
-                  "was: {}, but expected: {}",
-                  deserialize_uint32_t(buf.get()), size);
-
     buf.trim(compressed_data_size + 4);
     return std::move(buf);
   }
