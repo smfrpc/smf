@@ -37,7 +37,6 @@
 #endif
 
 
-
 #ifndef SMF_GCC_CONCEPTS
 #define SMF_CONCEPT(x...)
 #else

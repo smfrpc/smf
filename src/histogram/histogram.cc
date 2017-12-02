@@ -16,8 +16,7 @@ seastar::lw_shared_ptr<histogram> histogram::make_lw_shared(
   if (o != nullptr) { ::hdr_add(x->hist_->hist, o); }
   return x;
 }
-std::unique_ptr<histogram> histogram::make_unique(
-  const hdr_histogram *o) {
+std::unique_ptr<histogram> histogram::make_unique(const hdr_histogram *o) {
   std::unique_ptr<histogram> p(new histogram());
   assert(p->hist_->hist);
   if (o != nullptr) { ::hdr_add(p->hist_->hist, o); }

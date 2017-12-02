@@ -81,7 +81,7 @@ int main(int args, char **argv, char **env) {
             return conn->ostream.write(std::move(header_buf))
               .then([conn] { return conn->ostream.flush(); })
               .then([conn] {
-                  return seastar::sleep(std::chrono::milliseconds(10));
+                return seastar::sleep(std::chrono::milliseconds(10));
               })
               .finally([conn] {});
           });

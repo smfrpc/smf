@@ -39,8 +39,9 @@ int main(int argc, char **argv, char **env) {
   include_directories.push_back(local_include_directory.c_str());
   include_directories.push_back(nullptr);
 
-  LOG_IF(FATAL, !parser.Parse(contents.c_str(), &include_directories[0],
-                              FLAGS_filename.c_str()))
+  LOG_IF(FATAL,
+         !parser.Parse(contents.c_str(), &include_directories[0],
+                       FLAGS_filename.c_str()))
     << "Could not PARSE file: " << parser.error_;
 
   VLOG(1) << "File `" << FLAGS_filename << "` parsed. Generating";

@@ -37,8 +37,9 @@ std::unordered_map<uint32_t, smf::wal_write_request> core_map(
       auto core = smf::put_to_lcore(p->topic()->c_str(), it);
       if (retval.find(core) == retval.end()) {
         smf::wal_write_request req(
-          p, smf::priority_manager::thread_local_instance()
-               .streaming_write_priority(),
+          p,
+          smf::priority_manager::thread_local_instance()
+            .streaming_write_priority(),
           {it->partition()});
         retval.insert({core, std::move(req)});
       } else {

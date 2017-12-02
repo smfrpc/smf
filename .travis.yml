@@ -7,10 +7,12 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - g++-5
+      - g++-6
 
-before_script: cd meta && source source_ansible_bash && travis_wait 30 ansible-playbook playbooks/devbox_all.yml
+before_install: cd meta && source source_ansible_bash && travis_wait 240 ansible-playbook playbooks/devbox_all.yml && cd ..
 
 script:
-  - ./debug
-  - ./release
+  - travis_retry wget --no-check-certificate --quiet -O - "https://cmake.org/files/v3.8/cmake-3.8.0-Linux-x86_64.tar.gz" | tar --strip-components=1 -xz -C $HOME
+  - ~/bin/cmake --version
+  - $TRAVIS_BUILD_DIR/debug
+  - $TRAVIS_BUILD_DIR/release

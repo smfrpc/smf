@@ -16,8 +16,7 @@
 namespace smf {
 wal_reader_node::wal_reader_node(uint64_t epoch, seastar::sstring _filename)
   // needed signed for comparisons
-  : starting_epoch(static_cast<int64_t>(epoch)),
-    filename(_filename) {
+  : starting_epoch(static_cast<int64_t>(epoch)), filename(_filename) {
   namespace sm = seastar::metrics;
   metrics_.add_group(
     "smf::wal_reader_node::" + filename,

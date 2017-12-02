@@ -10,7 +10,7 @@
 namespace smf {
 
 seastar::future<seastar::temporary_buffer<char>>
-histogram_seastar_utils::print_histogram(histogram* h) {
+histogram_seastar_utils::print_histogram(histogram *h) {
   // HdrHistogram/GoogleChartsExample/example1.txt is 5K
   seastar::temporary_buffer<char> buf(4096 + 2048);
   FILE *fp = fmemopen(static_cast<void *>(buf.get_write()), buf.size(), "w+");
@@ -24,10 +24,10 @@ histogram_seastar_utils::print_histogram(histogram* h) {
     std::move(buf));
 }
 seastar::future<> histogram_seastar_utils::write_histogram(
-  seastar::sstring filename, histogram* h) {
-  return open_file_dma(filename, seastar::open_flags::rw
-                                   | seastar::open_flags::create
-                                   | seastar::open_flags::truncate)
+  seastar::sstring filename, histogram *h) {
+  return open_file_dma(filename,
+                       seastar::open_flags::rw | seastar::open_flags::create
+                         | seastar::open_flags::truncate)
     .then([h = std::move(h)](seastar::file file) mutable {
       auto f = seastar::make_lw_shared<seastar::output_stream<char>>(
         seastar::make_file_output_stream(std::move(file)));

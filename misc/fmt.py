@@ -55,18 +55,29 @@ def get_cpplint():
     return cmd
 
 
-def get_clang_format():
-    ret = subprocess.check_output("which clang-format", shell=True)
+def get_clang_prog(prog):
+    """ALL tools for clang should be pinned to one version"""
+    CLANG_SOURCE_VERSION = "4.0.1"
+    ret = subprocess.check_output("which %s" % prog, shell=True)
     if ret != None:
         original = "".join(str(ret).split())
         if "".join(
                 str(
                     subprocess.check_output(
-                        "%s --version | awk \'{print $3}\'" % original,
-                        shell=True))) != "3.9.1":
+                        "%s --version | grep %s | awk \'{print $3}\'" %
+                        (original, CLANG_SOURCE_VERSION),
+                        shell=True)).split()) != CLANG_SOURCE_VERSION:
             return None
         return original
     return None
+
+
+def get_clang_format():
+    return get_clang_prog("clang-format")
+
+
+def get_clang_tidy():
+    return get_clang_prog("clang-tidy")
 
 
 def get_git_files():
@@ -151,11 +162,13 @@ def cpplint_process(cmd, filename):
 def main():
     files = get_git_files()
     clang_fmt = get_clang_format()
+    clang_tidy = get_clang_tidy()
     cpplint = get_cpplint()
     root = get_git_root()
     logger.info("Git root: %s" % root)
     logger.info("Formatting %s files" % len(files))
     logger.info("Clang format: %s" % clang_fmt)
+    logger.info("Clang tidy: %s" % clang_tidy)
     logger.info("CPPLINT: %s" % cpplint)
 
     for f in files:
