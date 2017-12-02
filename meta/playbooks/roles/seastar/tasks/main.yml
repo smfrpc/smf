@@ -49,7 +49,7 @@
     - libgnutls28-dev
     - liblz4-dev
     - libsctp-dev
-    - g++-5
+    - g++-6
     - libprotobuf-dev
     - protobuf-compiler
     - python3
@@ -91,7 +91,7 @@
 
 - name: configure sources with dpdk enabled
   shell:
-    ./configure.py --enable-dpdk --static-boost --compiler=g++-5 \
+    ./configure.py --enable-dpdk --static-boost --compiler=g++-6 \
     --with=libseastar.a --with=seastar.pc \
     --cflags="-isystem {{third_party_dir}}/include" \
     --ldflags="-L{{third_party_dir}}/lib"

@@ -91,12 +91,14 @@ void cli_opts(boost::program_options::options_description_easy_init o) {
     "ip to connect to");
 
   smf::random rand;
-  o("port", po::value<uint16_t>()->default_value(smf::non_root_port(
-              rand.next() % std::numeric_limits<uint16_t>::max())),
+  o("port",
+    po::value<uint16_t>()->default_value(
+      smf::non_root_port(rand.next() % std::numeric_limits<uint16_t>::max())),
     "port for service");
 
-  o("httpport", po::value<uint16_t>()->default_value(smf::non_root_port(
-                  rand.next() % std::numeric_limits<uint16_t>::max())),
+  o("httpport",
+    po::value<uint16_t>()->default_value(
+      smf::non_root_port(rand.next() % std::numeric_limits<uint16_t>::max())),
     "port for http stats service");
 
 

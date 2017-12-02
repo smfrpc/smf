@@ -1,5 +1,8 @@
 #!/bin/bash
 set -e
+if [[ "${TRAVIS}" == "1" ]]; then
+    export PATH=~/bin:${PATH}
+fi
 git_root=$(git rev-parse --show-toplevel)
 build_dir=$git_root/build_release
 nprocs=$(grep -c ^processor /proc/cpuinfo)

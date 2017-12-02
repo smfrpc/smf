@@ -3,12 +3,12 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-#include <core/sstring.hh>
 #include <core/byteorder.hh>
+#include <core/sstring.hh>
 
 #include "utils/compression.h"
 
-using namespace smf; // NOLINT
+using namespace smf;  // NOLINT
 
 static const char *kPoem = "How do I love thee? Let me count the ways."
                            "I love thee to the depth and breadth and height"

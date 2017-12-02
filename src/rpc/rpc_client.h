@@ -58,9 +58,12 @@ struct rpc_client_opts {
 ///       This is coupled w/ a very specific server impl of processing one
 ///       request at a time per fiber
 ///
-/// Performance: We currently run at 26micros 100%-tile latency w/ a DPDK runtime
-///       With the posix stack we run about 180 micros w/ a client at posix and server
-///       running w/ dpdk. While both running on regular posix we run about 14ms.
+/// Performance: We currently run at 26micros 100%-tile latency w/ a DPDK
+/// runtime
+///       With the posix stack we run about 180 micros w/ a client at posix and
+///       server
+///       running w/ dpdk. While both running on regular posix we run about
+///       14ms.
 ///       Our p999 is 7 micros on the dpdk runtime and about 4ms w/ posix.
 ///
 class rpc_client {

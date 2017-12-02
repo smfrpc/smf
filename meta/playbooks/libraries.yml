@@ -2,6 +2,7 @@
 
 # We have this role but haven't integrated the lib yet
 # - range_v3          # ranges concept library
+# - linenoise_ng      # command line interactive prompt
 
 - name: Install & build all development dependencies
   hosts: localhost
@@ -17,5 +18,4 @@
     - zstd              # compression
     - lz4               # compression
     - roaring_bitmap    # bitmap but faster than std::lib
-    - linenoise_ng      # command line interactive prompt
     - libre2            # re2 cpp regex lib

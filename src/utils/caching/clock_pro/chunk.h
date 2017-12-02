@@ -27,9 +27,8 @@ concept bool ChunkKey = requires(T a, T b) {
 
 template <typename key_type, typename value_type>
 SMF_CONCEPT(requires ChunkKey<key_type> and ChunkValue<value_type>)
-struct chunk
-  : public boost::intrusive::set_base_hook<>,
-    public boost::intrusive::unordered_set_base_hook<> {
+struct chunk : public boost::intrusive::set_base_hook<>,
+               public boost::intrusive::unordered_set_base_hook<> {
   chunk() = delete;
 
   chunk(key_type &&k, value_type &&v) : key(std::move(k)), data(std::move(v)) {}
