@@ -1,7 +1,9 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
-#include <glog/logging.h>
 #include <iostream>
+
+#include <glog/logging.h>
+
 #include "rpc/smf_gen/cpp_generator.h"
 #include "rpc/smf_gen/smf_file.h"
 

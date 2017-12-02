@@ -57,7 +57,7 @@ T *throw_if_null(const char *file, int line, const char *names, T *t) {
     w.write("{}:{}] " format, __FILENAME__, __LINE__, ##args); \
     smf::internal_logger::get().error(w.data());               \
     throw std::runtime_error(w.data());                        \
-  } while (0)
+  } while (false)
 
 #define THROW_IFNULL(val)                            \
   smf::log_detail::throw_if_null(__FILE__, __LINE__, \
@@ -68,35 +68,35 @@ T *throw_if_null(const char *file, int line, const char *names, T *t) {
       smf::internal_logger::get().info("{}:{}] (" #condition ") " format, \
                                        __FILENAME__, __LINE__, ##args);   \
     }                                                                     \
-  } while (0)
+  } while (false)
 #define LOG_ERROR_IF(condition, format, args...)                           \
   do {                                                                     \
     if (condition) {                                                       \
       smf::internal_logger::get().error("{}:{}] (" #condition ") " format, \
                                         __FILENAME__, __LINE__, ##args);   \
     }                                                                      \
-  } while (0)
+  } while (false)
 #define LOG_DEBUG_IF(condition, format, args...)                           \
   do {                                                                     \
     if (condition) {                                                       \
       smf::internal_logger::get().debug("{}:{}] (" #condition ") " format, \
                                         __FILENAME__, __LINE__, ##args);   \
     }                                                                      \
-  } while (0)
+  } while (false)
 #define LOG_WARN_IF(condition, format, args...)                           \
   do {                                                                    \
     if (condition) {                                                      \
       smf::internal_logger::get().warn("{}:{}] (" #condition ") " format, \
                                        __FILENAME__, __LINE__, ##args);   \
     }                                                                     \
-  } while (0)
+  } while (false)
 #define LOG_TRACE_IF(condition, format, args...)                           \
   do {                                                                     \
     if (condition) {                                                       \
       smf::internal_logger::get().trace("{}:{}] (" #condition ") " format, \
                                         __FILENAME__, __LINE__, ##args);   \
     }                                                                      \
-  } while (0)
+  } while (false)
 #define LOG_THROW_IF(condition, format, args...)                         \
   do {                                                                   \
     if (SMF_UNLIKELY(condition)) {                                       \
@@ -106,7 +106,7 @@ T *throw_if_null(const char *file, int line, const char *names, T *t) {
       smf::internal_logger::get().error(w.data());                       \
       throw std::runtime_error(w.data());                                \
     }                                                                    \
-  } while (0)
+  } while (false)
 
 
 #ifndef NDEBUG
@@ -134,21 +134,21 @@ T *throw_if_null(const char *file, int line, const char *names, T *t) {
       smf::internal_logger::get().info("{}:{}] (" #condition ") " format, \
                                        __FILENAME__, __LINE__, ##args);   \
     }                                                                     \
-  } while (0)
+  } while (false)
 #define DLOG_ERROR_IF(condition, format, args...)                          \
   do {                                                                     \
     if (condition) {                                                       \
       smf::internal_logger::get().error("{}:{}] (" #condition ") " format, \
                                         __FILENAME__, __LINE__, ##args);   \
     }                                                                      \
-  } while (0)
+  } while (false)
 #define DLOG_DEBUG_IF(condition, format, args...)                          \
   do {                                                                     \
     if (condition) {                                                       \
       smf::internal_logger::get().debug("{}:{}] (" #condition ") " format, \
                                         __FILENAME__, __LINE__, ##args);   \
     }                                                                      \
-  } while (0)
+  } while (false)
 
 #define DLOG_WARN_IF(condition, format, args...)                          \
   do {                                                                    \
@@ -156,14 +156,14 @@ T *throw_if_null(const char *file, int line, const char *names, T *t) {
       smf::internal_logger::get().warn("{}:{}] (" #condition ") " format, \
                                        __FILENAME__, __LINE__, ##args);   \
     }                                                                     \
-  } while (0)
+  } while (false)
 #define DLOG_TRACE_IF(condition, format, args...)                          \
   do {                                                                     \
     if (condition) {                                                       \
       smf::internal_logger::get().trace("{}:{}] (" #condition ") " format, \
                                         __FILENAME__, __LINE__, ##args);   \
     }                                                                      \
-  } while (0)
+  } while (false)
 #define DLOG_THROW_IF(condition, format, args...)                        \
   do {                                                                   \
     if (SMF_UNLIKELY(condition)) {                                       \
@@ -173,7 +173,7 @@ T *throw_if_null(const char *file, int line, const char *names, T *t) {
       smf::internal_logger::get().error(w.data());                       \
       throw std::runtime_error(w.data());                                \
     }                                                                    \
-  } while (0)
+  } while (false)
 
 #else
 #define DTHROW_IFNULL(x) ((void)0)

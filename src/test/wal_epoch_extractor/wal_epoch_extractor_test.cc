@@ -1,6 +1,7 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #include <gtest/gtest.h>
+
 #include "filesystem/wal_name_extractor_utils.h"
 
 

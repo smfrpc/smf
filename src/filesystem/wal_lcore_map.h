@@ -10,4 +10,4 @@ uint32_t put_to_lcore(const char *                           topic,
 
 /// \brief map the request to the lcore that is going to handle the reads
 uint32_t get_to_lcore(const smf::wal::tx_get_request *r);
-}
+} // namespace smf

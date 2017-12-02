@@ -95,7 +95,7 @@ void rpc_server::start() {
     return listener_->accept().then([this, stats = stats_, limits = limits_](
       seastar::connected_socket fd, seastar::socket_address addr) mutable {
       auto conn = seastar::make_lw_shared<rpc_server_connection>(
-        std::move(fd), limits, std::move(addr), stats, ++connection_idx_);
+        std::move(fd), limits, addr, stats, ++connection_idx_);
 
       open_connections_.insert({connection_idx_, conn});
 

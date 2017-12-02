@@ -15,19 +15,19 @@ ostream &operator<<(ostream &o, const smf::rpc::header &h) {
                                        smf::rpc::headerTypeTable());
   return o;
 }
-}
+}  // namespace std
 
 namespace smf {
 namespace exp = std::experimental;
 
 rpc_recv_context::rpc_recv_context(rpc::header                     hdr,
                                    seastar::temporary_buffer<char> body)
-  : header(std::move(hdr)), payload(std::move(body)) {
+  : header(hdr), payload(std::move(body)) {
   assert(header.size() == payload.size());
 }
 
 rpc_recv_context::rpc_recv_context(rpc_recv_context &&o) noexcept
-  : header(std::move(o.header)), payload(std::move(o.payload)) {}
+  : header(o.header), payload(std::move(o.payload)) {}
 
 rpc_recv_context::~rpc_recv_context() {}
 
@@ -104,7 +104,7 @@ seastar::future<exp::optional<rpc_recv_context>> process_payload(
         return seastar::make_ready_future<ret_type>(exp::nullopt);
       }
 
-      rpc_recv_context ctx(std::move(hdr), std::move(body));
+      rpc_recv_context ctx(hdr, std::move(body));
       return seastar::make_ready_future<ret_type>(
         exp::optional<rpc_recv_context>(std::move(ctx)));
     });
@@ -135,7 +135,7 @@ seastar::future<exp::optional<rpc_recv_context>> rpc_recv_context::parse(
         LOG_ERROR("Emty body to parse. skipping");
         return seastar::make_ready_future<ret_type>(exp::nullopt);
       }
-      return process_payload(conn, std::move(hdr));
+      return process_payload(conn, hdr);
     })
     .finally([conn] { conn->istream_active_parser--; });
 }

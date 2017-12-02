@@ -1,7 +1,9 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
-#include <gtest/gtest.h>
 #include <memory>
+
+#include <gtest/gtest.h>
+
 #include "utils/caching/clock_pro/chunk.h"
 #include "utils/caching/clock_pro/clock_pro.h"
 

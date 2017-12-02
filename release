@@ -26,6 +26,10 @@ cmake --graphviz=$build_dir/dependencies.dot \
       -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
       -DCMAKE_BUILD_TYPE=Release $git_root
 
+# for fmt.py
+ln -sfn "$build_dir/compile_commands.json" "$git_root/compile_commands.json"
+
+
 #produce documentation
 if [[ $1 != "quick" ]]; then
     cmake --build $build_dir --target doc

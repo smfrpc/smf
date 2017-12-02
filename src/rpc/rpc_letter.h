@@ -15,7 +15,7 @@ struct rpc_letter {
   rpc_letter(rpc::header,
              std::unordered_map<seastar::sstring, seastar::sstring>,
              seastar::temporary_buffer<char>);
-  rpc_letter &operator=(rpc_letter &&l);
+  rpc_letter &operator=(rpc_letter &&l) noexcept;
   rpc_letter(rpc_letter &&) noexcept;
   ~rpc_letter();
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_letter);

@@ -40,8 +40,8 @@ seastar::lw_shared_ptr<wal_write_projection::item> xform(
   auto retval = seastar::make_lw_shared<wal_write_projection::item>();
 
   if (fbb.GetSize() > kMinCompressionSize) {
-    retval->fragment = std::move(
-      compression->compress((char *)fbb.GetBufferPointer(), fbb.GetSize()));
+    retval->fragment =
+      compression->compress((char *)fbb.GetBufferPointer(), fbb.GetSize());
     retval->hdr.mutable_ptr()->mutate_compression(
       wal_entry_compression_type::wal_entry_compression_type_lz4);
   } else {

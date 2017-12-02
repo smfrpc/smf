@@ -1,10 +1,13 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #include "rpc/smf_gen/cpp_generator.h"
-#include <gflags/gflags.h>
-#include <glog/logging.h>
+
 #include <map>
 #include <sstream>
+
+#include <gflags/gflags.h>
+#include <glog/logging.h>
+
 #include "rpc/smf_gen/smf_file.h"
 #include "rpc/smf_gen/smf_printer.h"
 
@@ -168,7 +171,7 @@ void print_header_service_method(smf_printer *     printer,
 
   std::map<std::string, std::string> vars;
   vars["MethodName"] = method->name();
-  vars["MethodId"]   = method->method_id();
+  vars["MethodId"]   = std::to_string(method->method_id());
   vars["InType"]     = method->input_type_name();
   vars["OutType"]    = method->output_type_name();
   printer->print(

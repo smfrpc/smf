@@ -116,11 +116,8 @@ class rpc_server {
   std::vector<out_filter_t> out_filters_;
 
   seastar::lw_shared_ptr<histogram> hist_ = histogram::make_lw_shared();
-  uint32_t                          flags_;
-
   seastar::lw_shared_ptr<rpc_connection_limits> limits_ = nullptr;
-
-  seastar::lw_shared_ptr<seastar::http_server> admin_ = nullptr;
+  seastar::lw_shared_ptr<seastar::http_server>  admin_  = nullptr;
 
   seastar::metrics::metric_groups metrics_{};
   // connection counting happens in different future

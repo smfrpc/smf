@@ -13,7 +13,7 @@ static seastar::sstring canonical_dir(const seastar::sstring &directory) {
 wal_opts::wal_opts(seastar::sstring log) : directory(canonical_dir(log)) {}
 
 wal_opts::wal_opts(wal_opts &&o) noexcept
-  : directory(std::move(o.directory)), type(std::move(o.type)) {}
+  : directory(std::move(o.directory)), type(o.type) {}
 
 wal_opts::wal_opts(const wal_opts &o) : directory(o.directory), type(o.type) {}
 

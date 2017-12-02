@@ -13,6 +13,9 @@ cmake -Wdev \
       -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
       -DCMAKE_BUILD_TYPE=Debug $git_root
 
+# for fmt.py
+ln -sfn "$build_dir/compile_commands.json" "$git_root/compile_commands.json"
+
 nprocs=$(grep -c ^processor /proc/cpuinfo)
 os=$(lsb_release 2> /dev/null -si | tr '[:upper:]' '[:lower:]')
 if [[ ${os} == "ubuntu" ]]; then

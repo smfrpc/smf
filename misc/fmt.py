@@ -6,6 +6,8 @@ import subprocess
 import datetime
 import logging
 import logging.handlers
+import argparse
+import distutils.util
 
 fmt_string = 'smf::fmt %(levelname)s:%(asctime)s %(filename)s:%(lineno)d] %(message)s'
 logging.basicConfig(format=fmt_string)
@@ -16,6 +18,21 @@ for h in logging.getLogger().handlers:
 
 logger = logging.getLogger('smf::fmt')
 logger.setLevel(logging.INFO)
+
+
+def generate_options():
+    parser = argparse.ArgumentParser(description='run smf formatter fmt.py')
+    parser.add_argument(
+        '--log',
+        type=str,
+        default='INFO',
+        help='info,debug, type log levels. i.e: --log=debug')
+    parser.add_argument(
+        '--tidy',
+        type=distutils.util.strtobool,
+        default='false',
+        help='run formatter with clang-tidy')
+    return parser
 
 
 def get_git_root():
@@ -29,6 +46,20 @@ def get_git_user():
     ret = str(subprocess.check_output("git config user.name", shell=True))
     assert ret is not None, "Failed getting git user"
     return "".join(ret.split("\n"))
+
+
+def get_build_dir_type(d):
+    build_dir = "%s/build_%s" % (get_git_root(), d)
+    if not os.path.isdir(build_dir): return None
+    return build_dir
+
+
+def get_debug_build_dir():
+    return get_build_dir_type("debug")
+
+
+def get_release_build_dir():
+    return get_build_dir_type("release")
 
 
 def run_subprocess(cmd):
@@ -90,6 +121,12 @@ def get_git_files():
 
 def is_clang_fmt_file(filename):
     for ext in [".cc", ".cpp", ".h", ".hpp", ".proto", ".java", ".js"]:
+        if filename.endswith(ext): return True
+    return False
+
+
+def is_clang_tidy_file(filename):
+    for ext in [".cc", ".cpp"]:
         if filename.endswith(ext): return True
     return False
 
@@ -165,11 +202,27 @@ def main():
     clang_tidy = get_clang_tidy()
     cpplint = get_cpplint()
     root = get_git_root()
+    can_run_clang_tidy = None
+
     logger.info("Git root: %s" % root)
     logger.info("Formatting %s files" % len(files))
     logger.info("Clang format: %s" % clang_fmt)
     logger.info("Clang tidy: %s" % clang_tidy)
     logger.info("CPPLINT: %s" % cpplint)
+
+    parser = generate_options()
+    options, program_options = parser.parse_known_args()
+
+    if options.tidy == True:
+        if not clang_tidy:
+            raise Exception(
+                "error tried to run clang tidy but binary not found")
+        can_run_clang_tidy = True
+
+    # set logging levels
+    logger.setLevel(getattr(logging, options.log.upper(), None))
+    logger.info("Loging level: %s" % options.log)
+    logger.info("Options -tidy: %s" % options.tidy)
 
     for f in files:
         f = "%s/%s" % (root, f)
@@ -178,8 +231,15 @@ def main():
         insert_legal(f)
         try:
             if is_clang_fmt_file(f):
+                # fixing code
+                if is_clang_tidy_file(
+                        f
+                ) and clang_tidy != None and can_run_clang_tidy != None:
+                    run_subprocess("%s -header-filter=.* -fix %s" % (clang_tidy, f))
+                # fixing formatting
                 if clang_fmt != None:
                     run_subprocess("%s -i %s" % (clang_fmt, f))
+                # always run
                 cpplint_process("%s --verbose=5 --counting=detailed" % cpplint,
                                 f)
         except Exception as e:

@@ -17,8 +17,8 @@ struct rpc_server_connection_options {
                                          bool _keepalive = false)
     : nodelay(_nodelay), enable_keepalive(_keepalive) {}
   rpc_server_connection_options(rpc_server_connection_options &&o) noexcept
-    : nodelay(std::move(o.nodelay))
-    , enable_keepalive(std::move(o.enable_keepalive))
+    : nodelay(o.nodelay)
+    , enable_keepalive(o.enable_keepalive)
     , keepalive(std::move(o.keepalive)) {}
 
   const bool nodelay;
@@ -73,7 +73,7 @@ class rpc_server_connection : public rpc_connection {
     rpc_server_connection_options opts = rpc_server_connection_options(false,
                                                                        false))
     : rpc_connection(std::move(sock), conn_limits)
-    , remote_address(std::move(address))
+    , remote_address(address)
     , id(connection_id)
     , stats(_stats)
     , opts_(std::move(opts)) {

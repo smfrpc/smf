@@ -14,7 +14,7 @@
 namespace smf {
 class histogram;
 struct histogram_measure;
-}
+}  // namespace smf
 
 namespace smf {
 // VERY Expensive object. At this granularity is about 185KB
@@ -27,7 +27,7 @@ struct hist_t {
                &hist);               // Pointer to initialize
   }
 
-  hist_t(hist_t &&o) noexcept : hist(std::move(o.hist)) {}
+  hist_t(hist_t &&o) noexcept : hist(o.hist) {}
 
   SMF_DISALLOW_COPY_AND_ASSIGN(hist_t);
 
@@ -54,7 +54,7 @@ class histogram : public seastar::enable_lw_shared_from_this<histogram> {
 
   histogram(histogram &&o) noexcept;
 
-  histogram &operator=(histogram &&o);
+  histogram &operator=(histogram &&o) noexcept;
   histogram &operator+=(const histogram &o);
 
   void record(const uint64_t &v);
@@ -92,9 +92,9 @@ struct histogram_measure {
   SMF_DISALLOW_COPY_AND_ASSIGN(histogram_measure);
 
   histogram_measure(histogram_measure &&o) noexcept
-    : trace_(std::move(trace_))
+    : trace_(o.trace_)
     , h(std::move(o.h))
-    , begin_t(std::move(o.begin_t)) {}
+    , begin_t(o.begin_t) {}
 
   void set_trace(bool b) { trace_ = b; }
 

@@ -51,7 +51,7 @@ class zstd_codec : public codec {
       "zstd decompression failed. Size expected: {}, decompressed size: {}",
       zstd_size, size_decompressed);
 
-    return std::move(new_body);
+    return new_body;
   }
 
 
@@ -81,7 +81,7 @@ class zstd_codec : public codec {
                  zstd_err, ZSTD_getErrorName(zstd_err));
 
     buf.trim(zstd_compressed_size);
-    return std::move(buf);
+    return buf;
   }
 };
 
@@ -122,7 +122,7 @@ class lz4_fast_codec : public codec {
 
     seastar::write_le<uint32_t>(buf.get_write(), size);
     buf.trim(compressed_data_size + 4);
-    return std::move(buf);
+    return buf;
   }
 
 
@@ -145,7 +145,7 @@ class lz4_fast_codec : public codec {
                  "I'm not sure this function can ever return 0.  "
                  "Documentation in lz4.h doesn't indicate so.");
     buf.trim(decompressed_size);
-    return std::move(buf);
+    return buf;
   }
 };
 

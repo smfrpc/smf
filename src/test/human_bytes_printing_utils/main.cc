@@ -2,6 +2,7 @@
 //
 #include <gtest/gtest.h>
 #include <sstream>
+
 #include "utils/human_bytes_printing_utils.h"
 
 TEST(human_bytes_printing_utils, basic) {

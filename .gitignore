@@ -42,3 +42,6 @@ build_debug/
 build_release/
 
 .DS_Store
+
+# clang-tidy
+compile_commands.json

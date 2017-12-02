@@ -25,7 +25,7 @@ seastar::sstring randstr(const seastar::sstring &                 dict,
     uint32_t idx = dist(rand);
     retval[i]    = dict[idx];
   }
-  return std::move(retval);
+  return retval;
 }
 
 seastar::sstring random::next_str(uint32_t size) {

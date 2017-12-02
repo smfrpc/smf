@@ -11,31 +11,30 @@
 #include "platform/log.h"
 
 namespace smf {
-rpc_client::rpc_client(seastar::ipv4_addr addr) : server_addr(std::move(addr)) {
+rpc_client::rpc_client(seastar::ipv4_addr addr) : server_addr(addr) {
   rpc_client_opts opts;
   limits = seastar::make_lw_shared<rpc_connection_limits>(
     opts.basic_req_bloat_size, opts.bloat_mult, opts.memory_avail_for_client,
     opts.recv_timeout);
 }
-rpc_client::rpc_client(rpc_client_opts opts)
-  : server_addr(std::move(opts.server_addr)) {
+rpc_client::rpc_client(rpc_client_opts opts) : server_addr(opts.server_addr) {
   limits = seastar::make_lw_shared<rpc_connection_limits>(
     opts.basic_req_bloat_size, opts.bloat_mult, opts.memory_avail_for_client,
     opts.recv_timeout);
 }
 
 rpc_client::rpc_client(rpc_client &&o) noexcept
-  : server_addr(std::move(o.server_addr))
+  : server_addr(o.server_addr)
   , limits(std::move(o.limits))
-  , is_error_state(std::move(o.is_error_state))
-  , read_counter(std::move(o.read_counter))
+  , is_error_state(o.is_error_state)
+  , read_counter(o.read_counter)
   , conn(std::move(o.conn))
   , rpc_slots(std::move(o.rpc_slots))
   , in_filters_(std::move(o.in_filters_))
   , out_filters_(std::move(o.out_filters_))
   , serialize_writes_(std::move(o.serialize_writes_))
   , hist_(std::move(o.hist_))
-  , session_idx_(std::move(o.session_idx_)) {}
+  , session_idx_(o.session_idx_) {}
 
 
 seastar::future<> rpc_client::stop() {
@@ -46,7 +45,7 @@ seastar::future<> rpc_client::stop() {
   }
   return seastar::make_ready_future<>();
 }
-rpc_client::~rpc_client() {}
+rpc_client::~rpc_client() = default;
 
 void rpc_client::disable_histogram_metrics() { hist_ = nullptr; }
 void rpc_client::enable_histogram_metrics() {

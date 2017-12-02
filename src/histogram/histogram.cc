@@ -20,7 +20,7 @@ std::unique_ptr<histogram> histogram::make_unique(const hdr_histogram *o) {
   std::unique_ptr<histogram> p(new histogram());
   assert(p->hist_->hist);
   if (o != nullptr) { ::hdr_add(p->hist_->hist, o); }
-  return std::move(p);
+  return p;
 }
 
 histogram::histogram() {}
@@ -31,7 +31,7 @@ histogram &histogram::operator+=(const histogram &o) {
   return *this;
 }
 
-histogram &histogram::operator=(histogram &&o) {
+histogram &histogram::operator=(histogram &&o) noexcept {
   hist_ = std::move(o.hist_);
   return *this;
 }

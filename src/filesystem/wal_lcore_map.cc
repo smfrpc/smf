@@ -29,4 +29,4 @@ uint32_t get_to_lcore(const smf::wal::tx_get_request *p) {
   return jump_consistent_hash(tp_hash, seastar::smp::count);
 }
 
-}  // end namespace smf
+}  // namespace smf
