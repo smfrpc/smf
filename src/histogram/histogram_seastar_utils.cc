@@ -28,7 +28,7 @@ seastar::future<> histogram_seastar_utils::write_histogram(
   return open_file_dma(filename,
                        seastar::open_flags::rw | seastar::open_flags::create
                          | seastar::open_flags::truncate)
-    .then([h](seastar::file file) mutable {
+    .then([h = std::move(h)](seastar::file file) mutable {
       auto f = seastar::make_lw_shared<seastar::output_stream<char>>(
         seastar::make_file_output_stream(std::move(file)));
       return histogram_seastar_utils::print_histogram(h).then(

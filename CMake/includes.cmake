@@ -2,7 +2,13 @@ link_directories(
   ${SEASTAR_LIBRARY_DIRS}
   ${PROJECT_SOURCE_DIR}/src/third_party/lib
   ${PROJECT_SOURCE_DIR}/src/third_party/lib64
-  /usr/local/lib # must be last if locals aren't used
+  # system includes should be last
+  /usr/local/lib
+  /usr/local/lib64
+  /usr/lib
+  /usr/lib64
+  /lib
+  /lib64
   )
 include_directories(
   SYSTEM
