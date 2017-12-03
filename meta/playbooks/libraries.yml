@@ -6,6 +6,7 @@
 
 - name: Install & build all development dependencies
   hosts: localhost
+  environment: '{{ build_env }}'
   roles:
     - fastrange         # very fast hash-mod
     - gflags            # flag parsing for code generator

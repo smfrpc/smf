@@ -14,4 +14,4 @@
 - shell: "make install -j$((({{ansible_processor_vcpus}}-1))) PREFIX='{{third_party_dir}}'"
   args:
     chdir: '{{goobly_cache_dir}}/lz4'
-    creates: '{{third_party_dir}}/lib/lz4.a'
+    creates: '{{third_party_dir}}/lib/liblz4.a'

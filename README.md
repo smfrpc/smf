@@ -1,4 +1,8 @@
-# [smf](http://senior7515.github.io/smf/)      [![Travis Build Status](https://travis-ci.org/senior7515/smf.svg?branch=master)](https://travis-ci.org/senior7515/smf)
+# [smf](http://senior7515.github.io/smf/) 
+
+Semaphore: [![Build Status](https://semaphoreci.com/api/v1/senior7515/smf/branches/master/badge.svg)](https://semaphoreci.com/senior7515/smf)
+
+Travis: [![Build Status](https://travis-ci.org/senior7515/smf.svg?branch=master)](https://travis-ci.org/senior7515/smf)
 
 **smf** is pronounced **/smɝf/**
 

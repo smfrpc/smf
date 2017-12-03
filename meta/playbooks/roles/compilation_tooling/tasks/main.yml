@@ -1,12 +1,14 @@
 ---
 
+# Note that we need 1 compiler to bootstrap our
+# OWN compiler. At time of writing we bootstrap gcc-7.2
+
 - name: Install all dev system tools
   become: yes
   dnf: name='{{item}}'
   with_items:
     - gcc-c++
     - ccache
-    - cmake
     - git
     - binutils
     - libtool
@@ -27,7 +29,6 @@
   with_items:
     - g++
     - ccache
-    - cmake
     - make
     - git
     - libtool
