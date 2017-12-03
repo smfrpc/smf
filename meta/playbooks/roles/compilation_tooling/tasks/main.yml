@@ -4,11 +4,8 @@
   become: yes
   dnf: name='{{item}}'
   with_items:
-    - gcc-c++
     - ccache
-    - cmake
     - git
-    - binutils
     - libtool
     - clang
     - doxygen
@@ -25,13 +22,10 @@
   become: yes
   apt: name='{{item}}'
   with_items:
-    - g++
     - ccache
-    - cmake
     - make
     - git
     - libtool
-    - binutils
     - clang
     - doxygen
     - libgtest-dev

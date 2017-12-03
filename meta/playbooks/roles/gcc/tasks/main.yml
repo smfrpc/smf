@@ -1,0 +1,72 @@
+---
+
+
+- name: Get binutils sources
+  unarchive:
+    src: 'https://ftp.gnu.org/gnu/binutils/binutils-2.29.tar.gz'
+    dest: '{{goobly_cache_dir}}/'
+    creates: '{{goobly_cache_dir}}/binutils-2.29'
+    remote_src: True
+
+- set_fact:
+    target: x86_64-elf
+
+- name: Configure binutils
+  shell:
+    './configure --target={{target}} --prefix={{third_party_dir}} --disable-nls --disable-werror'
+  args:
+    chdir='{{goobly_cache_dir}}/binutils-2.29'
+
+- name: Install binutils
+  shell:
+    "make install -j$((({{ansible_processor_vcpus}}-1))) PREFIX={{third_party_dir}}"
+  args:
+    chdir='{{goobly_cache_dir}}/binutils-2.29'
+
+
+- name: install os gcc deps
+  become: yes
+  apt:
+    name='{{item}}'
+  with_items:
+    - libgmp-dev
+    - libmpfr-dev
+    - libmpc-dev
+  when: ansible_os_family == "Debian"
+
+- name: install os gcc deps
+  become: yes
+  dnf:
+    name='{{item}}'
+  with_items:
+    - gmp-devel
+    - mpfr-devel
+    - libmpc-devel
+  when: ansible_os_family == "RedHat"
+
+- set_fact:
+    gcc_version: 7.2.0
+
+
+- name: Sync soure from git
+  git:
+    repo='https://github.com/gcc-mirror/gcc.git'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/gcc'
+    update=yes
+    recursive=yes
+    force=yes
+    version='gcc-7_2_0-release'
+
+- name: configure gcc only for c and c++
+  shell:
+    "./gcc-{{gcc_version}}/configure --target={{target}} --prefix={{third_party_dir}} --enable-languages=c,c++"
+  args:
+    chdir='{{goobly_cache_dir}}/gcc'
+
+- name: install gcc
+  shell:
+    "make install -j$((({{ansible_processor_vcpus}}-1))) PREFIX={{third_party_dir}}"
+  args:
+    chdir='{{goobly_cache_dir}}/gcc'
