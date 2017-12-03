@@ -5,6 +5,8 @@ link_directories(
   # system includes should be last
   /usr/local/lib
   /usr/local/lib64
+  /usr/lib
+  /usr/lib64
   /lib
   /lib64
   )
