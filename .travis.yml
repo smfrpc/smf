@@ -8,8 +8,6 @@ compiler: gcc
       - g++-7
 
 before_install:
-  - update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 60 --slave /usr/bin/g++ g++ /usr/bin/g++-7
-  - update-alternatives --config gcc
   - cd meta && source source_ansible_bash && travis_wait 640 ansible-playbook playbooks/devbox_all.yml && cd ..
 
 script:
