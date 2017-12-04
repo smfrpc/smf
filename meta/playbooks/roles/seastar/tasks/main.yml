@@ -87,7 +87,6 @@
   args:
     chdir: '{{goobly_cache_dir}}/seastar'
     creates: '{{goobly_cache_dir}}/seastar/build.ninja'
-  when: ansible_os_family == "RedHat"
 
 - name: build with ninja
   shell:
