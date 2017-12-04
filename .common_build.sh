@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# Copyright 2017 Alexander Gallego
+#
+
 set -e
 git_root=$(git rev-parse --show-toplevel)
 PATH=$git_root/src/third_party/bin:$PATH
@@ -15,7 +19,7 @@ CC=${git_root}/src/third_party/bin/gcc
 CXX=${git_root}/src/third_party/bin/g++
 
 cmake_cmd=${git_root}/src/third_party/bin/cmake
-ctest_cmd=${git_root}/src/third_party/bin/cmake
+ctest_cmd=${git_root}/src/third_party/bin/ctest
 
 
 # TODO(agallego) - I have a bug in the cmake I need to fix

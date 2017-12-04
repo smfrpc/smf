@@ -21,8 +21,8 @@ fi
 
 $cmake_cmd --graphviz=$build_dir/dependencies.dot \
            -Wno-dev \
-           -DCMAKE_C_COMPILER='$CC' \
-           -DCMAKE_CXX_COMPILER='$CXX' \
+           -DCMAKE_C_COMPILER=$CC \
+           -DCMAKE_CXX_COMPILER=$CXX \
            -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
            -DCMAKE_BUILD_TYPE=Release $git_root
 
@@ -32,7 +32,7 @@ ln -sfn "$build_dir/compile_commands.json" "$git_root/compile_commands.json"
 
 #produce documentation
 if [[ $1 != "quick" ]]; then
-    cmake --build $build_dir --target doc
+    $cmake_cmd --build $build_dir --target doc
 fi
 
 # from .common_build.sh

@@ -92,9 +92,7 @@ struct histogram_measure {
   SMF_DISALLOW_COPY_AND_ASSIGN(histogram_measure);
 
   histogram_measure(histogram_measure &&o) noexcept
-    : trace_(o.trace_)
-    , h(std::move(o.h))
-    , begin_t(o.begin_t) {}
+    : trace_(o.trace_), h(std::move(o.h)), begin_t(o.begin_t) {}
 
   void set_trace(bool b) { trace_ = b; }
 
