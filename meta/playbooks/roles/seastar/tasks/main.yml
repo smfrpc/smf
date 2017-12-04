@@ -79,8 +79,11 @@
     force=yes
     version='e60afd2'
 
+# needs to be exported because seastar
+# shells out to c-ares dns lib and others
 - name: configure sources with dpdk enabled
   shell:
+    export CC={{c_compiler}}  && export CXX={{cxx_compiler}} && \
     ./configure.py --enable-dpdk --static-boost \
     --cflags="-isystem {{third_party_dir}}/include" \
     --ldflags="-L{{third_party_dir}}/lib"
