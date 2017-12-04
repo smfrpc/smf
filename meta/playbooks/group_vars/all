@@ -4,3 +4,35 @@ third_party_dir: '{{inventory_dir}}/../src/third_party'
 goobly_cache_dir: '{{inventory_dir}}/tmp'
 user_bin_dir: '{{ansible_env.HOME}}/bin'
 cmake_dir: '{{inventory_dir}}/../CMake'
+
+# Flags
+default_c_flags: '-I{{ third_party_dir }}/include'
+default_cxx_flags: '-I{{ third_party_dir }}/include'
+default_ld_flags: '-L{{ third_party_dir }}/lib'
+
+# Ensure compiler is always set
+c_compiler: "{{ third_party_dir }}/bin/gcc"
+cxx_compiler: "{{ third_party_dir }}/bin/g++"
+
+# PATH stuff
+path: "{{third_party_dir}}/bin:{{ lookup('env', 'PATH') | default('/bin:/usr/bin:/usr/local/bin') }}"
+
+
+# Default build environment
+# - Ensure that defaults are set when lookup returns ""
+# - Append all flags with the matching default above
+# - Unset M* variables because Akamake...
+build_env:
+  CC: '{{ c_compiler if c_compiler != "" else "gcc" }}'
+  CXX: '{{ cxx_compiler if cxx_compiler != "" else "g++" }}'
+  CMAKE_C_COMPILER: '{{ c_compiler if c_compiler != "" else "gcc" }}'
+  CMAKE_CXX_COMPILER: '{{ cxx_compiler if cxx_compiler != "" else "g++" }}'
+  CFLAGS: "{{ lookup('env','CFLAGS') }} {{ default_c_flags }}"
+  CPPFLAGS: "{{ lookup('env','CPPFLAGS') }} {{ default_cxx_flags }}"
+  CXXFLAGS: "{{ lookup('env','CXXFLAGS') }} {{ default_cxx_flags }}"
+  LDFLAGS: "{{ lookup('env','LDFLAGS') }} {{ default_ld_flags }}"
+  LD_LIBRARY_PATH: "{{ lookup('env','LD_LIBRARY_PATH') | default('') }}"
+  PATH: "{{ path }}"
+  MFLAGS: ""
+  MAKEFLAGS: ""
+  MAKEOVERRIDES: ""

@@ -1,8 +1,7 @@
 #!/bin/bash
 set -e
 git_root=$(git rev-parse --show-toplevel)
-
-source .common_build.sh
+source $git_root/.common_build.sh
 
 build_dir=$git_root/build_release
 mkdir -p $build_dir
@@ -22,6 +21,8 @@ fi
 
 cmake --graphviz=$build_dir/dependencies.dot \
       -Wno-dev \
+      -DCMAKE_C_COMPILER='$CC' \
+      -DCMAKE_CXX_COMPILER='$CXX' \
       -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
       -DCMAKE_BUILD_TYPE=Release $git_root
 

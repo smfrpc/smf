@@ -8,7 +8,9 @@
     creates: '{{goobly_cache_dir}}/cmake-3.10.0-Linux-x86_64'
     remote_src: True
 
-- name: setting up gdbinit symlinks
+- file: path='{{third_party_dir}}/bin' state=directory
+
+- name: setting up cmake symlinks
   file:
     src: '{{goobly_cache_dir}}/cmake-3.10.0-Linux-x86_64/bin/{{item}}'
     dest: '{{third_party_dir}}/bin/{{item}}'
