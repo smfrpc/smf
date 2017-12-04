@@ -8,8 +8,6 @@ mkdir -p $build_dir
 cd $build_dir
 $cmake_cmd -Wdev \
            --debug-output \
-           -DCMAKE_C_COMPILER=$CC \
-           -DCMAKE_CXX_COMPILER=$CXX \
            -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
            -DCMAKE_BUILD_TYPE=Debug $git_root
 

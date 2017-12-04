@@ -4,8 +4,5 @@
   hosts: localhost
   roles:
     - cmake
-    - gcc
     - compilation_tooling
     - cpplint
-    - cmake
-    - gcc

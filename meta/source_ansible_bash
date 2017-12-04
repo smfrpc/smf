@@ -22,14 +22,14 @@ else
              python-dnf \
              libselinux-python
     fi
-    sudo pip install pip --upgrade
-    sudo pip install virtualenv
+    sudo pip install pip --upgrade 2> /dev/null
+    sudo pip install virtualenv 2> /dev/null
     echo "Creating work directory ${PWD}/tmp"
     mkdir -p ${DIR}/tmp
     virtualenv ${DIR}/tmp
     source ${DIR}/tmp/bin/activate
-    pip install paramiko PyYAML Jinja2 httplib2 yapf futures
-    pip install ansible==2.3.1.0
+    pip install paramiko PyYAML Jinja2 httplib2 yapf futures 2> /dev/null
+    pip install ansible==2.3.1.0 2> /dev/null
     echo "Successfully installed ansible!"
     echo "Next: ansible-playbook -K playbooks/devbox_all.yml"
 fi

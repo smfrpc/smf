@@ -5,28 +5,14 @@ goobly_cache_dir: '{{inventory_dir}}/tmp'
 user_bin_dir: '{{ansible_env.HOME}}/bin'
 cmake_dir: '{{inventory_dir}}/../CMake'
 
-# Flags
 default_c_flags: '-I{{ third_party_dir }}/include'
 default_cxx_flags: '-I{{ third_party_dir }}/include'
 default_ld_flags: '-L{{ third_party_dir }}/lib'
 
-# Ensure compiler is always set
-c_compiler: "{{ third_party_dir }}/bin/gcc"
-cxx_compiler: "{{ third_party_dir }}/bin/g++"
-
 # PATH stuff
 path: "{{third_party_dir}}/bin:{{ lookup('env', 'PATH') | default('/bin:/usr/bin:/usr/local/bin') }}"
 
-
-# Default build environment
-# - Ensure that defaults are set when lookup returns ""
-# - Append all flags with the matching default above
-# - Unset M* variables because Akamake...
 build_env:
-  CC: '{{c_compiler}}'
-  CXX: '{{cxx_compiler}}'
-  CMAKE_C_COMPILER: '{{c_compiler}}'
-  CMAKE_CXX_COMPILER: '{{cxx_compiler}}'
   CMAKE_LIBRARY_PATH: '{{third_party_dir}}/lib'
   CMAKE_INCLUDE_PATH: '{{third_party_dir}}/include'
   CMAKE_C_FLAGS: "{{ lookup('env','CFLAGS') }} {{ default_c_flags }}"

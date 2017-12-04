@@ -2,15 +2,14 @@ dist: trusty
 sudo: required
 language: cpp
 compiler: gcc
-addons:
-  apt:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - g++-6
+      - g++-7
 
 before_install:
-  - sudo apt-get update
+  - update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 60 --slave /usr/bin/g++ g++ /usr/bin/g++-7
+  - update-alternatives --config gcc
   - cd meta && source source_ansible_bash && travis_wait 640 ansible-playbook playbooks/devbox_all.yml && cd ..
 
 script:
