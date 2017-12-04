@@ -11,7 +11,7 @@ addons:
 
 before_install:
   - sudo apt-get update
-  - cd meta && source source_ansible_bash && travis_wait 240 ansible-playbook playbooks/devbox_all.yml && cd ..
+  - cd meta && source source_ansible_bash && travis_wait 640 ansible-playbook playbooks/devbox_all.yml && cd ..
 
 script:
   - $TRAVIS_BUILD_DIR/debug

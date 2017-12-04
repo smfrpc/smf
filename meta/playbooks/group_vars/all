@@ -23,10 +23,10 @@ path: "{{third_party_dir}}/bin:{{ lookup('env', 'PATH') | default('/bin:/usr/bin
 # - Append all flags with the matching default above
 # - Unset M* variables because Akamake...
 build_env:
-  CC: '{{ c_compiler if c_compiler != "" else "gcc" }}'
-  CXX: '{{ cxx_compiler if cxx_compiler != "" else "g++" }}'
-  CMAKE_C_COMPILER: '{{ c_compiler if c_compiler != "" else "gcc" }}'
-  CMAKE_CXX_COMPILER: '{{ cxx_compiler if cxx_compiler != "" else "g++" }}'
+  CC: '{{c_compiler}}'
+  CXX: '{{cxx_compiler}}'
+  CMAKE_C_COMPILER: '{{c_compiler}}'
+  CMAKE_CXX_COMPILER: '{{cxx_compiler}}'
   CMAKE_LIBRARY_PATH: '{{third_party_dir}}/lib'
   CMAKE_INCLUDE_PATH: '{{third_party_dir}}/include'
   CMAKE_C_FLAGS: "{{ lookup('env','CFLAGS') }} {{ default_c_flags }}"
@@ -36,7 +36,7 @@ build_env:
   CXXFLAGS: "{{ lookup('env','CXXFLAGS') }} {{ default_cxx_flags }}"
   LDFLAGS: "{{ lookup('env','LDFLAGS') }} {{ default_ld_flags }}"
   LD_LIBRARY_PATH: "{{ lookup('env','LD_LIBRARY_PATH') | default('') }}"
-  PATH: "{{ path }}"
+  PATH: "{{path}}"
   MFLAGS: ""
   MAKEFLAGS: ""
   MAKEOVERRIDES: ""
