@@ -27,6 +27,10 @@ build_env:
   CXX: '{{ cxx_compiler if cxx_compiler != "" else "g++" }}'
   CMAKE_C_COMPILER: '{{ c_compiler if c_compiler != "" else "gcc" }}'
   CMAKE_CXX_COMPILER: '{{ cxx_compiler if cxx_compiler != "" else "g++" }}'
+  CMAKE_LIBRARY_PATH: '{{third_party_dir}}/lib'
+  CMAKE_INCLUDE_PATH: '{{third_party_dir}}/include'
+  CMAKE_C_FLAGS: "{{ lookup('env','CFLAGS') }} {{ default_c_flags }}"
+  CMAKE_CXX_FLAGS: "{{ lookup('env','CXXFLAGS') }} {{ default_cxx_flags }}"
   CFLAGS: "{{ lookup('env','CFLAGS') }} {{ default_c_flags }}"
   CPPFLAGS: "{{ lookup('env','CPPFLAGS') }} {{ default_cxx_flags }}"
   CXXFLAGS: "{{ lookup('env','CXXFLAGS') }} {{ default_cxx_flags }}"

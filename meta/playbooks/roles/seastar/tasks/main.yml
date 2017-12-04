@@ -89,17 +89,6 @@
     creates: '{{goobly_cache_dir}}/seastar/build.ninja'
   when: ansible_os_family == "RedHat"
 
-- name: configure sources with dpdk enabled
-  shell:
-    ./configure.py --enable-dpdk --static-boost --compiler=g++-6 \
-    --with=libseastar.a --with=seastar.pc \
-    --cflags="-isystem {{third_party_dir}}/include" \
-    --ldflags="-L{{third_party_dir}}/lib"
-  args:
-    chdir: '{{goobly_cache_dir}}/seastar'
-    creates: '{{goobly_cache_dir}}/seastar/build.ninja'
-  when: ansible_os_family == "Debian"
-
 - name: build with ninja
   shell:
     "ninja-build -j$((({{ansible_processor_vcpus}}-1)))"
