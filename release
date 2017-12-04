@@ -19,12 +19,12 @@ if [[ $1 != "quick" ]]; then
     $git_root/misc/fmt.py
 fi
 
-cmake --graphviz=$build_dir/dependencies.dot \
-      -Wno-dev \
-      -DCMAKE_C_COMPILER='$CC' \
-      -DCMAKE_CXX_COMPILER='$CXX' \
-      -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
-      -DCMAKE_BUILD_TYPE=Release $git_root
+$cmake_cmd --graphviz=$build_dir/dependencies.dot \
+           -Wno-dev \
+           -DCMAKE_C_COMPILER='$CC' \
+           -DCMAKE_CXX_COMPILER='$CXX' \
+           -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
+           -DCMAKE_BUILD_TYPE=Release $git_root
 
 # for fmt.py
 ln -sfn "$build_dir/compile_commands.json" "$git_root/compile_commands.json"
@@ -37,5 +37,4 @@ fi
 
 # from .common_build.sh
 $ninja_cmd
-
-ctest -V -j$nprocs --force-new-ctest-process
+$ctest_cmd -V -j$nprocs --force-new-ctest-process
