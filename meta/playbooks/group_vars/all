@@ -5,9 +5,10 @@ goobly_cache_dir: '{{inventory_dir}}/tmp'
 user_bin_dir: '{{ansible_env.HOME}}/bin'
 cmake_dir: '{{inventory_dir}}/../CMake'
 
-default_c_flags: '-I{{ third_party_dir }}/include'
-default_cxx_flags: '-I{{ third_party_dir }}/include'
+default_c_flags: "{{ lookup('env','CFLAGS') }} -isystem {{ third_party_dir }}/include -I/usr/include -I/usr/local/include"
+default_cxx_flags: "{{ lookup('env','CXXFLAGS') }} -isystem {{ third_party_dir }}/include -I/usr/include -I/usr/local/include"
 default_ld_flags: '-L{{ third_party_dir }}/lib'
+default_ld_library_path: "{{ lookup('env','LD_LIBRARY_PATH') }}"
 
 # PATH stuff
 path: "{{third_party_dir}}/bin:{{ lookup('env', 'PATH') | default('/bin:/usr/bin:/usr/local/bin') }}"
@@ -15,13 +16,13 @@ path: "{{third_party_dir}}/bin:{{ lookup('env', 'PATH') | default('/bin:/usr/bin
 build_env:
   CMAKE_LIBRARY_PATH: '{{third_party_dir}}/lib'
   CMAKE_INCLUDE_PATH: '{{third_party_dir}}/include'
-  CMAKE_C_FLAGS: "{{ lookup('env','CFLAGS') }} {{ default_c_flags }}"
-  CMAKE_CXX_FLAGS: "{{ lookup('env','CXXFLAGS') }} {{ default_cxx_flags }}"
-  CFLAGS: "{{ lookup('env','CFLAGS') }} {{ default_c_flags }}"
-  CPPFLAGS: "{{ lookup('env','CPPFLAGS') }} {{ default_cxx_flags }}"
-  CXXFLAGS: "{{ lookup('env','CXXFLAGS') }} {{ default_cxx_flags }}"
+  CMAKE_C_FLAGS: "{{ default_c_flags }}"
+  CMAKE_CXX_FLAGS: "{{ default_cxx_flags }}"
+  CFLAGS: "{{ default_c_flags }}"
+  CPPFLAGS: "{{ default_cxx_flags }}"
+  CXXFLAGS: "{{ default_cxx_flags }}"
   LDFLAGS: "{{ lookup('env','LDFLAGS') }} {{ default_ld_flags }}"
-  LD_LIBRARY_PATH: "{{ lookup('env','LD_LIBRARY_PATH') | default('') }}"
+  LD_LIBRARY_PATH: "{{ default_ld_library_path if default_ld_library_path != '' else '/usr/local/lib:/usr/local/lib64:/usr/lib:/usr/lib64:/lib:/lib64:/usr/lib/x86_64-linux-gnu'}}"
   PATH: "{{path}}"
   MFLAGS: ""
   MAKEFLAGS: ""

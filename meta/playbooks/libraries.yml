@@ -8,6 +8,7 @@
   hosts: localhost
   environment: '{{ build_env }}'
   roles:
+    - env
     - fastrange         # very fast hash-mod
     - gflags            # flag parsing for code generator
     - glog              # logging for code generator

@@ -22,20 +22,19 @@ seastar::lw_shared_ptr<wal_write_projection::item> xform(
   // unfortunatealy, we need to copy mem, then compress it :( - so 2 memcpy.
   fbb.Clear();  // MUST happen first
   auto _op       = f.op();
-  auto _epoch_ms = f.epoch_ms();
   auto _type     = f.type();
-  auto _kv =
-    f.kv() ?
-      Createtx_put_kv(
-        fbb, fbb.CreateVector(f.kv()->key()->Data(), f.kv()->key()->Length()),
-        fbb.CreateVector(f.kv()->value()->Data(), f.kv()->value()->Length())) :
-      0;
-  auto _invalidation = f.invalidation() ? smf::wal::Createtx_put_invalidation(
-                                            fbb, f.invalidation()->reason(),
-                                            f.invalidation()->offset()) :
-                                          0;
-  fbb.Finish(smf::wal::Createtx_put_fragment(fbb, _op, _type, _epoch_ms, _kv,
-                                             _invalidation));
+  auto _epoch_ms = f.epoch_ms();
+  // key=val must be inline to reduce data size
+  auto _key =
+    f.key()->size() ? fbb.CreateVector(f.key()->Data(), f.key()->Length()) : 0;
+  auto _value = f.value()->size() ?
+                  fbb.CreateVector(f.value()->Data(), f.value()->Length()) :
+                  0;
+  // invalidations must be inline to reduce data size
+  auto _invalidation_reason = f.invalidation_reason();
+  auto _invalidation_offset = f.invalidation_offset();
+  fbb.Finish(Createtx_put_fragment(fbb, _op, _type, _epoch_ms, _key, _value,
+                                   _invalidation_reason, _invalidation_offset));
 
   auto retval = seastar::make_lw_shared<wal_write_projection::item>();
 

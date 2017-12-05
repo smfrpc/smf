@@ -12,13 +12,13 @@ enum wal_entry_compression_type:byte {
 
 struct wal_header {
   compression: wal_entry_compression_type = none;
+  // currently we have LOTS of free bits
+  // int8_t padding0__;
+  // int16_t padding1__;
   size:        uint = 0;
   checksum:    uint = 0;
 }
 
-struct wal_invalid_entry {
-  invalid_entry: ulong;
-}
 
 enum tx_put_operation:byte {
   none,
@@ -35,17 +35,6 @@ enum tx_put_operation:byte {
 enum tx_put_invalidation_reason:byte {
   server_connection_timeout,
   client_connection_timeout
-}
-table tx_put_invalidation {
-  reason: tx_put_invalidation_reason;
-  /// iff this->op == tx_put_operation::abort
-  /// use to write an abort, for a specific offset
-  /// This is the offset from the tx_put_reply.
-  offset: ulong;
-}
-table tx_put_kv {
-  key:              [ubyte];
-  value:            [ubyte];
 }
 
 enum tx_put_fragment_type:byte {
@@ -72,8 +61,18 @@ table tx_put_fragment {
   /// expected resolution is milliseconds
   epoch_ms:     ulong = 0;
 
-  kv:           tx_put_kv;
-  invalidation: tx_put_invalidation;
+  /// The reason key=value *and* invalidations are part of the same
+  /// struct is performance. every table is 12 bytes
+
+  key:              [ubyte];
+  value:            [ubyte];
+
+  invalidation_reason: tx_put_invalidation_reason;
+  /// iff this->op == tx_put_operation::abort
+  /// use to write an abort, for a specific offset
+  /// This is the offset from the tx_put_reply.
+  invalidation_offset: ulong;
+
 }
 
 table tx_put_partition_pair {

@@ -78,12 +78,10 @@ struct put_data_generator {
         f->op       = smf::wal::tx_put_operation::tx_put_operation_full;
         f->epoch_ms = smf::lowres_time_now_millis();
         f->type     = smf::wal::tx_put_fragment_type::tx_put_fragment_type_kv;
-        f->invalidation = nullptr;
-        f->kv           = std::make_unique<smf::wal::tx_put_kvT>();
-        f->kv->key.resize(key.size(), 0);
-        f->kv->value.resize(value.size(), 0);
-        std::memcpy(&f->kv->key[0], &key[0], key.size());
-        std::memcpy(&f->kv->value[0], &value[0], value.size());
+        f->key.resize(key.size(), 0);
+        f->value.resize(value.size(), 0);
+        std::memcpy(&f->key[0], &key[0], key.size());
+        std::memcpy(&f->value[0], &value[0], value.size());
         ptr->txs.push_back(std::move(f));
       }
       p.put->data.push_back(std::move(ptr));

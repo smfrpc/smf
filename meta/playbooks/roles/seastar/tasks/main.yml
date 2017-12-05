@@ -28,6 +28,7 @@
     - protobuf-compiler
     - libunwind-devel
     - systemtap-sdt-devel
+    - yaml-cpp-devel
   when: ansible_os_family == "RedHat"
 
 
@@ -56,6 +57,7 @@
     - libunwind8-dev
     - systemtap-sdt-dev
     - libtool
+    - libyaml-cpp-dev
   when: ansible_os_family == "Debian"
 
 
@@ -77,7 +79,7 @@
     update=yes
     recursive=yes
     force=yes
-    version='e60afd2'
+    version='54af71d'
 
 # needs to be exported because seastar
 # shells out to c-ares dns lib and others
@@ -89,6 +91,18 @@
   args:
     chdir: '{{goobly_cache_dir}}/seastar'
     creates: '{{goobly_cache_dir}}/seastar/build.ninja'
+  when: ansible_os_family == "RedHat"
+
+- name: configure sources with dpdk DISABLED for ubuntu
+  shell:
+    ./configure.py --static-boost \
+    --mode=release \
+    --cflags="-isystem {{third_party_dir}}/include -fuse-ld=gold" \
+    --ldflags="-L{{third_party_dir}}/lib -fuse-ld=gold"
+  args:
+    chdir: '{{goobly_cache_dir}}/seastar'
+    creates: '{{goobly_cache_dir}}/seastar/build.ninja'
+  when: ansible_os_family == "Debian"
 
 - name: build with ninja
   shell:

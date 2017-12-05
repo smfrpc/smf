@@ -1,0 +1,23 @@
+---
+
+- debug:
+    msg: "{{item.key}} => {{item.value}}"
+  with_items:
+    - key: "build_env"
+      value: "{{build_env}}"
+    - key: "default_c_flags"
+      value: "{{default_c_flags}}"
+    - key: "default_cxx_flags"
+      value: "{{default_cxx_flags}}"
+    - key: "default_ld_flags"
+      value: "{{default_ld_flags}}"
+    - key: "default_ld_library_path"
+      value: "{{default_ld_library_path}}"
+    - key: "cmake_dir"
+      value: "{{cmake_dir}}"
+    - key: "user_bin_dir"
+      value: "{{user_bin_dir}}"
+    - key: "goobly_cache_dir"
+      value: "{{goobly_cache_dir}}"
+    - key: "third_party_dir"
+      value: "{{third_party_dir}}"

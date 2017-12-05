@@ -33,7 +33,6 @@ std::unordered_map<uint32_t, smf::wal_write_request> core_map(
       // f->op         = smf::wal::tx_put_operation::tx_put_operation_full;
       // f->epoch_ms   = lowres_time_now_millis();
       // f->type       =
-      // f->invalidation = nullptr;
       auto core = smf::put_to_lcore(p->topic()->c_str(), it);
       if (retval.find(core) == retval.end()) {
         smf::wal_write_request req(
