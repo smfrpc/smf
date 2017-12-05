@@ -10,6 +10,7 @@
   roles:
     - env
     - fastrange         # very fast hash-mod
+    - gtest
     - gflags            # flag parsing for code generator
     - glog              # logging for code generator
     - libboost          # utilities & needed by ALL projects

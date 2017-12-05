@@ -18,7 +18,8 @@ function (smf_test)
     add_executable(
       ${SMF_TEST_BINARY_NAME} "${SMF_TEST_SOURCES}")
     target_link_libraries(
-      ${SMF_TEST_BINARY_NAME} "${SMF_TEST_LIBRARIES}")
+      ${SMF_TEST_BINARY_NAME}
+      PUBLIC "${SMF_TEST_LIBRARIES}")
     add_test (
       NAME ${SMF_TEST_BINARY_NAME}
       COMMAND
