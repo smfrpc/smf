@@ -1,10 +1,13 @@
 include(CMakeParseArguments)
 enable_testing()
-set(ENABLE_INTEGRATION_TESTS 1)
-set(ENABLE_UNIT_TESTS 1)
+option(ENABLE_INTEGRATION_TESTS "control if integrations are bulit and ran" ON)
+option(ENABLE_UNIT_TESTS "control if tests are bulit and ran" ON)
 set(INTEGRATION_TESTS "")
 set(UNIT_TESTS "")
 set(TEST_RUNNER ${PROJECT_SOURCE_DIR}/src/test_runner.py)
+
+message(STATUS "ENABLE_INTEGRATION_TESTS=${ENABLE_INTEGRATION_TESTS}")
+message(STATUS "ENABLE_UNIT_TESTS=${ENABLE_UNIT_TESTS}")
 
 function (smf_test)
   set(options INTEGRATION_TEST UNIT_TEST)

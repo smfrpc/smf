@@ -17,12 +17,30 @@ if [[ $1 != "quick" ]]; then
     cat $git_root/src/version.h
     echo "Formatting files"
     $git_root/misc/fmt.py
-fi
 
-$cmake_cmd --graphviz=$build_dir/dependencies.dot \
-           -Wno-dev \
-           -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
-           -DCMAKE_BUILD_TYPE=Release $git_root
+    $cmake_cmd --graphviz=$build_dir/dependencies.dot \
+               -Wno-dev \
+               -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
+               -DCMAKE_BUILD_TYPE=Release $git_root
+
+else
+    echo
+    echo
+    echo "=================================================="
+    echo
+    echo "Quick release"
+    echo
+    echo "=================================================="
+    echo
+    echo
+    # Disable integration tests for this
+    $cmake_cmd --graphviz=$build_dir/dependencies.dot \
+               -Wno-dev \
+               -DENABLE_INTEGRATION_TESTS=OFF \
+               -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
+               -DCMAKE_BUILD_TYPE=Release $git_root
+
+fi
 
 # for fmt.py
 ln -sfn "$build_dir/compile_commands.json" "$git_root/compile_commands.json"

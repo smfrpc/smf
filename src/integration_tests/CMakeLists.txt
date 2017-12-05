@@ -1,6 +1,5 @@
 set(IT_ROOT ${PROJECT_SOURCE_DIR}/src/integration_tests)
 
-
 smf_test(
   INTEGRATION_TEST
   BINARY_NAME wal_writer
@@ -22,10 +21,12 @@ smf_test(
   SOURCE_DIRECTORY ${IT_ROOT}/rpc
   LIBRARIES smf_rpc
   )
-add_dependencies(
-  rpc_integration_test
-  generated_demo_service
-)
+if(ENABLE_INTEGRATION_TESTS)
+  add_dependencies(
+    rpc_integration_test
+    generated_demo_service
+    )
+endif()
 smf_test(
   INTEGRATION_TEST
   BINARY_NAME rpc_recv_timeout
@@ -33,10 +34,13 @@ smf_test(
   SOURCE_DIRECTORY ${IT_ROOT}/rpc_recv_timeout
   LIBRARIES smf_rpc
   )
-add_dependencies(
-  rpc_recv_timeout_integration_test
-  generated_demo_service
-)
+
+if(ENABLE_INTEGRATION_TESTS)
+  add_dependencies(
+    rpc_recv_timeout_integration_test
+    generated_demo_service
+    )
+endif()
 smf_test(
   INTEGRATION_TEST
   BINARY_NAME wal
