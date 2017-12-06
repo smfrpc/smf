@@ -32,6 +32,11 @@ def generate_options():
         type=distutils.util.strtobool,
         default='false',
         help='run formatter with clang-tidy')
+    parser.add_argument(
+        '--incremental',
+        type=distutils.util.strtobool,
+        default='false',
+        help='run formatter ONLY on last commit')
     return parser
 
 
@@ -103,18 +108,28 @@ def get_clang_prog(prog):
     return None
 
 
-def get_clang_format():
+def get_clang_format(options):
     return get_clang_prog("clang-format")
 
 
-def get_clang_tidy():
-    return get_clang_prog("clang-tidy")
+def get_clang_tidy(options):
+    if options.tidy == True:
+        clang_tidy = get_clang_prog("clang-tidy")
+        if not clang_tidy:
+            raise Exception(
+                "error tried to run clang tidy but binary not found")
+        return clang_tidy
+    else:
+        return None
 
 
-def get_git_files():
+def get_git_files(options):
+    git_args = 'ls-files'
+    if options.incremental == True:
+        git_args = 'show --pretty="" --name-only'
     ret = str(
         subprocess.check_output(
-            "cd %s && git ls-files" % get_git_root(), shell=True))
+            "cd %s && git %s" % (get_git_root(), git_args), shell=True))
     assert ret is not None, "Failed getting files tracked by git"
     return ret.split("\n")
 
@@ -189,7 +204,7 @@ def insert_legal(filename):
 
 def cpplint_process(cmd, filename):
     """Has to have a special process since it just
-   prints sutff to stdout willy nilly"""
+    prints sutff to stdout willy nilly"""
     lint = subprocess.check_output("%s %s" % (cmd, filename), shell=True)
     if "Total errors found: 0" not in lint:
         logger.info("Error: %s" % lint)
@@ -197,32 +212,24 @@ def cpplint_process(cmd, filename):
 
 
 def main():
-    files = get_git_files()
-    clang_fmt = get_clang_format()
-    clang_tidy = get_clang_tidy()
+    parser = generate_options()
+    options, program_options = parser.parse_known_args()
+    logger.info("Options --log=%s" % options.log)
+    logger.info("Options --tidy=%s" % options.tidy)
+    logger.info("Options --incremental=%s" % options.incremental)
+    logger.setLevel(getattr(logging, options.log.upper(), None))
+
+    files = get_git_files(options)
+    clang_fmt = get_clang_format(options)
+    clang_tidy = get_clang_tidy(options)
     cpplint = get_cpplint()
     root = get_git_root()
-    can_run_clang_tidy = None
 
     logger.info("Git root: %s" % root)
     logger.info("Formatting %s files" % len(files))
     logger.info("Clang format: %s" % clang_fmt)
     logger.info("Clang tidy: %s" % clang_tidy)
-    logger.info("CPPLINT: %s" % cpplint)
-
-    parser = generate_options()
-    options, program_options = parser.parse_known_args()
-
-    if options.tidy == True:
-        if not clang_tidy:
-            raise Exception(
-                "error tried to run clang tidy but binary not found")
-        can_run_clang_tidy = True
-
-    # set logging levels
-    logger.setLevel(getattr(logging, options.log.upper(), None))
-    logger.info("Loging level: %s" % options.log)
-    logger.info("Options -tidy: %s" % options.tidy)
+    logger.info("cpplint.py: %s" % cpplint)
 
     for f in files:
         f = "%s/%s" % (root, f)
@@ -232,10 +239,9 @@ def main():
         try:
             if is_clang_fmt_file(f):
                 # fixing code
-                if is_clang_tidy_file(
-                        f
-                ) and clang_tidy != None and can_run_clang_tidy != None:
-                    run_subprocess("%s -header-filter=.* -fix %s" % (clang_tidy, f))
+                if is_clang_tidy_file(f) and clang_tidy != None:
+                    run_subprocess("%s -header-filter=.* -fix %s" %
+                                   (clang_tidy, f))
                 # fixing formatting
                 if clang_fmt != None:
                     run_subprocess("%s -i %s" % (clang_fmt, f))
