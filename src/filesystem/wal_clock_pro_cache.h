@@ -12,39 +12,9 @@
 #include "platform/macros.h"
 #include "utils/caching/clock_pro/clock_pro.h"
 
-// TODO(agallego) - pass metadata to wether or not enable systemwide page cache
-// eviction
-
 namespace smf {
 class wal_clock_pro_cache {
  public:
-  struct page_data {
-    using bufptr_t = std::unique_ptr<char[], seastar::free_deleter>;
-    page_data(uint32_t size, bufptr_t d) : buf_size(size), data(std::move(d)) {}
-    page_data(page_data &&d) noexcept
-      : buf_size(std::move(d.buf_size)), data(std::move(d.data)) {}
-    const uint32_t buf_size;
-    bufptr_t       data;
-    SMF_DISALLOW_COPY_AND_ASSIGN(page_data);
-  };
-  using cache_t     = smf::clock_pro_cache<uint64_t, page_data>;
-  using chunk_t     = typename cache_t::chunk_t;
-  using chunk_t_ptr = typename std::add_pointer<chunk_t>::type;
-
-
-  /// \brief - designed to be a cache from the direct-io layer
-  /// and pages fetched. It understands the wal_writer format
-  wal_clock_pro_cache(seastar::lw_shared_ptr<seastar::file> f,
-                      // size of the `f` file from the fstat() call
-                      // need this to figure out how many pages to allocate
-                      int64_t initial_size,
-                      // max_pages_in_memory = 0, allows us to make a decision
-                      // impl defined. right now, it chooses the max of 10% of
-                      // the file or 10 pages. each page is 4096 bytes
-                      uint32_t max_pages_in_memory = 0);
-
-
-  const uint64_t disk_dma_alignment;
 
 
   /// \brief this is risky and is for performance reasons
@@ -53,6 +23,7 @@ class wal_clock_pro_cache {
   void update_file_size_by(uint64_t delta);
   int64_t  file_size() { return file_size_; }
   uint32_t number_of_pages() { return number_of_pages_; }
+
   /// \brief - return buffer for offset with size
   seastar::future<wal_read_reply> read(wal_read_request r,
                                        uint64_t         relative_offset);
@@ -61,8 +32,6 @@ class wal_clock_pro_cache {
   seastar::future<> close();
 
  private:
-  int64_t  file_size_;
-  uint32_t number_of_pages_;
 
   /// \brief - returns a temporary buffer of size. similar to
   /// isotream.read_exactly()
@@ -87,11 +56,6 @@ class wal_clock_pro_cache {
 
  private:
   seastar::lw_shared_ptr<seastar::file> file_;  // uses direct io for fetching
-  // This will be removed once we hookup to the seastar allocator for memory
-  // backpressure
-  //
-  uint32_t                 max_resident_pages_ = 10;
-  std::unique_ptr<cache_t> cache_;
 };
 
 

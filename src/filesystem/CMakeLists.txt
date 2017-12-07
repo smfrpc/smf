@@ -5,7 +5,6 @@ add_library (smf_filesystem STATIC
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_clock_pro_cache.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_reader.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_reader_node.cc
-  ${PROJECT_SOURCE_DIR}/src/filesystem/wal_impl_with_cache.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/file_size_utils.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_name_extractor_utils.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_name_extractor_utils.cc
@@ -17,6 +16,7 @@ add_library (smf_filesystem STATIC
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_partition_manager.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_write_behind_cache.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_lcore_map.cc
+  ${PROJECT_SOURCE_DIR}/src/filesystem/wal_topics_manager.cc
   )
 
 # add_dependencies(smf_filesystem

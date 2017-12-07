@@ -11,7 +11,8 @@ namespace smf {
 namespace chains {
 class chain_replication_service : public chain_replication {
  public:
-  explicit chain_replication_service(sharded_write_ahead_log *w)
+  explicit chain_replication_service(
+    seastar::distributed<smf::write_ahead_log> *w)
     : wal_(THROW_IFNULL(w)) {}
 
   virtual seastar::future<smf::rpc_typed_envelope<chain_put_reply>> put(
@@ -21,7 +22,7 @@ class chain_replication_service : public chain_replication {
     smf::rpc_recv_typed_context<chain_get_request> &&) final;
 
  private:
-  sharded_write_ahead_log *wal_;
+  seastar::distributed<smf::write_ahead_log> *wal_;
 };
 
 }  // end namespace chains

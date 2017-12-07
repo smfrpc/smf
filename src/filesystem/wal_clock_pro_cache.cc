@@ -42,59 +42,7 @@ seastar::future<> wal_clock_pro_cache::close() {
   return f->close().finally([f] {});
 }
 
-/// intrusive containers::iterators are not default no-throw move
-/// constructible, so we have to get the ptr to the data which is lame
-///
-seastar::future<wal_clock_pro_cache::chunk_t_ptr>
-wal_clock_pro_cache::clock_pro_get_page(uint32_t                          page,
-                                        const seastar::io_priority_class &pc) {
-  if (cache_->contains(page)) {
-    return seastar::make_ready_future<chunk_t_ptr>(cache_->get_page(page));
-  }
-  // we fetch things dynamiclly. so just fill up the buffer before eviction
-  // agorithm kicks in. nothing fancy
-  //
-  // if we just let the clock-pro work w/out pre-allocating, you end up w/ one
-  // or 2 pages that you are moving between hot and cold and test
-  //
-  if (cache_->size() < number_of_pages_) {
-    return fetch_page(page, pc).then([this, page](auto chunk) {
-      cache_->set(std::move(chunk));
-      return seastar::make_ready_future<chunk_t_ptr>(
-        cache_->get_chunk_ptr(page));
-    });
-  }
-  cache_->run_cold_hand();
-  cache_->run_hot_hand();
-  cache_->fix_hands();
-
-  // next add page to list
-  return fetch_page(page, pc).then([this, page](auto chunk) {
-    cache_->set(std::move(chunk));
-    return seastar::make_ready_future<chunk_t_ptr>(cache_->get_chunk_ptr(page));
-  });
-}
-
-
-seastar::future<wal_clock_pro_cache::chunk_t> wal_clock_pro_cache::fetch_page(
-  const uint32_t &page, const seastar::io_priority_class &pc) {
-  const uint64_t page_offset_begin =
-    static_cast<uint64_t>(page) * disk_dma_alignment;
-
-  auto bufptr = seastar::allocate_aligned_buffer<char>(disk_dma_alignment,
-                                                       disk_dma_alignment);
-  auto fut =
-    file_->dma_read(page_offset_begin, bufptr.get(), disk_dma_alignment, pc);
-
-  return std::move(fut).then([
-    page, bufptr = std::move(bufptr), alignment = disk_dma_alignment
-  ](auto size) mutable {
-    LOG_THROW_IF(size > alignment, "Read more than 1 page");
-    chunk_t c(page, page_data(size, std::move(bufptr)));
-    return seastar::make_ready_future<chunk_t>(std::move(c));
-  });
-}
-
+// this function needs testing
 static uint64_t copy_page_data(seastar::temporary_buffer<char> *      buf,
                                const int64_t &                        offset,
                                const int64_t &                        size,
