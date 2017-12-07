@@ -2,13 +2,6 @@ set(IT_ROOT ${PROJECT_SOURCE_DIR}/src/integration_tests)
 
 smf_test(
   INTEGRATION_TEST
-  BINARY_NAME wal_writer
-  SOURCES ${IT_ROOT}/wal_writer/main.cc
-  SOURCE_DIRECTORY ${IT_ROOT}/wal_writer
-  LIBRARIES smf_filesystem
-  )
-smf_test(
-  INTEGRATION_TEST
   BINARY_NAME histograms
   SOURCES ${IT_ROOT}/histograms/main.cc
   SOURCE_DIRECTORY ${IT_ROOT}/histograms
@@ -57,9 +50,8 @@ smf_test(
   )
 smf_test(
   INTEGRATION_TEST
-  BINARY_NAME cr
-  SOURCES ${IT_ROOT}/chain_replication_utils/main.cc
-  SOURCE_DIRECTORY ${IT_ROOT}/chain_replication_utils
-  LIBRARIES smf_cr flatbuffers
+  BINARY_NAME wal_segment
+  SOURCES ${IT_ROOT}/wal_segment/main.cc
+  SOURCE_DIRECTORY ${IT_ROOT}/wal_segment
+  LIBRARIES smf_filesystem flatbuffers
   )
-

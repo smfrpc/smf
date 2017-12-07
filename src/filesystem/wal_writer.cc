@@ -18,22 +18,22 @@
 
 namespace smf {
 
-wal_writer::wal_writer(seastar::sstring _topic, uint32_t topic_partition)
-  : topic(_topic), partition(topic_partition) {}
+wal_writer::wal_writer(wal_opts _opts, seastar::sstring writer_dir)
+  : opts(std::move(_opts)), writer_directory(std::move(writer_dir)) {}
 
 wal_writer::wal_writer(wal_writer &&o) noexcept
-  : topic(std::move(o.topic))
-  , partition(std::move(o.partition))
+  : opts(std::move(o.opts))
+  , writer_directory(std::move(o.writer_directory))
   , writer_(std::move(o.writer_)) {}
 
-seastar::sstring wal_writer::work_directory() const {
-  return topic + "." + seastar::to_sstring(partition);
-}
-wal_writer_node_opts wal_writer::default_writer_opts() const {
-  return wal_writer_node_opts(work_directory(), topic, partition);
+wal_writer_node_opts
+wal_writer::default_writer_opts() const {
+  return wal_writer_node_opts(
+    opts, writer_directory, priority_manager::get().streaming_write_priority());
 }
 
-seastar::future<> wal_writer::close() {
+seastar::future<>
+wal_writer::close() {
   if (writer_) { return writer_->close(); }
   // writer can be null if after creation, but before open()
   // is called there is a system_error or an exception
@@ -42,35 +42,48 @@ seastar::future<> wal_writer::close() {
   return seastar::make_ready_future<>();
 }
 
-seastar::future<> wal_writer::open_empty_dir() {
+seastar::future<>
+wal_writer::open_empty_dir() {
   writer_ = std::make_unique<wal_writer_node>(default_writer_opts());
   return writer_->open();
 }
 
-seastar::future<> wal_writer::open_non_empty_dir(seastar::sstring last_file) {
+seastar::future<>
+wal_writer::open_non_empty_dir(seastar::sstring last_file) {
   auto epoch = wal_name_extractor_utils::extract_epoch(last_file);
-  return seastar::file_size(work_directory() + "/" + last_file)
+  return seastar::file_size(writer_directory + "/" + last_file)
     .then([this, epoch](uint64_t size) {
       auto wo  = default_writer_opts();
       wo.epoch = epoch + size;
-      writer_  = std::make_unique<wal_writer_node>(std::move(wo));
+      LOG_ERROR_IF(
+        size == 0,
+        "Empty file size"
+        "Directory was not empty. Starting at 0.wal again. Likely an "
+        "incorrect shutdown behavior. You might have lost data");
+      writer_ = std::make_unique<wal_writer_node>(std::move(wo));
       return writer_->open();
     });
 }
 
-seastar::future<> wal_writer::open() {
-  return seastar::open_directory(work_directory())
+seastar::future<>
+wal_writer::open() {
+  return seastar::open_directory(writer_directory)
     .then([this](seastar::file f) {
       auto l = seastar::make_lw_shared<wal_head_file_max_functor>(std::move(f));
-      return l->done().then([l, this]() {
-        if (l->last_file.empty()) { return open_empty_dir(); }
-        return open_non_empty_dir(l->last_file);
-      });
+      return l->done()
+        .then([l, this]() {
+          LOG_INFO(
+            "Finished scanning the directory `{}` Last wal file found {}",
+            writer_directory, l->last_file.empty() ? "(none)" : l->last_file);
+          if (l->last_file.empty()) { return open_empty_dir(); }
+          return open_non_empty_dir(l->last_file);
+        })
+        .finally([l] {});
     });
 }
 
-seastar::future<wal_write_reply> wal_writer::append(
-  seastar::lw_shared_ptr<wal_write_projection> req) {
+seastar::future<seastar::lw_shared_ptr<wal_write_reply>>
+wal_writer::append(seastar::lw_shared_ptr<wal_write_projection> req) {
   DLOG_THROW_IF(writer_ == nullptr, "cannot write with a null writer");
   return writer_->append(std::move(req));
 }

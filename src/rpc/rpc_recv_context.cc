@@ -9,7 +9,8 @@
 #include "platform/log.h"
 
 namespace std {
-ostream &operator<<(ostream &o, const smf::rpc::header &h) {
+ostream &
+operator<<(ostream &o, const smf::rpc::header &h) {
   o << "rpc::header="
     << flatbuffers::FlatBufferToString(reinterpret_cast<const uint8_t *>(&h),
                                        smf::rpc::headerTypeTable());
@@ -31,13 +32,19 @@ rpc_recv_context::rpc_recv_context(rpc_recv_context &&o) noexcept
 
 rpc_recv_context::~rpc_recv_context() {}
 
-uint32_t rpc_recv_context::request_id() const { return header.meta(); }
+uint32_t
+rpc_recv_context::request_id() const {
+  return header.meta();
+}
 
-uint32_t rpc_recv_context::status() const { return header.meta(); }
+uint32_t
+rpc_recv_context::status() const {
+  return header.meta();
+}
 
 
-seastar::future<seastar::temporary_buffer<char>> read_payload(
-  rpc_connection *conn, size_t payload_size) {
+seastar::future<seastar::temporary_buffer<char>>
+read_payload(rpc_connection *conn, size_t payload_size) {
   if (!conn->limits) {
     return conn->istream.read_exactly(payload_size);
   } else {
@@ -46,7 +53,7 @@ seastar::future<seastar::temporary_buffer<char>> read_payload(
         // set timeout
         seastar::timer<> body_timeout;
         body_timeout.set_callback(
-          [max_timeout = conn->limits->max_body_parsing_duration, conn] {
+          [ max_timeout = conn->limits->max_body_parsing_duration, conn ] {
             LOG_ERROR(
               "Parsing the body of the connnection exceeded max_timeout: {}ms",
               std::chrono::duration_cast<std::chrono::milliseconds>(max_timeout)
@@ -69,7 +76,8 @@ seastar::future<seastar::temporary_buffer<char>> read_payload(
   }
 }
 
-constexpr uint32_t max_flatbuffers_size() {
+constexpr uint32_t
+max_flatbuffers_size() {
   // 2GB - 1 is the max a flatbuffers::vector<uint8_t> can hold
   //
   // needed so that we have access to the internal typedefs
@@ -77,8 +85,8 @@ constexpr uint32_t max_flatbuffers_size() {
   return static_cast<uint32_t>(FLATBUFFERS_MAX_BUFFER_SIZE);
 }
 
-seastar::future<exp::optional<rpc_recv_context>> process_payload(
-  rpc_connection *conn, rpc::header hdr) {
+seastar::future<exp::optional<rpc_recv_context>>
+process_payload(rpc_connection *conn, rpc::header hdr) {
   using ret_type = exp::optional<rpc_recv_context>;
   return read_payload(conn, hdr.size())
     .then([hdr](seastar::temporary_buffer<char> body) mutable {
@@ -91,8 +99,8 @@ seastar::future<exp::optional<rpc_recv_context>> process_payload(
         LOG_ERROR("Bad payload. Body is >  FLATBUFFERS_MAX_BUFFER_SIZE");
         return seastar::make_ready_future<ret_type>(exp::nullopt);
       }
-      if (hdr.bitflags()
-          & rpc::header_bit_flags::header_bit_flags_has_payload_headers) {
+      if (hdr.bitflags() &
+          rpc::header_bit_flags::header_bit_flags_has_payload_headers) {
         LOG_ERROR("Reading payload headers is not yet implemented");
         return seastar::make_ready_future<ret_type>(exp::nullopt);
       }
@@ -110,8 +118,8 @@ seastar::future<exp::optional<rpc_recv_context>> process_payload(
     });
 }
 
-seastar::future<exp::optional<rpc_recv_context>> rpc_recv_context::parse(
-  rpc_connection *conn) {
+seastar::future<exp::optional<rpc_recv_context>>
+rpc_recv_context::parse(rpc_connection *conn) {
   using ret_type = exp::optional<rpc_recv_context>;
 
   static constexpr size_t kRPCHeaderSize = sizeof(rpc::header);

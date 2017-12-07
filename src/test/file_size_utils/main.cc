@@ -10,6 +10,11 @@ TEST(file_size_utils, page_size) {
   uint64_t alignment = 4096;
   ASSERT_EQ(smf::offset_to_page(offset, alignment), 3);
 }
+TEST(file_size_utils, first_page) {
+  uint64_t offset    = 4096;
+  uint64_t alignment = 4096;
+  ASSERT_EQ(smf::offset_to_page(offset, alignment), 1);
+}
 
 TEST(file_size_utils, zero_page) {
   uint64_t offset    = 0;
@@ -29,7 +34,8 @@ TEST(file_size_utils, large_page_size) {
   ASSERT_EQ(smf::offset_to_page(offset, alignment), 239487);
 }
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

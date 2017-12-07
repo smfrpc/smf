@@ -11,13 +11,17 @@ random::random() {
 }
 random::~random() {}
 
-uint64_t random::next() { return dist_(rand_); }
+uint64_t
+random::next() {
+  return dist_(rand_);
+}
 
 
-seastar::sstring randstr(const seastar::sstring &                 dict,
-                         std::uniform_int_distribution<uint32_t> &dist,
-                         std::mt19937 &                           rand,
-                         uint32_t                                 size) {
+seastar::sstring
+randstr(const seastar::sstring &                 dict,
+        std::uniform_int_distribution<uint32_t> &dist,
+        std::mt19937 &                           rand,
+        uint32_t                                 size) {
   seastar::sstring retval;
   retval.resize(size);
   // this could use a simd
@@ -28,7 +32,8 @@ seastar::sstring randstr(const seastar::sstring &                 dict,
   return retval;
 }
 
-seastar::sstring random::next_str(uint32_t size) {
+seastar::sstring
+random::next_str(uint32_t size) {
   static const seastar::sstring kDict = "abcdefghijklmnopqrstuvwxyz"
                                         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                         "1234567890"
@@ -37,7 +42,8 @@ seastar::sstring random::next_str(uint32_t size) {
   static std::uniform_int_distribution<uint32_t> kDictDist(0, kDict.size());
   return randstr(kDict, kDictDist, rand_, size);
 }
-seastar::sstring random::next_alphanum(uint32_t size) {
+seastar::sstring
+random::next_alphanum(uint32_t size) {
   static const seastar::sstring kDict = "abcdefghijklmnopqrstuvwxyz"
                                         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                         "1234567890";

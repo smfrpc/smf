@@ -18,5 +18,4 @@ $ninja_cmd
 $ctest_cmd --output-on-failure \
            --force-new-ctest-process \
            --schedule-random \
-           --timeout 10 \
            -j$nprocs "$@"

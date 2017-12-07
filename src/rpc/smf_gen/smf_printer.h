@@ -9,8 +9,9 @@ class smf_printer {
   explicit smf_printer(std::string *str)
     : str_(str), escape_char_('$'), indent_(0) {}
 
-  void print(const std::map<std::string, std::string> &vars,
-             const char *string_template) {
+  void
+  print(const std::map<std::string, std::string> &vars,
+        const char *                              string_template) {
     std::string s = string_template;
     // Replace any occurrences of strings in "vars" that are surrounded
     // by the escape character by what they're mapped to.
@@ -29,7 +30,8 @@ class smf_printer {
     print(s.c_str());
   }
 
-  void print(const char *s) {
+  void
+  print(const char *s) {
     // Add this string, but for each part separated by \n, add indentation.
     for (;;) {
       // Current indentation.
@@ -47,8 +49,12 @@ class smf_printer {
     }
   }
 
-  void indent() { indent_++; }
-  void outdent() {
+  void
+  indent() {
+    indent_++;
+  }
+  void
+  outdent() {
     indent_--;
     assert(indent_ >= 0);
   }

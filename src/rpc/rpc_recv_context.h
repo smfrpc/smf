@@ -39,7 +39,10 @@ struct rpc_recv_context {
   /// follows the HTTP status codes
   uint32_t status() const;
 
-  uint16_t session() const { return header.session(); }
+  uint16_t
+  session() const {
+    return header.session();
+  }
 
   rpc::header                     header;
   seastar::temporary_buffer<char> payload;

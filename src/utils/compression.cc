@@ -30,8 +30,8 @@ class zstd_codec : public codec {
   ~zstd_codec() {}
   zstd_codec(codec_type type, compression_level level) : codec(type, level) {}
 
-  virtual seastar::temporary_buffer<char> uncompress(
-    const seastar::temporary_buffer<char> &data) {
+  virtual seastar::temporary_buffer<char>
+  uncompress(const seastar::temporary_buffer<char> &data) {
     auto zstd_size = ZSTD_findDecompressedSize(
       static_cast<const void *>(data.get()), data.size());
 
@@ -55,13 +55,13 @@ class zstd_codec : public codec {
   }
 
 
-  virtual seastar::temporary_buffer<char> compress(
-    const seastar::temporary_buffer<char> &data) {
+  virtual seastar::temporary_buffer<char>
+  compress(const seastar::temporary_buffer<char> &data) {
     return compress(data.get(), data.size());
   }
 
-  virtual seastar::temporary_buffer<char> compress(const char *data,
-                                                   size_t      size) {
+  virtual seastar::temporary_buffer<char>
+  compress(const char *data, size_t size) {
     auto const body_size = ZSTD_compressBound(size);
 
     seastar::temporary_buffer<char> buf(body_size);
@@ -95,13 +95,13 @@ class lz4_fast_codec : public codec {
     : codec(type, level) {}
 
 
-  virtual seastar::temporary_buffer<char> compress(
-    const seastar::temporary_buffer<char> &data) {
+  virtual seastar::temporary_buffer<char>
+  compress(const seastar::temporary_buffer<char> &data) {
     return compress(data.get(), data.size());
   }
 
-  virtual seastar::temporary_buffer<char> compress(const char *data,
-                                                   size_t      size) {
+  virtual seastar::temporary_buffer<char>
+  compress(const char *data, size_t size) {
     const int max_dst_size = LZ4_compressBound(size);
 
     seastar::temporary_buffer<char> buf(max_dst_size + 4);
@@ -126,8 +126,8 @@ class lz4_fast_codec : public codec {
   }
 
 
-  virtual seastar::temporary_buffer<char> uncompress(
-    const seastar::temporary_buffer<char> &data) {
+  virtual seastar::temporary_buffer<char>
+  uncompress(const seastar::temporary_buffer<char> &data) {
     uint32_t orig = seastar::read_le<uint32_t>(data.get());
 
     seastar::temporary_buffer<char> buf(orig);
@@ -149,8 +149,8 @@ class lz4_fast_codec : public codec {
   }
 };
 
-std::unique_ptr<codec> codec::make_unique(codec_type        type,
-                                          compression_level level) {
+std::unique_ptr<codec>
+codec::make_unique(codec_type type, compression_level level) {
   switch (type) {
   case codec_type::lz4:
     return std::make_unique<lz4_fast_codec>(type, level);

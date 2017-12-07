@@ -38,10 +38,10 @@ class client_topic_poll_strategy {
   };
 
  private:
-  poll_strategy_start                   default_start_;
-  std::vector<smf::wal::wal_watermarkT> watermarks_;
+  poll_strategy_start                             default_start_;
+  std::vector<smf::wal::wal_watermarkT>           watermarks_;
   std::unordered_map<uint32_t, client_poll_stats> stats_{};
-  uint64_t round_robin_idx_{0};
+  uint64_t                                        round_robin_idx_{0};
 };
 
 }  // namespace chains

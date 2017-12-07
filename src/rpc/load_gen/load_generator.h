@@ -52,7 +52,8 @@ class __attribute__((visibility("default"))) load_generator {
 
   const generator_args args;
 
-  std::unique_ptr<smf::histogram> copy_histogram() const {
+  std::unique_ptr<smf::histogram>
+  copy_histogram() const {
     auto h = smf::histogram::make_unique();
     for (auto &c : channels_) {
       auto p = c->get_histogram();
@@ -61,17 +62,19 @@ class __attribute__((visibility("default"))) load_generator {
     return std::move(h);
   }
 
-  seastar::future<> stop() {
+  seastar::future<>
+  stop() {
     return seastar::do_for_each(channels_.begin(), channels_.end(),
                                 [](auto &c) { return c->stop(); });
   }
-  seastar::future<> connect() {
+  seastar::future<>
+  connect() {
     LOG_INFO("Making {} connections on this core.", channels_.size());
     return seastar::do_for_each(channels_.begin(), channels_.end(),
                                 [](auto &c) { return c->connect(); });
   }
-  seastar::future<generator_duration> benchmark(generator_cb_t gen,
-                                                method_cb_t    method_cb) {
+  seastar::future<generator_duration>
+  benchmark(generator_cb_t gen, method_cb_t method_cb) {
     namespace co = std::chrono;
     const uint32_t reqs_per_channel =
       std::max<uint32_t>(1, std::ceil(args.num_of_req / args.concurrency));

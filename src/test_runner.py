@@ -3,7 +3,6 @@
 # Copyright 2017 Alexander Gallego
 #
 
-
 import sys
 import os
 import logging
@@ -15,6 +14,9 @@ import os.path
 import json
 import glob
 import shutil
+import random
+import string
+from string import Template
 
 fmt_string = 'TESTRUNNER %(levelname)s:%(asctime)s %(filename)s:%(lineno)d] %(message)s'
 logging.basicConfig(format=fmt_string)
@@ -24,6 +26,13 @@ for h in logging.getLogger().handlers:
 logger = logging.getLogger('it.test')
 # Set to logging.DEBUG to see more info about tests
 logger.setLevel(logging.INFO)
+
+KTEST_DIR_PREFIX = "smf_test_"
+
+
+def gen_alphanum(x=16):
+    return ''.join(
+        random.choice(string.ascii_letters + string.digits) for _ in range(x))
 
 
 def generate_options():
@@ -79,8 +88,10 @@ def run_subprocess(cmd, cfg, environ):
             cfg["execution_directory"]))
 
     os.chdir(cfg["execution_directory"])
+    hydrated_cmd = Template(cmd).safe_substitute(cfg)
+    logger.info("Hydrated cmd:\n%s\n" % hydrated_cmd)
     proc = subprocess.Popen(
-        "exec %s" % cmd,
+        "exec %s" % hydrated_cmd,
         stdout=sys.stdout,
         stderr=sys.stderr,
         env=environ,
@@ -96,14 +107,18 @@ def run_subprocess(cmd, cfg, environ):
         proc.kill()
         raise
 
-    if return_code != 0: raise subprocess.CalledProcessError(return_code, cmd)
+    if return_code != 0:
+        raise subprocess.CalledProcessError(return_code, hydrated_cmd)
 
 
 def set_up_test_environment(cfg):
     test_env = test_environ()
     dirpath = os.getcwd()
     if cfg.has_key("tmp_home"):
-        dirpath = tempfile.mkdtemp()
+        dirpath = tempfile.mkdtemp(
+            suffix=gen_alphanum(),
+            prefix=KTEST_DIR_PREFIX,
+            dir=cfg["git_root"])
         logger.debug("Executing test in tmp dir %s" % dirpath)
         os.chdir(dirpath)
         test_env["HOME"] = dirpath
@@ -121,7 +136,7 @@ def set_up_test_environment(cfg):
 def clean_test_resources(cfg):
     if cfg.has_key("execution_directory"):
         exec_dir = cfg["execution_directory"]
-        if exec_dir.startswith("/tmp/"):
+        if KTEST_DIR_PREFIX in exec_dir:
             if cfg.has_key("remove_test_dir") and \
                cfg["remove_test_dir"] is False:
                 logger.info("Skipping rm -r tmp dir: %s" % exec_dir)
@@ -137,6 +152,7 @@ def load_test_configuration(directory):
         json_data = open(test_cfg).read()
         ret = json.loads(json_data)
         ret["source_directory"] = directory
+        ret["git_root"] = get_git_root()
         return ret
     except Exception as e:
         logger.exception("Could not load test configuration %s" % e)
@@ -180,7 +196,8 @@ def main():
         raise Exception("Missing source directory")
     if not options.test_type:
         if (options.test_type is not "unit"
-                or options.test_type is not "integration"):
+                or options.test_type is not "integration"
+                or options.test_type is not "benchmark"):
             parser.print_help()
             raise Exception("Missing test_type ")
 

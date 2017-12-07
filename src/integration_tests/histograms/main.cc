@@ -7,7 +7,8 @@
 #include "histogram/histogram_seastar_utils.h"
 #include "platform/log.h"
 
-int main(int args, char **argv, char **env) {
+int
+main(int args, char **argv, char **env) {
   LOG_DEBUG("Starting test for histogram write");
   seastar::app_template app;
   try {

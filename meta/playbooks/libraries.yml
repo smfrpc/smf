@@ -10,9 +10,10 @@
   roles:
     - env
     - fastrange         # very fast hash-mod
-    - gtest
+    - gtest             # google testing
     - gflags            # flag parsing for code generator
     - glog              # logging for code generator
+    - google_benchmark  # google testing
     - libboost          # utilities & needed by ALL projects
     - seastar           # futures/tasks/filesystem lib
     - flatbuffers       # serialization lib

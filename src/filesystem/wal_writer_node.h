@@ -6,43 +6,42 @@
 #include <core/metrics_registration.hh>
 #include <core/semaphore.hh>
 #include <core/sstring.hh>
+#include <core/timer.hh>
 // generated
 #include "flatbuffers/wal_generated.h"
 // smf
 #include "filesystem/wal_opts.h"
 #include "filesystem/wal_requests.h"
+#include "filesystem/wal_segment.h"
 #include "filesystem/wal_write_behind_utils.h"
 #include "filesystem/wal_write_projection.h"
-#include "filesystem/wal_writer_file_lease.h"
 #include "filesystem/wal_writer_utils.h"
 #include "utils/time_utils.h"
 
 namespace smf {
 struct wal_writer_node_opts {
   SMF_DISALLOW_COPY_AND_ASSIGN(wal_writer_node_opts);
-  wal_writer_node_opts(const seastar::sstring &workdir,
-                       const seastar::sstring &_topic,
-                       uint32_t                _partition)
-    : work_directory(workdir), topic(_topic), partition(_partition) {}
+  wal_writer_node_opts(const wal_opts &                  op,
+                       const seastar::sstring &          writer_dir,
+                       const seastar::io_priority_class &prio)
+    : wopts(op), writer_directory(writer_dir), pclass(prio) {}
 
   wal_writer_node_opts(wal_writer_node_opts &&o) noexcept
-    : work_directory(std::move(o.work_directory))
-    , topic(std::move(o.topic))
-    , partition(std::move(o.partition))
-    , epoch(std::move(o.epoch))
-    , run_id(std::move(o.run_id))
-    , fstream(std::move(o.fstream))
+    : wopts(o.wopts)
+    , writer_directory(o.writer_directory)
+    , pclass(o.pclass)
+    , epoch(o.epoch)
+    , write_concurrency(o.write_concurrency)
     , max_file_size(std::move(o.max_file_size)) {}
 
-  seastar::sstring work_directory;
-  seastar::sstring topic;
-  uint32_t         partition;
-  uint64_t         epoch = 0;
-  /// \brief each time we create a wal_writer_node_opts per topic partition
-  /// we want to know when we created it
-  const seastar::sstring run_id = seastar::to_sstring(time_now_micros());
-  seastar::file_output_stream_options fstream = default_file_ostream_options();
-  const uint64_t                      max_file_size = wal_file_size_aligned();
+  const wal_opts &                  wopts;
+  const seastar::sstring &          writer_directory;
+  const seastar::io_priority_class &pclass;
+
+  uint64_t       epoch                      = 0;
+  const uint32_t write_concurrency          = 4; /*4 pages max concurrency*/
+  const uint32_t write_file_in_memory_cache = 1024 * 1024; /*1MB*/
+  const uint64_t max_file_size              = wal_file_size_aligned();
 };
 
 /// \brief - given a prefix and an epoch (monotinically increasing counter)
@@ -66,7 +65,7 @@ class wal_writer_node {
   explicit wal_writer_node(wal_writer_node_opts &&opts);
 
   /// \brief writes the projection to disk ensuring file size capacity
-  seastar::future<wal_write_reply> append(
+  seastar::future<seastar::lw_shared_ptr<wal_write_reply>> append(
     seastar::lw_shared_ptr<wal_write_projection> req);
   /// \brief flushes the file before closing
   seastar::future<> close();
@@ -78,8 +77,14 @@ class wal_writer_node {
 
   ~wal_writer_node();
 
-  uint64_t space_left() const { return opts_.max_file_size - current_size_; }
-  uint64_t current_offset() const { return opts_.epoch + current_size_; }
+  uint64_t
+  space_left() const {
+    return opts_.max_file_size - current_size_;
+  }
+  uint64_t
+  current_offset() const {
+    return opts_.epoch + current_size_;
+  }
 
  private:
   seastar::future<> rotate_fstream();
@@ -102,10 +107,11 @@ class wal_writer_node {
   // file it needs to exist in the background fiber that closes the
   // underlying file
   //
-  seastar::lw_shared_ptr<wal_writer_file_lease> lease_ = nullptr;
-  seastar::semaphore                            serialize_writes_{1};
-  wal_writer_node_stats                         stats_{};
-  seastar::metrics::metric_groups               metrics_{};
+  seastar::lw_shared_ptr<wal_segment> lease_ = nullptr;
+  seastar::semaphore                  serialize_writes_{1};
+  wal_writer_node_stats               stats_{};
+  seastar::metrics::metric_groups     metrics_{};
+  seastar::timer<>                    flush_timeout_;
 };
 
 }  // namespace smf

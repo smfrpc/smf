@@ -12,7 +12,8 @@
 
 namespace smf {
 struct internal_logger {
-  static seastar::logger &get() {
+  static seastar::logger &
+  get() {
     static seastar::logger l("smf");
     return l;
   }
@@ -21,7 +22,8 @@ struct internal_logger {
 namespace log_detail {
 // A small helper for throw_if_null().
 template <typename T>
-T *throw_if_null(const char *file, int line, const char *names, T *t) {
+T *
+throw_if_null(const char *file, int line, const char *names, T *t) {
   if (SMF_UNLIKELY(t == NULL)) {
     auto s = fmt::sprintf("{}:{}] check_not_null({})", file, line, names);
     smf::internal_logger::get().error(s.c_str());
@@ -29,6 +31,9 @@ T *throw_if_null(const char *file, int line, const char *names, T *t) {
   }
   return t;
 }
+inline void
+noop(...) {}
+
 }  // namespace log_detail
 }  // namespace smf
 
@@ -176,7 +181,7 @@ T *throw_if_null(const char *file, int line, const char *names, T *t) {
   } while (false)
 
 #else
-#define DTHROW_IFNULL(x) ((void)0)
+#define DTHROW_IFNULL(x) (x)
 #define DLOG_INFO(format, args...) ((void)0)
 #define DLOG_ERROR(format, args...) ((void)0)
 #define DLOG_WARN(format, args...) ((void)0)
@@ -187,7 +192,8 @@ T *throw_if_null(const char *file, int line, const char *names, T *t) {
 #define DLOG_DEBUG_IF(condition, format, args...) ((void)0)
 #define DLOG_WARN_IF(condition, format, args...) ((void)0)
 #define DLOG_TRACE_IF(condition, format, args...) ((void)0)
-#define DLOG_THROW_IF(condition, format, args...) ((void)0)
+#define DLOG_THROW_IF(condition, format, args...) \
+  smf::log_detail::noop(condition, format, ##args);
 #endif
 
 

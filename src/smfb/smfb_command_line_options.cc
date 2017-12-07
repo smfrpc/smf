@@ -6,7 +6,8 @@
 
 namespace smf {
 
-void smfb_command_line_options::validate(
+void
+smfb_command_line_options::validate(
   const boost::program_options::variables_map &vm) {
   LOG_THROW_IF(!vm.count("write-ahead-log-dir"),
                "--write-ahead-log-dir not specified");
@@ -14,7 +15,8 @@ void smfb_command_line_options::validate(
 
 // Note: boost has to use std::string as it has no built in parser for
 // seastar::sstring
-void smfb_command_line_options::add(
+void
+smfb_command_line_options::add(
   boost::program_options::options_description_easy_init o) {
   namespace po = boost::program_options;
 

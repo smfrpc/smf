@@ -8,20 +8,22 @@
 namespace smf {
 namespace chains {
 
-seastar::lw_shared_ptr<cr_client> cr_client::make_cr_client(
-  seastar::ipv4_addr server_addr) {
+seastar::lw_shared_ptr<cr_client>
+cr_client::make_cr_client(seastar::ipv4_addr server_addr) {
   return seastar::make_lw_shared<cr_client>(
     new cr_client(std::move(server_addr)));
 }
 
 
-seastar::lw_shared_ptr<cr_client_tx> cr_client::begin_transaction() {
+seastar::lw_shared_ptr<cr_client_tx>
+cr_client::begin_transaction() {
   return seastar::make_lw_shared<tx>(shared_from_this());
 }
 
 /*, strategy=round-robin?, exponential-backoff add strategy for polling*/
-seastar::future<chain_get_reply> cr_client::poll(
-  const seastar::sstring &topic, const poll_strategy_start &strategy) {
+seastar::future<chain_get_reply>
+cr_client::poll(const seastar::sstring &   topic,
+                const poll_strategy_start &strategy) {
   if (read_world_.find(topic) == read_world_.end()) {
     chains_discover_requestT r;
     r.topic = topic;
@@ -43,7 +45,8 @@ cr_client::cr_client(seastar::ipv4_addr server_addr)
   : chain_replication_client(std::move(server_addr)) {}
 
 
-seastar::future<chain_get_reply> cr_client::do_poll(seastar::string topic) {}
+seastar::future<chain_get_reply>
+cr_client::do_poll(seastar::string topic) {}
 
 }  // namespace chains
 }  // namespace smf

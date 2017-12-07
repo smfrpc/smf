@@ -27,7 +27,8 @@ using load_gen_t = smf::load_gen::load_generator<client_t>;
 // This example is just using the load generator to test performance
 //
 struct method_callback {
-  seastar::future<> operator()(client_t *c, smf::rpc_envelope &&e) {
+  seastar::future<>
+  operator()(client_t *c, smf::rpc_envelope &&e) {
     return c->Get(std::move(e)).then([](auto ret) {
       return seastar::make_ready_future<>();
     });
@@ -35,8 +36,8 @@ struct method_callback {
 };
 
 struct generator {
-  smf::rpc_envelope operator()(
-    const boost::program_options::variables_map &cfg) {
+  smf::rpc_envelope
+  operator()(const boost::program_options::variables_map &cfg) {
     smf::rpc_typed_envelope<smf_gen::demo::Request> req;
     req.data->name = "Hello, smf-world!";
     return req.serialize_data();
@@ -44,7 +45,8 @@ struct generator {
 };
 
 
-void cli_opts(boost::program_options::options_description_easy_init o) {
+void
+cli_opts(boost::program_options::options_description_easy_init o) {
   namespace po = boost::program_options;
 
   o("ip", po::value<std::string>()->default_value("127.0.0.1"),
@@ -61,7 +63,8 @@ void cli_opts(boost::program_options::options_description_easy_init o) {
 }
 
 
-int main(int args, char **argv, char **env) {
+int
+main(int args, char **argv, char **env) {
   seastar::distributed<load_gen_t> load;
   seastar::app_template            app;
   cli_opts(app.add_options());

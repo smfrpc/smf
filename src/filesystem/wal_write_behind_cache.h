@@ -9,6 +9,7 @@
 #include <core/metrics_registration.hh>
 #include <core/sstring.hh>
 
+#include "adt/flat_hash_map.h"
 #include "filesystem/wal_requests.h"
 #include "filesystem/wal_write_projection.h"
 #include "platform/macros.h"
@@ -24,7 +25,7 @@ class wal_write_behind_cache {
     uint64_t bytes_written{0};
   };
 
-  using value_type = seastar::lw_shared_ptr<wal_write_projection::item>;
+  using item_ptr = seastar::lw_shared_ptr<wal_write_projection::item>;
 
   explicit wal_write_behind_cache(seastar::sstring topic_name,
                                   uint32_t         topic_partition,
@@ -35,17 +36,22 @@ class wal_write_behind_cache {
 
   uint64_t min_offset();
   uint64_t max_offset();
+  inline bool
+  is_offset_in_range(const uint64_t &o) {
+    return o >= min_offset() && o < max_offset();
+  }
 
-  void put(uint64_t offset, value_type data);
-  wal_read_reply get(const wal_read_request &req);
+
+  void                                   put(uint64_t offset, item_ptr data);
+  seastar::lw_shared_ptr<wal_read_reply> get(const wal_read_request &req);
 
  private:
   wal_write_behind_cache_stats stats_;
   uint64_t                     current_size_{0};
-  // need 2 orderings, hence unordered_map does not suffice.
-  // need key order to pop lowest on ring-buffer-like
   // need fast lookup for offsets
-  std::map<uint64_t, value_type> puts_;
+  smf::flat_hash_map<uint64_t, item_ptr> puts_{};
+  // ska map is unordered need to keep the next key to evict in order
+  std::vector<uint64_t>           keys_{};
   seastar::metrics::metric_groups metrics_{};
 };
 

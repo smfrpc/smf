@@ -17,22 +17,22 @@
 #include "flatbuffers/demo_service.smf.fb.h"
 
 class storage_service : public smf_gen::demo::SmfStorage {
-  virtual seastar::future<smf::rpc_typed_envelope<smf_gen::demo::Response>> Get(
-    smf::rpc_recv_typed_context<smf_gen::demo::Request> &&rec) final {
+  virtual seastar::future<smf::rpc_typed_envelope<smf_gen::demo::Response>>
+  Get(smf::rpc_recv_typed_context<smf_gen::demo::Request> &&rec) final {
     smf::rpc_typed_envelope<smf_gen::demo::Response> data;
 
     // return the same payload
     if (rec) { data.data->name = rec->name()->c_str(); }
 
     data.envelope.set_status(200);
-    return seastar::
-      make_ready_future<smf::rpc_typed_envelope<smf_gen::demo::Response>>(
-        std::move(data));
+    return seastar::make_ready_future<
+      smf::rpc_typed_envelope<smf_gen::demo::Response>>(std::move(data));
   }
 };
 
 
-void cli_opts(boost::program_options::options_description_easy_init o) {
+void
+cli_opts(boost::program_options::options_description_easy_init o) {
   namespace po = boost::program_options;
   o("ip", po::value<std::string>()->default_value("127.0.0.1"),
     "ip to connect to");
@@ -42,7 +42,8 @@ void cli_opts(boost::program_options::options_description_easy_init o) {
 }
 
 
-int main(int args, char **argv, char **env) {
+int
+main(int args, char **argv, char **env) {
   std::setvbuf(stdout, nullptr, _IOLBF, 1024);
   seastar::distributed<smf::rpc_server> rpc;
   seastar::app_template                 app;

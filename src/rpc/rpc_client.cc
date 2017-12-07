@@ -37,7 +37,8 @@ rpc_client::rpc_client(rpc_client &&o) noexcept
   , session_idx_(o.session_idx_) {}
 
 
-seastar::future<> rpc_client::stop() {
+seastar::future<>
+rpc_client::stop() {
   if (conn) {
     // proper way of closing connection that is safe
     // of concurrency bugs
@@ -47,14 +48,20 @@ seastar::future<> rpc_client::stop() {
 }
 rpc_client::~rpc_client() = default;
 
-void rpc_client::disable_histogram_metrics() { hist_ = nullptr; }
-void rpc_client::enable_histogram_metrics() {
+void
+rpc_client::disable_histogram_metrics() {
+  hist_ = nullptr;
+}
+void
+rpc_client::enable_histogram_metrics() {
   if (!hist_) hist_ = histogram::make_lw_shared();
 }
 
-seastar::future<> rpc_client::connect() {
-  LOG_THROW_IF(conn, "Client already connected to server: `{}'. connect "
-                     "called more than once.",
+seastar::future<>
+rpc_client::connect() {
+  LOG_THROW_IF(conn,
+               "Client already connected to server: `{}'. connect "
+               "called more than once.",
                server_addr);
 
   auto local = seastar::socket_address(sockaddr_in{AF_INET, INADDR_ANY, {0}});
@@ -68,13 +75,14 @@ seastar::future<> rpc_client::connect() {
       return seastar::make_ready_future<>();
     });
 }
-seastar::future<> rpc_client::dispatch_write(rpc_envelope e) {
+seastar::future<>
+rpc_client::dispatch_write(rpc_envelope e) {
   // must protect the conn->ostream
   return serialize_writes_.wait(1).then(
-    [ee = std::move(e), self = parent_shared_from_this(), this]() mutable {
+    [ ee = std::move(e), self = parent_shared_from_this(), this ]() mutable {
       auto payload_size = ee.size();
       return self->conn->limits->wait_for_payload_resources(payload_size)
-        .then([self, e = std::move(ee)]() mutable {
+        .then([ self, e = std::move(ee) ]() mutable {
           return smf::rpc_envelope::send(&self->conn->ostream, std::move(e))
             .handle_exception([self](auto _) {
               LOG_ERROR("Error sending data: {}", _);
@@ -88,7 +96,8 @@ seastar::future<> rpc_client::dispatch_write(rpc_envelope e) {
     });
 }
 
-seastar::future<> rpc_client::do_reads() {
+seastar::future<>
+rpc_client::do_reads() {
   return seastar::do_until(
            [c = conn] { return !c->is_valid(); },
            [self = parent_shared_from_this()]() mutable {
@@ -128,21 +137,21 @@ static thread_local auto outgoing_stage = seastar::make_execution_stage(
   "smf::rpc_client::outgoing::filter", &rpc_client::apply_outgoing_filters);
 
 
-seastar::future<rpc_recv_context> rpc_client::apply_incoming_filters(
-  rpc_recv_context ctx) {
+seastar::future<rpc_recv_context>
+rpc_client::apply_incoming_filters(rpc_recv_context ctx) {
   return rpc_filter_apply(&in_filters_, std::move(ctx));
 }
-seastar::future<rpc_envelope> rpc_client::apply_outgoing_filters(
-  rpc_envelope e) {
+seastar::future<rpc_envelope>
+rpc_client::apply_outgoing_filters(rpc_envelope e) {
   return rpc_filter_apply(&out_filters_, std::move(e));
 }
 
-seastar::future<rpc_recv_context> rpc_client::stage_apply_incoming_filters(
-  rpc_recv_context ctx) {
+seastar::future<rpc_recv_context>
+rpc_client::stage_apply_incoming_filters(rpc_recv_context ctx) {
   return incoming_stage(this, std::move(ctx));
 }
-seastar::future<rpc_envelope> rpc_client::stage_apply_outgoing_filters(
-  rpc_envelope e) {
+seastar::future<rpc_envelope>
+rpc_client::stage_apply_outgoing_filters(rpc_envelope e) {
   return outgoing_stage(this, std::move(e));
 }
 

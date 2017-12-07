@@ -10,7 +10,9 @@ namespace smf {
 ///       return futurize_status_for_type<smf::chains::tx_put_reply>(400);
 ///    }
 /// \endcode
-template <typename T> auto futurize_status_for_type(uint32_t status) {
+template <typename T>
+auto
+futurize_status_for_type(uint32_t status) {
   using t = smf::rpc_typed_envelope<T>;
   t data;
   data.envelope.set_status(status);

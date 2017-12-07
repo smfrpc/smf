@@ -4,9 +4,9 @@
 #pragma once
 
 #include "filesystem/wal_reader.h"
+#include "filesystem/wal_requests.h"
 #include "filesystem/wal_write_behind_cache.h"
 #include "filesystem/wal_writer.h"
-#include "filesystem/write_ahead_log.h"
 #include "platform/macros.h"
 
 namespace smf {
@@ -30,10 +30,11 @@ class wal_partition_manager {
   ///        partitions.insert(it->partition());
   ///    }
   /// \endcode
-  seastar::future<wal_write_reply> append(
+  seastar::future<seastar::lw_shared_ptr<wal_write_reply>> append(
     seastar::lw_shared_ptr<wal_write_projection> projection);
+  seastar::future<seastar::lw_shared_ptr<wal_read_reply>> get(
+    wal_read_request r);
 
-  seastar::future<wal_read_reply> get(wal_read_request r);
   seastar::future<> open();
   seastar::future<> close();
 
@@ -44,8 +45,12 @@ class wal_partition_manager {
   const wal_opts         opts;
   const seastar::sstring topic;
   const uint32_t         partition;
+  const seastar::sstring work_dir;
 
-  bool is_open() const { return is_ready_open_; }
+  bool
+  is_open() const {
+    return is_ready_open_;
+  }
 
  private:
   seastar::future<> do_open();

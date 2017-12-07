@@ -14,7 +14,8 @@
 DEFINE_string(filename, "", "filename to parse");
 DEFINE_string(include_dirs, "", "extra include directories: not supported yet");
 
-int main(int argc, char **argv, char **env) {
+int
+main(int argc, char **argv, char **env) {
   google::SetUsageMessage("Generate smf services");
   google::ParseCommandLineFlags(&argc, &argv, true);
   google::InstallFailureSignalHandler();
@@ -41,16 +42,14 @@ int main(int argc, char **argv, char **env) {
   include_directories.push_back(local_include_directory.c_str());
   include_directories.push_back(nullptr);
 
-  LOG_IF(FATAL,
-         !parser.Parse(contents.c_str(), &include_directories[0],
-                       FLAGS_filename.c_str()))
+  LOG_IF(FATAL, !parser.Parse(contents.c_str(), &include_directories[0],
+                              FLAGS_filename.c_str()))
     << "Could not PARSE file: " << parser.error_;
 
   VLOG(1) << "File `" << FLAGS_filename << "` parsed. Generating";
 
-  LOG_IF(
-    FATAL,
-    !smf_gen::generate(parser, flatbuffers::StripExtension(FLAGS_filename)))
+  LOG_IF(FATAL, !smf_gen::generate(parser,
+                                   flatbuffers::StripExtension(FLAGS_filename)))
     << "Could not generate file";
   parser.MarkGenerated();
 }

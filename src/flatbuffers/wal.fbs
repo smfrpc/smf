@@ -10,13 +10,24 @@ enum wal_entry_compression_type:byte {
   lz4
 }
 
+/// WARNING
+///
+/// \brief on the actual disk format, we manually write one int at a time
+/// via seastar::write_le and seastar::read_le
+/// for example: seastar::write_le<uint8_t>(compression)
+/// this saves about 19 bytes per entry on disk! and we still have a bunch
+/// of zeros for lower sizes.
+///
+/// On the reader we allocate 9 bytes for reading, read one field at a time
+/// and populate the struct manually afterwards.
+///
+/// We write these fields in ORDER:
+///     size(4 bytes), checksum(4 bytes), compression(1 byte).
+///
 struct wal_header {
-  compression: wal_entry_compression_type = none;
-  // currently we have LOTS of free bits
-  // int8_t padding0__;
-  // int16_t padding1__;
-  size:        uint = 0;
-  checksum:    uint = 0;
+  size:        uint;
+  checksum:    uint;
+  compression: wal_entry_compression_type;
 }
 
 
@@ -33,6 +44,7 @@ enum tx_put_operation:byte {
 }
 
 enum tx_put_invalidation_reason:byte {
+  none,
   server_connection_timeout,
   client_connection_timeout
 }
@@ -67,23 +79,19 @@ table tx_put_fragment {
   key:              [ubyte];
   value:            [ubyte];
 
-  invalidation_reason: tx_put_invalidation_reason;
+  invalidation_reason: tx_put_invalidation_reason = none;
   /// iff this->op == tx_put_operation::abort
   /// use to write an abort, for a specific offset
   /// This is the offset from the tx_put_reply.
-  invalidation_offset: ulong;
+  invalidation_offset: ulong = 0;
 
 }
 
-table tx_put_partition_pair {
+table tx_put_partition_tuple {
   /// hashing_utils::xxhash_32( topic +  tx_put_fragment::data::key )
   partition:   uint (key); 
 
   // 
-  // TODO(agallego) - optimize to a union - so that the client may be allowed to send bytes
-  // requires a bit more sophisticated client. but probably worth it.
-  //
-
   /// \brief - this could be optimized further if we make the client send bytes instead.
   /// currently kafka and other brokers do many re-compression
   ///   1) form the transport RPC mechanism
@@ -110,15 +118,21 @@ table tx_put_partition_pair {
 /// brief - stores `puts` transactionally
 table tx_put_request {
   topic:   string;
-  data:    [tx_put_partition_pair];
+  data:    [tx_put_partition_tuple];
 }
 
-table tx_put_reply {
+table tx_put_reply_partition_tuple {
+  topic:       string;
+  partition:   uint (key);
   /// \brief the committed offset into the WAL
   ///  clients can monitor how much disk was consumed by the puts
   ///  and we need this for cache eviction and management.
   start_offset: ulong;
-  end_offset: ulong;
+  end_offset:   ulong;
+
+}
+table tx_put_reply {
+  offsets: [tx_put_reply_partition_tuple];
 }
 
 
@@ -145,10 +159,28 @@ table tx_get_fragment {
   /// tx_put_fragment
   fragment:        [ubyte]; 
 }
+enum wal_read_errno:byte {
+  /// \brief - we chillin
+  none,
 
+  /// \brief the offset does not exist
+  invalid_offset,
+
+  /// \brief header for WAL entry is corrupted
+  invalid_header,
+
+  /// \brief invalid checksum for the payload
+  missmatching_payload_checksum,
+
+  /// \brief the header of the entry says the payload is of size
+  /// and that size does not match with the actual data read
+  /// from the disk
+  missmatching_header_payload_size,
+}
 table tx_get_reply {
   next_offset: ulong;
   gets:        [tx_get_fragment];
+  error:       wal_read_errno = none;
 }
 
 table wal_watermark {

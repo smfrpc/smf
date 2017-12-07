@@ -11,9 +11,10 @@
     version='247a3d8'
     force=yes
 
-- file: path='{{goobly_cache_dir}}/gtest/build' state=directory
+- name: configure build dir
+  file: path='{{goobly_cache_dir}}/gtest/build' state=directory
 
-- name: auto gtest
+- name: configure and make
   shell:
     cmake \
     -DGTEST_USE_OWN_TR1_TUPLE=0 \
@@ -22,11 +23,12 @@
     {{goobly_cache_dir}}/gtest
   args:
     chdir: '{{goobly_cache_dir}}/gtest/build'
-    creates: '{{goobly_cache_dir}}/gtest/Makefile'
+    creates: '{{goobly_cache_dir}}/gtest/build/Makefile'
 
 
-- shell:
+- name: install gtest
+  shell:
     "make install -j$((({{ansible_processor_vcpus}}-1))) PREFIX={{third_party_dir}}"
   args:
     chdir: '{{goobly_cache_dir}}/gtest/build'
-    creates: '{{third_party_dir}}/lib64/libgtest.so'
+    creates: '{{third_party_dir}}/lib64/libgtest.a'

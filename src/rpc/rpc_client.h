@@ -97,7 +97,8 @@ class rpc_client {
   /// \param req - the bytes to send
   ///
   template <typename T>
-  seastar::future<rpc_recv_typed_context<T>> send(rpc_envelope e) {
+  seastar::future<rpc_recv_typed_context<T>>
+  send(rpc_envelope e) {
     LOG_THROW_IF(is_error_state, "Cannot send request in error state");
 
     using ret_type = rpc_recv_typed_context<T>;
@@ -146,20 +147,32 @@ class rpc_client {
   virtual void disable_histogram_metrics() final;
   virtual void enable_histogram_metrics() final;
 
-  bool is_histogram_enabled() { return !!hist_; }
+  bool
+  is_histogram_enabled() {
+    return !!hist_;
+  }
 
-  seastar::lw_shared_ptr<histogram> get_histogram() { return hist_; }
+  seastar::lw_shared_ptr<histogram>
+  get_histogram() {
+    return hist_;
+  }
 
   /// \brief use to enqueue or dequeue filters
   /// \code{.cpp}
   ///    client->incoming_filters().push_back(zstd_decompression_filter());
   /// \endcode
-  std::vector<in_filter_t> &incoming_filters() { return in_filters_; }
+  std::vector<in_filter_t> &
+  incoming_filters() {
+    return in_filters_;
+  }
   /// \brief use to enqueue or dequeue filters
   /// \code{.cpp}
   ///    client->outgoing_filters().push_back(zstd_compression_filter(1000));
   /// \endcode
-  std::vector<out_filter_t> &outgoing_filters() { return out_filters_; }
+  std::vector<out_filter_t> &
+  outgoing_filters() {
+    return out_filters_;
+  }
 
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_client);
 

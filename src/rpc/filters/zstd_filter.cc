@@ -14,10 +14,10 @@ namespace smf {
 static thread_local auto compressor =
   codec::make_unique(codec_type::zstd, compression_level::fastest);
 
-seastar::future<rpc_envelope> zstd_compression_filter::operator()(
-  rpc_envelope &&e) {
-  if (e.letter.header.compression()
-      != rpc::compression_flags::compression_flags_none) {
+seastar::future<rpc_envelope>
+zstd_compression_filter::operator()(rpc_envelope &&e) {
+  if (e.letter.header.compression() !=
+      rpc::compression_flags::compression_flags_none) {
     return seastar::make_ready_future<rpc_envelope>(std::move(e));
   }
   if (e.letter.body.size() <= min_compression_size) {
@@ -33,10 +33,10 @@ seastar::future<rpc_envelope> zstd_compression_filter::operator()(
 }
 
 
-seastar::future<rpc_recv_context> zstd_decompression_filter::operator()(
-  rpc_recv_context &&ctx) {
-  if (ctx.header.compression()
-      == rpc::compression_flags::compression_flags_zstd) {
+seastar::future<rpc_recv_context>
+zstd_decompression_filter::operator()(rpc_recv_context &&ctx) {
+  if (ctx.header.compression() ==
+      rpc::compression_flags::compression_flags_zstd) {
     ctx.payload = compressor->uncompress(ctx.payload);
     ctx.header.mutate_compression(
       rpc::compression_flags::compression_flags_none);

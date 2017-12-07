@@ -15,15 +15,20 @@ class unique_histogram_adder {
   std::unique_ptr<smf::histogram> result_ = smf::histogram::make_unique();
 
  public:
-  seastar::future<> operator()(std::unique_ptr<smf::histogram> value) {
+  seastar::future<>
+  operator()(std::unique_ptr<smf::histogram> value) {
     if (value) { *result_ += *value; }
     return seastar::make_ready_future<>();
   }
-  seastar::future<> operator()(const smf::histogram *value) {
+  seastar::future<>
+  operator()(const smf::histogram *value) {
     if (value) { *result_ += *value; }
     return seastar::make_ready_future<>();
   }
-  std::unique_ptr<smf::histogram> get() && { return std::move(result_); }
+  std::unique_ptr<smf::histogram>
+  get() && {
+    return std::move(result_);
+  }
 };
 
 

@@ -36,22 +36,30 @@ struct rpc_envelope {
   void add_dynamic_header(const char *header, const char *value);
 
   /// \brief used on the client-sender side
-  inline void set_request_id(uint32_t request_id) {
+  inline void
+  set_request_id(uint32_t request_id) {
     letter.header.mutate_meta(request_id);
   }
 
   /// \brief typically used on the server-returning-content side.
   /// usually it acts like the HTTP status codes
-  inline void set_status(const uint32_t &status) {
+  inline void
+  set_status(const uint32_t &status) {
     letter.header.mutate_meta(status);
   }
 
-  inline size_t size() const { return letter.size(); }
+  inline size_t
+  size() const {
+    return letter.size();
+  }
 
   /// \brief, sometimes you know/understand the lifecycle and want a read
   /// only copy of this rpc_envelope - note that headers are 'copied', the
   /// payload, however is 'shared()'
-  rpc_envelope share() { return rpc_envelope(letter.share()); }
+  rpc_envelope
+  share() {
+    return rpc_envelope(letter.share());
+  }
 
   rpc_letter letter;
 };

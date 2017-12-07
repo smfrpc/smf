@@ -21,7 +21,8 @@ using load_gen_t = smf::load_gen::load_generator<client_t>;
 
 
 struct test_put {
-  seastar::future<> operator()(client_t *c, smf::rpc_envelope &&e) {
+  seastar::future<>
+  operator()(client_t *c, smf::rpc_envelope &&e) {
     return c->put(std::move(e)).then([](auto ret) {
       return seastar::make_ready_future<>();
     });
@@ -29,13 +30,14 @@ struct test_put {
 };
 
 struct put_data_generator {
-  smf::random &random() {
+  smf::random &
+  random() {
     static thread_local smf::random rand;
     return rand;
   }
 
-  smf::rpc_envelope operator()(
-    const boost::program_options::variables_map &cfg) {
+  smf::rpc_envelope
+  operator()(const boost::program_options::variables_map &cfg) {
     // anti pattern w/ seastar, but boost ... has no conversion to
     // seastar::sstring
     std::string topic = cfg["topic"].as<std::string>();
@@ -69,7 +71,7 @@ struct put_data_generator {
                static_cast<uint64_t>(std::ceil(batch_size / fragment_count)));
 
     for (auto i = 0u; i < puts_per_partition; ++i) {
-      auto ptr       = std::make_unique<smf::wal::tx_put_partition_pairT>();
+      auto ptr       = std::make_unique<smf::wal::tx_put_partition_tupleT>();
       ptr->partition = fastrange32(static_cast<uint32_t>(random().next()), 32);
 
       for (auto j = 0u; j < fragment_count; ++j) {
@@ -90,7 +92,8 @@ struct put_data_generator {
   }
 };
 
-void cli_opts(boost::program_options::options_description_easy_init o) {
+void
+cli_opts(boost::program_options::options_description_easy_init o) {
   namespace po = boost::program_options;
 
   o("ip", po::value<std::string>()->default_value("127.0.0.1"),
@@ -118,7 +121,8 @@ void cli_opts(boost::program_options::options_description_easy_init o) {
 }
 
 
-int main(int argc, char **argv, char **env) {
+int
+main(int argc, char **argv, char **env) {
   std::setvbuf(stdout, nullptr, _IOLBF, 1024);
   seastar::distributed<load_gen_t> load;
   seastar::app_template            app;

@@ -15,7 +15,8 @@
 namespace smf {
 namespace stdx = std::experimental;
 
-std::ostream &operator<<(std::ostream &o, const smf::rpc_server &s) {
+std::ostream &
+operator<<(std::ostream &o, const smf::rpc_server &s) {
   o << "rpc_server{args.ip=" << s.args_.ip << ", args.flags=" << s.args_.flags
     << ", args.rpc_port=" << s.args_.rpc_port
     << ", args.http_port=" << s.args_.http_port << ", rpc_routes=" << s.routes_
@@ -60,7 +61,8 @@ rpc_server::rpc_server(rpc_server_args args)
 
 rpc_server::~rpc_server() {}
 
-void rpc_server::start() {
+void
+rpc_server::start() {
   LOG_INFO("Starging server:{}", *this);
   if (!(args_.flags & rpc_server_flags_disable_http_server)) {
     LOG_INFO("Starting HTTP admin server on background future");
@@ -92,7 +94,7 @@ void rpc_server::start() {
                                  seastar::ipv4_addr{args_.ip, args_.rpc_port}),
     lo);
   seastar::keep_doing([this] {
-    return listener_->accept().then([this, stats = stats_, limits = limits_](
+    return listener_->accept().then([ this, stats = stats_, limits = limits_ ](
       seastar::connected_socket fd, seastar::socket_address addr) mutable {
       auto conn = seastar::make_lw_shared<rpc_server_connection>(
         std::move(fd), limits, addr, stats, ++connection_idx_);
@@ -102,15 +104,17 @@ void rpc_server::start() {
       // DO NOT return the future. Need to execute in parallel
       handle_client_connection(conn);
     });
-  }).handle_exception([](auto ep) {
-    // Current and future \ref accept() calls will terminate immediately
-    // with an error after listener_->abort_accept().
-    // prevent future connections
-    LOG_WARN("Server stopped accepting connections: `{}`", ep);
-  });
+  })
+    .handle_exception([](auto ep) {
+      // Current and future \ref accept() calls will terminate immediately
+      // with an error after listener_->abort_accept().
+      // prevent future connections
+      LOG_WARN("Server stopped accepting connections: `{}`", ep);
+    });
 }
 
-seastar::future<> rpc_server::stop() {
+seastar::future<>
+rpc_server::stop() {
   LOG_WARN("Stopping rpc server: aborting future accept() calls");
   listener_->abort_accept();
 
@@ -127,7 +131,8 @@ seastar::future<> rpc_server::stop() {
   });
 }
 
-seastar::future<> rpc_server::handle_client_connection(
+seastar::future<>
+rpc_server::handle_client_connection(
   seastar::lw_shared_ptr<rpc_server_connection> conn) {
   return seastar::do_until(
     [conn] { return !conn->is_valid(); },
@@ -141,8 +146,8 @@ seastar::future<> rpc_server::handle_client_connection(
         }
         auto metric = h->auto_measure();
         /*return*/ stage_apply_incoming_filters(std::move(recv_ctx.value()))
-          .then([this, conn,
-                 metric = std::move(metric)](rpc_recv_context ctx) mutable {
+          .then([ this, conn,
+                  metric = std::move(metric) ](rpc_recv_context ctx) mutable {
             auto payload_size = ctx.payload.size();
             return this->dispatch_rpc(conn, std::move(ctx)).finally([
               this, conn, metric = std::move(metric), payload_size
@@ -156,8 +161,8 @@ seastar::future<> rpc_server::handle_client_connection(
                   conn->stats->active_connections--;
                   LOG_INFO("Closing connection for client: {}",
                            conn->remote_address);
-                  if (open_connections_.find(conn->id)
-                      != open_connections_.end()) {
+                  if (open_connections_.find(conn->id) !=
+                      open_connections_.end()) {
                     open_connections_.erase(conn->id);
                   }
                   return conn->ostream.close();
@@ -181,8 +186,9 @@ seastar::future<> rpc_server::handle_client_connection(
     });
 }
 
-seastar::future<> rpc_server::dispatch_rpc(
-  seastar::lw_shared_ptr<rpc_server_connection> conn, rpc_recv_context &&ctx) {
+seastar::future<>
+rpc_server::dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
+                         rpc_recv_context &&                           ctx) {
   if (ctx.request_id() == 0) {
     conn->set_error("Missing request_id. Invalid request");
     return seastar::make_ready_future<>();
@@ -203,7 +209,7 @@ seastar::future<> rpc_server::dispatch_rpc(
   /// connection
   return seastar::with_gate(
            conn->limits->reply_gate,
-           [this, ctx = std::move(ctx), conn, method_dispatch]() mutable {
+           [ this, ctx = std::move(ctx), conn, method_dispatch ]() mutable {
              return method_dispatch->apply(std::move(ctx))
                .then([this](rpc_envelope e) {
                  return stage_apply_outgoing_filters(std::move(e));
@@ -211,7 +217,7 @@ seastar::future<> rpc_server::dispatch_rpc(
                .then([this, conn](rpc_envelope e) {
                  conn->stats->out_bytes += e.letter.size();
                  return conn->serialize_writes.wait(1)
-                   .then([conn, ee = std::move(e)]() mutable {
+                   .then([ conn, ee = std::move(e) ]() mutable {
                      return smf::rpc_envelope::send(&conn->ostream,
                                                     std::move(ee));
 
@@ -232,21 +238,21 @@ static thread_local auto outgoing_stage = seastar::make_execution_stage(
   "smf::rpc_server::outgoing::filter", &rpc_server::apply_outgoing_filters);
 
 
-seastar::future<rpc_recv_context> rpc_server::apply_incoming_filters(
-  rpc_recv_context ctx) {
+seastar::future<rpc_recv_context>
+rpc_server::apply_incoming_filters(rpc_recv_context ctx) {
   return rpc_filter_apply(&in_filters_, std::move(ctx));
 }
-seastar::future<rpc_envelope> rpc_server::apply_outgoing_filters(
-  rpc_envelope e) {
+seastar::future<rpc_envelope>
+rpc_server::apply_outgoing_filters(rpc_envelope e) {
   return rpc_filter_apply(&out_filters_, std::move(e));
 }
 
-seastar::future<rpc_recv_context> rpc_server::stage_apply_incoming_filters(
-  rpc_recv_context ctx) {
+seastar::future<rpc_recv_context>
+rpc_server::stage_apply_incoming_filters(rpc_recv_context ctx) {
   return incoming_stage(this, std::move(ctx));
 }
-seastar::future<rpc_envelope> rpc_server::stage_apply_outgoing_filters(
-  rpc_envelope e) {
+seastar::future<rpc_envelope>
+rpc_server::stage_apply_outgoing_filters(rpc_envelope e) {
   return outgoing_stage(this, std::move(e));
 }
 }  // namespace smf

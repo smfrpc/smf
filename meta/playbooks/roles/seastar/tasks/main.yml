@@ -79,7 +79,7 @@
     update=yes
     recursive=yes
     force=yes
-    version='54af71d'
+    version='0ed15e9'
 
 # needs to be exported because seastar
 # shells out to c-ares dns lib and others

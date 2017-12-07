@@ -24,16 +24,24 @@ struct generator_duration {
 
   uint64_t total_bytes{0};
 
-  void begin() { test_begin = std::chrono::high_resolution_clock::now(); }
-  void end() { test_end = std::chrono::high_resolution_clock::now(); }
+  void
+  begin() {
+    test_begin = std::chrono::high_resolution_clock::now();
+  }
+  void
+  end() {
+    test_end = std::chrono::high_resolution_clock::now();
+  }
 
-  inline uint64_t duration_in_millis() {
+  inline uint64_t
+  duration_in_millis() {
     namespace co = std::chrono;
     auto d       = test_end - test_begin;
     return co::duration_cast<co::milliseconds>(d).count();
   }
 
-  inline uint64_t qps() {
+  inline uint64_t
+  qps() {
     auto       milli = duration_in_millis();
     const auto reqs  = static_cast<double>(num_of_req);
 
@@ -46,7 +54,8 @@ struct generator_duration {
     return queries_per_milli * 1000.0;
   }
 
-  seastar::sstring as_sstring() {
+  seastar::sstring
+  as_sstring() {
     std::stringstream ss;
     ss << "benchmark_stats={test_duration: " << duration_in_millis()
        << "ms, qps: " << qps() << ", total_bytes: " << total_bytes << " }";

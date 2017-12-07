@@ -2,13 +2,11 @@
 //
 #pragma once
 
-// Don't put inside a namespace
 // Prefix the namespace using SNAKE_UPPER_CASE
-// #define is a preprocessor directive. The macros are being replaced before
-// anything else apart from removing comments (which means, before compilation).
-// So at the time macros are replaced, the compiler knows nothing about your
-// namespaces.
 
+template <typename T, size_t N>
+char (&smf_array_size_helper(T (&array)[N]))[N];
+#define SMF_ARRAYSIZE(array) (sizeof(::smf_array_size_helper(array)))
 
 #define SMF_DISALLOW_COPY(TypeName) TypeName(const TypeName &) = delete
 

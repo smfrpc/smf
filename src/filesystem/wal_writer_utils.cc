@@ -8,7 +8,8 @@
 #include "utils/time_utils.h"
 
 namespace smf {
-uint64_t wal_file_size_aligned() {
+uint64_t
+wal_file_size_aligned() {
   static const uint64_t pz = ::sysconf(_SC_PAGESIZE);
   // same as hdfs, see package org.apache.hadoop.fs; - 64MB
   // 67108864
@@ -21,12 +22,11 @@ uint64_t wal_file_size_aligned() {
   return kDefaultFileSize - extra_bytes;
 }
 
-seastar::sstring wal_file_name(const seastar::sstring &work_dir,
-                               const seastar::sstring &prefix,
-                               uint64_t                epoch) {
+seastar::sstring
+wal_file_name(const seastar::sstring &work_dir, uint64_t epoch) {
   DLOG_THROW_IF(work_dir[work_dir.size() - 1] == '/',
                 "Work dirrectory cannot end in /");
-  return work_dir + "/" + prefix + ":" + seastar::to_sstring(epoch) + ".wal";
+  return work_dir + "/" + seastar::to_sstring(epoch) + ".wal";
 }
 
 }  // namespace smf

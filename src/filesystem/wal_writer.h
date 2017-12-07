@@ -12,7 +12,7 @@
 namespace smf {
 class wal_writer {
  public:
-  wal_writer(seastar::sstring topic, uint32_t topic_partition);
+  wal_writer(wal_opts opts, seastar::sstring writer_dir);
   wal_writer(wal_writer &&o) noexcept;
   ~wal_writer() {}
 
@@ -22,16 +22,15 @@ class wal_writer {
   /// to determine last epoch written for this dir & prefix
   seastar::future<> open();
   /// \brief returns starting offset
-  seastar::future<wal_write_reply> append(
+  seastar::future<seastar::lw_shared_ptr<wal_write_reply>> append(
     seastar::lw_shared_ptr<wal_write_projection> projection);
   /// \brief closes current file
   seastar::future<> close();
 
-  const seastar::sstring topic;
-  const uint32_t         partition;
+  const wal_opts         opts;
+  const seastar::sstring writer_directory;
 
  private:
-  seastar::sstring     work_directory() const;
   wal_writer_node_opts default_writer_opts() const;
 
   seastar::future<> open_empty_dir();

@@ -22,7 +22,8 @@ struct rpc_typed_envelope {
   ~rpc_typed_envelope() {}
   explicit rpc_typed_envelope(std::unique_ptr<native_type> &&ptr) noexcept
     : data(std::move(ptr)) {}
-  rpc_typed_envelope &operator=(rpc_typed_envelope<RootType> &&te) noexcept {
+  rpc_typed_envelope &
+  operator=(rpc_typed_envelope<RootType> &&te) noexcept {
     envelope = std::move(te.envelope);
     data     = std::move(te.data);
     return *this;
@@ -33,7 +34,8 @@ struct rpc_typed_envelope {
   /// \brief this copies this->data into this->envelope
   /// and retuns a *moved* copy of the envelope. That is
   /// the envelope will be invalid after this method call
-  rpc_envelope &&serialize_data() {
+  rpc_envelope &&
+  serialize_data() {
     envelope.letter.body =
       std::move(smf::native_table_as_buffer<RootType>(*(data.get())));
     smf::checksum_rpc(envelope.letter.header, envelope.letter.body.get(),

@@ -30,9 +30,9 @@ struct rpc_letter {
   /// \brief does it have a valid body
   bool empty() const;
 
-  rpc::header header;
+  rpc::header                                            header;
   std::unordered_map<seastar::sstring, seastar::sstring> dynamic_headers;
-  seastar::temporary_buffer<char> body;
+  seastar::temporary_buffer<char>                        body;
 };
 
 }  // namespace smf

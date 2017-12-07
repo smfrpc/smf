@@ -20,14 +20,15 @@
 #include "flatbuffers/demo_service.smf.fb.h"
 
 class storage_service : public smf_gen::demo::SmfStorage {
-  virtual seastar::future<smf::rpc_typed_envelope<smf_gen::demo::Response>> Get(
-    smf::rpc_recv_typed_context<smf_gen::demo::Request> &&rec) final {
+  virtual seastar::future<smf::rpc_typed_envelope<smf_gen::demo::Response>>
+  Get(smf::rpc_recv_typed_context<smf_gen::demo::Request> &&rec) final {
     LOG_THROW("SHOULD NOT REACH THIS W/ A TIMEOUT");
   }
 };
 
 
-int main(int args, char **argv, char **env) {
+int
+main(int args, char **argv, char **env) {
   DLOG_DEBUG("About to start the RPC test");
   seastar::distributed<smf::rpc_server> rpc;
 

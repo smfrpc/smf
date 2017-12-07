@@ -3,8 +3,10 @@
 
 #pragma once
 
+#include <cstdint>
 #include <list>
 
+#include <core/byteorder.hh>
 #include <core/shared_ptr.hh>
 #include <core/sstring.hh>
 
@@ -24,26 +26,37 @@ namespace smf {
 /// underlying array, minimizing memory consumption
 ///
 struct wal_write_projection {
-  // This is ALMOST identical to the wal_generated.h
-  // HOWEVER - a set of major improvements - it works with seastar IO subsystem.
-  // Which means we can share this all we want and we'll get the most memory
-  // friendlyness
   struct item {
-    static constexpr uint32_t kWalHeaderSize = sizeof(wal::wal_header);
-
-    item() : hdr(seastar::temporary_buffer<char>(kWalHeaderSize)) {}
-
-    fbs_typed_buf<wal::wal_header>  hdr;
-    seastar::temporary_buffer<char> fragment;
-
-    uint32_t size() { return hdr.buf().size() + fragment.size(); }
+    using buf_t = seastar::temporary_buffer<char>;
     SMF_DISALLOW_COPY_AND_ASSIGN(item);
+
+    item(wal::wal_header header, buf_t payload)
+      : hdr(std::move(header)), fragment(std::move(payload)) {}
+
+    const wal::wal_header hdr;
+    const buf_t           fragment;
+
+    buf_t
+    create_disk_header() const {
+      buf_t ret(9);
+      std::memset(ret.get_write(), 0, 9);
+      seastar::write_le<uint32_t>(ret.get_write(), hdr.size());
+      seastar::write_le<uint32_t>(ret.get_write() + 4, hdr.checksum());
+      seastar::write_le<int8_t>(ret.get_write() + 8,
+                                static_cast<int8_t>(hdr.compression()));
+      return std::move(ret);
+    }
+    inline uint32_t
+    on_disk_size() const {
+      return 9 + fragment.size();
+    }
   };
 
-  wal_write_projection() {}
-  wal_write_projection(wal_write_projection &&o) noexcept
-    : projection(std::move(o.projection)) {}
-  std::list<seastar::lw_shared_ptr<item>> projection{};
+  wal_write_projection(const seastar::sstring &t, uint32_t p)
+    : topic(t), partition(p) {}
+  const seastar::sstring                    topic;
+  const uint32_t                            partition;
+  std::vector<seastar::lw_shared_ptr<item>> projection;
   SMF_DISALLOW_COPY_AND_ASSIGN(wal_write_projection);
 
   /// \brief takes in what the user expected to write, and converts it to a
@@ -77,7 +90,7 @@ struct wal_write_projection {
   /// schemes, but you must cache the write-behind
   ///
   static seastar::lw_shared_ptr<wal_write_projection> translate(
-    const wal::tx_put_partition_pair *req);
+    const seastar::sstring &topic, const wal::tx_put_partition_tuple *req);
 };
 
 }  // namespace smf

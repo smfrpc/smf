@@ -20,6 +20,7 @@ if [[ $1 != "quick" ]]; then
 
     $cmake_cmd --graphviz=$build_dir/dependencies.dot \
                -Wno-dev \
+               -DENABLE_BENCHMARK_TESTS=ON \
                -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
                -DCMAKE_BUILD_TYPE=Release $git_root
 
@@ -37,6 +38,7 @@ else
     $cmake_cmd --graphviz=$build_dir/dependencies.dot \
                -Wno-dev \
                -DENABLE_INTEGRATION_TESTS=OFF \
+               -DENABLE_BENCHMARK_TESTS=OFF \
                -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
                -DCMAKE_BUILD_TYPE=Release $git_root
 

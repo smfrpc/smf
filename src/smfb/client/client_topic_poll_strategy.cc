@@ -16,7 +16,8 @@ client_topic_poll_strategy::client_topic_poll_strategy(
   std::vector<smf::wal::wal_watermarkT>           ws)
   : default_start_(default_start), watermarks_(std::move(ws)) {}
 
-uint32_t client_topic_poll_strategy::next_offset() const {
+uint32_t
+client_topic_poll_strategy::next_offset() const {
   auto  i = fastrange32(round_robin_idx_++, watermarks_.size());
   auto &p = watermarks_[i];
   if (stats_.find(p.partition) == stats_.end()) {
@@ -37,7 +38,8 @@ uint32_t client_topic_poll_strategy::next_offset() const {
   }
   return stats_[p.partition].next_offset;
 }
-void client_topic_poll_strategy::update_partition_stats(
+void
+client_topic_poll_strategy::update_partition_stats(
   const uint32_t &                       partition,
   const uint64_t &                       next_offset,
   const uint32_t &                       total_records,

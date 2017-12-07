@@ -43,7 +43,8 @@ struct generator_args {
   const boost::program_options::variables_map cfg;
 };
 
-std::ostream &operator<<(std::ostream &o, const generator_args &args) {
+std::ostream &
+operator<<(std::ostream &o, const generator_args &args) {
   o << "generator_args{ip=" << args.ip << ", port=" << args.port
     << ", num_of_req=" << args.num_of_req
     << ", concurrency=" << args.concurrency

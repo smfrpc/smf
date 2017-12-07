@@ -18,13 +18,16 @@ DEFINE_bool(use_system_headers, true, "use #include<>, vs #include\"\"");
 namespace smf_gen {
 namespace {
 
-template <class T> std::string as_string(T x) {
+template <class T>
+std::string
+as_string(T x) {
   std::ostringstream out;
   out << x;
   return out.str();
 }
 
-std::string file_name_identifier(const std::string &filename) {
+std::string
+file_name_identifier(const std::string &filename) {
   std::string result;
   for (unsigned i = 0; i < filename.size(); i++) {
     char c = filename[i];
@@ -43,10 +46,14 @@ std::string file_name_identifier(const std::string &filename) {
 }
 }  // namespace
 
-template <class T, size_t N> T *array_end(T (&array)[N]) { return array + N; }
+template <class T, size_t N>
+T *
+array_end(T (&array)[N]) {
+  return array + N;
+}
 
-void print_includes(smf_printer *                   printer,
-                    const std::vector<std::string> &headers) {
+void
+print_includes(smf_printer *printer, const std::vector<std::string> &headers) {
   VLOG(1) << "print_includes";
   std::map<std::string, std::string> vars;
   vars["l"] = FLAGS_use_system_headers ? '<' : '"';
@@ -61,12 +68,13 @@ void print_includes(smf_printer *                   printer,
   }
 }
 
-std::string get_header_prologue(smf_file *file) {
+std::string
+get_header_prologue(smf_file *file) {
   VLOG(1) << "get_header_prologue";
   std::string output;
   {
     // Scope the output stream so it closes and finalizes output to the string.
-    auto printer = file->create_printer(&output);
+    auto                               printer = file->create_printer(&output);
     std::map<std::string, std::string> vars;
 
     // FIXME - weird ._generated.h
@@ -90,12 +98,13 @@ std::string get_header_prologue(smf_file *file) {
   return output;
 }
 
-std::string get_header_includes(smf_file *file) {
+std::string
+get_header_includes(smf_file *file) {
   VLOG(1) << "get_header_includes";
   std::string output;
   {
     // Scope the output stream so it closes and finalizes output to the string.
-    auto printer = file->create_printer(&output);
+    auto                               printer = file->create_printer(&output);
     std::map<std::string, std::string> vars;
 
     static const char *headers_strs[] = {
@@ -121,8 +130,9 @@ std::string get_header_includes(smf_file *file) {
 }
 
 
-void print_header_service_ctor_dtor(smf_printer *      printer,
-                                    const smf_service *service) {
+void
+print_header_service_ctor_dtor(smf_printer *      printer,
+                               const smf_service *service) {
   VLOG(1) << "print_header_service_ctor_dtor for service: " << service->name();
   std::map<std::string, std::string> vars;
 
@@ -162,8 +172,9 @@ void print_header_service_ctor_dtor(smf_printer *      printer,
   printer->outdent();
   printer->print("}\n");
 }
-void print_header_service_handle_request_id(smf_printer *      printer,
-                                            const smf_service *service) {
+void
+print_header_service_handle_request_id(smf_printer *      printer,
+                                       const smf_service *service) {
   printer->print("virtual smf::rpc_service_method_handle *\n"
                  "method_for_request_id(uint32_t idx) override final {\n");
   printer->indent();
@@ -171,7 +182,7 @@ void print_header_service_handle_request_id(smf_printer *      printer,
   printer->indent();
   for (int i = 0; i < service->method_count(); ++i) {
     std::map<std::string, std::string> vars;
-    auto method       = service->method(i);
+    auto                               method = service->method(i);
     vars["ServiceID"] = std::to_string(method->service_id());
     vars["MethodId"]  = std::to_string(method->method_id());
     vars["VectorIdx"] = std::to_string(i);
@@ -185,7 +196,8 @@ void print_header_service_handle_request_id(smf_printer *      printer,
   printer->outdent();
   printer->print("}\n");
 }
-void print_header_service_handles(smf_printer *printer) {
+void
+print_header_service_handles(smf_printer *printer) {
   printer->print("virtual const std::vector<smf::rpc_service_method_handle> &"
                  "methods() override final {\n");
   printer->indent();
@@ -193,8 +205,8 @@ void print_header_service_handles(smf_printer *printer) {
   printer->outdent();
   printer->print("}\n");
 }
-void print_header_service_method(smf_printer *     printer,
-                                 const smf_method *method) {
+void
+print_header_service_method(smf_printer *printer, const smf_method *method) {
   VLOG(1) << "print_header_service_method: " << method->name();
 
   std::map<std::string, std::string> vars;
@@ -220,7 +232,8 @@ void print_header_service_method(smf_printer *     printer,
   printer->print("}\n");
 }
 
-void print_header_service(smf_printer *printer, const smf_service *service) {
+void
+print_header_service(smf_printer *printer, const smf_service *service) {
   VLOG(1) << "print_header_service: " << service->name();
   std::map<std::string, std::string> vars{};
   vars["Service"]   = service->name();
@@ -257,11 +270,13 @@ void print_header_service(smf_printer *printer, const smf_service *service) {
   printer->print(vars, "}; // end of service: $Service$\n");
 }
 
-bool is_camel_case(const std::string &s) {
+bool
+is_camel_case(const std::string &s) {
   return std::find_if(s.begin(), s.end(), ::isupper) != s.end();
 }
 // copy on purpose
-std::string proper_postfix_token(std::string s, std::string postfix) {
+std::string
+proper_postfix_token(std::string s, std::string postfix) {
   CHECK(!s.empty() || !postfix.empty()) << "Can't compute postfix token";
 
   if (is_camel_case(s)) {
@@ -277,8 +292,8 @@ std::string proper_postfix_token(std::string s, std::string postfix) {
 }
 
 
-void print_header_client_method(smf_printer *     printer,
-                                const smf_method *method) {
+void
+print_header_client_method(smf_printer *printer, const smf_method *method) {
   std::map<std::string, std::string> vars;
   vars["MethodName"]  = method->name();
   vars["MethodID"]    = std::to_string(method->method_id());
@@ -302,7 +317,8 @@ void print_header_client_method(smf_printer *     printer,
   printer->print("}\n");
 }
 
-void print_header_client(smf_printer *printer, const smf_service *service) {
+void
+print_header_client(smf_printer *printer, const smf_service *service) {
   // print the client rpc code
   VLOG(1) << "print_header_client for service: " << service->name();
   std::map<std::string, std::string> vars{};
@@ -385,13 +401,14 @@ void print_header_client(smf_printer *printer, const smf_service *service) {
   printer->outdent();
 }
 
-std::string get_header_services(smf_file *file) {
+std::string
+get_header_services(smf_file *file) {
   VLOG(1) << "get_header_services";
 
   std::string output;
   {
     // Scope the output stream so it closes and finalizes output to the string.
-    auto printer = file->create_printer(&output);
+    auto                               printer = file->create_printer(&output);
     std::map<std::string, std::string> vars;
     // Package string is empty or ends with a dot. It is used to fully qualify
     // method names.
@@ -420,13 +437,14 @@ std::string get_header_services(smf_file *file) {
   return output;
 }
 
-std::string get_header_epilogue(smf_file *file) {
+std::string
+get_header_epilogue(smf_file *file) {
   VLOG(1) << "get_header_epilogue";
 
   std::string output;
   {
     // Scope the output stream so it closes and finalizes output to the string.
-    auto printer = file->create_printer(&output);
+    auto                               printer = file->create_printer(&output);
     std::map<std::string, std::string> vars;
 
     vars["filename"] = file->filename();

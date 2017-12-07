@@ -76,4 +76,7 @@ int main(int args, char **argv, char **env) {
 }
 */
 
-int main(int argc, char **argv) { return 0; }
+int
+main(int argc, char **argv) {
+  return 0;
+}

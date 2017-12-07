@@ -16,38 +16,6 @@ namespace chains {
 using namespace smf;       // NOLINT
 using namespace smf::wal;  // NOLINT
 
-std::unordered_map<uint32_t, smf::wal_write_request> core_map(
-  const tx_put_request *p) {
-  std::unordered_map<uint32_t, smf::wal_write_request> retval;
-
-  if (SMF_UNLIKELY(p->data() == nullptr || p->data()->Length() == 0)) {
-    LOG_ERROR_IF(p->data() == nullptr, "null pointer to transactions");
-    LOG_ERROR_IF(p->data()->Length() == 0, "There are no partitions available");
-    return retval;
-  }
-
-  std::for_each(
-    p->data()->begin(), p->data()->end(),
-    [p, &retval](const smf::wal::tx_put_partition_pair *it) mutable {
-      // TODO(agallego) - validate
-      // f->op         = smf::wal::tx_put_operation::tx_put_operation_full;
-      // f->epoch_ms   = lowres_time_now_millis();
-      // f->type       =
-      auto core = smf::put_to_lcore(p->topic()->c_str(), it);
-      if (retval.find(core) == retval.end()) {
-        smf::wal_write_request req(
-          p,
-          smf::priority_manager::thread_local_instance()
-            .streaming_write_priority(),
-          {it->partition()});
-        retval.insert({core, std::move(req)});
-      } else {
-        retval.at(core).partition_view.insert(it->partition());
-      }
-    });
-  return retval;
-}
-
 seastar::future<rpc_typed_envelope<chain_put_reply>>
 chain_replication_service::put(
   rpc_recv_typed_context<chain_put_request> &&record) {
@@ -56,35 +24,33 @@ chain_replication_service::put(
   // * Create a core to put map for all partition pairs
   // * Send to all cores and reduce
   return seastar::do_with(std::move(record), [this](auto &r) {
-    auto cmap = core_map(r->put());
+    auto cmap = core_assignment(r->put());
     return seastar::map_reduce(
              // for-all
              cmap.begin(), cmap.end(),
 
              // Mapper function
-             [this](auto it) {
-               return seastar::smp::submit_to(it.first, [this, r = it.second] {
+             [this](auto &it) {
+               return seastar::smp::submit_to(it.runner_core, [ this, r = it ] {
                  return wal_->local().append(r);
                });
              },
 
              // Initial State
-             tx_put_replyT{},
+             seastar::make_lw_shared<wal_write_reply>(),
 
              // Reducer function
              [this](auto acc, auto next) {
-               // TODO(agallego)
-               // missing partition information
-               acc.start_offset =
-                 std::min(acc.start_offset, next.data.start_offset);
-               acc.end_offset = std::max(acc.end_offset, next.data.end_offset);
+               for (const auto &t : *next) {
+                 auto &p = t.second;
+                 acc->set_reply_partition_tuple(p->topic, p->partition,
+                                                p->start_offset, p->end_offset);
+               }
                return acc;
              })
       .then([](auto reduced) {
-        rpc_typed_envelope<chain_put_reply> data;
-        data.data->put               = std::make_unique<tx_put_replyT>();
-        data.data->put->start_offset = reduced.start_offset;
-        data.data->put->end_offset   = reduced.end_offset;
+        rpc_typed_envelope<chain_put_reply> data{};
+        data.data->put = reduced->move_into();
         data.envelope.set_status(200);
         return seastar::make_ready_future<rpc_typed_envelope<chain_put_reply>>(
           std::move(data));

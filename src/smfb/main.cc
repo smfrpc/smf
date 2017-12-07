@@ -14,10 +14,10 @@
 #include "rpc/rpc_server.h"
 #include "smfb/smfb_command_line_options.h"
 #include "utils/checks/cpu.h"
-#include "utils/checks/disk.h"
 #include "utils/checks/memory.h"
 
-void base_init(const boost::program_options::variables_map &config) {
+void
+base_init(const boost::program_options::variables_map &config) {
   auto l = config["log-level"].as<std::string>();
   if (l == "debug") {
     SET_LOG_LEVEL(seastar::log_level::debug);
@@ -26,11 +26,12 @@ void base_init(const boost::program_options::variables_map &config) {
   }
 }
 
-int main(int argc, char **argv, char **env) {
+int
+main(int argc, char **argv, char **env) {
   std::setvbuf(stdout, nullptr, _IOLBF, 1024);
 
-  seastar::distributed<smf::rpc_server> rpc;
-  smf::sharded_write_ahead_log          log;
+  seastar::distributed<smf::rpc_server>      rpc;
+  seastar::distributed<smf::write_ahead_log> log;
 
   seastar::app_template app;
 
@@ -71,18 +72,10 @@ int main(int argc, char **argv, char **env) {
       smf::checks::cpu::check();
       smf::checks::memory::check(config["developer"].as<bool>());
 
-      LOG_INFO("Checking disk type");
-      return smf::checks::disk::check(
-               config["write-ahead-log-dir"].as<std::string>(),
-               config["developer"].as<bool>())
-        .then([&log, &config] {
-          auto dir = config["write-ahead-log-dir"].as<std::string>();
-          LOG_INFO("Starting write-ahead-log in: `{}`", dir);
-          return log.start(smf::wal_opts(dir.c_str()));
-        })
-        .then([&log] {
-          return log.invoke_on_all(&smf::write_ahead_log_proxy::open);
-        })
+      auto dir = config["write-ahead-log-dir"].as<std::string>();
+      LOG_INFO("Starting write-ahead-log in: `{}`", dir);
+      return log.start(smf::wal_opts(dir.c_str()))
+        .then([&log] { return log.invoke_on_all(&smf::write_ahead_log::open); })
         .then([&rpc, &config] {
           smf::rpc_server_args args;
           args.rpc_port              = config["port"].as<uint16_t>();

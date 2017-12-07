@@ -55,7 +55,8 @@ using client_t   = smf_gen::demo::SmfStorageClient;
 using load_gen_t = smf::load_gen::load_generator<client_t>;
 
 struct method_callback {
-  seastar::future<> operator()(client_t *c, smf::rpc_envelope &&e) {
+  seastar::future<>
+  operator()(client_t *c, smf::rpc_envelope &&e) {
     return c->Get(std::move(e)).then([](auto ret) {
       return seastar::make_ready_future<>();
     });
@@ -63,8 +64,8 @@ struct method_callback {
 };
 
 struct generator {
-  smf::rpc_envelope operator()(
-    const boost::program_options::variables_map &cfg) {
+  smf::rpc_envelope
+  operator()(const boost::program_options::variables_map &cfg) {
     smf::rpc_typed_envelope<smf_gen::demo::Request> req;
     req.data->name = kPoem;
     return req.serialize_data();
@@ -73,18 +74,18 @@ struct generator {
 
 
 class storage_service : public smf_gen::demo::SmfStorage {
-  virtual seastar::future<smf::rpc_typed_envelope<smf_gen::demo::Response>> Get(
-    smf::rpc_recv_typed_context<smf_gen::demo::Request> &&rec) final {
+  virtual seastar::future<smf::rpc_typed_envelope<smf_gen::demo::Response>>
+  Get(smf::rpc_recv_typed_context<smf_gen::demo::Request> &&rec) final {
     smf::rpc_typed_envelope<smf_gen::demo::Response> data;
     data.envelope.set_status(200);
-    return seastar::
-      make_ready_future<smf::rpc_typed_envelope<smf_gen::demo::Response>>(
-        std::move(data));
+    return seastar::make_ready_future<
+      smf::rpc_typed_envelope<smf_gen::demo::Response>>(std::move(data));
   }
 };
 
 
-void cli_opts(boost::program_options::options_description_easy_init o) {
+void
+cli_opts(boost::program_options::options_description_easy_init o) {
   namespace po = boost::program_options;
 
   o("ip", po::value<std::string>()->default_value("127.0.0.1"),
@@ -110,7 +111,8 @@ void cli_opts(boost::program_options::options_description_easy_init o) {
 }
 
 
-int main(int args, char **argv, char **env) {
+int
+main(int args, char **argv, char **env) {
   SET_LOG_LEVEL(seastar::log_level::trace);
   LOG_INFO("About to start the RPC test");
   seastar::distributed<smf::rpc_server> rpc;
@@ -143,9 +145,8 @@ int main(int args, char **argv, char **env) {
           &smf::rpc_server::register_service<storage_service>);
       })
       .then([&rpc] {
-        return rpc.invoke_on_all(
-          &smf::rpc_server::
-            register_incoming_filter<smf::zstd_decompression_filter>);
+        return rpc.invoke_on_all(&smf::rpc_server::register_incoming_filter<
+                                 smf::zstd_decompression_filter>);
       })
       .then([&rpc] {
         LOG_INFO("Invoking rpc start on all cores");

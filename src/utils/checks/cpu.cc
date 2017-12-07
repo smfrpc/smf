@@ -6,7 +6,8 @@
 
 namespace smf {
 namespace checks {
-void cpu::check() {
+void
+cpu::check() {
   LOG_THROW_IF(!__builtin_cpu_supports("sse4.2"),
                "sse4.2 support is required to run");
 }

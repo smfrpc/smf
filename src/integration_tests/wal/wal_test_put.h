@@ -7,6 +7,8 @@
 #include <memory>
 
 #include <core/reactor.hh>
+#include <core/sstring.hh>
+
 #include <fastrange/fastrange.h>
 
 #include "filesystem/wal_lcore_map.h"
@@ -26,12 +28,15 @@ namespace smf {
 
 class wal_test_put {
  public:
-  explicit wal_test_put(uint32_t batch_size = 10) {
-    uint32_t max_rand_bytes =
-      static_cast<uint32_t>(std::numeric_limits<uint8_t>::max());
+  static constexpr uint32_t max_rand_bytes =
+    static_cast<uint32_t>(std::numeric_limits<uint8_t>::max());
 
-    auto key   = random().next_str(random().next() % max_rand_bytes);
-    auto value = random().next_str(random().next() % max_rand_bytes);
+
+  explicit wal_test_put(uint32_t _batch_size, uint32_t _fragment_count)
+    : batch_size(_batch_size), fragment_count(_fragment_count) {
+    partition_             = static_cast<uint32_t>(rand_.next());
+    seastar::sstring key   = rand_.next_str(rand_.next() % max_rand_bytes);
+    seastar::sstring value = rand_.next_str(rand_.next() % max_rand_bytes);
     seastar::sstring topic = "dummy_topic_test";
 
     DLOG_INFO("Size of key: {}", key.size());
@@ -39,84 +44,52 @@ class wal_test_put {
     DLOG_INFO("Topic name size: {}", topic.size());
 
 
-    smf::chains::chain_put_requestT p;
-    p.chain_index = 0;
-    p.chain.push_back(uint32_t(2130706433));
-    p.put        = std::make_unique<smf::wal::tx_put_requestT>();
-    p.put->topic = topic;
+    auto ptr   = std::make_unique<smf::wal::tx_put_requestT>();
+    ptr->topic = topic;
+    ptr->data.push_back(std::make_unique<smf::wal::tx_put_partition_tupleT>());
+    auto &tuple      = *ptr->data.begin();
+    tuple->partition = partition_;
 
-    const uint64_t fragment_count =
-      std::max(uint64_t(1), random().next() % batch_size);
-    const uint64_t puts_per_partition =
-      std::max(uint64_t(1),
-               static_cast<uint64_t>(std::ceil(batch_size / fragment_count)));
-
-    DLOG_INFO("Fragment count: {}, puts_per_partition: {}", fragment_count,
-              puts_per_partition);
-
-    for (auto i = 0u; i < puts_per_partition; ++i) {
-      auto ptr       = std::make_unique<smf::wal::tx_put_partition_pairT>();
-      ptr->partition = fastrange32(static_cast<uint32_t>(random().next()), 8);
-
-      for (auto j = 0u; j < fragment_count; ++j) {
-        auto f = std::make_unique<smf::wal::tx_put_fragmentT>();
-        // data + commit
-        f->op       = smf::wal::tx_put_operation::tx_put_operation_full;
-        f->epoch_ms = lowres_time_now_millis();
-        f->type     = smf::wal::tx_put_fragment_type::tx_put_fragment_type_kv;
-        f->key.resize(key.size());
-        f->value.resize(value.size());
-        std::memcpy(&f->key[0], &key[0], key.size());
-        std::memcpy(&f->value[0], &value[0], value.size());
-        ptr->txs.push_back(std::move(f));
-      }
-      p.put->data.push_back(std::move(ptr));
+    for (auto j = 0u; j < fragment_count; ++j) {
+      auto f = std::make_unique<smf::wal::tx_put_fragmentT>();
+      // data + commit
+      f->op       = smf::wal::tx_put_operation::tx_put_operation_full;
+      f->epoch_ms = time_now_millis();
+      f->type     = smf::wal::tx_put_fragment_type::tx_put_fragment_type_kv;
+      f->key.resize(key.size());
+      f->value.resize(value.size());
+      std::memcpy(&f->key[0], &key[0], key.size());
+      std::memcpy(&f->value[0], &value[0], value.size());
+      tuple->txs.push_back(std::move(f));
     }
 
-    auto body = smf::native_table_as_buffer<smf::chains::chain_put_request>(p);
+    auto body = smf::native_table_as_buffer<smf::wal::tx_put_request>(*ptr);
     DLOG_INFO("Encoded request is of size: {}", body.size());
-    orig_ =
-      std::make_unique<smf::fbs_typed_buf<smf::chains::chain_put_request>>(
-        std::move(body));
-
-    // verify_data();
+    orig_ = std::make_unique<smf::fbs_typed_buf<smf::wal::tx_put_request>>(
+      std::move(body));
   }
 
-  void verify_data() {
-    flatbuffers::Verifier v(
-      reinterpret_cast<const uint8_t *>(orig_->buf().get()),
-      orig_->buf().size());
-
-    LOG_THROW_IF(!orig_->mutable_ptr()->Verify(v),
-                 "the buffer is unverifyable");
+  smf::wal_write_request
+  get_request(const uint32_t assigned_core, const uint32_t runner_core) {
+    auto p = orig_->get();
+    return wal_write_request(
+      p, smf::priority_manager::get().streaming_write_priority(), assigned_core,
+      runner_core, {partition_});
   }
 
-  smf::wal_write_request get_request() {
-    // verify_data();
-    std::set<uint32_t> partitions;
-    auto               p = orig_->mutable_ptr()->mutable_put();
-    LOG_THROW_IF(p->data() == nullptr, "null pointer to transactions");
-    LOG_THROW_IF(p->data()->Length() == 0, "There are no partitions available");
-
-    std::for_each(p->data()->begin(), p->data()->end(),
-                  [&partitions, p](const smf::wal::tx_put_partition_pair *it) {
-                    // make sure only one core does this
-                    auto core = smf::put_to_lcore(p->topic()->c_str(), it);
-                    if (core == seastar::engine().cpu_id()) {
-                      partitions.insert(it->partition());
-                    }
-                  });
-
-    return smf::wal_write_request(
-      p, smf::priority_manager::thread_local_instance().default_priority(),
-      partitions);
+  uint32_t
+  get_partition() const {
+    return partition_;
   }
+
+  const uint32_t batch_size;
+  const uint32_t fragment_count;
 
 
  private:
-  smf::random                                                         rand_;
-  std::unique_ptr<smf::fbs_typed_buf<smf::chains::chain_put_request>> orig_ =
-    nullptr;
+  uint32_t                                                      partition_;
+  smf::random                                                   rand_;
+  std::unique_ptr<smf::fbs_typed_buf<smf::wal::tx_put_request>> orig_ = nullptr;
 };
 
 }  // namespace smf

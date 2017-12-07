@@ -16,12 +16,13 @@ DEFINE_string(output_path, "", "output path of the generated files");
 
 namespace smf_gen {
 
-bool generate(const flatbuffers::Parser &parser, std::string file_name) {
+bool
+generate(const flatbuffers::Parser &parser, std::string file_name) {
   smf_file fbfile(parser, file_name);
 
   std::string header_code =
-    get_header_prologue(&fbfile) + get_header_includes(&fbfile)
-    + get_header_services(&fbfile) + get_header_epilogue(&fbfile);
+    get_header_prologue(&fbfile) + get_header_includes(&fbfile) +
+    get_header_services(&fbfile) + get_header_epilogue(&fbfile);
 
 
   if (FLAGS_print_smf_gen_to_stderr) { std::cerr << header_code << std::endl; }

@@ -9,16 +9,18 @@
 
 namespace smf {
 struct wal_head_file_max_comparator {
-  bool operator()(const seastar::sstring &current,
-                  const seastar::sstring &new_file) {
+  bool
+  operator()(const seastar::sstring &current,
+             const seastar::sstring &new_file) {
     auto current_epoch = wal_name_extractor_utils::extract_epoch(current);
     auto new_epoch     = wal_name_extractor_utils::extract_epoch(new_file);
     return current_epoch <= new_epoch;
   }
 };
 struct wal_head_file_min_comparator {
-  bool operator()(const seastar::sstring &current,
-                  const seastar::sstring &new_file) {
+  bool
+  operator()(const seastar::sstring &current,
+             const seastar::sstring &new_file) {
     auto current_epoch = wal_name_extractor_utils::extract_epoch(current);
     auto new_epoch     = wal_name_extractor_utils::extract_epoch(new_file);
     return current_epoch >= new_epoch;
@@ -38,14 +40,16 @@ struct wal_head_file_min_comparator {
 ///            return seastar::make_ready_future<>();
 ///       });
 ///
-template <typename Comparator> struct wal_head_file_functor : wal_file_walker {
+template <typename Comparator>
+struct wal_head_file_functor : wal_file_walker {
   explicit wal_head_file_functor(seastar::file dir)
     : wal_file_walker(std::move(dir)) {}
-  seastar::future<> visit(seastar::directory_entry de) final {
+  seastar::future<>
+  visit(seastar::directory_entry de) final {
     if (comparator(last_file, de.name)) { last_file = de.name; }
     return seastar::make_ready_future<>();
   }
-  seastar::sstring last_file;
+  seastar::sstring last_file = "";
   Comparator       comparator{};
 };
 

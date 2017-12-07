@@ -24,11 +24,17 @@ class codec {
   codec(codec_type type, compression_level level)
     : type_(type), level_(level) {}
   virtual ~codec() {}
-  virtual codec_type        type() const final { return type_; }
-  virtual compression_level level() const final { return level_; }
+  virtual codec_type
+  type() const final {
+    return type_;
+  }
+  virtual compression_level
+  level() const final {
+    return level_;
+  }
 
   virtual seastar::temporary_buffer<char> compress(
-    const seastar::temporary_buffer<char> &data) = 0;
+    const seastar::temporary_buffer<char> &data)                = 0;
   virtual seastar::temporary_buffer<char> compress(const char *data,
                                                    size_t      size) = 0;
   virtual seastar::temporary_buffer<char> uncompress(

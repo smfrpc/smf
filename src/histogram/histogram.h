@@ -59,12 +59,12 @@ class histogram : public seastar::enable_lw_shared_from_this<histogram> {
 
   void record(const uint64_t &v);
 
-  void record_multiple_times(const uint64_t &v, const uint32_t &times);
-  void record_corrected(const uint64_t &v, const uint64_t &interval);
+  void    record_multiple_times(const uint64_t &v, const uint32_t &times);
+  void    record_corrected(const uint64_t &v, const uint64_t &interval);
   int64_t value_at(double percentile) const;
-  double stddev() const;
-  double mean() const;
-  size_t memory_size() const;
+  double  stddev() const;
+  double  mean() const;
+  size_t  memory_size() const;
 
   hdr_histogram *get();
 
@@ -94,7 +94,10 @@ struct histogram_measure {
   histogram_measure(histogram_measure &&o) noexcept
     : trace_(o.trace_), h(std::move(o.h)), begin_t(o.begin_t) {}
 
-  void set_trace(bool b) { trace_ = b; }
+  void
+  set_trace(bool b) {
+    trace_ = b;
+  }
 
   ~histogram_measure() {
     if (h && trace_) {

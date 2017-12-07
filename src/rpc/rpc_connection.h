@@ -28,13 +28,31 @@ class rpc_connection {
   seastar::lw_shared_ptr<rpc_connection_limits> limits;
   uint32_t                                      istream_active_parser{0};
 
-  void disable() { enabled_ = false; }
-  bool is_enabled() const { return enabled_; }
-  bool is_valid() { return !istream.eof() && !has_error() && enabled_; }
-  bool has_error() const { return error_.operator bool(); }
-  void set_error(const char *e) { error_ = seastar::sstring(e); }
+  void
+  disable() {
+    enabled_ = false;
+  }
+  bool
+  is_enabled() const {
+    return enabled_;
+  }
+  bool
+  is_valid() {
+    return !istream.eof() && !has_error() && enabled_;
+  }
+  bool
+  has_error() const {
+    return error_.operator bool();
+  }
+  void
+  set_error(const char *e) {
+    error_ = seastar::sstring(e);
+  }
 
-  virtual seastar::sstring get_error() const { return error_.value(); }
+  virtual seastar::sstring
+  get_error() const {
+    return error_.value();
+  }
 
   virtual ~rpc_connection() {}
 

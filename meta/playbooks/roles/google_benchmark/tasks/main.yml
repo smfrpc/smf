@@ -1,0 +1,34 @@
+---
+
+- name: Sync soure from git
+  git:
+    repo='https://github.com/google/benchmark.git'
+    accept_hostkey=yes
+    clone=yes
+    dest='{{goobly_cache_dir}}/google_benchmark'
+    update=yes
+    recursive=yes
+    version='4fe0206'
+    force=yes
+
+- name: make build dir
+  file: path='{{goobly_cache_dir}}/google_benchmark/build' state=directory
+
+- name: configure google benchmark
+  shell:
+    cmake \
+    -DCMAKE_BUILD_TYPE=RELEASE \
+    -DBENCHMARK_ENABLE_GTEST_TESTS=OFF \
+    -DCMAKE_INSTALL_PREFIX:PATH='{{third_party_dir}}' \
+    {{goobly_cache_dir}}/google_benchmark
+  args:
+    chdir: '{{goobly_cache_dir}}/google_benchmark/build'
+    creates: '{{goobly_cache_dir}}/google_benchmark/build/Makefile'
+
+
+- name: install google benchmark
+  shell:
+    "make install -j$((({{ansible_processor_vcpus}}-1))) PREFIX={{third_party_dir}}"
+  args:
+    chdir: '{{goobly_cache_dir}}/google_benchmark/build'
+    creates: '{{third_party_dir}}/lib/libbenchmark.a'

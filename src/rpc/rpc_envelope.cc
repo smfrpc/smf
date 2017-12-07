@@ -15,8 +15,8 @@
 
 namespace smf {
 
-seastar::future<> rpc_envelope::send(seastar::output_stream<char> *out,
-                                     rpc_envelope                  e) {
+seastar::future<>
+rpc_envelope::send(seastar::output_stream<char> *out, rpc_envelope e) {
   seastar::temporary_buffer<char> header_buf(kHeaderSize);
   DLOG_THROW_IF(e.letter.header.size() == 0, "Invalid header size");
   DLOG_THROW_IF(e.letter.header.session() == 0, "Invalid session");
@@ -29,7 +29,7 @@ seastar::future<> rpc_envelope::send(seastar::output_stream<char> *out,
 
   // needs to be moved so we can do zero copy output buffer
   return out->write(std::move(header_buf))
-    .then([out, e = std::move(e)]() mutable {
+    .then([ out, e = std::move(e) ]() mutable {
       // TODO(agalleg) - need to see if we need to write headers
       return out->write(std::move(e.letter.body));
     })
@@ -40,7 +40,8 @@ rpc_envelope::rpc_envelope(rpc_letter &&l) : letter(std::move(l)) {}
 rpc_envelope::~rpc_envelope() {}
 rpc_envelope::rpc_envelope() {}
 
-rpc_envelope &rpc_envelope::operator=(rpc_envelope &&o) noexcept {
+rpc_envelope &
+rpc_envelope::operator=(rpc_envelope &&o) noexcept {
   if (this != &o) { letter = std::move(o.letter); }
   return *this;
 }
@@ -48,7 +49,8 @@ rpc_envelope &rpc_envelope::operator=(rpc_envelope &&o) noexcept {
 rpc_envelope::rpc_envelope(rpc_envelope &&o) noexcept
   : letter(std::move(o.letter)) {}
 
-void rpc_envelope::add_dynamic_header(const char *header, const char *value) {
+void
+rpc_envelope::add_dynamic_header(const char *header, const char *value) {
   DLOG_THROW_IF(header != nullptr, "Cannot add header with empty key");
   DLOG_THROW_IF(value != nullptr, "Cannot add header with empty value");
   letter.dynamic_headers.emplace(header, value);

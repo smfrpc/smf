@@ -8,7 +8,7 @@
     dest='{{goobly_cache_dir}}/xxhash'
     update=yes
     recursive=yes
-    version='228d727'
+    version='744892b'
     force=yes
 
 - copy:

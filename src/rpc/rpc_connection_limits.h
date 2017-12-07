@@ -57,9 +57,9 @@ struct rpc_connection_limits {
   /// If you use manually, be careful not to leak resources
   /// Please try to use wait_for_payload_resources()
   /// and release_payload_resources()
-  uint64_t estimate_request_size(uint64_t serialized_size);
+  uint64_t          estimate_request_size(uint64_t serialized_size);
   seastar::future<> wait_for_resources(uint64_t memory_consumed);
-  void release_resources(uint64_t memory_consumed);
+  void              release_resources(uint64_t memory_consumed);
 };
 std::ostream &operator<<(std::ostream &o, const rpc_connection_limits &l);
 

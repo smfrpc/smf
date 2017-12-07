@@ -60,27 +60,31 @@ class rpc_server {
   void              start();
   seastar::future<> stop();
 
-  seastar::future<std::unique_ptr<smf::histogram>> copy_histogram() {
+  seastar::future<std::unique_ptr<smf::histogram>>
+  copy_histogram() {
     auto h = smf::histogram::make_unique(hist_->get());
     return seastar::make_ready_future<std::unique_ptr<smf::histogram>>(
       std::move(h));
   }
 
   template <typename T, typename... Args>
-  void register_service(Args &&... args) {
+  void
+  register_service(Args &&... args) {
     static_assert(std::is_base_of<rpc_service, T>::value,
                   "register_service can only be called with a derived class of "
                   "smf::rpc_service");
     routes_.register_service(std::make_unique<T>(std::forward<Args>(args)...));
   }
   template <typename Function, typename... Args>
-  void register_incoming_filter(Args &&... args) {
+  void
+  register_incoming_filter(Args &&... args) {
     in_filters_.push_back(Function(std::forward<Args>(args)...));
   }
 
 
   template <typename Function, typename... Args>
-  void register_outgoing_filter(Args &&... args) {
+  void
+  register_outgoing_filter(Args &&... args) {
     out_filters_.push_back(Function(std::forward<Args>(args)...));
   }
 

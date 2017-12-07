@@ -3,7 +3,8 @@ include_directories(
   SYSTEM
   ${PROJECT_SOURCE_DIR}/meta/tmp/xxhash
   )
-add_library(xxhash_static STATIC
-  ${PROJECT_SOURCE_DIR}/meta/tmp/xxhash/xxhash.c
-  )
-target_link_libraries(xxhash_static ${BASE_FLAGS})
+add_definitions(-DXXH_PRIVATE_API)
+# add_library(xxhash_static STATIC
+#   ${PROJECT_SOURCE_DIR}/meta/tmp/xxhash/xxhash.c
+#   )
+# target_link_libraries(xxhash_static ${BASE_FLAGS})

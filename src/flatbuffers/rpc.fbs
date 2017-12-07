@@ -31,15 +31,15 @@ enum header_bit_flags:byte (bit_flags) {
 /// total = 128bits == 16bytes
 ///
 struct header {
-  compression:    compression_flags = none;
-  bitflags:       header_bit_flags = 0;
+  compression:    compression_flags;
+  bitflags:       header_bit_flags;
   /// 16 bits for storing the actual session id.
   /// used for streaming client and slot allocation
-  session:        ushort = 0;
+  session:        ushort;
   /// size of the next payload
-  size:           uint = 0;
+  size:           uint;
   /// currently we use xxhash32
-  checksum:       uint = 0;
+  checksum:       uint;
   /// \brief used for sending and receiving, read carefully.
   ///
   /// Receiving:
@@ -55,7 +55,7 @@ struct header {
   /// This is how the server multiplexer figures out what function pointer
   /// to call
   ///
-  meta: uint = 0;
+  meta: uint;
 }
 
 /// \brief used for extra headers, ala HTTP

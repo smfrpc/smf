@@ -1,55 +1,24 @@
 BasedOnStyle: Google
-AccessModifierOffset: -1
 AlignEscapedNewlinesLeft: true
-AlignTrailingComments: true
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
-
-AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortFunctionsOnASingleLine: true
-AllowShortIfStatementsOnASingleLine: true 
 AllowShortLoopsOnASingleLine: true
 AllowShortBlocksOnASingleLine: true
-AlignOperands: true
-
 AlwaysBreakBeforeMultilineStrings: false
-AlwaysBreakTemplateDeclarations: false
+AlwaysBreakAfterReturnType: AllDefinitions
 BinPackParameters: false
-BreakBeforeBinaryOperators: NonAssignment
-BreakBeforeBraces: Attach
 BreakBeforeTernaryOperators: false
 BreakConstructorInitializersBeforeComma: true
-ColumnLimit: 80
-CommentPragmas: ''
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ConstructorInitializerIndentWidth: 2
 ContinuationIndentWidth: 2
-Cpp11BracedListStyle: true
 DerivePointerBinding: false
 IndentCaseLabels: false
 IndentFunctionDeclarationAfterType: false
-IndentWidth: 2
 MaxEmptyLinesToKeep: 2
-NamespaceIndentation: None
-ObjCSpaceAfterProperty: true
-ObjCSpaceBeforeProtocolList: true
 DerivePointerAlignment: false
 PointerAlignment: Right
-SpaceBeforeAssignmentOperators: true
-SpaceBeforeParens: true
-SpaceInEmptyParentheses: false
-SpacesBeforeTrailingComments: 2
-SpacesInAngles: false
-SpacesInCStyleCastParentheses: false
-SpacesInContainerLiterals: false
-SpacesInParentheses: false
-Standard: Auto
 TabWidth: 2
-UseTab: Never
 IncludeCategories:
-  - Regex:           '^"(llvm|llvm-c|clang|clang-c)/'
+  - Regex:           '^<smf/.*>'
     Priority:        2
-  - Regex:           '^(<|"(core|gtest|isl|json)/)'
-    Priority:        3
-  - Regex:           '.\*'
-    Priority:        1

@@ -7,7 +7,8 @@
 namespace smf {
 
 
-template <typename T> class rpc_recv_typed_context {
+template <typename T>
+class rpc_recv_typed_context {
  public:
   using type           = T;
   using opt_recv_ctx_t = std::experimental::optional<rpc_recv_context>;
@@ -30,9 +31,13 @@ template <typename T> class rpc_recv_typed_context {
     : ctx(std::move(o.ctx)), cache_(std::move(o.cache_)) {}
 
   inline T *operator->() { return cache_; }
-  inline T *get() { return cache_; }
+  inline T *
+  get() {
+    return cache_;
+  }
 
-  seastar::lw_shared_ptr<rpc_recv_typed_context<T>> move_to_lw_shared() {
+  seastar::lw_shared_ptr<rpc_recv_typed_context<T>>
+  move_to_lw_shared() {
     return seastar::make_lw_shared<rpc_recv_typed_context<T>>(
       std::move(ctx.value()));
   }
@@ -42,7 +47,7 @@ template <typename T> class rpc_recv_typed_context {
   ///     if(obj){}
   /// \endcode
   /// simply forward the bool operator to the option
-  inline operator bool() const { return ctx.operator bool(); }
+  inline         operator bool() const { return ctx.operator bool(); }
   opt_recv_ctx_t ctx;
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_recv_typed_context);
 

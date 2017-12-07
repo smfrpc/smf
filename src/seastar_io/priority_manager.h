@@ -23,30 +23,40 @@ class priority_manager {
     , default_priority_(seastar::engine().register_one_priority_class(
         "smf::defult_priority", 1)) {}
 
-  const seastar::io_priority_class &commitlog_priority() {
+  const seastar::io_priority_class &
+  commitlog_priority() {
     return commitlog_priority_;
   }
-  const seastar::io_priority_class &brissa_query_priority() {
+  const seastar::io_priority_class &
+  brissa_query_priority() {
     return brissa_query_priority_;
   }
-  const seastar::io_priority_class &compaction_priority() {
+  const seastar::io_priority_class &
+  compaction_priority() {
     return compaction_priority_;
   }
-  const seastar::io_priority_class &streaming_read_priority() {
+  const seastar::io_priority_class &
+  streaming_read_priority() {
     return stream_read_priority_;
   }
-  const seastar::io_priority_class &streaming_write_priority() {
+  const seastar::io_priority_class &
+  streaming_write_priority() {
     return stream_write_priority_;
   }
-  const seastar::io_priority_class &default_priority() {
+  const seastar::io_priority_class &
+  default_priority() {
     return default_priority_;
   }
 
-  static priority_manager &thread_local_instance() {
+  static priority_manager &
+  thread_local_instance() {
     static thread_local priority_manager pm = priority_manager();
     return pm;
   }
-
+  static priority_manager &
+  get() {
+    return priority_manager::thread_local_instance();
+  }
 
  private:
   // high

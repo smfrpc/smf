@@ -1,14 +1,16 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 
-#include "utils/human_bytes_printing_utils.h"
+#include "utils/human_bytes.h"
 
 #include <iomanip>
 
 namespace smf {
-std::ostream &human_bytes::print(std::ostream &o, double t) {
+std::ostream &
+operator<<(std::ostream &o, const human_bytes &h) {
   auto const orig_precision = o.precision();
   o << std::fixed << std::setprecision(3);
+  auto t = h.data;
   if (t < 1024) {
     if (t < 1) { t = 0; }
     o << t << " bytes";

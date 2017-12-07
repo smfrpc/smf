@@ -17,7 +17,7 @@ class rpc_client_stats {
   // on a distributed<type> obj_ a map reduce
   // i.e.:
   // obj_.map_reduce(adder<type>, &outer::rpc_client_stats);
-  void operator+=(const rpc_client_stats &o);
+  void              operator+=(const rpc_client_stats &o);
   rpc_client_stats  self();
   seastar::future<> stop();
 };
