@@ -5,6 +5,8 @@ set(SMF_GEN_SOURCES
   )
 set(SMF_GEN_LIBS
   flatbuffers.a
+  boost_system
+  boost_filesystem
   gflags
   glog
   pthread
