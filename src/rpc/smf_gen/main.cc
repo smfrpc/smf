@@ -1,13 +1,16 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
+#include <iostream>
+#include <vector>
+
+#include <boost/filesystem.hpp>
 #include <flatbuffers/flatbuffers.h>
 #include <flatbuffers/util.h>
 #include <gflags/gflags.h>
 #include <glog/logging.h>
-#include <iostream>
-#include <vector>
 
 #include "rpc/smf_gen/idl.h"
+
 DEFINE_string(filename, "", "filename to parse");
 DEFINE_string(include_dirs, "", "extra include directories: not supported yet");
 
@@ -17,10 +20,9 @@ int main(int argc, char **argv, char **env) {
   google::InstallFailureSignalHandler();
   google::InitGoogleLogging(argv[0]);
 
-  if (FLAGS_filename.empty()) {
-    LOG(ERROR) << "No filename to parse";
-    exit(1);
-  }
+  LOG_IF(FATAL, FLAGS_filename.empty()) << "No filename to parse";
+  LOG_IF(FATAL, !boost::filesystem::exists(FLAGS_filename))
+    << "File does not exists";
 
   VLOG(1) << "Parsing file: " << FLAGS_filename
           << ", Include dirs: " << FLAGS_include_dirs;
@@ -46,6 +48,9 @@ int main(int argc, char **argv, char **env) {
 
   VLOG(1) << "File `" << FLAGS_filename << "` parsed. Generating";
 
-  smf_gen::generate(parser, flatbuffers::StripExtension(FLAGS_filename));
+  LOG_IF(
+    FATAL,
+    !smf_gen::generate(parser, flatbuffers::StripExtension(FLAGS_filename)))
+    << "Could not generate file";
   parser.MarkGenerated();
 }
