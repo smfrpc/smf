@@ -1,0 +1,44 @@
+dist: trusty
+sudo: required 
+language: cpp
+
+services:
+  - docker
+
+matrix:
+  include:
+    - os: linux
+      env: DOCKER_IMAGE=fedora:27
+    - os: linux
+      env: DOCKER_IMAGE=fedora:26
+    - os: linux
+      env: DOCKER_IMAGE=fedora:25
+    - os: linux
+      env: DOCKER_IMAGE=debian:stretch
+    - os: linux
+      env: DOCKER_IMAGE=debian:sid
+    - os: linux
+      env: DOCKER_IMAGE=debian:buster
+    - os: linux
+      env: DOCKER_IMAGE=ubuntu:zesty
+    - os: linux
+      env: DOCKER_IMAGE=ubuntu:artful
+    - os: linux
+      env: DOCKER_IMAGE=fedora:27 USE_NINJA=1
+    - os: linux
+      env: DOCKER_IMAGE=fedora:26 USE_NINJA=1
+    - os: linux
+      env: DOCKER_IMAGE=fedora:25 USE_NINJA=1
+    - os: linux
+      env: DOCKER_IMAGE=debian:stretch USE_NINJA=1
+    - os: linux
+      env: DOCKER_IMAGE=debian:sid USE_NINJA=1
+    - os: linux
+      env: DOCKER_IMAGE=debian:buster USE_NINJA=1
+    - os: linux
+      env: DOCKER_IMAGE=ubuntu:zesty USE_NINJA=1
+    - os: linux
+      env: DOCKER_IMAGE=ubuntu:artful USE_NINJA=1
+
+script:
+  - ci/script.sh
