@@ -4,7 +4,7 @@
 #include <limits>
 
 #include <core/app-template.hh>
-#include <fastrange/fastrange.h>
+#include <fastrange.h>
 
 #include "chain_replication/chain_replication_service.h"
 #include "flatbuffers/chain_replication.smf.fb.h"

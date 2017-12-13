@@ -3,6 +3,7 @@ PROJECT_NAME           = "SMF"
 INPUT                  = @PROJECT_SOURCE_DIR@/src 
 RECURSIVE              = YES
 EXCLUDE_PATTERNS       = @PROJECT_SOURCE_DIR@/src/third_party/*
+EXCLUDE_PATTERNS      += @PROJECT_SOURCE_DIR@/src/googletest/*
 EXCLUDE_PATTERNS      += @PROJECT_SOURCE_DIR@/src/test/*
 EXCLUDE_PATTERNS      += @PROJECT_SOURCE_DIR@/src/alf_tests/*
 EXCLUDE_PATTERNS      += @PROJECT_SOURCE_DIR@/src/integration_tests/*

@@ -1,13 +1,8 @@
 include(CMakeParseArguments)
 enable_testing()
-option(ENABLE_INTEGRATION_TESTS "control if integrations are bulit and ran" ON)
-option(ENABLE_UNIT_TESTS "control if tests are bulit and ran" ON)
 set(INTEGRATION_TESTS "")
 set(UNIT_TESTS "")
 set(TEST_RUNNER ${PROJECT_SOURCE_DIR}/src/test_runner.py)
-
-message(STATUS "ENABLE_INTEGRATION_TESTS=${ENABLE_INTEGRATION_TESTS}")
-message(STATUS "ENABLE_UNIT_TESTS=${ENABLE_UNIT_TESTS}")
 
 function (smf_test)
   set(options INTEGRATION_TEST UNIT_TEST)
@@ -20,6 +15,7 @@ function (smf_test)
     set(INTEGRATION_TESTS "${INTEGRATION_TESTS} ${SMF_TEST_BINARY_NAME}")
     add_executable(
       ${SMF_TEST_BINARY_NAME} "${SMF_TEST_SOURCES}")
+    install(TARGETS ${SMF_TEST_BINARY_NAME} DESTINATION bin)
     target_link_libraries(
       ${SMF_TEST_BINARY_NAME}
       PUBLIC "${SMF_TEST_LIBRARIES}")
@@ -37,6 +33,7 @@ function (smf_test)
     set(UNIT_TESTS "${UNIT_TESTS} ${SMF_TEST_BINARY_NAME}")
     add_executable(
       ${SMF_TEST_BINARY_NAME} "${SMF_TEST_SOURCES}")
+    install(TARGETS ${SMF_TEST_BINARY_NAME} DESTINATION bin)
     target_link_libraries(
       ${SMF_TEST_BINARY_NAME} "${SMF_TEST_LIBRARIES}")
     add_test (

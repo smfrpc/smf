@@ -1,31 +1,33 @@
 cmake_minimum_required(VERSION 3.3)
-project(SMF VERSION "0.0.1")
-set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
-set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -v" )
+project(SMF VERSION "0.0.1" LANGUAGES CXX C)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake/")
+
 # https://cmake.org/cmake/help/v3.4/policy/CMP0065.html
 cmake_policy(SET CMP0065 OLD)
-include(CMake/Seastar.cmake)
-include(CMake/git_version.cmake)
-include(CMake/includes.cmake)
-include(CMake/gen_flatbuffers.cmake)
-include(CMake/ccache.cmake)
-include(CMake/base_flags.cmake)
-include(CMake/join_function.cmake)
-include(CMake/xxhash.cmake)
-include(CMake/packaging.cmake)
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+
+find_package(GFlags)
+find_package(Glog)
+find_package(LZ4)
+
+find_package(Boost COMPONENTS
+  system
+  program_options
+  REQUIRED)
+
+option(ENABLE_INTEGRATION_TESTS "control if integrations are bulit and ran" ON)
+message(STATUS "ENABLE_INTEGRATION_TESTS=${ENABLE_INTEGRATION_TESTS}")
+
+option(ENABLE_UNIT_TESTS "control if tests are bulit and ran" ON)
+message(STATUS "ENABLE_UNIT_TESTS=${ENABLE_UNIT_TESTS}")
+
+include_directories(
+  ${PROJECT_SOURCE_DIR}/src
+  ${PROJECT_BINARY_DIR}/src)
+
 include(CMake/doxygen.cmake)
-include(CMake/tests.cmake)
-message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
-set(CXX_FLAG_LIST ${BASE_FLAGS} ${SEASTAR_CFLAGS})
-join("${CXX_FLAG_LIST}" " " CMAKE_CXX_FLAGS)
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/histogram)
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/utils)
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/rpc)
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/raft)
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/chain_replication)
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/filesystem)
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/smfb)
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/test)
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/integration_tests)
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/demo_apps)
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/platform)
+include(CMake/ccache.cmake)
+include(CMake/packaging.cmake)
+
+add_subdirectory(src)

@@ -7,7 +7,7 @@
 #include <memory>
 
 #include <core/reactor.hh>
-#include <fastrange/fastrange.h>
+#include <fastrange.h>
 
 #include "filesystem/wal_lcore_map.h"
 #include "filesystem/wal_requests.h"
