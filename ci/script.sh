@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -x
 
 THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR=${THIS_DIR}/../
@@ -17,7 +18,7 @@ if [ ! -z ${DOCKER_IMAGE+x} ]; then
     cidfile=$(mktemp); rm ${cidfile}
     docker run -it --cidfile=${cidfile} \
       -e USE_CLANG=1 \
-      -v ${ROOT_DIR}/install-deps.sh:/tmp/install-deps.sh \
+      -v ${ROOT_DIR}/install-deps.sh:/tmp/install-deps.sh:z,ro \
       ${DOCKER_IMAGE} /tmp/install-deps.sh
     cid=$(cat ${cidfile})
     docker commit ${cid} ${depimg}
