@@ -23,3 +23,6 @@
 	path = src/googletest
 	url = https://github.com/google/googletest
 	ignore = dirty
+[submodule "src/third_party/google-styleguide"]
+	path = src/third_party/google-styleguide
+	url = https://github.com/google/styleguide
