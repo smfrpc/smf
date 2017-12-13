@@ -4,7 +4,7 @@
 
 #include <flatbuffers/minireflect.h>
 
-#include "flatbuffers/rpc_generated.h"
+#include "rpc/rpc_generated.h"
 #include "hashing/hashing_utils.h"
 #include "platform/log.h"
 

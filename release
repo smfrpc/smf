@@ -1,29 +1,28 @@
 #!/bin/bash
 set -e
-git_root=$(git rev-parse --show-toplevel)
-source $git_root/.common_build.sh
 
-build_dir=$git_root/build_release
-mkdir -p $build_dir
-cd $build_dir
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+build_dir=${ROOT_DIR}/build_release
+mkdir -p ${build_dir}
+cd ${build_dir}
 
 echo "./release quick"
 echo "To build and run tests only, no formatting, validation, etc"
 
 if [[ $1 != "quick" ]]; then
     echo "Generating version file"
-    $git_root/misc/version.sh
-    cat $git_root/src/version.h
+    ${ROOT_DIR}/misc/version.sh
+    cat ${ROOT_DIR}/src/version.h
     echo "Formatting files"
-    $git_root/misc/fmt.py
+    ${ROOT_DIR}/misc/fmt.py
 
-    $cmake_cmd --graphviz=$build_dir/dependencies.dot \
-               -Wno-dev \
-               -DENABLE_BENCHMARK_TESTS=ON \
-               -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
-               -DCMAKE_BUILD_TYPE=Release $git_root
-
+    cmake --graphviz=${build_dir}/dependencies.dot \
+      -Wno-dev \
+      -DSEASTAR_DIR=${SEASTAR_DIR} \
+      -DENABLE_BENCHMARK_TESTS=ON \
+      -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
+      -DCMAKE_BUILD_TYPE=Release ${ROOT_DIR}
 else
     echo
     echo
@@ -35,24 +34,23 @@ else
     echo
     echo
     # Disable integration tests for this
-    $cmake_cmd --graphviz=$build_dir/dependencies.dot \
-               -Wno-dev \
-               -DENABLE_INTEGRATION_TESTS=OFF \
-               -DENABLE_BENCHMARK_TESTS=OFF \
-               -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
-               -DCMAKE_BUILD_TYPE=Release $git_root
-
+    cmake --graphviz=${build_dir}/dependencies.dot \
+      -Wno-dev \
+      -DSEASTAR_DIR=${SEASTAR_DIR} \
+      -DENABLE_INTEGRATION_TESTS=OFF \
+      -DENABLE_BENCHMARK_TESTS=OFF \
+      -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
+      -DCMAKE_BUILD_TYPE=Release ${ROOT_DIR}
 fi
 
 # for fmt.py
-ln -sfn "$build_dir/compile_commands.json" "$git_root/compile_commands.json"
+ln -sfn "${build_dir}/compile_commands.json" "${ROOT_DIR}/compile_commands.json"
 
 
-#produce documentation
+# produce documentation
 if [[ $1 != "quick" ]]; then
-    $cmake_cmd --build $build_dir --target doc
+  cmake --build ${build_dir} --target doc
 fi
 
-# from .common_build.sh
-$ninja_cmd
-$ctest_cmd -V -j$nprocs --force-new-ctest-process
+ninja
+ctest -V -j$(nproc) --force-new-ctest-process

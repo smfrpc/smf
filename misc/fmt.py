@@ -86,7 +86,7 @@ def run_subprocess(cmd):
 
 
 def get_cpplint():
-    cmd = "%s/%s" % (get_git_root(), "src/third_party/bin/cpplint.py")
+    cmd = "%s/%s" % (get_git_root(), "src/third_party/google-styleguide/cpplint/cpplint.py")
     assert os.path.exists(cmd)
     return cmd
 

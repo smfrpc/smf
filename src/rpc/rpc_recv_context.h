@@ -6,8 +6,8 @@
 // seastar
 #include <core/iostream.hh>
 // smf
-#include "flatbuffers/fbs_typed_buf.h"
-#include "flatbuffers/rpc_generated.h"
+#include "rpc/fbs_typed_buf.h"
+#include "rpc/rpc_generated.h"
 #include "hashing/hashing_utils.h"
 #include "platform/log.h"
 #include "platform/macros.h"

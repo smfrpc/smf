@@ -23,6 +23,7 @@ function (smf_test)
     set(INTEGRATION_TESTS "${INTEGRATION_TESTS} ${SMF_TEST_BINARY_NAME}")
     add_executable(
       ${SMF_TEST_BINARY_NAME} "${SMF_TEST_SOURCES}")
+    install(TARGETS ${SMF_TEST_BINARY_NAME} DESTINATION bin)
     target_link_libraries(
       ${SMF_TEST_BINARY_NAME}
       PUBLIC "${SMF_TEST_LIBRARIES}")
@@ -40,6 +41,7 @@ function (smf_test)
     set(UNIT_TESTS "${UNIT_TESTS} ${SMF_TEST_BINARY_NAME}")
     add_executable(
       ${SMF_TEST_BINARY_NAME} "${SMF_TEST_SOURCES}")
+    install(TARGETS ${SMF_TEST_BINARY_NAME} DESTINATION bin)
     target_link_libraries(
       ${SMF_TEST_BINARY_NAME} "${SMF_TEST_LIBRARIES}")
     add_test (

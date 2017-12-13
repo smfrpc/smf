@@ -19,7 +19,7 @@
 #include "rpc/rpc_server.h"
 #include "utils/random.h"
 // templates
-#include "flatbuffers/demo_service.smf.fb.h"
+#include "integration_tests/demo_service.smf.fb.h"
 
 
 static const char *kPoem = "How do I love thee? Let me count the ways."

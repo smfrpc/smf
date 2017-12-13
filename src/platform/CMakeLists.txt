@@ -1,4 +1,4 @@
 install(FILES
-  ${PROJECT_SOURCE_DIR}/src/platform/macros.h
-  ${PROJECT_SOURCE_DIR}/src/platform/log.h
+  macros.h
+  log.h
   DESTINATION include/smf/platform)

@@ -14,7 +14,7 @@
 #include "rpc/rpc_filter.h"
 #include "rpc/rpc_server.h"
 
-#include "flatbuffers/demo_service.smf.fb.h"
+#include "demo_apps/demo_service.smf.fb.h"
 
 class storage_service : public smf_gen::demo::SmfStorage {
   virtual seastar::future<smf::rpc_typed_envelope<smf_gen::demo::Response>>

@@ -1,21 +1,29 @@
 #!/bin/bash
-set -e
-git_root=$(git rev-parse --show-toplevel)
-source $git_root/.common_build.sh
 
-build_dir=$git_root/build_debug
-mkdir -p $build_dir
-cd $build_dir
-$cmake_cmd -Wdev \
-           --debug-output \
-           -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
-           -DCMAKE_BUILD_TYPE=Debug $git_root
+# SEASTAR_DIR=/path/seastar ./debug
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+build_dir=${ROOT_DIR}/build_debug
+mkdir -p ${build_dir}
+cd ${build_dir}
+cmake -Wdev \
+  --debug-output \
+  -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
+  -DSEASTAR_DIR=${SEASTAR_DIR} \
+  -DCMAKE_BUILD_TYPE=Debug ${ROOT_DIR}
 
 # for fmt.py
-ln -sfn "$build_dir/compile_commands.json" "$git_root/compile_commands.json"
-# from .common_build.sh
-$ninja_cmd
-$ctest_cmd --output-on-failure \
-           --force-new-ctest-process \
-           --schedule-random \
-           -j$nprocs "$@"
+ln -sfn "${build_dir}/compile_commands.json" "${ROOT_DIR}/compile_commands.json"
+
+ninja_cmd='ninja-build -v'
+os=$(lsb_release 2> /dev/null -si | tr '[:upper:]' '[:lower:]')
+if [[ ${os} == "ubuntu" ]]; then
+  ninja_cmd='ninja -v'
+fi
+
+${ninja_cmd}
+ctest --output-on-failure \
+  --force-new-ctest-process \
+  --schedule-random \
+  -j$(nproc) "$@"
