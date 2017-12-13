@@ -187,7 +187,8 @@ seastar::future<> rpc_server::dispatch_rpc(
     conn->set_error("Missing request_id. Invalid request");
     return seastar::make_ready_future<>();
   }
-  if (!routes_.can_handle_request(ctx.request_id())) {
+  auto method_dispatch = routes_.get_handle_for_request(ctx.request_id());
+  if (method_dispatch == nullptr) {
     conn->stats->no_route_requests++;
     conn->set_error("Can't find route for request. Invalid");
     return seastar::make_ready_future<>();
@@ -202,8 +203,8 @@ seastar::future<> rpc_server::dispatch_rpc(
   /// connection
   return seastar::with_gate(
            conn->limits->reply_gate,
-           [this, ctx = std::move(ctx), conn]() mutable {
-             return routes_.handle(std::move(ctx))
+           [this, ctx = std::move(ctx), conn, method_dispatch]() mutable {
+             return method_dispatch->apply(std::move(ctx))
                .then([this](rpc_envelope e) {
                  return stage_apply_outgoing_filters(std::move(e));
                })

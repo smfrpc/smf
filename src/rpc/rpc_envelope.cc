@@ -53,14 +53,4 @@ void rpc_envelope::add_dynamic_header(const char *header, const char *value) {
   DLOG_THROW_IF(value != nullptr, "Cannot add header with empty value");
   letter.dynamic_headers.emplace(header, value);
 }
-
-void rpc_envelope::set_request_id(const uint32_t &service,
-                                  const uint32_t  method) {
-  letter.header.mutate_meta(service ^ method);
-}
-
-void rpc_envelope::set_status(const uint32_t &status) {
-  letter.header.mutate_meta(status);
-}
-
 }  // namespace smf

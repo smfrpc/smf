@@ -21,16 +21,14 @@ class rpc_handle_router {
 
   seastar::future<> stop();
 
-  virtual bool can_handle_request(const uint32_t &request_id);
-  /// \brief actually makes the router dispatch
-  virtual seastar::future<rpc_envelope> handle(rpc_recv_context &&recv);
+  smf::rpc_service_method_handle *get_handle_for_request(
+    const uint32_t &request_id);
 
   /// \brief multiple rpc_services can register w/ this  handle router
   void register_rpc_service(rpc_service *s);
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_handle_router);
 
  private:
-  std::unordered_map<uint32_t, rpc_service_method_handle> dispatch_{};
   std::vector<std::unique_ptr<rpc_service>> services_{};
 
   friend std::ostream &operator<<(std::ostream &,

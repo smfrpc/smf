@@ -121,24 +121,23 @@ std::string get_header_includes(smf_file *file) {
 }
 
 
-void print_header_service_index(smf_printer *      printer,
-                                const smf_service *service) {
-  VLOG(1) << "print_header_service_index for service: " << service->name();
+void print_header_service_ctor_dtor(smf_printer *      printer,
+                                    const smf_service *service) {
+  VLOG(1) << "print_header_service_ctor_dtor for service: " << service->name();
+  std::map<std::string, std::string> vars;
 
-
-  printer->print("virtual std::vector<smf::rpc_service_method_handle> "
-                 "methods() override final {\n");
+  vars["Service"] = service->name();
+  printer->print(vars, "~$Service$() = default;\n");
+  printer->print(vars, "$Service$() {\n");
   printer->indent();
-  printer->print("std::vector<smf::rpc_service_method_handle> handles;\n");
 
   for (int i = 0; i < service->method_count(); ++i) {
-    auto method = service->method(i);
-    std::map<std::string, std::string> vars;
+    auto method        = service->method(i);
     vars["MethodName"] = method->name();
     vars["InType"]     = method->input_type_name();
     vars["OutType"]    = method->output_type_name();
     vars["MethodId"]   = std::to_string(method->method_id());
-    printer->print("handles.emplace_back(\n");
+    printer->print("handles_.emplace_back(\n");
     printer->indent();
     printer->print(vars, "\"$MethodName$\", $MethodId$,\n");
     printer->print("[this](smf::rpc_recv_context c) -> "
@@ -160,11 +159,40 @@ void print_header_service_index(smf_printer *      printer,
     printer->outdent();
     printer->print("});\n");
   }
-  printer->print("return handles;\n");
   printer->outdent();
   printer->print("}\n");
 }
-
+void print_header_service_handle_request_id(smf_printer *      printer,
+                                            const smf_service *service) {
+  printer->print("virtual smf::rpc_service_method_handle *\n"
+                 "method_for_request_id(uint32_t idx) override final {\n");
+  printer->indent();
+  printer->print("switch(idx){\n");
+  printer->indent();
+  for (int i = 0; i < service->method_count(); ++i) {
+    std::map<std::string, std::string> vars;
+    auto method       = service->method(i);
+    vars["ServiceID"] = std::to_string(method->service_id());
+    vars["MethodId"]  = std::to_string(method->method_id());
+    vars["VectorIdx"] = std::to_string(i);
+    printer->print(
+      vars,
+      "case ($ServiceID$ ^ $MethodId$): return &handles_[$VectorIdx$];\n");
+  }
+  printer->print("default: return nullptr;\n");
+  printer->outdent();
+  printer->print("}\n");
+  printer->outdent();
+  printer->print("}\n");
+}
+void print_header_service_handles(smf_printer *printer) {
+  printer->print("virtual const std::vector<smf::rpc_service_method_handle> &"
+                 "methods() override final {\n");
+  printer->indent();
+  printer->print("return handles_;\n");
+  printer->outdent();
+  printer->print("}\n");
+}
 void print_header_service_method(smf_printer *     printer,
                                  const smf_method *method) {
   VLOG(1) << "print_header_service_method: " << method->name();
@@ -179,16 +207,15 @@ void print_header_service_method(smf_printer *     printer,
   printer->print(
     vars, "$MethodName$(smf::rpc_recv_typed_context<$InType$> &&rec) {\n");
   printer->indent();
-  printer->print(vars, "smf::rpc_typed_envelope<$OutType$> data;\n");
+  printer->print(vars, "using ret_t = smf::rpc_typed_envelope<$OutType$>;\n");
+  printer->print(vars, "ret_t data;\n");
   printer->print(
     "// Helpful for clients to set the status.\n"
     "// Typically follows HTTP style. Not imposed by smf whatsoever.\n"
     "// i.e. 501 == Method not implemented\n");
   printer->print("data.envelope.set_status(501);\n");
   printer->print(
-    vars, "return "
-          "seastar::make_ready_future<smf::rpc_typed_envelope<$OutType$>>("
-          "std::move(data));\n");
+    vars, "return seastar::make_ready_future<ret_t>(std::move(data));\n");
   printer->outdent();
   printer->print("}\n");
 }
@@ -200,8 +227,11 @@ void print_header_service(smf_printer *printer, const smf_service *service) {
   vars["ServiceID"] = std::to_string(service->service_id());
 
   printer->print(vars, "class $Service$: public smf::rpc_service {\n");
+  printer->print(" private:\n");
+  printer->print("  std::vector<smf::rpc_service_method_handle> handles_;\n");
   printer->print(" public:\n");
   printer->indent();
+  print_header_service_ctor_dtor(printer, service);
 
   // print the overrides for smf
   printer->print("virtual const char *service_name() const override final {\n");
@@ -216,7 +246,8 @@ void print_header_service(smf_printer *printer, const smf_service *service) {
   printer->outdent();
   printer->print("}\n");
 
-  print_header_service_index(printer, service);
+  print_header_service_handles(printer);
+  print_header_service_handle_request_id(printer, service);
 
   for (int i = 0; i < service->method_count(); ++i) {
     print_header_service_method(printer, service->method(i).get());
@@ -265,7 +296,7 @@ void print_header_client_method(smf_printer *     printer,
                  "seastar::future<smf::rpc_recv_typed_context<$OutType$>>\n");
   printer->print(vars, "$MethodName$(smf::rpc_envelope e) {\n");
   printer->indent();
-  printer->print(vars, "e.set_request_id($ServiceID$, $MethodID$);\n");
+  printer->print(vars, "e.set_request_id($ServiceID$ ^ $MethodID$);\n");
   printer->print(vars, "return send<$OutType$>(std::move(e));\n");
   printer->outdent();
   printer->print("}\n");

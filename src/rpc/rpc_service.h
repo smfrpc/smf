@@ -31,8 +31,9 @@ struct rpc_service_method_handle {
 struct rpc_service {
   virtual const char *service_name() const = 0;
   /// \brief crc32(service_name())
-  virtual uint32_t                               service_id() const = 0;
-  virtual std::vector<rpc_service_method_handle> methods()          = 0;
+  virtual uint32_t                                      service_id() const = 0;
+  virtual const std::vector<rpc_service_method_handle> &methods()          = 0;
+  virtual rpc_service_method_handle *method_for_request_id(uint32_t idx)   = 0;
   virtual ~rpc_service() {}
 };
 }  // namespace smf

@@ -211,7 +211,6 @@ with a router.
 
 ```cpp
 class rpc_handle_router {
-    bool can_handle_request(const uint32_t &request_id);
 
     void register_service(std::unique_ptr<rpc_service> s);
 
