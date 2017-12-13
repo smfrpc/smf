@@ -1,0 +1,28 @@
+[submodule "src/third_party/flatbuffers"]
+	path = src/third_party/flatbuffers
+	url = https://github.com/google/flatbuffers
+[submodule "src/third_party/xxHash"]
+	path = src/third_party/xxHash
+	url = https://github.com/Cyan4973/xxHash
+[submodule "src/third_party/zstd"]
+	path = src/third_party/zstd
+	url = https://github.com/facebook/zstd.git
+[submodule "src/third_party/HdrHistogram_c"]
+	path = src/third_party/HdrHistogram_c
+	url = https://github.com/HdrHistogram/HdrHistogram_c.git
+	ignore = dirty
+[submodule "src/third_party/seastar"]
+	path = src/third_party/seastar
+	url = https://github.com/noahdesu/seastar.git
+	branch = foo
+	ignore = dirty
+[submodule "src/third_party/fastrange"]
+	path = src/third_party/fastrange
+	url = https://github.com/lemire/fastrange.git
+[submodule "src/googletest"]
+	path = src/googletest
+	url = https://github.com/google/googletest
+	ignore = dirty
+[submodule "src/third_party/google-styleguide"]
+	path = src/third_party/google-styleguide
+	url = https://github.com/google/styleguide

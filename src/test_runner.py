@@ -38,6 +38,11 @@ def generate_options():
         type=str,
         default="unit",
         help='either integration or unit. ie: --test_type unit')
+    parser.add_argument(
+        '--git_root',
+        type=str,
+        default=None,
+        help='project root')
     return parser
 
 
@@ -50,9 +55,9 @@ def get_git_root():
     return "".join(ret.split())
 
 
-def test_environ():
+def test_environ(maybe_git_root):
     e = os.environ.copy()
-    git_root = get_git_root()
+    git_root = maybe_git_root if maybe_git_root else get_git_root()
     e["GIT_ROOT"] = git_root
     ld_path = ""
     if e.has_key("LD_LIBRARY_PATH"):
@@ -99,10 +104,11 @@ def run_subprocess(cmd, cfg, environ):
     if return_code != 0: raise subprocess.CalledProcessError(return_code, cmd)
 
 
-def set_up_test_environment(cfg):
-    test_env = test_environ()
+def set_up_test_environment(git_root, cfg):
+    test_env = test_environ(git_root)
     dirpath = os.getcwd()
-    if cfg.has_key("tmp_home"):
+    if cfg.has_key("tmp_home") and not dirpath.startswith("/tmp/tmp."):
+        print dirpath
         dirpath = tempfile.mkdtemp()
         logger.debug("Executing test in tmp dir %s" % dirpath)
         os.chdir(dirpath)
@@ -121,7 +127,7 @@ def set_up_test_environment(cfg):
 def clean_test_resources(cfg):
     if cfg.has_key("execution_directory"):
         exec_dir = cfg["execution_directory"]
-        if exec_dir.startswith("/tmp/"):
+        if exec_dir.startswith("/tmp/") and not exec_dir.startswith("/tmp/tmp."):
             if cfg.has_key("remove_test_dir") and \
                cfg["remove_test_dir"] is False:
                 logger.info("Skipping rm -r tmp dir: %s" % exec_dir)
@@ -161,10 +167,10 @@ def execute(cmd, test_env, cfg):
             run_subprocess(cmd, cfg, test_env)
 
 
-def prepare_test(binary, source_dir):
-    cfg = load_test_configuration(source_dir)
-    test_env = set_up_test_environment(cfg)
-    cmd = get_full_executable(binary, cfg)
+def prepare_test(options):
+    cfg = load_test_configuration(options.directory)
+    test_env = set_up_test_environment(options.git_root, cfg)
+    cmd = get_full_executable(options.binary, cfg)
     return (cmd, test_env, cfg)
 
 
@@ -184,7 +190,7 @@ def main():
             parser.print_help()
             raise Exception("Missing test_type ")
 
-    (cmd, env, cfg) = prepare_test(options.binary, options.directory)
+    (cmd, env, cfg) = prepare_test(options)
     execute(cmd, env, cfg)
     clean_test_resources(cfg)
 

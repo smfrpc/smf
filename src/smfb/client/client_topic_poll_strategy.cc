@@ -4,7 +4,7 @@
 #pragma once
 
 #include <core/lowres_clock.hh>
-#include <fastrange/fastrange.h>
+#include <fastrange.h>
 
 #include "platform/log.h"
 

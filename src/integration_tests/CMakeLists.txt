@@ -12,35 +12,22 @@ smf_test(
   BINARY_NAME histograms
   SOURCES ${IT_ROOT}/histograms/main.cc
   SOURCE_DIRECTORY ${IT_ROOT}/histograms
-  LIBRARIES smf_filesystem
+  LIBRARIES smf_tracing smf_filesystem
   )
 smf_test(
   INTEGRATION_TEST
   BINARY_NAME rpc
   SOURCES ${IT_ROOT}/rpc/main.cc
   SOURCE_DIRECTORY ${IT_ROOT}/rpc
-  LIBRARIES smf_rpc
+  LIBRARIES smf_rpc demo_service
   )
-if(ENABLE_INTEGRATION_TESTS)
-  add_dependencies(
-    rpc_integration_test
-    generated_demo_service
-    )
-endif()
 smf_test(
   INTEGRATION_TEST
   BINARY_NAME rpc_recv_timeout
   SOURCES ${IT_ROOT}/rpc_recv_timeout/main.cc
   SOURCE_DIRECTORY ${IT_ROOT}/rpc_recv_timeout
-  LIBRARIES smf_rpc
+  LIBRARIES smf_rpc demo_service
   )
-
-if(ENABLE_INTEGRATION_TESTS)
-  add_dependencies(
-    rpc_recv_timeout_integration_test
-    generated_demo_service
-    )
-endif()
 smf_test(
   INTEGRATION_TEST
   BINARY_NAME wal
@@ -60,6 +47,6 @@ smf_test(
   BINARY_NAME cr
   SOURCES ${IT_ROOT}/chain_replication_utils/main.cc
   SOURCE_DIRECTORY ${IT_ROOT}/chain_replication_utils
-  LIBRARIES smf_cr flatbuffers
+  LIBRARIES smf_cr
   )
 

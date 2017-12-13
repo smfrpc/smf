@@ -4,7 +4,7 @@
 #pragma once
 
 #include "hashing/hashing_utils.h"
-#include "rpc_generated.h"
+#include "flatbuffers/rpc_generated.h"
 
 namespace smf {
 template <typename T>
