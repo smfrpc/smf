@@ -44,6 +44,7 @@ class wal_partition_manager {
   const wal_opts         opts;
   const seastar::sstring topic;
   const uint32_t         partition;
+  const seastar::sstring work_dir;
 
   bool is_open() const { return is_ready_open_; }
 

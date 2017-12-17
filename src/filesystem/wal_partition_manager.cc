@@ -12,11 +12,15 @@ namespace smf {
 wal_partition_manager::wal_partition_manager(wal_opts         o,
                                              seastar::sstring topic_name,
                                              uint32_t         topic_partition)
-  : opts(o), topic(topic_name), partition(topic_partition) {
+  : opts(o)
+  , topic(topic_name)
+  , partition(topic_partition)
+  , work_dir(opts.directory + "/" + topic + "."
+             + seastar::to_sstring(partition)) {
   cache_ = std::make_unique<wal_write_behind_cache>(
     topic, partition, default_file_ostream_options());
-  writer_ = std::make_unique<wal_writer>(topic, partition);
-  reader_ = std::make_unique<wal_reader>(topic, partition);
+  writer_ = std::make_unique<wal_writer>(work_dir);
+  reader_ = std::make_unique<wal_reader>(work_dir);
 }
 
 wal_partition_manager::~wal_partition_manager() {}
@@ -68,16 +72,16 @@ seastar::future<> wal_partition_manager::do_open() {
     .finally([this] { is_ready_open_ = true; });
 }
 seastar::future<> wal_partition_manager::open() {
-  LOG_DEBUG("Opening partition manager with: opts={}, topic={}, partition={}",
-            opts, topic, partition);
-  seastar::sstring dir = topic + "." + seastar::to_sstring(partition);
-  return file_exists(dir)
-    .then([dir](bool exists) {
+  LOG_DEBUG("Opening partition manager with: opts={}, topic={}, partition={}, "
+            "work_dir={}",
+            opts, topic, partition, work_dir);
+  return file_exists(work_dir)
+    .then([dir = work_dir](bool exists) {
       if (exists) { return seastar::make_ready_future<>(); }
-      return seastar::make_directory(dir).then_wrapped(
-        [](auto _) { return seastar::make_ready_future<>(); });
+      return seastar::make_directory(dir).then(
+        [] { return seastar::make_ready_future<>(); });
     })
-    .then_wrapped([this](auto _) { return this->do_open(); });
+    .then([this] { return this->do_open(); });
 }
 seastar::future<> wal_partition_manager::close() {
   LOG_DEBUG("Closing partition manager with: opts={}, topic={}, partition={}",

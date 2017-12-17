@@ -10,6 +10,7 @@
 // #include "filesystem/wal_file_name_mender.h"
 // TODO(need a partition scanner, etc)
 #include "filesystem/wal_requests.h"
+#include "utils/checks/disk.h"
 
 namespace smf {
 wal_impl_with_cache::wal_impl_with_cache(wal_opts _opts)
@@ -55,15 +56,18 @@ seastar::future<wal_read_reply> wal_impl_with_cache::get(wal_read_request r) {
 
 seastar::future<> wal_impl_with_cache::open() {
   LOG_INFO("starting: {}", opts);
+  if (seastar::engine().cpu_id() == 0) {
+    auto dir = opts.directory;
+    return file_exists(dir).then([dir](bool exists) {
+      if (exists) { return seastar::make_ready_future<>(); }
+      LOG_INFO("Creating log directory: {}", dir);
+      return seastar::make_directory(dir).then([dir] {
+        LOG_INFO("Checking for supported filesystems");
+        return smf::checks::disk::check(dir);
+      });
+    });
+  }
   return seastar::make_ready_future<>();
-  auto dir = opts.directory;
-  // TODO(agallego)
-  // missing partition scanning
-  return file_exists(dir).then([dir](bool exists) {
-    if (exists) { return seastar::make_ready_future<>(); }
-    return seastar::make_directory(dir).then_wrapped(
-      [](auto _) { return seastar::make_ready_future<>(); });
-  });
 }
 
 seastar::future<> wal_impl_with_cache::close() {

@@ -20,23 +20,17 @@
 namespace smf {
 struct wal_writer_node_opts {
   SMF_DISALLOW_COPY_AND_ASSIGN(wal_writer_node_opts);
-  wal_writer_node_opts(const seastar::sstring &workdir,
-                       const seastar::sstring &_topic,
-                       uint32_t                _partition)
-    : work_directory(workdir), topic(_topic), partition(_partition) {}
+  wal_writer_node_opts(const seastar::sstring &workdir)
+    : work_directory(workdir) {}
 
   wal_writer_node_opts(wal_writer_node_opts &&o) noexcept
     : work_directory(std::move(o.work_directory))
-    , topic(std::move(o.topic))
-    , partition(std::move(o.partition))
     , epoch(std::move(o.epoch))
     , run_id(std::move(o.run_id))
     , fstream(std::move(o.fstream))
     , max_file_size(std::move(o.max_file_size)) {}
 
   seastar::sstring work_directory;
-  seastar::sstring topic;
-  uint32_t         partition;
   uint64_t         epoch = 0;
   /// \brief each time we create a wal_writer_node_opts per topic partition
   /// we want to know when we created it

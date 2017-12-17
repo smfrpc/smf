@@ -27,8 +27,7 @@ int main(int args, char **argv, char **env) {
       DLOG_DEBUG("about to start the wal.h");
 
       return w.start(smf::wal_opts("."))
-        .then(
-          [&w] { return w.invoke_on_all(&smf::write_ahead_log_proxy::open); })
+        .then([&w] { w.invoke_on_all(&smf::write_ahead_log_proxy::open); })
         .then([&w, &put_req] {
           return w.invoke_on_all([&put_req](smf::write_ahead_log_proxy &w) {
             return w.append(put_req.get_request())

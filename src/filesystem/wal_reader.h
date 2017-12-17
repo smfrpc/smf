@@ -44,7 +44,7 @@ class wal_reader {
                 "bad key for intrusive map");
 
  public:
-  wal_reader(seastar::sstring topic, uint32_t partition);
+  explicit wal_reader(seastar::sstring workdir);
   wal_reader(wal_reader &&o) noexcept;
   ~wal_reader();
   SMF_DISALLOW_COPY_AND_ASSIGN(wal_reader);
@@ -59,8 +59,7 @@ class wal_reader {
   /// This recomputes offsets of files that we want to read
   void update_file_size_by(int64_t node_epoch, uint64_t delta);
 
-  const seastar::sstring directory;
-  const uint32_t         partition;
+  const seastar::sstring work_directory;
 
  private:
   friend wal_reader_visitor;

@@ -27,13 +27,10 @@ seastar::future<> wal_reader_visitor::visit(seastar::directory_entry de) {
 }  // namespace smf
 
 namespace smf {
-wal_reader::wal_reader(seastar::sstring topic, uint32_t topic_partition)
-  : directory(topic + "." + seastar::to_sstring(topic_partition))
-  , partition(topic_partition) {}
+wal_reader::wal_reader(seastar::sstring workdir) : work_directory(workdir) {}
 
 wal_reader::wal_reader(wal_reader &&o) noexcept
-  : directory(std::move(o.directory))
-  , partition(std::move(o.partition))
+  : work_directory(std::move(o.work_directory))
   , allocated_(std::move(o.allocated_))
   , buckets_(std::move(o.buckets_))
   , fs_observer_(std::move(o.fs_observer_)) {}
@@ -44,7 +41,8 @@ wal_reader::~wal_reader() {}
 seastar::future<> wal_reader::monitor_files(seastar::directory_entry entry) {
   auto e = wal_name_extractor_utils::extract_epoch(entry.name);
   if (buckets_.find(e) == buckets_.end()) {
-    auto n = std::make_unique<wal_reader_node>(e, directory + "/" + entry.name);
+    auto n =
+      std::make_unique<wal_reader_node>(e, work_directory + "/" + entry.name);
     auto copy = n.get();
     return copy->open().then([this, n = std::move(n)]() mutable {
       allocated_.emplace_back(std::move(n));
@@ -61,7 +59,7 @@ seastar::future<> wal_reader::close() {
 }
 
 seastar::future<> wal_reader::open() {
-  return open_directory(directory).then([this](seastar::file f) {
+  return open_directory(work_directory).then([this](seastar::file f) {
     fs_observer_ = std::make_unique<wal_reader_visitor>(this, std::move(f));
     // the visiting actually happens on a subscription thread from the filesys
     // api and it calls seastar::future<>monitor_files()...

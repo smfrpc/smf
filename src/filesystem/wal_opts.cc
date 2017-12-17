@@ -6,11 +6,8 @@
 
 
 namespace smf {
-static seastar::sstring canonical_dir(const seastar::sstring &directory) {
-  return boost::filesystem::canonical(directory.c_str()).string();
-}
 
-wal_opts::wal_opts(seastar::sstring log) : directory(canonical_dir(log)) {}
+wal_opts::wal_opts(seastar::sstring log) : directory(log) {}
 
 wal_opts::wal_opts(wal_opts &&o) noexcept
   : directory(std::move(o.directory)), type(o.type) {}

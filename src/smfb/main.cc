@@ -14,7 +14,6 @@
 #include "rpc/rpc_server.h"
 #include "smfb/smfb_command_line_options.h"
 #include "utils/checks/cpu.h"
-#include "utils/checks/disk.h"
 #include "utils/checks/memory.h"
 
 void base_init(const boost::program_options::variables_map &config) {
@@ -71,15 +70,9 @@ int main(int argc, char **argv, char **env) {
       smf::checks::cpu::check();
       smf::checks::memory::check(config["developer"].as<bool>());
 
-      LOG_INFO("Checking disk type");
-      return smf::checks::disk::check(
-               config["write-ahead-log-dir"].as<std::string>(),
-               config["developer"].as<bool>())
-        .then([&log, &config] {
-          auto dir = config["write-ahead-log-dir"].as<std::string>();
-          LOG_INFO("Starting write-ahead-log in: `{}`", dir);
-          return log.start(smf::wal_opts(dir.c_str()));
-        })
+      auto dir = config["write-ahead-log-dir"].as<std::string>();
+      LOG_INFO("Starting write-ahead-log in: `{}`", dir);
+      return log.start(smf::wal_opts(dir.c_str()))
         .then([&log] {
           return log.invoke_on_all(&smf::write_ahead_log_proxy::open);
         })

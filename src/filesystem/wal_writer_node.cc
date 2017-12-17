@@ -29,8 +29,7 @@ wal_writer_node::wal_writer_node(wal_writer_node_opts &&opts)
   : opts_(std::move(opts)) {
   namespace sm = seastar::metrics;
   metrics_.add_group(
-    "smf::wal_writer_node::" + opts_.topic + " ("
-      + seastar::to_sstring(opts_.partition) + ")",
+    "smf::wal_writer_node::" + opts_.work_directory,
     {sm::make_derive("total_writes", stats_.total_writes,
                      sm::description("Number of writes to disk")),
      sm::make_derive("total_bytes", stats_.total_bytes,

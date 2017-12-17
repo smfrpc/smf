@@ -18,19 +18,14 @@
 
 namespace smf {
 
-wal_writer::wal_writer(seastar::sstring _topic, uint32_t topic_partition)
-  : topic(_topic), partition(topic_partition) {}
+wal_writer::wal_writer(seastar::sstring workdir) : work_directory(workdir) {}
 
 wal_writer::wal_writer(wal_writer &&o) noexcept
-  : topic(std::move(o.topic))
-  , partition(std::move(o.partition))
+  : work_directory(std::move(o.work_directory))
   , writer_(std::move(o.writer_)) {}
 
-seastar::sstring wal_writer::work_directory() const {
-  return topic + "." + seastar::to_sstring(partition);
-}
 wal_writer_node_opts wal_writer::default_writer_opts() const {
-  return wal_writer_node_opts(work_directory(), topic, partition);
+  return wal_writer_node_opts(work_directory);
 }
 
 seastar::future<> wal_writer::close() {
@@ -49,7 +44,7 @@ seastar::future<> wal_writer::open_empty_dir() {
 
 seastar::future<> wal_writer::open_non_empty_dir(seastar::sstring last_file) {
   auto epoch = wal_name_extractor_utils::extract_epoch(last_file);
-  return seastar::file_size(work_directory() + "/" + last_file)
+  return seastar::file_size(work_directory + "/" + last_file)
     .then([this, epoch](uint64_t size) {
       auto wo  = default_writer_opts();
       wo.epoch = epoch + size;
@@ -59,14 +54,13 @@ seastar::future<> wal_writer::open_non_empty_dir(seastar::sstring last_file) {
 }
 
 seastar::future<> wal_writer::open() {
-  return seastar::open_directory(work_directory())
-    .then([this](seastar::file f) {
-      auto l = seastar::make_lw_shared<wal_head_file_max_functor>(std::move(f));
-      return l->done().then([l, this]() {
-        if (l->last_file.empty()) { return open_empty_dir(); }
-        return open_non_empty_dir(l->last_file);
-      });
+  return seastar::open_directory(work_directory).then([this](seastar::file f) {
+    auto l = seastar::make_lw_shared<wal_head_file_max_functor>(std::move(f));
+    return l->done().then([l, this]() {
+      if (l->last_file.empty()) { return open_empty_dir(); }
+      return open_non_empty_dir(l->last_file);
     });
+  });
 }
 
 seastar::future<wal_write_reply> wal_writer::append(
