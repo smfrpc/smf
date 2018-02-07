@@ -80,6 +80,7 @@ wal_writer::open() {
         })
         .finally([l] {});
     });
+  });
 }
 
 seastar::future<seastar::lw_shared_ptr<wal_write_reply>>
