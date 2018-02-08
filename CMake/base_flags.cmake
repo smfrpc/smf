@@ -46,5 +46,6 @@ else()
   set(BASE_FLAGS
     ${BASE_FLAGS}
     "-O2"
+    "-ggdb"
     )
 endif()

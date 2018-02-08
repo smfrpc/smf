@@ -3,6 +3,8 @@
 
 #include "filesystem/wal_write_projection.h"
 
+#include <sys/sdt.h>
+
 #include "flatbuffers/native_type_utils.h"
 #include "hashing/hashing_utils.h"
 #include "platform/log.h"
@@ -16,6 +18,7 @@ static const uint64_t kMinCompressionSize = 512;
 
 static seastar::lw_shared_ptr<wal_write_projection::item>
 xform(const tx_put_fragment &f) {
+  DTRACE_PROBE(smf, wal_projection_xform);
   static thread_local flatbuffers::FlatBufferBuilder fbb;
   fbb.ForceDefaults(true);
   fbb.Clear();  // MUST happen first
@@ -28,6 +31,7 @@ xform(const tx_put_fragment &f) {
   seastar::temporary_buffer<char> payload;
   wal::wal_header                 hdr;
   if (fbb.GetSize() > kMinCompressionSize) {
+    DTRACE_PROBE(smf, wal_projection_xform_compression);
     payload =
       compression->compress((char *)fbb.GetBufferPointer(), fbb.GetSize());
     hdr.mutate_compression(
@@ -48,8 +52,10 @@ xform(const tx_put_fragment &f) {
 seastar::lw_shared_ptr<wal_write_projection>
 wal_write_projection::translate(const seastar::sstring &      topic,
                                 const tx_put_partition_tuple *req) {
+  DTRACE_PROBE(smf, wal_translate);
   auto ret =
     seastar::make_lw_shared<wal_write_projection>(topic, req->partition());
+  ret->projection.reserve(req->txs()->size());
   std::transform(req->txs()->begin(), req->txs()->end(),
                  std::back_inserter(ret->projection),
                  [](auto it) { return xform(*it); });

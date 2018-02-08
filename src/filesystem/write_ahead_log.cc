@@ -5,9 +5,10 @@
 #include <memory>
 #include <utility>
 
+#include <sys/sdt.h>
+
 #include "platform/log.h"
 
-// TODO(need a partition scanner, etc)
 #include "filesystem/wal_requests.h"
 #include "filesystem/wal_write_projection.h"
 #include "utils/checks/disk.h"
@@ -19,8 +20,9 @@ write_ahead_log::write_ahead_log(wal_opts _opts)
 seastar::future<seastar::lw_shared_ptr<wal_write_reply>>
 write_ahead_log::append(wal_write_request r) {
   DLOG_THROW_IF(r.runner_core != seastar::engine().cpu_id(),
-               "Incorrect core assignment");
-  DLOG_THROW_IF(!wal_write_request::validate(r), "invalid write request");
+                "Incorrect core assignment");
+  DLOG_THROW_IF(!wal_write_request::valid(r), "invalid write request");
+  DTRACE_PROBE(smf, wal_write);
   // 1) Get projection
   // 2) Write to disk
   // 3) Write to to cache
@@ -54,7 +56,8 @@ write_ahead_log::append(wal_write_request r) {
 
 seastar::future<seastar::lw_shared_ptr<wal_read_reply>>
 write_ahead_log::get(wal_read_request r) {
-  DLOG_THROW_IF(!wal_read_request::validate(r), "invalid read request");
+  DLOG_THROW_IF(!wal_read_request::valid(r), "invalid read request");
+  DTRACE_PROBE(smf, wal_get);
   auto t = seastar::sstring(r.req->topic()->c_str());
   return tm_.get_manager(t, r.req->partition()).then([r](auto mngr) {
     return mngr->get(r);

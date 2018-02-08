@@ -14,16 +14,14 @@ namespace smf {
 wal_partition_manager::wal_partition_manager(wal_opts         o,
                                              seastar::sstring topic_name,
                                              uint32_t         topic_partition)
-  : opts(o)
+  : opts(std::move(o))
   , topic(topic_name)
   , partition(topic_partition)
   , work_dir(opts.directory + "/" + topic + "." +
-             seastar::to_sstring(partition)) {
-  cache_ = std::make_unique<wal_write_behind_cache>(
-    topic, partition, default_file_ostream_options());
-  writer_ = std::make_unique<wal_writer>(opts, work_dir);
-  reader_ = std::make_unique<wal_reader>(work_dir);
-}
+             seastar::to_sstring(partition))
+  , writer_(opts, work_dir)
+  , reader_(work_dir)
+  , cache_(topic, partition, default_file_ostream_options()) {}
 
 wal_partition_manager::~wal_partition_manager() {}
 
@@ -37,8 +35,7 @@ wal_partition_manager::wal_partition_manager(wal_partition_manager &&o) noexcept
 
 seastar::future<seastar::lw_shared_ptr<wal_write_reply>>
 wal_partition_manager::append(seastar::lw_shared_ptr<wal_write_projection> p) {
-  DLOG_THROW_IF(!is_ready_open_, "wal_partition_manager::append... not ready!");
-  return writer_->append(p).then([this, p](auto reply) {
+  return writer_.append(p).then([this, p](auto reply) {
     DLOG_THROW_IF(reply->size() != 1,
                   "The cache for *this* topic: `{}` partition: `{}` tuple "
                   "should be exactly one",
@@ -46,7 +43,7 @@ wal_partition_manager::append(seastar::lw_shared_ptr<wal_write_projection> p) {
     auto idx = reply->begin()->second->start_offset;
     std::for_each(p->projection.begin(), p->projection.end(),
                   [&idx, this](auto it) {
-                    cache_->put(idx, it);
+                    cache_.put(idx, it);
                     idx += it->on_disk_size();
                   });
     return seastar::make_ready_future<decltype(reply)>(reply);
@@ -56,28 +53,26 @@ wal_partition_manager::append(seastar::lw_shared_ptr<wal_write_projection> p) {
 
 seastar::future<seastar::lw_shared_ptr<wal_read_reply>>
 wal_partition_manager::get(wal_read_request r) {
-  DLOG_THROW_IF(!is_ready_open_, "wal_partition_manager::get... not ready!");
-  if (cache_->is_offset_in_range(r.req->offset())) {
+  if (cache_.is_offset_in_range(r.req->offset())) {
     return seastar::make_ready_future<seastar::lw_shared_ptr<wal_read_reply>>(
-      cache_->get(r));
+      cache_.get(r));
   }
-  return reader_->get(r);
+  return reader_.get(r);
 }
 seastar::future<>
 wal_partition_manager::do_open() {
-  return reader_->open()
+  return reader_.open()
     .handle_exception([this](auto eptr) {
       LOG_ERROR("Error opening reader: {}. for {}.{} ", eptr, topic, partition);
       std::rethrow_exception(eptr);
     })
     .then([this] {
-      return writer_->open().handle_exception([this](auto eptr) {
+      return writer_.open().handle_exception([this](auto eptr) {
         LOG_ERROR("Error opening writer: {}. for {}.{} ", eptr, topic,
                   partition);
         std::rethrow_exception(eptr);
       });
-    })
-    .finally([this] { is_ready_open_ = true; });
+    });
 }
 seastar::future<>
 wal_partition_manager::open() {
@@ -100,8 +95,8 @@ wal_partition_manager::close() {
     LOG_ERROR("Ignoring error closing partition manager: {}", eptr);
     return seastar::make_ready_future<>();
   };
-  return writer_->close().handle_exception(elogger).then(
-    [this, elogger] { return reader_->close().handle_exception(elogger); });
+  return writer_.close().handle_exception(elogger).then(
+    [this, elogger] { return reader_.close().handle_exception(elogger); });
 }
 
 

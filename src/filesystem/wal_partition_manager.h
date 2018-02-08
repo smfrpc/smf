@@ -47,19 +47,13 @@ class wal_partition_manager {
   const uint32_t         partition;
   const seastar::sstring work_dir;
 
-  bool
-  is_open() const {
-    return is_ready_open_;
-  }
-
  private:
   seastar::future<> do_open();
 
  private:
-  bool                                    is_ready_open_ = false;
-  std::unique_ptr<wal_writer>             writer_        = nullptr;
-  std::unique_ptr<wal_reader>             reader_        = nullptr;
-  std::unique_ptr<wal_write_behind_cache> cache_         = nullptr;
+  wal_writer             writer_;
+  wal_reader             reader_;
+  wal_write_behind_cache cache_;
 };
 
 }  // namespace smf

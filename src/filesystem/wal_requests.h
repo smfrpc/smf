@@ -55,7 +55,7 @@ struct wal_read_request : details::priority_wrapper<smf::wal::tx_get_request> {
     : priority_wrapper(ptr, p) {}
 
 
-  static bool validate(const wal_read_request &r);
+  static bool valid(const wal_read_request &r);
 };
 
 class wal_read_reply {
@@ -143,9 +143,10 @@ struct wal_write_request : details::priority_wrapper<smf::wal::tx_put_request> {
   const uint32_t           runner_core;
   const std::set<uint32_t> partition_view;
 
-  static bool validate(const wal_write_request &r);
+  static bool valid(const wal_write_request &r);
 };
 
+// FIXME(agallego) use wal_ptid.h in the write-reply
 
 /// \brief exposes a nested hashing for the underlying map
 class wal_write_reply {

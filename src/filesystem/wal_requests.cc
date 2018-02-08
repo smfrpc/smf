@@ -9,7 +9,7 @@
 namespace smf {
 
 bool
-wal_read_request::validate(const wal_read_request &r) {
+wal_read_request::valid(const wal_read_request &r) {
   try {
     // traversing the fbs might throw
     (void)r.req->partition();
@@ -111,7 +111,9 @@ wal_write_request::wal_write_request(const smf::wal::tx_put_request *    ptr,
   : priority_wrapper(ptr, p)
   , assigned_core(_assigned_core)
   , runner_core(_runner_core)
-  , partition_view(partitions) {}
+  , partition_view(partitions) {
+  DLOG_THROW_IF(partition_view.empty(), "Partition view is empty");
+}
 
 wal_write_request::write_request_iterator
 wal_write_request::begin() {
@@ -124,7 +126,8 @@ wal_write_request::end() {
                                 req->data()->end());
 }
 bool
-wal_write_request::validate(const wal_write_request &r) {
+wal_write_request::valid(const wal_write_request &r) {
+  DLOG_INFO_IF(r.partition_view.empty(), "Partition view is empty!");
   try {
     // traversing the request object might throw
     (void)r.req->topic();

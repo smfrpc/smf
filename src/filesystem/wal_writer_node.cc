@@ -3,6 +3,8 @@
 #include "filesystem/wal_writer_node.h"
 
 #include <utility>
+
+#include <sys/sdt.h>
 // third party
 #include <core/file.hh>
 #include <core/fstream.hh>
@@ -38,8 +40,9 @@ wal_writer_node::wal_writer_node(wal_writer_node_opts &&opts)
 
   flush_timeout_.set_callback([this] {
     auto l = lease_;
-    return serialize_writes_.wait(1).then([l, this] {
-      return l->flush().finally([this, l] { serialize_writes_.signal(1); });
+    return seastar::with_semaphore(serialize_writes_, 1, [l] {
+      DTRACE_PROBE(smf, wal_writer_node_periodic_flush);
+      return l->flush();
     });
   });
   flush_timeout_.arm_periodic(opts_.wopts.writer_flush_period);
@@ -73,27 +76,26 @@ wal_writer_node::disk_write(
 
 seastar::future<seastar::lw_shared_ptr<wal_write_reply>>
 wal_writer_node::append(seastar::lw_shared_ptr<wal_write_projection> req) {
-  return serialize_writes_.wait(1)
-    .then([this, req]() mutable {
-      const uint64_t start_offset = current_offset();
-      const uint64_t write_size   = wal_write_request_size(req);
-      return seastar::do_for_each(
-               req->projection.begin(), req->projection.end(),
-               [this, req](auto &i) mutable { return this->do_append(i); })
-        .then([write_size, start_offset, req, this] {
-          LOG_THROW_IF(
-            start_offset + write_size != current_offset(),
-            "Invalid offset accounting: start_offset:{}, "
-            "write_size:{}, current_offset(): {}, total_writes_in_batch: {}",
-            start_offset, write_size, current_offset(), req->projection.size());
-          auto ret = seastar::make_lw_shared<wal_write_reply>();
-          ret->set_reply_partition_tuple(
-            req->topic, req->partition, opts_.epoch + start_offset,
-            opts_.epoch + start_offset + write_size);
-          return seastar::make_ready_future<decltype(ret)>(ret);
-        });
-    })
-    .finally([this] { serialize_writes_.signal(1); });
+  DTRACE_PROBE(smf, wal_writer_node_append);
+  return seastar::with_semaphore(serialize_writes_, 1, [this, req]() mutable {
+    const uint64_t start_offset = current_offset();
+    const uint64_t write_size   = wal_write_request_size(req);
+    return seastar::do_for_each(
+             req->projection.begin(), req->projection.end(),
+             [this, req](auto &i) mutable { return this->do_append(i); })
+      .then([write_size, start_offset, req, this] {
+        LOG_THROW_IF(
+          start_offset + write_size != current_offset(),
+          "Invalid offset accounting: start_offset:{}, "
+          "write_size:{}, current_offset(): {}, total_writes_in_batch: {}",
+          start_offset, write_size, current_offset(), req->projection.size());
+        auto ret = seastar::make_lw_shared<wal_write_reply>();
+        ret->set_reply_partition_tuple(req->topic, req->partition,
+                                       opts_.epoch + start_offset,
+                                       opts_.epoch + start_offset + write_size);
+        return seastar::make_ready_future<decltype(ret)>(ret);
+      });
+  });
 }
 
 
@@ -112,14 +114,13 @@ wal_writer_node::close() {
   flush_timeout_.cancel();
   // need to make sure the file is not closed in the midst of a write
   //
-  return serialize_writes_.wait(1)
-    .then([l = lease_] {
-      return l->flush().then([l] { return l->close(); }).finally([l] {});
-    })
-    .finally([this] { serialize_writes_.signal(1); });
+  return seastar::with_semaphore(serialize_writes_, 1, [l = lease_] {
+    return l->flush().then([l] { return l->close(); }).finally([l] {});
+  });
 }
 seastar::future<>
 wal_writer_node::rotate_fstream() {
+  DTRACE_PROBE(smf, wal_writer_node_rotation);
   DLOG_INFO("rotating fstream");
   // Although close() does similar work, it will deadlock the fiber
   // if you call close here. Close ensures that there is no other ongoing

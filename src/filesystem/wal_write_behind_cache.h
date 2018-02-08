@@ -1,6 +1,7 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #pragma once
+#include <deque>
 #include <list>
 #include <map>
 #include <utility>
@@ -24,12 +25,22 @@ class wal_write_behind_cache {
     uint64_t evicted_puts{0};
     uint64_t bytes_written{0};
   };
-
   using item_ptr = seastar::lw_shared_ptr<wal_write_projection::item>;
+  struct eviction_key {
+    eviction_key(uint64_t k, uint64_t sz, item_ptr d)
+      : key(k), size(sz), data(d) {}
+    eviction_key(eviction_key &&o) noexcept
+      : key(o.key), size(o.size), data(std::move(o.data)) {}
+    uint64_t key;
+    uint64_t size;
+    item_ptr data;
+  };
 
-  explicit wal_write_behind_cache(seastar::sstring topic_name,
-                                  uint32_t         topic_partition,
-                                  seastar::file_output_stream_options o);
+
+  wal_write_behind_cache(seastar::sstring                    topic_name,
+                         uint32_t                            topic_partition,
+                         seastar::file_output_stream_options o);
+  wal_write_behind_cache(wal_write_behind_cache &&) noexcept;
   SMF_DISALLOW_COPY_AND_ASSIGN(wal_write_behind_cache);
 
   const seastar::file_output_stream_options opts;
@@ -46,12 +57,9 @@ class wal_write_behind_cache {
   seastar::lw_shared_ptr<wal_read_reply> get(const wal_read_request &req);
 
  private:
-  wal_write_behind_cache_stats stats_;
-  uint64_t                     current_size_{0};
-  // need fast lookup for offsets
-  smf::flat_hash_map<uint64_t, item_ptr> puts_{};
-  // ska map is unordered need to keep the next key to evict in order
-  std::vector<uint64_t>           keys_{};
+  wal_write_behind_cache_stats    stats_;
+  uint64_t                        current_size_{0};
+  std::deque<eviction_key>        data_{};
   seastar::metrics::metric_groups metrics_{};
 };
 
