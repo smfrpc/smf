@@ -20,7 +20,7 @@ seastar::future<seastar::lw_shared_ptr<wal_write_reply>>
 write_ahead_log::append(wal_write_request r) {
   DLOG_THROW_IF(r.runner_core != seastar::engine().cpu_id(),
                "Incorrect core assignment");
-  LOG_THROW_IF(!wal_write_request::validate(r), "invalid write request");
+  DLOG_THROW_IF(!wal_write_request::validate(r), "invalid write request");
   // 1) Get projection
   // 2) Write to disk
   // 3) Write to to cache
@@ -54,7 +54,7 @@ write_ahead_log::append(wal_write_request r) {
 
 seastar::future<seastar::lw_shared_ptr<wal_read_reply>>
 write_ahead_log::get(wal_read_request r) {
-  LOG_THROW_IF(!wal_read_request::validate(r), "invalid read request");
+  DLOG_THROW_IF(!wal_read_request::validate(r), "invalid read request");
   auto t = seastar::sstring(r.req->topic()->c_str());
   return tm_.get_manager(t, r.req->partition()).then([r](auto mngr) {
     return mngr->get(r);

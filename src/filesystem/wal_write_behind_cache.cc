@@ -68,8 +68,6 @@ wal_write_behind_cache::put(uint64_t offset, item_ptr data) {
   stats_.bytes_written += data->on_disk_size();
   puts_.emplace(offset, data);
   keys_.push_back(offset);
-  // keeping order is hugely important for removing data.
-  std::sort(keys_.begin(), keys_.end());
 }
 
 seastar::lw_shared_ptr<wal_read_reply>
