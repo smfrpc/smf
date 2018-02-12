@@ -16,7 +16,7 @@ using namespace smf::wal;  // NOLINT
 static const uint64_t kMinCompressionSize = 512;
 
 
-static seastar::lw_shared_ptr<wal_write_projection::item>
+static std::unique_ptr<wal_write_projection::item>
 xform(const tx_put_fragment &f) {
   DTRACE_PROBE(smf, wal_projection_xform);
   static thread_local flatbuffers::FlatBufferBuilder fbb;
@@ -45,8 +45,8 @@ xform(const tx_put_fragment &f) {
   hdr.mutate_size(payload.size());
   hdr.mutate_checksum(xxhash_32(payload.get(), payload.size()));
 
-  return seastar::make_lw_shared<wal_write_projection::item>(
-    std::move(hdr), std::move(payload));
+  return std::make_unique<wal_write_projection::item>(std::move(hdr),
+                                                      std::move(payload));
 }
 
 seastar::lw_shared_ptr<wal_write_projection>
@@ -56,9 +56,7 @@ wal_write_projection::translate(const seastar::sstring &      topic,
   auto ret =
     seastar::make_lw_shared<wal_write_projection>(topic, req->partition());
   ret->projection.reserve(req->txs()->size());
-  std::transform(req->txs()->begin(), req->txs()->end(),
-                 std::back_inserter(ret->projection),
-                 [](auto it) { return xform(*it); });
+  for (auto i : *req->txs()) { ret->projection.push_back(xform(*i)); }
   return ret;
 }
 

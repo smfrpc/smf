@@ -32,9 +32,11 @@ struct wal_write_projection {
 
     item(wal::wal_header header, buf_t payload)
       : hdr(std::move(header)), fragment(std::move(payload)) {}
+    item(item &&o) noexcept
+      : hdr(std::move(o.hdr)), fragment(std::move(o.fragment)) {}
 
-    const wal::wal_header hdr;
-    const buf_t           fragment;
+    wal::wal_header hdr;
+    buf_t           fragment;
 
     buf_t
     create_disk_header() const {
@@ -54,9 +56,9 @@ struct wal_write_projection {
 
   wal_write_projection(const seastar::sstring &t, uint32_t p)
     : topic(t), partition(p) {}
-  const seastar::sstring                    topic;
-  const uint32_t                            partition;
-  std::vector<seastar::lw_shared_ptr<item>> projection;
+  const seastar::sstring             topic;
+  const uint32_t                     partition;
+  std::vector<std::unique_ptr<item>> projection;
   SMF_DISALLOW_COPY_AND_ASSIGN(wal_write_projection);
 
   /// \brief takes in what the user expected to write, and converts it to a

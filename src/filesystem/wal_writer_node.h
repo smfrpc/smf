@@ -93,10 +93,8 @@ class wal_writer_node {
   /// do append has a similar logic as the kafka log.
   /// effectively just check if there is enough space, if not rotate and then
   /// write.
-  seastar::future<> do_append(
-    seastar::lw_shared_ptr<wal_write_projection::item> fragment);
-  seastar::future<> disk_write(
-    seastar::lw_shared_ptr<wal_write_projection::item> fragment);
+  seastar::future<> do_append(const wal_write_projection::item *fragment);
+  seastar::future<> disk_write(const wal_write_projection::item *fragment);
 
 
  private:

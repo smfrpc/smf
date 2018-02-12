@@ -70,11 +70,11 @@ class wal_test_put {
   }
 
   smf::wal_write_request
-  get_request(const uint32_t assigned_core, const uint32_t runner_core) {
+  get_request(const uint32_t runner_core) {
     auto p = orig_->get();
     return wal_write_request(
-      p, smf::priority_manager::get().streaming_write_priority(), assigned_core,
-      runner_core, {partition_});
+      p, smf::priority_manager::get().streaming_write_priority(), runner_core,
+      {partition_});
   }
 
   uint32_t

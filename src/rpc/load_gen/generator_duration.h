@@ -3,9 +3,11 @@
 #pragma once
 
 #include <chrono>
+#include <iostream>
 #include <sstream>
 
 #include "histogram/histogram.h"
+#include "utils/human_bytes.h"
 
 namespace smf {
 namespace load_gen {
@@ -34,14 +36,14 @@ struct generator_duration {
   }
 
   inline uint64_t
-  duration_in_millis() {
+  duration_in_millis() const {
     namespace co = std::chrono;
     auto d       = test_end - test_begin;
     return co::duration_cast<co::milliseconds>(d).count();
   }
 
   inline uint64_t
-  qps() {
+  qps() const {
     auto       milli = duration_in_millis();
     const auto reqs  = static_cast<double>(num_of_req);
 
@@ -53,15 +55,16 @@ struct generator_duration {
 
     return queries_per_milli * 1000.0;
   }
-
-  seastar::sstring
-  as_sstring() {
-    std::stringstream ss;
-    ss << "benchmark_stats={test_duration: " << duration_in_millis()
-       << "ms, qps: " << qps() << ", total_bytes: " << total_bytes << " }";
-    return ss.str();
-  }
 };
+
+inline std::ostream &
+operator<<(std::ostream &o, const generator_duration &d) {
+  o << "generator_duration={ test_duration= " << d.duration_in_millis()
+    << "ms, qps=" << d.qps()
+    << ", total_bytes=" << smf::human_bytes(d.total_bytes) << "("
+    << d.total_bytes << ") }";
+  return o;
+}
 
 }  // namespace load_gen
 }  // namespace smf

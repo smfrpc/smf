@@ -105,11 +105,9 @@ wal_write_request::write_request_iterator::operator!=(
 
 wal_write_request::wal_write_request(const smf::wal::tx_put_request *    ptr,
                                      const ::seastar::io_priority_class &p,
-                                     const uint32_t            _assigned_core,
                                      const uint32_t            _runner_core,
                                      const std::set<uint32_t> &partitions)
   : priority_wrapper(ptr, p)
-  , assigned_core(_assigned_core)
   , runner_core(_runner_core)
   , partition_view(partitions) {
   DLOG_THROW_IF(partition_view.empty(), "Partition view is empty");

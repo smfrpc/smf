@@ -41,11 +41,11 @@ wal_partition_manager::append(seastar::lw_shared_ptr<wal_write_projection> p) {
                   "should be exactly one",
                   topic, partition);
     auto idx = reply->begin()->second->start_offset;
-    std::for_each(p->projection.begin(), p->projection.end(),
-                  [&idx, this](auto it) {
-                    cache_.put(idx, it);
-                    idx += it->on_disk_size();
-                  });
+    for (auto &&i : p->projection) {
+      auto sz = i->on_disk_size();
+      cache_.put(idx, std::move(i));
+      idx += sz;
+    }
     return seastar::make_ready_future<decltype(reply)>(reply);
   });
 }

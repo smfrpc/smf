@@ -61,8 +61,7 @@ wal_writer_node::open() {
   return lease_->open();
 }
 seastar::future<>
-wal_writer_node::disk_write(
-  seastar::lw_shared_ptr<wal_write_projection::item> frag) {
+wal_writer_node::disk_write(const wal_write_projection::item *frag) {
   auto b = frag->create_disk_header();
   stats_.total_bytes += b.size();
   current_size_ += b.size();
@@ -82,7 +81,7 @@ wal_writer_node::append(seastar::lw_shared_ptr<wal_write_projection> req) {
     const uint64_t write_size   = wal_write_request_size(req);
     return seastar::do_for_each(
              req->projection.begin(), req->projection.end(),
-             [this, req](auto &i) mutable { return this->do_append(i); })
+             [this, req](auto &i) mutable { return this->do_append(i.get()); })
       .then([write_size, start_offset, req, this] {
         LOG_THROW_IF(
           start_offset + write_size != current_offset(),
@@ -100,8 +99,7 @@ wal_writer_node::append(seastar::lw_shared_ptr<wal_write_projection> req) {
 
 
 seastar::future<>
-wal_writer_node::do_append(
-  seastar::lw_shared_ptr<wal_write_projection::item> frag) {
+wal_writer_node::do_append(const wal_write_projection::item *frag) {
   if (SMF_LIKELY(frag->on_disk_size() <= space_left())) {
     return disk_write(frag);
   }

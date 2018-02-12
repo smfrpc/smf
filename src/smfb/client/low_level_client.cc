@@ -153,10 +153,11 @@ main(int argc, char **argv, char **env) {
             load_gen_t::method_cb_t    method = test_put{};
             load_gen_t::generator_cb_t gen    = put_data_generator{};
 
-            return server.benchmark(gen, method).then([](auto test) {
-              LOG_INFO("Test {}", test.as_sstring());
-              return seastar::make_ready_future<>();
-            });
+            return server.benchmark(gen, method)
+              .then([](smf::load_gen::generator_duration test) {
+                LOG_INFO("Test {}", test);
+                return seastar::make_ready_future<>();
+              });
           });
         })
         .then([&load] {

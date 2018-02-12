@@ -129,7 +129,6 @@ struct wal_write_request : details::priority_wrapper<smf::wal::tx_put_request> {
 
   wal_write_request(const smf::wal::tx_put_request *    ptr,
                     const ::seastar::io_priority_class &p,
-                    const uint32_t                      assigned_core,
                     const uint32_t                      runner_core,
                     const std::set<uint32_t> &          partitions);
 
@@ -139,7 +138,6 @@ struct wal_write_request : details::priority_wrapper<smf::wal::tx_put_request> {
   write_request_iterator begin();
   write_request_iterator end();
 
-  const uint32_t           assigned_core;
   const uint32_t           runner_core;
   const std::set<uint32_t> partition_view;
 

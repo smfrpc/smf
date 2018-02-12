@@ -25,10 +25,10 @@ class wal_write_behind_cache {
     uint64_t evicted_puts{0};
     uint64_t bytes_written{0};
   };
-  using item_ptr = seastar::lw_shared_ptr<wal_write_projection::item>;
+  using item_ptr = std::unique_ptr<wal_write_projection::item>;
   struct eviction_key {
     eviction_key(uint64_t k, uint64_t sz, item_ptr d)
-      : key(k), size(sz), data(d) {}
+      : key(k), size(sz), data(std::move(d)) {}
     eviction_key(eviction_key &&o) noexcept
       : key(o.key), size(o.size), data(std::move(o.data)) {}
     uint64_t key;

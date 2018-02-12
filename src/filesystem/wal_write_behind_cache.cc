@@ -88,7 +88,7 @@ wal_write_behind_cache::put(uint64_t offset, item_ptr data) {
   }
   current_size_ += size_on_disk;
   stats_.bytes_written += size_on_disk;
-  data_.push_back({offset, size_on_disk, data});
+  data_.push_back({offset, size_on_disk, std::move(data)});
 }
 
 seastar::lw_shared_ptr<wal_read_reply>

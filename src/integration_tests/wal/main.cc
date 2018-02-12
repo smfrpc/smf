@@ -41,37 +41,36 @@ add_opts(boost::program_options::options_description_easy_init o) {
 
 seastar::future<>
 do_one_request(uint32_t core, smf::write_ahead_log &w) {
-  return seastar::do_with(smf::wal_test_put(100, 10), [
-    &w, running_core = core, assigned_core = 1000 + core
-  ](wal_test_put & put) {
-    return w.append(put.get_request(assigned_core, running_core))
-      .then([&](auto write_reply) mutable {
-        auto readq = smf::fbs_typed_buf<smf::wal::tx_get_request>(
-          smf::native_table_as_buffer<smf::wal::tx_get_request>(
-            get_read_request(put.get_partition())));
+  return seastar::do_with(
+    smf::wal_test_put(100, 10), [&w, core](wal_test_put &put) {
+      return w.append(put.get_request(core))
+        .then([&](auto write_reply) mutable {
+          auto readq = smf::fbs_typed_buf<smf::wal::tx_get_request>(
+            smf::native_table_as_buffer<smf::wal::tx_get_request>(
+              get_read_request(put.get_partition())));
 
-        // perform the read next!
-        return seastar::do_with(
-          std::move(readq),
-          [&w](smf::fbs_typed_buf<smf::wal::tx_get_request> &tbuf) {
-            smf::wal_read_request r(
-              tbuf.get(), smf::priority_manager::get().default_priority());
-            return w.get(r);
-          });
-      })
-      .then([](seastar::lw_shared_ptr<smf::wal_read_reply> r) {
-        LOG_INFO("Reply for reading: {}", *r.get());
-        for (auto &g : r->reply()->gets) {
-          auto ptr =
-            flatbuffers::GetRoot<smf::wal::tx_put_fragment>(g->fragment.data());
-          LOG_THROW_IF(ptr == nullptr, "Could not flatbuffers::GetRoot");
-          LOG_THROW_IF(ptr->key()->Data() == nullptr,
-                       "Ooops, Likely incorrect flatbuffers format "
-                       "on the wire!");
-        }
-        return seastar::make_ready_future<>();
-      });
-  });
+          // perform the read next!
+          return seastar::do_with(
+            std::move(readq),
+            [&w](smf::fbs_typed_buf<smf::wal::tx_get_request> &tbuf) {
+              smf::wal_read_request r(
+                tbuf.get(), smf::priority_manager::get().default_priority());
+              return w.get(r);
+            });
+        })
+        .then([](seastar::lw_shared_ptr<smf::wal_read_reply> r) {
+          LOG_INFO("Reply for reading: {}", *r.get());
+          for (auto &g : r->reply()->gets) {
+            auto ptr = flatbuffers::GetRoot<smf::wal::tx_put_fragment>(
+              g->fragment.data());
+            LOG_THROW_IF(ptr == nullptr, "Could not flatbuffers::GetRoot");
+            LOG_THROW_IF(ptr->key()->Data() == nullptr,
+                         "Ooops, Likely incorrect flatbuffers format "
+                         "on the wire!");
+          }
+          return seastar::make_ready_future<>();
+        });
+    });
 }
 
 int
