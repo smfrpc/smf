@@ -101,45 +101,26 @@ class wal_read_reply {
 // writes
 
 struct wal_write_request : details::priority_wrapper<smf::wal::tx_put_request> {
-  using fb_const_iter_t = typename flatbuffers::Vector<
-    flatbuffers::Offset<smf::wal::tx_put_partition_tuple>>::const_iterator;
-
-  class write_request_iterator
-    : std::iterator<std::input_iterator_tag, fb_const_iter_t> {
-   public:
-    using const_iter_t = fb_const_iter_t;
-    write_request_iterator(const std::set<uint32_t> &view,
-                           const_iter_t              start,
-                           const_iter_t              end);
-
-    write_request_iterator(const write_request_iterator &o);
-    write_request_iterator &next();
-    write_request_iterator &operator++();
-    write_request_iterator  operator++(int);
-    const_iter_t            operator->();
-    const_iter_t            operator*();
-    bool                    operator==(const write_request_iterator &o);
-    bool                    operator!=(const write_request_iterator &o);
-
-   private:
-    const std::set<uint32_t> &view_;
-    const_iter_t              start_;
-    const_iter_t              end_;
-  };
-
-  wal_write_request(const smf::wal::tx_put_request *    ptr,
-                    const ::seastar::io_priority_class &p,
-                    const uint32_t                      runner_core,
-                    const std::set<uint32_t> &          partitions);
+  wal_write_request(
+    const smf::wal::tx_put_request *                      ptr,
+    const seastar::io_priority_class &                    p,
+    const uint32_t                                        runner_core,
+    std::vector<const smf::wal::tx_put_partition_tuple *> partitions);
 
   wal_write_request(const wal_write_request &) = default;
   wal_write_request &operator=(const wal_write_request &) = default;
 
-  write_request_iterator begin();
-  write_request_iterator end();
+  auto
+  begin() const {
+    return partitions.begin();
+  };
+  auto
+  end() const {
+    return partitions.end();
+  };
 
-  const uint32_t           runner_core;
-  const std::set<uint32_t> partition_view;
+  const uint32_t                                        runner_core;
+  std::vector<const smf::wal::tx_put_partition_tuple *> partitions;
 
   static bool valid(const wal_write_request &r);
 };

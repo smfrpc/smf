@@ -36,7 +36,7 @@ write_ahead_log::append(wal_write_request r) {
     [this, r](auto it) {
       auto topic = seastar::sstring(r.req->topic()->c_str());
       return this->tm_.get_manager(topic, it->partition()).then([
-        this, topic, projection = wal_write_projection::translate(topic, *it)
+        this, topic, projection = wal_write_projection::translate(topic, it)
       ](auto mngr) { return mngr->append(projection); });
     },
 

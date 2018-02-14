@@ -46,91 +46,25 @@ wal_read_reply::on_wire_size() {
                          });
 }
 
-wal_write_request::write_request_iterator::write_request_iterator(
-  const std::set<uint32_t> &view, const_iter_t start, const_iter_t end)
-  : view_(view), start_(start), end_(end) {
-  if (start_ != end_ && view_.find(start_->partition()) == view_.end()) {
-    next();
-  }
-}
 
-wal_write_request::write_request_iterator::write_request_iterator(
-  const write_request_iterator &o)
-  : view_(o.view_), start_(o.start_), end_(o.end_) {
-  if (start_ != end_ && view_.find(start_->partition()) == view_.end()) {
-    next();
-  }
-}
-
-wal_write_request::write_request_iterator &
-wal_write_request::write_request_iterator::next() {
-  while (start_ != end_) {
-    ++start_;
-    if (start_ != end_ && view_.find(start_->partition()) != view_.end()) {
-      break;
-    }
-  }
-  return *this;
-}
-
-wal_write_request::write_request_iterator
-  &wal_write_request::write_request_iterator::operator++() {
-  return next();
-}
-wal_write_request::write_request_iterator
-  wal_write_request::write_request_iterator::operator++(int) {
-  write_request_iterator retval = *this;
-  next();
-  return retval;
-}
-wal_write_request::write_request_iterator::const_iter_t
-  wal_write_request::write_request_iterator::operator->() {
-  return start_;
-}
-wal_write_request::write_request_iterator::const_iter_t
-  wal_write_request::write_request_iterator::operator*() {
-  return start_;
-}
-bool
-wal_write_request::write_request_iterator::operator==(
-  const wal_write_request::write_request_iterator &o) {
-  return start_ == o.start_ && end_ == o.end_ && view_ == o.view_;
-}
-bool
-wal_write_request::write_request_iterator::operator!=(
-  const wal_write_request::write_request_iterator &o) {
-  return !(*this == o);
-}
-
-
-wal_write_request::wal_write_request(const smf::wal::tx_put_request *    ptr,
-                                     const ::seastar::io_priority_class &p,
-                                     const uint32_t            _runner_core,
-                                     const std::set<uint32_t> &partitions)
+wal_write_request::wal_write_request(
+  const smf::wal::tx_put_request *                ptr,
+  const ::seastar::io_priority_class &            p,
+  const uint32_t                                  _runner_core,
+  std::vector<const smf::wal::tx_put_partition_tuple *> partitions_view)
   : priority_wrapper(ptr, p)
   , runner_core(_runner_core)
-  , partition_view(partitions) {
-  DLOG_THROW_IF(partition_view.empty(), "Partition view is empty");
+  , partitions(std::move(partitions_view)) {
+  DLOG_THROW_IF(partitions.empty(), "Partition view is empty");
 }
 
-wal_write_request::write_request_iterator
-wal_write_request::begin() {
-  return write_request_iterator(partition_view, req->data()->begin(),
-                                req->data()->end());
-}
-wal_write_request::write_request_iterator
-wal_write_request::end() {
-  return write_request_iterator(partition_view, req->data()->end(),
-                                req->data()->end());
-}
 bool
 wal_write_request::valid(const wal_write_request &r) {
-  DLOG_INFO_IF(r.partition_view.empty(), "Partition view is empty!");
   try {
     // traversing the request object might throw
     (void)r.req->topic();
     (void)r.req->data();
-    return !r.partition_view.empty() && r.req->topic()->size() != 0;
+    return !r.partitions.empty() && r.req->topic()->size() != 0;
   } catch (const std::exception &e) {
     LOG_ERROR("Validating wal_write_request: caught exception: {}", e.what());
   }

@@ -39,8 +39,8 @@ std::list<smf::wal_write_request>
 core_assignment(const smf::wal::tx_put_request *p) {
   struct assigner {
     explicit assigner(uint32_t runner) : runner_core(runner) {}
-    uint32_t           runner_core;
-    std::set<uint32_t> partitions{};
+    uint32_t                                              runner_core;
+    std::vector<const smf::wal::tx_put_partition_tuple *> partitions;
   };
 
   if (SMF_UNLIKELY(p->data() == nullptr || p->data()->Length() == 0)) {
@@ -52,16 +52,16 @@ core_assignment(const smf::wal::tx_put_request *p) {
   std::vector<assigner> view;
   view.reserve(seastar::smp::count);
   for (auto i = 0u; i < seastar::smp::count; ++i) { view.emplace_back(i); }
-  for (auto it : *(p->data())) {
+  for (const smf::wal::tx_put_partition_tuple *it : *(p->data())) {
     auto runner = smf::put_to_lcore(p->topic()->data(), p->topic()->size(), it);
-    view[runner].partitions.insert(it->partition());
+    view[runner].partitions.push_back(it);
   }
   std::list<smf::wal_write_request> retval;
-  for (auto &v : view) {
+  for (auto &&v : view) {
     retval.push_front(smf::wal_write_request(
       p /*original pointer*/,
       smf::priority_manager::get().streaming_write_priority(), v.runner_core,
-      v.partitions));
+      std::move(v.partitions)));
   }
   return retval;
 }

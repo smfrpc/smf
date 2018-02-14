@@ -42,3 +42,10 @@ smf_test(
   SOURCE_DIRECTORY ${TEST_ROOT}/compressor
   LIBRARIES gtest smf_utils
   )
+smf_test(
+  UNIT_TEST
+  BINARY_NAME fbs_size
+  SOURCES ${TEST_ROOT}/flatbuffers/main.cc
+  SOURCE_DIRECTORY ${TEST_ROOT}/flatbuffers
+  LIBRARIES flatbuffers
+  )

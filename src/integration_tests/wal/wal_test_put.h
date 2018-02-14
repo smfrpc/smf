@@ -71,10 +71,12 @@ class wal_test_put {
 
   smf::wal_write_request
   get_request(const uint32_t runner_core) {
-    auto p = orig_->get();
+    auto                                                  p = orig_->get();
+    std::vector<const smf::wal::tx_put_partition_tuple *> d;
+    d.push_back(*p->data()->begin());
     return wal_write_request(
       p, smf::priority_manager::get().streaming_write_priority(), runner_core,
-      {partition_});
+      std::move(d));
   }
 
   uint32_t
