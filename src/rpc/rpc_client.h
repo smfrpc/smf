@@ -99,46 +99,16 @@ class rpc_client {
   template <typename T>
   seastar::future<rpc_recv_typed_context<T>>
   send(rpc_envelope e) {
-    LOG_THROW_IF(is_error_state, "Cannot send request in error state");
-
     using ret_type = rpc_recv_typed_context<T>;
-    // create the work item
-    ++session_idx_;
-    ++read_counter;
-
-    DLOG_THROW_IF(rpc_slots.find(session_idx_) != rpc_slots.end(),
-                  "RPC slot already allocated");
-    auto work    = seastar::make_lw_shared<work_item>(session_idx_);
-    auto measure = is_histogram_enabled() ? hist_->auto_measure() : nullptr;
-
-    rpc_slots.insert({session_idx_, work});
-    // critical - without this nothing works
-    e.letter.header.mutate_session(session_idx_);
-
-    // apply the first set of outgoing filters, then return promise
-    return stage_apply_outgoing_filters(std::move(e))
-      .then([this, work](rpc_envelope e) {
-        // dispatch the write concurrently!
-        dispatch_write(std::move(e));
-        return work->pr.get_future();
-      })
-      .then([this](stdx::optional<rpc_recv_context> opt_ctx) {
-        if (!opt_ctx) {
-          return seastar::make_ready_future<ret_type>(std::move(opt_ctx));
-        }
-        return stage_apply_incoming_filters(std::move(opt_ctx.value()))
-          .then([](rpc_recv_context ctx) {
-            return seastar::make_ready_future<ret_type>(
-              stdx::optional<decltype(ctx)>(std::move(ctx)));
-          });
-      })
-      .then([measure = std::move(measure)](auto opt_ctx) {
-        return seastar::make_ready_future<ret_type>(std::move(opt_ctx));
-      });
+    return raw_send(std::move(e)).then([](auto opt_ctx) {
+      return seastar::make_ready_future<ret_type>(std::move(opt_ctx));
+    });
   }
 
 
-  seastar::future<> connect();
+  virtual seastar::future<stdx::optional<rpc_recv_context>> raw_send(
+    rpc_envelope e) final;
+  virtual seastar::future<> connect() final;
 
   virtual seastar::future<> stop();
 

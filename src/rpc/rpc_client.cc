@@ -57,6 +57,46 @@ rpc_client::enable_histogram_metrics() {
   if (!hist_) hist_ = histogram::make_lw_shared();
 }
 
+
+seastar::future<stdx::optional<rpc_recv_context>>
+rpc_client::raw_send(rpc_envelope e) {
+  LOG_THROW_IF(is_error_state, "Cannot send request in error state");
+  using opt_recv_t = stdx::optional<rpc_recv_context>;
+  // create the work item
+  ++session_idx_;
+  ++read_counter;
+
+  DLOG_THROW_IF(rpc_slots.find(session_idx_) != rpc_slots.end(),
+                "RPC slot already allocated");
+  auto work    = seastar::make_lw_shared<work_item>(session_idx_);
+  auto measure = is_histogram_enabled() ? hist_->auto_measure() : nullptr;
+
+  rpc_slots.insert({session_idx_, work});
+  // critical - without this nothing works
+  e.letter.header.mutate_session(session_idx_);
+
+  // apply the first set of outgoing filters, then return promise
+  return stage_apply_outgoing_filters(std::move(e))
+    .then([this, work](rpc_envelope e) {
+      // dispatch the write concurrently!
+      dispatch_write(std::move(e));
+      return work->pr.get_future();
+    })
+    .then([ this, m = std::move(measure) ](opt_recv_t r) mutable {
+      if (!r) {
+        // nothing to do
+        return seastar::make_ready_future<opt_recv_t>(std::move(r));
+      }
+      // something to do
+      return stage_apply_incoming_filters(std::move(r.value()))
+        .then([m = std::move(m)](rpc_recv_context ctx) {
+          return seastar::make_ready_future<opt_recv_t>(
+            opt_recv_t(std::move(ctx)));
+        });
+    });
+}
+
+
 seastar::future<>
 rpc_client::connect() {
   LOG_THROW_IF(conn,
@@ -78,7 +118,8 @@ rpc_client::connect() {
 seastar::future<>
 rpc_client::dispatch_write(rpc_envelope e) {
   // must protect the conn->ostream
-  return serialize_writes_.wait(1).then(
+  return seastar::with_semaphore(
+    serialize_writes_, 1,
     [ ee = std::move(e), self = parent_shared_from_this(), this ]() mutable {
       auto payload_size = ee.size();
       return self->conn->limits->wait_for_payload_resources(payload_size)
@@ -91,7 +132,6 @@ rpc_client::dispatch_write(rpc_envelope e) {
         })
         .finally([this, self, payload_size] {
           self->conn->limits->release_payload_resources(payload_size);
-          serialize_writes_.signal(1);
         });
     });
 }
