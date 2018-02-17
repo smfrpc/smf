@@ -13,7 +13,6 @@
 #include "filesystem/wal_opts.h"
 #include "filesystem/wal_requests.h"
 #include "filesystem/wal_segment.h"
-#include "filesystem/wal_write_behind_utils.h"
 #include "filesystem/wal_write_projection.h"
 #include "filesystem/wal_writer_utils.h"
 #include "utils/time_utils.h"

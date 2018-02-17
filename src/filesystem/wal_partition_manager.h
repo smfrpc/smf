@@ -5,7 +5,6 @@
 
 #include "filesystem/wal_reader.h"
 #include "filesystem/wal_requests.h"
-#include "filesystem/wal_write_behind_cache.h"
 #include "filesystem/wal_writer.h"
 #include "platform/macros.h"
 

@@ -10,24 +10,13 @@ enum wal_entry_compression_type:byte {
   lz4
 }
 
-/// WARNING
-///
-/// \brief on the actual disk format, we manually write one int at a time
-/// via seastar::write_le and seastar::read_le
-/// for example: seastar::write_le<uint8_t>(compression)
-/// this saves about 19 bytes per entry on disk! and we still have a bunch
-/// of zeros for lower sizes.
-///
-/// On the reader we allocate 9 bytes for reading, read one field at a time
-/// and populate the struct manually afterwards.
-///
-/// We write these fields in ORDER:
-///     size(4 bytes), checksum(4 bytes), compression(1 byte).
-///
 struct wal_header {
+  /// \brief, we use xxhash64 since xxhash32 is slow
+  checksum:    ulong;
   size:        uint;
-  checksum:    uint;
+  version:     ubyte;
   compression: wal_entry_compression_type;
+  /// Note we still have 16 bits unused
 }
 
 
@@ -86,9 +75,7 @@ table tx_put_fragment {
   invalidation_offset: ulong = 0;
 
 }
-
-table tx_put_partition_tuple {
-  partition:   uint (key);
+table tx_put_binary_fragment {
   /// \brief this is *not* in a format that is friendly
   /// to flatbuffers for performance reasons.
   /// It is a format friendly to the disk
@@ -108,7 +95,11 @@ table tx_put_partition_tuple {
   /// on flatbuffers, since the defaults might change over time, breaking
   /// the reader's expectation
   ///
-  txs: [[ubyte]];
+  data: [ubyte];
+}
+table tx_put_partition_tuple {
+  partition:   uint (key);
+  txs: [tx_put_binary_fragment];
 }
 
 /// brief - stores `puts` transactionally

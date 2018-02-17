@@ -7,7 +7,6 @@
 
 #include <core/reactor.hh>
 
-#include "filesystem/wal_write_behind_utils.h"
 #include "filesystem/wal_write_projection.h"
 
 namespace smf {
@@ -20,8 +19,7 @@ wal_partition_manager::wal_partition_manager(wal_opts         o,
   , work_dir(opts.directory + "/" + topic + "." +
              seastar::to_sstring(partition))
   , writer_(opts, work_dir)
-  , reader_(work_dir)
-  , cache_(topic, partition, default_file_ostream_options()) {}
+  , reader_(work_dir) {}
 
 wal_partition_manager::~wal_partition_manager() {}
 
