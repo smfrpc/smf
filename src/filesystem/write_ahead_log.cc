@@ -33,11 +33,10 @@ write_ahead_log::append(wal_write_request r) {
     r.begin(), r.end(),
 
     // Mapper function
-    [this, r](auto it) {
+    [this, r](const smf::wal::tx_put_partition_tuple *it) {
       auto topic = seastar::sstring(r.req->topic()->c_str());
-      return this->tm_.get_manager(topic, it->partition()).then([
-        this, topic, projection = wal_write_projection::translate(topic, it)
-      ](auto mngr) { return mngr->append(projection); });
+      return this->tm_.get_manager(topic, it->partition())
+        .then([this, it](auto mngr) { return mngr->append(it); });
     },
 
     // Initial State

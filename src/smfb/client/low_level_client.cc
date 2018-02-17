@@ -6,7 +6,10 @@
 #include <core/app-template.hh>
 #include <fastrange/fastrange.h>
 
+#include "flatbuffers/wal_generated.h"
+
 #include "chain_replication/chain_replication_service.h"
+#include "filesystem/wal_write_projection.h"
 #include "flatbuffers/chain_replication.smf.fb.h"
 #include "hashing/hashing_utils.h"
 #include "histogram/histogram_seastar_utils.h"
@@ -41,17 +44,17 @@ struct put_data_generator {
     return rand;
   }
 
-  std::vector<std::make_unique<smf::wal::tx_put_fragmentT>> &
+  std::vector<std::unique_ptr<smf::wal::tx_put_partition_tupleT>> &
   frags() {
     static thread_local std::vector<
-      std::make_unique<smf::wal::tx_put_fragmentT>>
+      std::unique_ptr<smf::wal::tx_put_partition_tupleT>>
       lvec(kMaxPartitions);
     return lvec;
   }
 
   const seastar::sstring &
   key(const boost::program_options::variables_map &cfg) {
-    static thread_local seastar::sstring key = [&cfg]() {
+    static thread_local seastar::sstring key = [this, &cfg]() {
       auto s = cfg["key"].as<seastar::sstring>();
       if (s == "random") {
         s = random().next_str(random().next() % kMaxRandBytes);
@@ -63,7 +66,7 @@ struct put_data_generator {
   }
   const seastar::sstring &
   topic(const boost::program_options::variables_map &cfg) {
-    static thread_local seastar::sstring key = [&cfg]() {
+    static thread_local seastar::sstring key = [this, &cfg]() {
       auto s = cfg["topic"].as<seastar::sstring>();
       if (s == "random") {
         s = random().next_str(random().next() % kMaxRandBytes);
@@ -75,7 +78,7 @@ struct put_data_generator {
   }
   const seastar::sstring &
   value(const boost::program_options::variables_map &cfg) {
-    static thread_local seastar::sstring key = [&cfg]() {
+    static thread_local seastar::sstring key = [this, &cfg]() {
       auto s = cfg["value"].as<seastar::sstring>();
       if (s == "random") {
         s = random().next_str(random().next() % kMaxRandBytes);
@@ -96,32 +99,36 @@ struct put_data_generator {
     p.put->topic = topic(cfg);
 
     const uint32_t batch_size = cfg["batch-size"].as<uint32_t>();
-    const uint64_t fragment_count =
-      std::max(uint64_t(1), random().next() % batch_size);
-    const uint64_t puts_per_partition =
-      std::max(uint64_t(1),
-               static_cast<uint64_t>(std::ceil(batch_size / fragment_count)));
+    auto           partition =
+      fastrange32(static_cast<uint32_t>(random().next()), kMaxPartitions);
 
-    for (auto i = 0u; i < puts_per_partition; ++i) {
-      auto partition = fastrange32(static_cast<uint32_t>(random().next()), 32);
-      if (frags()[partition] == nullptr) {
-        auto ptr       = std::make_unique<smf::wal::tx_put_partition_tupleT>();
-        ptr->partition = partition;
-        for (auto j = 0u; j < fragment_count; ++j) {
-          smf::wal::tx_put_fragmentT f;
-          f.op       = smf::wal::tx_put_operation::tx_put_operation_full;
-          f.epoch_ms = smf::lowres_time_now_millis();
-          f.type     = smf::wal::tx_put_fragment_type::tx_put_fragment_type_kv;
-          f.key.resize(key(cfg).size(), 0);
-          f.value.resize(value(cfg).size(), 0);
-          std::memcpy(&f.key[0], key(cfg).data(), key(cfg).size());
-          std::memcpy(&f.value[0], value(cfg).data(), value(cfg).size());
-          ptr->txs.push_back(std::move(f));
-        }
-        frags()[partition] = std::move(ptr);
+    if (frags()[partition] == nullptr) {
+      auto ptr       = std::make_unique<smf::wal::tx_put_partition_tupleT>();
+      ptr->partition = partition;
+      for (auto j = 0u; j < batch_size; ++j) {
+        smf::wal::tx_put_fragmentT frag;
+        frag.op       = smf::wal::tx_put_operation::tx_put_operation_full;
+        frag.epoch_ms = smf::lowres_time_now_millis();
+        frag.type     = smf::wal::tx_put_fragment_type::tx_put_fragment_type_kv;
+        frag.key.resize(key(cfg).size(), 0);
+        frag.value.resize(value(cfg).size(), 0);
+        std::memcpy(&frag.key[0], key(cfg).data(), key(cfg).size());
+        std::memcpy(&frag.value[0], value(cfg).data(), value(cfg).size());
+        ptr->txs.emplace_back(smf::wal_write_projection::xform(frag));
       }
-      p.put->data.push_back(wal_write_projection::xform(*frags()[partition]));
+      frags()[partition] = std::move(ptr);
     }
+    // copy
+    auto ptr       = std::make_unique<smf::wal::tx_put_partition_tupleT>();
+    ptr->partition = partition;
+    for (auto &bf : frags()[partition]->txs) {
+      auto bin = std::unique_ptr<smf::wal::tx_put_binary_fragmentT>();
+      bin->data.resize(bf->data.size());
+      std::memcpy(bin->data.data(), bf->data.data(), bf->data.size());
+      ptr->txs.push_back(std::move(bin));
+    }
+    // return yet one last copy! yikes
+    p.put->data.push_back(std::move(ptr));
     return typed_env.serialize_data();
   }
 };

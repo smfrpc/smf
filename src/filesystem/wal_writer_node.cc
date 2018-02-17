@@ -20,10 +20,12 @@
 namespace smf {
 
 static uint64_t
-wal_write_request_size(seastar::lw_shared_ptr<wal_write_projection> req) {
+wal_write_request_size(const smf::wal::tx_put_partition_tuple *it) {
   return std::accumulate(
-    req->projection.begin(), req->projection.end(), uint64_t(0),
-    [](uint64_t acc, const auto &it) { return acc + it->on_disk_size(); });
+    it->txs()->begin(), it->txs()->end(), uint64_t(0),
+    [](uint64_t acc, const smf::wal::tx_put_binary_fragment *x) {
+      return acc + x->data()->size();
+    });
 }
 
 wal_writer_node::wal_writer_node(wal_writer_node_opts &&opts)
@@ -61,35 +63,30 @@ wal_writer_node::open() {
   return lease_->open();
 }
 seastar::future<>
-wal_writer_node::disk_write(const wal_write_projection::item *frag) {
-  auto b = frag->create_disk_header();
-  stats_.total_bytes += b.size();
-  current_size_ += b.size();
-  return lease_->append(b.get(), b.size()).then([frag, this] {
-    current_size_ += frag->fragment.size();
-    stats_.total_bytes += frag->fragment.size();
-    ++stats_.total_writes;
-    return lease_->append(frag->fragment.get(), frag->fragment.size());
-  });
+wal_writer_node::disk_write(const smf::wal::tx_put_binary_fragment *f) {
+  stats_.total_bytes += f->data()->size();
+  current_size_ += f->data()->size();
+  ++stats_.total_writes;
+  return lease_->append((const char *)f->data()->Data(), f->data()->size());
 }
 
 seastar::future<seastar::lw_shared_ptr<wal_write_reply>>
-wal_writer_node::append(seastar::lw_shared_ptr<wal_write_projection> req) {
+wal_writer_node::append(const smf::wal::tx_put_partition_tuple *it) {
   DTRACE_PROBE(smf, wal_writer_node_append);
-  return seastar::with_semaphore(serialize_writes_, 1, [this, req]() mutable {
+  return seastar::with_semaphore(serialize_writes_, 1, [this, it]() mutable {
     const uint64_t start_offset = current_offset();
-    const uint64_t write_size   = wal_write_request_size(req);
+    const uint64_t write_size   = wal_write_request_size(it);
     return seastar::do_for_each(
-             req->projection.begin(), req->projection.end(),
-             [this, req](auto &i) mutable { return this->do_append(i.get()); })
-      .then([write_size, start_offset, req, this] {
+             it->txs()->begin(), it->txs()->end(),
+             [this](auto i) mutable { return this->do_append(i); })
+      .then([write_size, start_offset, it, this] {
         LOG_THROW_IF(
           start_offset + write_size != current_offset(),
           "Invalid offset accounting: start_offset:{}, "
           "write_size:{}, current_offset(): {}, total_writes_in_batch: {}",
-          start_offset, write_size, current_offset(), req->projection.size());
+          start_offset, write_size, current_offset(), it->txs()->size());
         auto ret = seastar::make_lw_shared<wal_write_reply>();
-        ret->set_reply_partition_tuple(req->topic, req->partition,
+        ret->set_reply_partition_tuple("need_to_set", it->partition(),
                                        opts_.epoch + start_offset,
                                        opts_.epoch + start_offset + write_size);
         return seastar::make_ready_future<decltype(ret)>(ret);
@@ -99,12 +96,9 @@ wal_writer_node::append(seastar::lw_shared_ptr<wal_write_projection> req) {
 
 
 seastar::future<>
-wal_writer_node::do_append(const wal_write_projection::item *frag) {
-  if (SMF_LIKELY(frag->on_disk_size() <= space_left())) {
-    return disk_write(frag);
-  }
-  return rotate_fstream().then(
-    [this, frag]() mutable { return disk_write(frag); });
+wal_writer_node::do_append(const smf::wal::tx_put_binary_fragment *f) {
+  if (SMF_LIKELY(f->data()->size() <= space_left())) { return disk_write(f); }
+  return rotate_fstream().then([this, f]() mutable { return disk_write(f); });
 }
 
 seastar::future<>

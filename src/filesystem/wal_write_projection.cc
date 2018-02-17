@@ -38,11 +38,12 @@ wal_write_projection::xform(const tx_put_fragmentT &f) {
       wal_entry_compression_type::wal_entry_compression_type_none);
 
     hdr.mutate_size(fbb.GetSize());
-    hdr.mutate_checksum(xxhash_64(fbb.GetBufferPointer(), fbb.GetSize()));
+    hdr.mutate_checksum(
+      xxhash_64((const char *)fbb.GetBufferPointer(), fbb.GetSize()));
 
     // allocate once!
     retval->data.reserve(kWalHeaderSize + fbb.GetSize());
-    std::memcpy(retval->data.data(), (char *)hdr, kWalHeaderSize);
+    std::memcpy(retval->data.data(), (char *)&hdr, kWalHeaderSize);
     std::memcpy(retval->data.data() + kWalHeaderSize, fbb.GetBufferPointer(),
                 fbb.GetSize());
 
@@ -61,7 +62,7 @@ wal_write_projection::xform(const tx_put_fragmentT &f) {
 
   // allocate once! - for the second time :(
   retval->data.reserve(kWalHeaderSize + payload.size());
-  std::memcpy(retval->data.data(), (char *)hdr, kWalHeaderSize);
+  std::memcpy(retval->data.data(), (char *)&hdr, kWalHeaderSize);
   std::memcpy(retval->data.data() + kWalHeaderSize, payload.get(),
               payload.size());
 

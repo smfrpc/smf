@@ -65,7 +65,7 @@ class wal_writer_node {
 
   /// \brief writes the projection to disk ensuring file size capacity
   seastar::future<seastar::lw_shared_ptr<wal_write_reply>> append(
-    seastar::lw_shared_ptr<wal_write_projection> req);
+    const smf::wal::tx_put_partition_tuple *it);
   /// \brief flushes the file before closing
   seastar::future<> close();
   /// \brief opens the file w/ open_flags::rw | open_flags::create |
@@ -92,8 +92,8 @@ class wal_writer_node {
   /// do append has a similar logic as the kafka log.
   /// effectively just check if there is enough space, if not rotate and then
   /// write.
-  seastar::future<> do_append(const wal_write_projection::item *fragment);
-  seastar::future<> disk_write(const wal_write_projection::item *fragment);
+  seastar::future<> do_append(const smf::wal::tx_put_binary_fragment *f);
+  seastar::future<> disk_write(const smf::wal::tx_put_binary_fragment *f);
 
 
  private:

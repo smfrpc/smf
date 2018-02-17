@@ -30,7 +30,7 @@ class wal_partition_manager {
   ///    }
   /// \endcode
   seastar::future<seastar::lw_shared_ptr<wal_write_reply>> append(
-    seastar::lw_shared_ptr<wal_write_projection> projection);
+    const smf::wal::tx_put_partition_tuple *it);
   seastar::future<seastar::lw_shared_ptr<wal_read_reply>> get(
     wal_read_request r);
 
@@ -50,9 +50,8 @@ class wal_partition_manager {
   seastar::future<> do_open();
 
  private:
-  wal_writer             writer_;
-  wal_reader             reader_;
-  wal_write_behind_cache cache_;
+  wal_writer writer_;
+  wal_reader reader_;
 };
 
 }  // namespace smf

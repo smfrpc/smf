@@ -23,7 +23,7 @@ class wal_writer {
   seastar::future<> open();
   /// \brief returns starting offset
   seastar::future<seastar::lw_shared_ptr<wal_write_reply>> append(
-    seastar::lw_shared_ptr<wal_write_projection> projection);
+    const smf::wal::tx_put_partition_tuple *it);
   /// \brief closes current file
   seastar::future<> close();
 

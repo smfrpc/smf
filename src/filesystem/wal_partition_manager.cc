@@ -28,22 +28,24 @@ wal_partition_manager::wal_partition_manager(wal_partition_manager &&o) noexcept
   , topic(std::move(o.topic))
   , partition(std::move(o.partition))
   , writer_(std::move(o.writer_))
-  , reader_(std::move(o.reader_))
-  , cache_(std::move(o.cache_)) {}
+  , reader_(std::move(o.reader_)) {}
 
 seastar::future<seastar::lw_shared_ptr<wal_write_reply>>
-wal_partition_manager::append(seastar::lw_shared_ptr<wal_write_projection> p) {
-  return writer_.append(p).then([this, p](auto reply) {
+wal_partition_manager::append(const smf::wal::tx_put_partition_tuple *it) {
+  return writer_.append(it).then([this, it](auto reply) {
     DLOG_THROW_IF(reply->size() != 1,
-                  "The cache for *this* topic: `{}` partition: `{}` tuple "
-                  "should be exactly one",
+                  "The writer::append() for *this* topic: `{}` partition: `{}` "
+                  "tuple should be exactly one",
                   topic, partition);
-    auto idx = reply->begin()->second->start_offset;
-    for (auto &&i : p->projection) {
-      auto sz = i->on_disk_size();
-      cache_.put(idx, std::move(i));
-      idx += sz;
-    }
+    // TODO(agallego) - using the indexer, inform the reader of the next page to
+    // read for the active reads
+    //
+    // auto idx = reply->begin()->second->start_offset;
+    // for (auto &&i : p->projection) {
+    //   auto sz = i->on_disk_size();
+    //   cache_.put(idx, std::move(i));
+    //   idx += sz;
+    //}
     return seastar::make_ready_future<decltype(reply)>(reply);
   });
 }
@@ -51,10 +53,6 @@ wal_partition_manager::append(seastar::lw_shared_ptr<wal_write_projection> p) {
 
 seastar::future<seastar::lw_shared_ptr<wal_read_reply>>
 wal_partition_manager::get(wal_read_request r) {
-  if (cache_.is_offset_in_range(r.req->offset())) {
-    return seastar::make_ready_future<seastar::lw_shared_ptr<wal_read_reply>>(
-      cache_.get(r));
-  }
   return reader_.get(r);
 }
 seastar::future<>
