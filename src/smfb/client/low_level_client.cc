@@ -122,7 +122,7 @@ struct put_data_generator {
     auto ptr       = std::make_unique<smf::wal::tx_put_partition_tupleT>();
     ptr->partition = partition;
     for (auto &bf : frags()[partition]->txs) {
-      auto bin = std::unique_ptr<smf::wal::tx_put_binary_fragmentT>();
+      auto bin = std::make_unique<smf::wal::tx_put_binary_fragmentT>();
       bin->data.resize(bf->data.size());
       std::memcpy(bin->data.data(), bf->data.data(), bf->data.size());
       ptr->txs.push_back(std::move(bin));

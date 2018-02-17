@@ -20,7 +20,7 @@ std::unique_ptr<tx_put_binary_fragmentT>
 wal_write_projection::xform(const tx_put_fragmentT &f) {
   DTRACE_PROBE(smf, wal_projection_xform);
   static thread_local flatbuffers::FlatBufferBuilder fbb;
-  fbb.ForceDefaults(true);
+  //fbb.ForceDefaults(true);
   fbb.Clear();  // MUST happen first
   static thread_local auto compression =
     codec::make_unique(codec_type::lz4, compression_level::fastest);
@@ -30,7 +30,7 @@ wal_write_projection::xform(const tx_put_fragmentT &f) {
   fbb.Finish(tx_put_fragment::Pack(fbb, &f, nullptr));
 
   // format it as it will appear on disk
-  auto            retval = std::unique_ptr<tx_put_binary_fragmentT>();
+  auto            retval = std::make_unique<tx_put_binary_fragmentT>();
   wal::wal_header hdr;
 
   if (fbb.GetSize() < kMinCompressionSize) {
@@ -42,7 +42,7 @@ wal_write_projection::xform(const tx_put_fragmentT &f) {
       xxhash_64((const char *)fbb.GetBufferPointer(), fbb.GetSize()));
 
     // allocate once!
-    retval->data.reserve(kWalHeaderSize + fbb.GetSize());
+    retval->data.resize(kWalHeaderSize + fbb.GetSize());
     std::memcpy(retval->data.data(), (char *)&hdr, kWalHeaderSize);
     std::memcpy(retval->data.data() + kWalHeaderSize, fbb.GetBufferPointer(),
                 fbb.GetSize());
@@ -61,7 +61,7 @@ wal_write_projection::xform(const tx_put_fragmentT &f) {
   hdr.mutate_checksum(xxhash_64(payload.get(), payload.size()));
 
   // allocate once! - for the second time :(
-  retval->data.reserve(kWalHeaderSize + payload.size());
+  retval->data.resize(kWalHeaderSize + payload.size());
   std::memcpy(retval->data.data(), (char *)&hdr, kWalHeaderSize);
   std::memcpy(retval->data.data() + kWalHeaderSize, payload.get(),
               payload.size());
