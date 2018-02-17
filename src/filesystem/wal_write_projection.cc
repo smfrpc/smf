@@ -20,7 +20,7 @@ std::unique_ptr<tx_put_binary_fragmentT>
 wal_write_projection::xform(const tx_put_fragmentT &f) {
   DTRACE_PROBE(smf, wal_projection_xform);
   static thread_local flatbuffers::FlatBufferBuilder fbb;
-  //fbb.ForceDefaults(true);
+  fbb.ForceDefaults(true);
   fbb.Clear();  // MUST happen first
   static thread_local auto compression =
     codec::make_unique(codec_type::lz4, compression_level::fastest);
