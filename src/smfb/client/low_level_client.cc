@@ -6,7 +6,10 @@
 #include <core/app-template.hh>
 #include <fastrange/fastrange.h>
 
+#include "flatbuffers/wal_generated.h"
+
 #include "chain_replication/chain_replication_service.h"
+#include "filesystem/wal_write_projection.h"
 #include "flatbuffers/chain_replication.smf.fb.h"
 #include "hashing/hashing_utils.h"
 #include "histogram/histogram_seastar_utils.h"
@@ -30,64 +33,102 @@ struct test_put {
 };
 
 struct put_data_generator {
+  static constexpr std::size_t kMaxPartitions = 32;
+  static constexpr uint32_t    kMaxRandBytes =
+    static_cast<uint32_t>(std::numeric_limits<uint8_t>::max());
+
+
   smf::random &
   random() {
     static thread_local smf::random rand;
     return rand;
   }
 
+  std::vector<std::unique_ptr<smf::wal::tx_put_partition_tupleT>> &
+  frags() {
+    static thread_local std::vector<
+      std::unique_ptr<smf::wal::tx_put_partition_tupleT>>
+      lvec(kMaxPartitions);
+    return lvec;
+  }
+
+  const seastar::sstring &
+  key(const boost::program_options::variables_map &cfg) {
+    static thread_local seastar::sstring key = [this, &cfg]() {
+      auto s = cfg["key"].as<seastar::sstring>();
+      if (s == "random") {
+        s = random().next_str(random().next() % kMaxRandBytes);
+      }
+      return s;
+    }();
+
+    return key;
+  }
+  const seastar::sstring &
+  topic(const boost::program_options::variables_map &cfg) {
+    static thread_local seastar::sstring key = [this, &cfg]() {
+      auto s = cfg["topic"].as<seastar::sstring>();
+      if (s == "random") {
+        s = random().next_str(random().next() % kMaxRandBytes);
+      }
+      return s;
+    }();
+
+    return key;
+  }
+  const seastar::sstring &
+  value(const boost::program_options::variables_map &cfg) {
+    static thread_local seastar::sstring key = [this, &cfg]() {
+      auto s = cfg["value"].as<seastar::sstring>();
+      if (s == "random") {
+        s = random().next_str(random().next() % kMaxRandBytes);
+      }
+      return s;
+    }();
+    return key;
+  }
+
+
   smf::rpc_envelope
   operator()(const boost::program_options::variables_map &cfg) {
-    // anti pattern w/ seastar, but boost ... has no conversion to
-    // seastar::sstring
-    std::string topic = cfg["topic"].as<std::string>();
-    std::string key   = cfg["key"].as<std::string>();
-    std::string value = cfg["value"].as<std::string>();
-    uint32_t    max_rand_bytes =
-      static_cast<uint32_t>(std::numeric_limits<uint8_t>::max());
-
-    if (key == "random") {
-      key = random().next_str(random().next() % max_rand_bytes).c_str();
-    }
-    if (value == "random") {
-      value = random().next_str(random().next() % max_rand_bytes).c_str();
-    }
-    if (topic == "random") {
-      topic = random().next_str(random().next() % max_rand_bytes).c_str();
-    }
-
     smf::rpc_typed_envelope<smf::chains::chain_put_request> typed_env;
     auto &p       = *typed_env.data.get();
     p.chain_index = 0;
     p.chain.push_back(uint32_t(2130706433) /*127.0.0.1*/);
     p.put        = std::make_unique<smf::wal::tx_put_requestT>();
-    p.put->topic = topic;
+    p.put->topic = topic(cfg);
 
     const uint32_t batch_size = cfg["batch-size"].as<uint32_t>();
-    const uint64_t fragment_count =
-      std::max(uint64_t(1), random().next() % batch_size);
-    const uint64_t puts_per_partition =
-      std::max(uint64_t(1),
-               static_cast<uint64_t>(std::ceil(batch_size / fragment_count)));
+    auto           partition =
+      fastrange32(static_cast<uint32_t>(random().next()), kMaxPartitions);
 
-    for (auto i = 0u; i < puts_per_partition; ++i) {
+    if (frags()[partition] == nullptr) {
       auto ptr       = std::make_unique<smf::wal::tx_put_partition_tupleT>();
-      ptr->partition = fastrange32(static_cast<uint32_t>(random().next()), 32);
-
-      for (auto j = 0u; j < fragment_count; ++j) {
-        auto f = std::make_unique<smf::wal::tx_put_fragmentT>();
-        // data + commit
-        f->op       = smf::wal::tx_put_operation::tx_put_operation_full;
-        f->epoch_ms = smf::lowres_time_now_millis();
-        f->type     = smf::wal::tx_put_fragment_type::tx_put_fragment_type_kv;
-        f->key.resize(key.size(), 0);
-        f->value.resize(value.size(), 0);
-        std::memcpy(&f->key[0], &key[0], key.size());
-        std::memcpy(&f->value[0], &value[0], value.size());
-        ptr->txs.push_back(std::move(f));
+      ptr->partition = partition;
+      for (auto j = 0u; j < batch_size; ++j) {
+        smf::wal::tx_put_fragmentT frag;
+        frag.op       = smf::wal::tx_put_operation::tx_put_operation_full;
+        frag.epoch_ms = smf::lowres_time_now_millis();
+        frag.type     = smf::wal::tx_put_fragment_type::tx_put_fragment_type_kv;
+        frag.key.resize(key(cfg).size(), 0);
+        frag.value.resize(value(cfg).size(), 0);
+        std::memcpy(&frag.key[0], key(cfg).data(), key(cfg).size());
+        std::memcpy(&frag.value[0], value(cfg).data(), value(cfg).size());
+        ptr->txs.emplace_back(smf::wal_write_projection::xform(frag));
       }
-      p.put->data.push_back(std::move(ptr));
+      frags()[partition] = std::move(ptr);
     }
+    // copy
+    auto ptr       = std::make_unique<smf::wal::tx_put_partition_tupleT>();
+    ptr->partition = partition;
+    for (auto &bf : frags()[partition]->txs) {
+      auto bin = std::make_unique<smf::wal::tx_put_binary_fragmentT>();
+      bin->data.resize(bf->data.size());
+      std::memcpy(bin->data.data(), bf->data.data(), bf->data.size());
+      ptr->txs.push_back(std::move(bin));
+    }
+    // return yet one last copy! yikes
+    p.put->data.push_back(std::move(ptr));
     return typed_env.serialize_data();
   }
 };
@@ -96,7 +137,7 @@ void
 cli_opts(boost::program_options::options_description_easy_init o) {
   namespace po = boost::program_options;
 
-  o("ip", po::value<std::string>()->default_value("127.0.0.1"),
+  o("ip", po::value<seastar::sstring>()->default_value("127.0.0.1"),
     "ip to connect to");
 
   o("port", po::value<uint16_t>()->default_value(11201), "port for service");
@@ -107,13 +148,13 @@ cli_opts(boost::program_options::options_description_easy_init o) {
   o("concurrency", po::value<uint32_t>()->default_value(3),
     "number of green threads per real thread (seastar::futures<>)");
 
-  o("topic", po::value<std::string>()->default_value("dummy_topic"),
+  o("topic", po::value<seastar::sstring>()->default_value("dummy_topic"),
     "client in which to enqueue records, set to `random' to auto gen");
 
-  o("key", po::value<std::string>()->default_value("dummy_key"),
+  o("key", po::value<seastar::sstring>()->default_value("dummy_key"),
     "key to enqueue on broker, set to `random' to auto gen");
 
-  o("value", po::value<std::string>()->default_value("dummy_value"),
+  o("value", po::value<seastar::sstring>()->default_value("dummy_value"),
     "value to enqueue on broker, set to `random' to auto gen");
 
   o("batch-size", po::value<uint32_t>()->default_value(1),
@@ -135,7 +176,7 @@ main(int argc, char **argv, char **env) {
       auto &cfg = app.configuration();
 
       ::smf::load_gen::generator_args largs(
-        cfg["ip"].as<std::string>().c_str(), cfg["port"].as<uint16_t>(),
+        cfg["ip"].as<seastar::sstring>().c_str(), cfg["port"].as<uint16_t>(),
         cfg["req-num"].as<uint32_t>(), cfg["concurrency"].as<uint32_t>(),
         static_cast<uint64_t>(0.9 * seastar::memory::stats().total_memory()),
         smf::rpc::compression_flags::compression_flags_lz4, cfg);

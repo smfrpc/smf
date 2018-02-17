@@ -13,6 +13,7 @@
 
 #include "filesystem/wal_lcore_map.h"
 #include "filesystem/wal_requests.h"
+#include "filesystem/wal_write_projection.h"
 #include "flatbuffers/chain_replication_generated.h"
 #include "flatbuffers/fbs_typed_buf.h"
 #include "flatbuffers/native_type_utils.h"
@@ -51,16 +52,16 @@ class wal_test_put {
     tuple->partition = partition_;
 
     for (auto j = 0u; j < fragment_count; ++j) {
-      auto f = std::make_unique<smf::wal::tx_put_fragmentT>();
+      smf::wal::tx_put_fragmentT f;
       // data + commit
-      f->op       = smf::wal::tx_put_operation::tx_put_operation_full;
-      f->epoch_ms = time_now_millis();
-      f->type     = smf::wal::tx_put_fragment_type::tx_put_fragment_type_kv;
-      f->key.resize(key.size());
-      f->value.resize(value.size());
-      std::memcpy(&f->key[0], &key[0], key.size());
-      std::memcpy(&f->value[0], &value[0], value.size());
-      tuple->txs.push_back(std::move(f));
+      f.op       = smf::wal::tx_put_operation::tx_put_operation_full;
+      f.epoch_ms = time_now_millis();
+      f.type     = smf::wal::tx_put_fragment_type::tx_put_fragment_type_kv;
+      f.key.resize(key.size());
+      f.value.resize(value.size());
+      std::memcpy(&f.key[0], &key[0], key.size());
+      std::memcpy(&f.value[0], &value[0], value.size());
+      tuple->txs.push_back(wal_write_projection::xform(f));
     }
 
     auto body = smf::native_table_as_buffer<smf::wal::tx_put_request>(*ptr);

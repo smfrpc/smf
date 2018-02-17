@@ -12,7 +12,6 @@ add_library (smf_filesystem STATIC
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_segment.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_write_projection.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_partition_manager.cc
-  ${PROJECT_SOURCE_DIR}/src/filesystem/wal_write_behind_cache.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_lcore_map.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_topics_manager.cc
   ${PROJECT_SOURCE_DIR}/src/filesystem/wal_page_cache.cc

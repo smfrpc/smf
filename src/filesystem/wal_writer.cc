@@ -83,9 +83,9 @@ wal_writer::open() {
 }
 
 seastar::future<seastar::lw_shared_ptr<wal_write_reply>>
-wal_writer::append(seastar::lw_shared_ptr<wal_write_projection> req) {
+wal_writer::append(const smf::wal::tx_put_partition_tuple *it) {
   DLOG_THROW_IF(writer_ == nullptr, "cannot write with a null writer");
-  return writer_->append(std::move(req));
+  return writer_->append(it);
 }
 
 

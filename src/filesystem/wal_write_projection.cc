@@ -13,51 +13,60 @@
 
 namespace smf {
 using namespace smf::wal;  // NOLINT
-static const uint64_t kMinCompressionSize = 512;
+static constexpr uint64_t    kMinCompressionSize = 512;
+static constexpr std::size_t kWalHeaderSize      = sizeof(wal::wal_header);
 
-
-static std::unique_ptr<wal_write_projection::item>
-xform(const tx_put_fragment &f) {
+std::unique_ptr<tx_put_binary_fragmentT>
+wal_write_projection::xform(const tx_put_fragmentT &f) {
   DTRACE_PROBE(smf, wal_projection_xform);
   static thread_local flatbuffers::FlatBufferBuilder fbb;
   fbb.ForceDefaults(true);
   fbb.Clear();  // MUST happen first
   static thread_local auto compression =
     codec::make_unique(codec_type::lz4, compression_level::fastest);
-  // unfortunatealy, we need to copy mem, then compress it :( - so 2 memcpy.
-  //
-  std::unique_ptr<tx_put_fragmentT> xx(f.UnPack());
-  fbb.Finish(tx_put_fragment::Pack(fbb, xx.get()));
-  seastar::temporary_buffer<char> payload;
-  wal::wal_header                 hdr;
-  if (fbb.GetSize() > kMinCompressionSize) {
-    DTRACE_PROBE(smf, wal_projection_xform_compression);
-    payload =
-      compression->compress((char *)fbb.GetBufferPointer(), fbb.GetSize());
-    hdr.mutate_compression(
-      wal_entry_compression_type::wal_entry_compression_type_lz4);
-  } else {
-    payload = seastar::temporary_buffer<char>(fbb.GetSize());
-    std::memcpy(payload.get_write(), fbb.GetBufferPointer(), fbb.GetSize());
+
+  // convert fragment as actual flatbuffer
+
+  fbb.Finish(tx_put_fragment::Pack(fbb, &f, nullptr));
+
+  // format it as it will appear on disk
+  auto            retval = std::make_unique<tx_put_binary_fragmentT>();
+  wal::wal_header hdr;
+
+  if (fbb.GetSize() < kMinCompressionSize) {
     hdr.mutate_compression(
       wal_entry_compression_type::wal_entry_compression_type_none);
+
+    hdr.mutate_size(fbb.GetSize());
+    hdr.mutate_checksum(
+      xxhash_64((const char *)fbb.GetBufferPointer(), fbb.GetSize()));
+
+    // allocate once!
+    retval->data.resize(kWalHeaderSize + fbb.GetSize());
+    std::memcpy(retval->data.data(), (char *)&hdr, kWalHeaderSize);
+    std::memcpy(retval->data.data() + kWalHeaderSize, fbb.GetBufferPointer(),
+                fbb.GetSize());
+
+    return std::move(retval);
   }
+
+  // slow compression path
+
+  DTRACE_PROBE(smf, wal_projection_xform_compression);
+  hdr.mutate_compression(
+    wal_entry_compression_type::wal_entry_compression_type_lz4);
+  auto payload =
+    compression->compress((char *)fbb.GetBufferPointer(), fbb.GetSize());
   hdr.mutate_size(payload.size());
-  hdr.mutate_checksum(xxhash_32(payload.get(), payload.size()));
+  hdr.mutate_checksum(xxhash_64(payload.get(), payload.size()));
 
-  return std::make_unique<wal_write_projection::item>(std::move(hdr),
-                                                      std::move(payload));
-}
+  // allocate once! - for the second time :(
+  retval->data.resize(kWalHeaderSize + payload.size());
+  std::memcpy(retval->data.data(), (char *)&hdr, kWalHeaderSize);
+  std::memcpy(retval->data.data() + kWalHeaderSize, payload.get(),
+              payload.size());
 
-seastar::lw_shared_ptr<wal_write_projection>
-wal_write_projection::translate(const seastar::sstring &      topic,
-                                const tx_put_partition_tuple *req) {
-  DTRACE_PROBE(smf, wal_translate);
-  auto ret =
-    seastar::make_lw_shared<wal_write_projection>(topic, req->partition());
-  ret->projection.reserve(req->txs()->size());
-  for (auto i : *req->txs()) { ret->projection.push_back(xform(*i)); }
-  return ret;
+  return std::move(retval);
 }
 
 }  // namespace smf
