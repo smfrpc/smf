@@ -88,31 +88,27 @@ table tx_put_fragment {
 }
 
 table tx_put_partition_tuple {
-  /// hashing_utils::xxhash_32( topic +  tx_put_fragment::data::key )
-  partition:   uint (key); 
-
-  // 
-  /// \brief - this could be optimized further if we make the client send bytes instead.
-  /// currently kafka and other brokers do many re-compression
-  ///   1) form the transport RPC mechanism
-  ///   2) from the disk format and ultimate disk layout
-  /// There is also at least one memcpy of all bytes into the caches:
-  ///   1) To the disk cache - we keep a 1MB write-behind cache if the direct io
-  ///      is catching behind
-  ///   2) To the internal - page cache - since we don't use the operating system
-  ///      which must keep 1MB per open file.
+  partition:   uint (key);
+  /// \brief this is *not* in a format that is friendly
+  /// to flatbuffers for performance reasons.
+  /// It is a format friendly to the disk
   ///
-  /// We have locks, and many other mem copies the java.nio.channels.FileChannel
-  /// uses for example https://goo.gl/hrTnjY
-  /// since we don't then again copy into the page cache.
+  /// [ header ][ payload ]
   ///
-  /// Last, we don't keep any logs. Currently the kafka path is synchronized 3 times.
-  /// 1) To get the leader & append the writes for the log section.
-  /// 1.1) Roll the file - which happens under a relatively big critical region inside Log.scala
-  /// 2) Into the operating system page cache
-  /// 3) Into the java nio channel FileChannel since it 'guarantees' concurrent friendly updates
   ///
-  txs:         [tx_put_fragment];
+  /// [ header ] is 9 bytes
+  /// [ 4byte size of payload, 4byte hash, 1byte compression ]
+  ///
+  ///
+  /// [ payload ] is a byte array representation of a tx_put_fragment
+  ///
+  /// Note: When constructing the payload, make sure you set
+  /// builder.ForceDefaults(true);
+  ///
+  /// on flatbuffers, since the defaults might change over time, breaking
+  /// the reader's expectation
+  ///
+  txs: [[ubyte]];
 }
 
 /// brief - stores `puts` transactionally
