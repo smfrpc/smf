@@ -14,14 +14,10 @@ title: Introducing smf
 | [Documentation](https://senior7515.github.io/smf/)
 
 
-**smf** is a set of libraries and utilities (like boost:: for C++ or guava for java)
-designed to be the building blocks of your next distributed systems.
+## [**smf** RPC]({{site.baseurl}}rpc)
 
 
-## [RPC]({{site.baseurl}}rpc)
-
-
-It is a new RPC system and code generation like gRPC, Cap n Proto,
+**smf** is a new RPC system and code generation like gRPC, Cap n Proto,
 Apache Thrift, etc, but designed for **microsecond tail latency**.
 
 Current benchmarks in microseconds
@@ -45,38 +41,6 @@ Highlights:
 * Arbitrary filter chaining on incoming and outgoing channels (like twitter's Finagle)
 * Small 16byte overhead
 * Binary with pluggable compressors
-
-## [WAL - Write Ahead Log]({{site.baseurl}}write_ahead_log)
-
-It is a write ahead log modeled after an Apache Kafka-like interface or 
-Apache Pulsar. It has topics, partitions, etc. It is designed to have a
-single reader/writer per topic/partition. 
-
-Current benchmarks in milliseconds ==> 41X faster than Apache Kafka
-
-3 Producers latency vs Apache Kafka
-
-| percentile  | Apache Kafka      | smf WAL  | speedup |
-| ----------- | ----------------- | -------- |     --- |
-| p50	     | 878ms		     | 21ms     |     41X |
-| p95	     | 1340ms		    | 36ms     |     37x |
-| p99	     | 1814ms		    | 49ms     |     37x |
-| p999	    | 1896ms		    | 54ms     |     35x |
-| p100	    | 1930ms		    | 54ms     |     35x |
-
-
-Highlights:
----
-
-* Write-Ahead-Log - WAL abstraction w/ O_DIRECT support
-* Write behind writers (configurable)
-* Sharded (ability to run on every core efficiently)
-* Partitioned (like Apache Pulsar or Apache Kafka)
-
-## In the works:
-
-* Chain Replication 
-* Raft Consensus
 
 ## We need your help!
 
@@ -117,56 +81,4 @@ ansible-playbook playbooks/devbox_all.yml
 
 ```
 
-
-# enabling core dumps 
-
-These are the core pattern directives
-
-```
-%c  core file size soft resource limit of crashing process (since Linux 2.6.24)
-%d  dump mode—same as value returned by prctl(2) PR_GET_DUMPABLE (since Linux 3.7)
-%e  executable filename (without path prefix)
-%E  pathname of executable, with slashes ('/') replaced by exclamation marks ('!') (since Linux 3.0).
-%g  (numeric) real GID of dumped process
-%h  hostname (same as nodename returned by uname(2))
-%i  TID of thread that triggered core dump, as seen in the PID namespace in which the thread resides (since Linux 3.18)
-%I  TID of thread that triggered core dump, as seen in the initial PID namespace (since Linux 3.18)
-%p  PID of dumped process, as seen in the PID namespace in which the process resides
-%P  PID of dumped process, as seen in the initial PID namespace (since Linux 3.12)
-%s  number of signal causing dump
-%t  time of dump, expressed as seconds since the Epoch, 1970-01-01 00:00:00 +0000 (UTC)
-%u  (numeric) real UID of dumped process
-
-```
-
-```
- # This is what I set my core dump as. A bit verbose, but easy to read
- root$ echo 'core_dump.file_name(%e).signal(%s).size(%c).process_id(%p).uid(%u).gid(%g).time(%t).initial_pid(%P).thread_id(%I)' > /proc/sys/kernel/core_pattern
-```
-
-## asciinema
-
-[![asciicast](https://asciinema.org/a/1u2j8vg20813jxmgbky7liwxr.png)](https://asciinema.org/a/1u2j8vg20813jxmgbky7liwxr?autoplay=1&loop=1&speed=2)
-
-<a name="References"/>
-# References
-
-* [Persistent memory programming - pmem](http://pmem.io/)
-* [Seastar Project](http://www.seastar-project.org/)
-* [Data plane developtment kit - DPDK](http://dpdk.org/)
-* [RAMCloud](https://ramcloud.atlassian.net/wiki/download/attachments/6848571/RAMCloudPaper.pdf)
-* [Making lockless synchronization fast: performance implications of memory reclamation1](http://doi.ieeecomputersociety.org/10.1109/IPDPS.2006.163)
-* [All files are not created equal: On the complexity of crafting crash-consistent applications](http://research.cs.wisc.edu/wind/Publications/alice-osdi14.pdf)
-* [File consistency - danluu's blog post](http://danluu.com/file-consistency/)
-* [Kafka Exactly Once](https://docs.google.com/document/d/11Jqy_GjUGtdXJK94XGsEIK7CP1SnQGdp2eF0wSw9ra8/edit)
-* [flatbuffers](https://google.github.io/flatbuffers/)
-* [seastar](http://www.seastar-project.org/)
-* [gRPC](http://grpc.io)
-* [Cassandra](https://cassandra.apache.org/)
-* [PostgreSQL](https://www.postgresql.org/)
-* [MySQL](https://www.mysql.com/)
-* [Scylla](http://www.scylladb.com/)
-* [Kudu](https://kudu.apache.org/)
-* [Clock-pro caching algorithm](http://static.usenix.org/event/usenix05/tech/general/full_papers/jiang/jiang_html/html.html)
-* [Cap'n Proto](https://capnproto.org/)
 

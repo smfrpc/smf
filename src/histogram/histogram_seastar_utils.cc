@@ -1,11 +1,14 @@
 // Copyright (c) 2017 Alexander Gallego. All rights reserved.
 //
 #include "histogram/histogram_seastar_utils.h"
+
 #include <utility>
+
+#include <core/reactor.hh>
+#include <core/file.hh>
 // smf
 #include "histogram/histogram.h"
 #include "platform/log.h"
-#include "seastar_io/priority_manager.h"
 
 namespace smf {
 

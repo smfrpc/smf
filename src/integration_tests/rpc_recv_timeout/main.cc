@@ -10,11 +10,11 @@
 #include <net/api.hh>
 // smf
 #include "flatbuffers/rpc_generated.h"
+#include "integration_tests/non_root_port.h"
 #include "platform/log.h"
 #include "rpc/rpc_handle_router.h"
 #include "rpc/rpc_recv_context.h"
 #include "rpc/rpc_server.h"
-#include "test_utils/non_root_port.h"
 #include "utils/random.h"
 // templates
 #include "flatbuffers/demo_service.smf.fb.h"

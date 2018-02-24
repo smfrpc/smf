@@ -13,11 +13,7 @@ set(FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS
 include(${PROJECT_SOURCE_DIR}/CMake/BuildFlatBuffers.cmake)
 set(FLATBUFFERS_FILES
   ${PROJECT_SOURCE_DIR}/src/flatbuffers/rpc.fbs
-  ${PROJECT_SOURCE_DIR}/src/flatbuffers/raft.fbs
-  ${PROJECT_SOURCE_DIR}/src/flatbuffers/chain_replication.fbs
-  ${PROJECT_SOURCE_DIR}/src/flatbuffers/wal.fbs
   ${PROJECT_SOURCE_DIR}/src/flatbuffers/demo_service.fbs
-  ${PROJECT_SOURCE_DIR}/src/flatbuffers/timestamp.fbs
   )
 # build the RPC Types
 build_flatbuffers(

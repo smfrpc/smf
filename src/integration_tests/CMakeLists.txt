@@ -5,7 +5,7 @@ smf_test(
   BINARY_NAME histograms
   SOURCES ${IT_ROOT}/histograms/main.cc
   SOURCE_DIRECTORY ${IT_ROOT}/histograms
-  LIBRARIES smf_filesystem
+  LIBRARIES smf_rpc
   )
 smf_test(
   INTEGRATION_TEST
@@ -34,24 +34,3 @@ if(ENABLE_INTEGRATION_TESTS)
     generated_demo_service
     )
 endif()
-smf_test(
-  INTEGRATION_TEST
-  BINARY_NAME wal
-  SOURCES ${IT_ROOT}/wal/main.cc
-  SOURCE_DIRECTORY ${IT_ROOT}/wal
-  LIBRARIES smf_filesystem smf_rpc smf_cr
-  )
-smf_test(
-  INTEGRATION_TEST
-  BINARY_NAME clock_pro
-  SOURCES ${IT_ROOT}/wal_clock_pro_cache/main.cc
-  SOURCE_DIRECTORY ${IT_ROOT}/wal_clock_pro_cache
-  LIBRARIES smf_filesystem
-  )
-smf_test(
-  INTEGRATION_TEST
-  BINARY_NAME wal_segment
-  SOURCES ${IT_ROOT}/wal_segment/main.cc
-  SOURCE_DIRECTORY ${IT_ROOT}/wal_segment
-  LIBRARIES smf_filesystem flatbuffers
-  )

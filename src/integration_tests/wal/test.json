@@ -1,4 +1,0 @@
-{
-    "args": ["-c 2", "-m 1G", "--write-ahead-log-dir=$execution_directory"],
-    "tmp_home": true
-}

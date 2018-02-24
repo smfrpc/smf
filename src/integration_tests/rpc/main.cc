@@ -9,6 +9,7 @@
 // smf
 #include "histogram/histogram_seastar_utils.h"
 #include "histogram/unique_histogram_adder.h"
+#include "integration_tests/non_root_port.h"
 #include "platform/log.h"
 #include "rpc/filters/zstd_filter.h"
 #include "rpc/load_gen/load_channel.h"
@@ -16,7 +17,6 @@
 #include "rpc/rpc_filter.h"
 #include "rpc/rpc_handle_router.h"
 #include "rpc/rpc_server.h"
-#include "test_utils/non_root_port.h"
 #include "utils/random.h"
 // templates
 #include "flatbuffers/demo_service.smf.fb.h"
