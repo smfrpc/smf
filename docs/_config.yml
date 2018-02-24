@@ -9,7 +9,7 @@ permalink:        pretty
 
 # Setup
 title:            'smf'
-tagline:          'smf - **/smɝf/** - the fastest durable log broker in the West'
+tagline:          'smf - **/smɝf/** - the fastest RPC in the West'
 description:      ''
 url:              'https://senior7515.github.io'
 baseurl:          /smf/

@@ -11,7 +11,7 @@ set(CPACK_PACKAGE_CONTACT "gallego.alexx@gmail.com")
 set(CPACK_PACKAGE_VERSION "${SMF_VERSION}")
 set(CPACK_STRIP_FILES "ON")
 set(CPACK_PACKAGE_NAME "smf")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Fastest durable log broker on the west")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Fastest RPC west")
 
 #deb
 set(CPACK_DEB_COMPONENT_INSTALL TRUE)
