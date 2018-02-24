@@ -59,10 +59,9 @@ BM_fixed_hash(benchmark::State &state) {
   }
 }
 BENCHMARK(BM_fixed_hash)
-->Args({1 << 1, 1 << 1})
-->Args({1 << 4, 1 << 4})
-->Args({1 << 8, 1 << 8})
-->Args({1 << 16, 1 << 16});
+  ->Args({1 << 1, 1 << 1})
+  ->Args({1 << 4, 1 << 4})
+  ->Args({1 << 8, 1 << 8});
 
 
 static void
