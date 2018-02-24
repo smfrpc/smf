@@ -39,3 +39,31 @@ Current benchmarks in microseconds
 
 
 
+# Getting started
+
+
+```bash
+
+# assuming you are in the smf folder
+cd meta/
+
+source source_ansible_bash
+
+ansible-playbook -K playbooks/devbox_all.yml
+
+# wait a while for seastar and boost to compile
+# ... a bit more...
+
+cd .. # back to smf
+
+./debug # for debug builds
+./release # for release builds and packaging .deb & .rpm files
+
+
+```
+
+That's about it! 
+
+
+
+
