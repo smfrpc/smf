@@ -1,10 +1,4 @@
-# [smf - the fastest RPC in the West](http://senior7515.github.io/smf/) 
-
-
-[![Semaphore-ci Build Status](https://semaphoreci.com/api/v1/senior7515/smf/branches/master/badge.svg)](https://semaphoreci.com/senior7515/smf)
-
-
-[![Travis-ci Build Status](https://travis-ci.org/senior7515/smf.svg?branch=master)](https://travis-ci.org/senior7515/smf)
+# [smf - the fastest RPC in the West](http://senior7515.github.io/smf/) [![Travis-ci Build Status](https://travis-ci.org/senior7515/smf.svg?branch=master)](https://travis-ci.org/senior7515/smf)
 
 
 **smf** is pronounced **/smɝf/**
