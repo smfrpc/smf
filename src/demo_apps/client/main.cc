@@ -14,7 +14,7 @@
 #include "rpc/load_gen/load_generator.h"
 
 // templates
-#include "flatbuffers/demo_service.smf.fb.h"
+#include "demo_apps/demo_service.smf.fb.h"
 
 using client_t   = smf_gen::demo::SmfStorageClient;
 using load_gen_t = smf::load_gen::load_generator<client_t>;

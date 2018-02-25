@@ -50,25 +50,11 @@ def generate_options():
     return parser
 
 
-def get_git_root():
-    ret = str(
-        subprocess.check_output("git rev-parse --show-toplevel", shell=True))
-    if ret is None:
-        log.error("Cannot get the git root")
-        sys.exit(1)
-    return "".join(ret.split())
-
-
 def test_environ():
     e = os.environ.copy()
-    git_root = get_git_root()
-    e["GIT_ROOT"] = git_root
     ld_path = ""
     if e.has_key("LD_LIBRARY_PATH"):
         ld_path = e["LD_LIBRARY_PATH"]
-    libs = "{}/src/third_party/lib:{}/src/third_party/lib64:{}".format(
-        git_root, git_root, ld_path)
-    e["LD_LIBRARY_PATH"] = libs
     e["GLOG_logtostderr"] = '1'
     e["GLOG_v"] = '1'
     e["GLOG_vmodule"] = ''
@@ -117,8 +103,7 @@ def set_up_test_environment(cfg):
     if cfg.has_key("tmp_home"):
         dirpath = tempfile.mkdtemp(
             suffix=gen_alphanum(),
-            prefix=KTEST_DIR_PREFIX,
-            dir=cfg["git_root"])
+            prefix=KTEST_DIR_PREFIX)
         logger.debug("Executing test in tmp dir %s" % dirpath)
         os.chdir(dirpath)
         test_env["HOME"] = dirpath
@@ -152,7 +137,6 @@ def load_test_configuration(directory):
         json_data = open(test_cfg).read()
         ret = json.loads(json_data)
         ret["source_directory"] = directory
-        ret["git_root"] = get_git_root()
         return ret
     except Exception as e:
         logger.exception("Could not load test configuration %s" % e)

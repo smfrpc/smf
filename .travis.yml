@@ -1,0 +1,32 @@
+dist: trusty
+sudo: required 
+language: cpp
+
+services:
+  - docker
+
+matrix:
+  include:
+    - os: linux
+      env: IMAGE=fedora:27
+    - os: linux
+      env: IMAGE=fedora:26
+    - os: linux
+      env: IMAGE=debian:sid
+    - os: linux
+      env: IMAGE=debian:buster
+    - os: linux
+      env: IMAGE=ubuntu:artful
+    - os: linux
+      env: IMAGE=fedora:27 USE_NINJA=1
+    - os: linux
+      env: IMAGE=fedora:26 USE_NINJA=1
+    - os: linux
+      env: IMAGE=debian:sid USE_NINJA=1
+    - os: linux
+      env: IMAGE=debian:buster USE_NINJA=1
+    - os: linux
+      env: IMAGE=ubuntu:artful USE_NINJA=1
+
+script:
+  - ci/one.sh

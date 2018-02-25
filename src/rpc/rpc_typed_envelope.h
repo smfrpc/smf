@@ -2,7 +2,7 @@
 //
 #pragma once
 
-#include "flatbuffers/native_type_utils.h"
+#include "rpc/native_type_utils.h"
 #include "platform/macros.h"
 #include "rpc/rpc_envelope.h"
 #include "rpc/rpc_header_utils.h"

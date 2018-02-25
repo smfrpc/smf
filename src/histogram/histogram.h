@@ -7,7 +7,7 @@
 #include <utility>
 
 #include <core/shared_ptr.hh>
-#include <hdr/hdr_histogram.h>
+#include <hdr_histogram.h>
 
 #include "platform/macros.h"
 

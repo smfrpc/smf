@@ -6,7 +6,7 @@
 #include <cstring>
 #include <utility>
 
-#include "flatbuffers/rpc_generated.h"
+#include "rpc/rpc_generated.h"
 
 // smf
 #include "platform/log.h"

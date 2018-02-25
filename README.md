@@ -41,29 +41,24 @@ Current benchmarks in microseconds
 
 # Getting started
 
+Build Seastar
 
 ```bash
+git clone https://github.com/scylladb/seastar.git
+cd seastar
+git submodule update --init --recursive
+./configure --mode=debug
+ninja
+```
 
-# assuming you are in the smf folder
-cd meta/
+Build smf
 
-source source_ansible_bash
-
-ansible-playbook -K playbooks/devbox_all.yml
-
-# wait a while for seastar and boost to compile
-# ... a bit more...
-
-cd .. # back to smf
-
-./debug # for debug builds
-./release # for release builds and packaging .deb & .rpm files
-
-
+```bash
+git clone https://github.com/senior7515/smf
+cd smf
+git submodule update --init --recursive
+SEASTAR_DIR=/path/to/seastar ./debug
+# or: SEASTAR_DIR=/path/to/seastar ./release
 ```
 
 That's about it! 
-
-
-
-

@@ -3,8 +3,8 @@
 #include "histogram/histogram.h"
 
 #include <cstdlib>
-#include <hdr/hdr_histogram.h>
-#include <hdr/hdr_histogram_log.h>
+#include <hdr_histogram.h>
+#include <hdr_histogram_log.h>
 
 #include <iostream>
 

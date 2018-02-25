@@ -7,7 +7,7 @@
 
 #include <benchmark/benchmark.h>
 
-#include <fastrange/fastrange.h>
+#include <fastrange.h>
 #include "hashing/hashing_utils.h"
 
 using namespace smf;  // NOLINT

@@ -5,7 +5,7 @@
 #include <core/sstring.hh>
 #include <core/temporary_buffer.hh>
 
-#include "flatbuffers/rpc_generated.h"
+#include "rpc/rpc_generated.h"
 #include "platform/macros.h"
 
 namespace smf {

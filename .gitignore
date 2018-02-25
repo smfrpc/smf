@@ -34,8 +34,6 @@ bazel-*
 # Vagrant
 .vagrant/
 
-src/third_party/*
-!src/third_party/.gitignore
 .gdb_history
 *.smf.fb.h*
 build_debug/
@@ -45,3 +43,32 @@ build_release/
 
 # clang-tidy
 compile_commands.json
+
+# vim
+.*.swp
+
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+CPackConfig.cmake
+CPackSourceConfig.cmake
+CTestTestfile.cmake
+CMakeDoxyfile.in
+CMakeDoxygenDefaults.cmake
+
+src/utils/zstd_ext-prefix/
+src/rpc/smf_gen/generated_demo_service
+src/rpc/smf_gen/smf_gen
+src/utils/libzstd/
+src/demo_apps/demo_client
+src/demo_apps/demo_server
+src/smfb/smfb
+src/smfb/client/smfb_low_level_client
+
+# tests
+src/integration_tests/*_test
+src/test/*_unit_test
+
+# docs
+Doxyfile
