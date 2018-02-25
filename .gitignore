@@ -36,6 +36,7 @@ bazel-*
 
 .gdb_history
 *.smf.fb.h*
+*_generated.h
 build_debug/
 build_release/
 
@@ -57,14 +58,9 @@ CTestTestfile.cmake
 CMakeDoxyfile.in
 CMakeDoxygenDefaults.cmake
 
-src/utils/zstd_ext-prefix/
-src/rpc/smf_gen/generated_demo_service
 src/rpc/smf_gen/smf_gen
-src/utils/libzstd/
 src/demo_apps/demo_client
 src/demo_apps/demo_server
-src/smfb/smfb
-src/smfb/client/smfb_low_level_client
 
 # tests
 src/integration_tests/*_test
