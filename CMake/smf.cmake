@@ -15,6 +15,8 @@ function(smf_generate_cpp name)
            --gen-mutable --cpp-str-type 'seastar::sstring'
            -o "${CMAKE_CURRENT_BINARY_DIR}/" ${FILE}
       COMMENT "Building C++ header for ${FILE}"
+      DEPENDS flatc
+      DEPENDS ${FILE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
     add_custom_command(OUTPUT ${SMF_GEN_OUTPUT}
@@ -22,6 +24,8 @@ function(smf_generate_cpp name)
       ARGS --logtostderr --filename ${CMAKE_CURRENT_SOURCE_DIR}/${FILE}
            --output_path=${CMAKE_CURRENT_BINARY_DIR}
       COMMENT "Generating smf rpc stubs for ${FILE}"
+      DEPENDS smf_gen
+      DEPENDS ${FILE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endforeach()
   set(${name}_OUTPUTS ${SMF_GEN_OUTPUTS} PARENT_SCOPE)
