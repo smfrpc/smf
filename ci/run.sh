@@ -39,5 +39,5 @@ cmake -G "${CMAKE_GENERATOR}" \
 
 ${MAKE} doc 2> /dev/null
 ${MAKE} ${MAKE_J}
-ctest -V
+ctest -V -N -R "^smf"
 ${MAKE} install
