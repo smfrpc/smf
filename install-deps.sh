@@ -33,7 +33,6 @@ function debs() {
     libxml2-dev \
     libpciaccess-dev \
     libgnutls28-dev \
-    libre2-dev \
     ninja-build \
     doxygen \
     python ${extra}
@@ -82,7 +81,6 @@ function rpms() {
     numactl-devel \
     systemtap-sdt-devel \
     lksctp-tools-devel \
-    re2-devel \
     ninja-build \
     doxygen \
     python ${extra}

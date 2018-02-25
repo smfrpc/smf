@@ -48,6 +48,7 @@ git clone https://github.com/scylladb/seastar.git
 cd seastar
 git submodule update --init --recursive
 ./configure --mode=debug
+ninja
 ```
 
 Build smf
