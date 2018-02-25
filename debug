@@ -24,6 +24,7 @@ fi
 
 ${ninja_cmd}
 ctest --output-on-failure \
-  --force-new-ctest-process \
-  --schedule-random \
-  -j$(nproc) "$@"
+      -N -R "^smf" \
+      --force-new-ctest-process \
+      --schedule-random \
+      -j$(nproc) "$@"

@@ -19,7 +19,7 @@ function (smf_test)
   cmake_parse_arguments(SMF_TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   if(SMF_TEST_INTEGRATION_TEST AND ENABLE_INTEGRATION_TESTS)
-    set(SMF_TEST_BINARY_NAME "${SMF_TEST_BINARY_NAME}_integration_test")
+    set(SMF_TEST_BINARY_NAME "smf_${SMF_TEST_BINARY_NAME}_integration_test")
     set(INTEGRATION_TESTS "${INTEGRATION_TESTS} ${SMF_TEST_BINARY_NAME}")
     add_executable(
       ${SMF_TEST_BINARY_NAME} "${SMF_TEST_SOURCES}")
@@ -37,7 +37,7 @@ function (smf_test)
       )
   endif()
   if(SMF_TEST_UNIT_TEST AND ENABLE_UNIT_TESTS)
-    set(SMF_TEST_BINARY_NAME "${SMF_TEST_BINARY_NAME}_unit_test")
+    set(SMF_TEST_BINARY_NAME "smf_${SMF_TEST_BINARY_NAME}_unit_test")
     set(UNIT_TESTS "${UNIT_TESTS} ${SMF_TEST_BINARY_NAME}")
     add_executable(
       ${SMF_TEST_BINARY_NAME} "${SMF_TEST_SOURCES}")
@@ -54,7 +54,7 @@ function (smf_test)
       )
   endif()
   if(SMF_TEST_BENCHMARK_TEST AND ENABLE_BENCHMARK_TESTS)
-    set(SMF_TEST_BINARY_NAME "${SMF_TEST_BINARY_NAME}_benchmark_test")
+    set(SMF_TEST_BINARY_NAME "smf_${SMF_TEST_BINARY_NAME}_benchmark_test")
     set(BENCHMARK_TESTS "${BENCHMARK_TESTS} ${SMF_TEST_BINARY_NAME}")
     add_executable(
       ${SMF_TEST_BINARY_NAME} "${SMF_TEST_SOURCES}")
@@ -73,5 +73,5 @@ endfunction ()
 
 
 add_custom_target(check
-  COMMAND ctest --output-on-failure
+  COMMAND ctest --output-on-failure -N -R "^smf"
   DEPENDS "${UNIT_TESTS} ${INTEGRATION_TESTS} ${BENCHMARK_TESTS}")

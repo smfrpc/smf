@@ -53,4 +53,4 @@ if [[ $1 != "quick" ]]; then
 fi
 
 ninja
-ctest -V -j$(nproc) --force-new-ctest-process
+ctest -V -j$(nproc) --force-new-ctest-process -N -R "^smf"
