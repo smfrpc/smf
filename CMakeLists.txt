@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.3)
 project(SMF VERSION "0.0.1" LANGUAGES CXX C)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake/")
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake/")
 
 # https://cmake.org/cmake/help/v3.4/policy/CMP0065.html
 cmake_policy(SET CMP0065 OLD)

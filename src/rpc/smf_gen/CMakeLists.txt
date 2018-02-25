@@ -16,5 +16,5 @@ set(SMF_GEN_LIBS
 add_executable (smf_gen ${SMF_GEN_SOURCES})
 target_link_libraries (smf_gen ${SMF_GEN_LIBS})
 target_include_directories(smf_gen
-  PUBLIC SYSTEM ${SEASTAR_INCLUDE_DIRS})
+  PUBLIC ${SEASTAR_INCLUDE_DIRS})
 install(TARGETS smf_gen RUNTIME DESTINATION bin)
