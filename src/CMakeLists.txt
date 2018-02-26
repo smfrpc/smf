@@ -51,7 +51,7 @@ endif()
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -ggdb")
 
-include(${CMAKE_SOURCE_DIR}/CMake/smf.cmake)
+include(${PROJECT_SOURCE_DIR}/CMake/smf.cmake)
 
 add_subdirectory(platform)
 add_subdirectory(utils)
