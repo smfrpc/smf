@@ -14,10 +14,6 @@
 [submodule "src/third_party/fastrange"]
 	path = src/third_party/fastrange
 	url = https://github.com/lemire/fastrange.git
-[submodule "src/googletest"]
-	path = src/googletest
-	url = https://github.com/google/googletest
-	ignore = dirty
 [submodule "src/third_party/google-styleguide"]
 	path = src/third_party/google-styleguide
 	url = https://github.com/google/styleguide
@@ -27,3 +23,7 @@
 [submodule "src/third_party/google_benchmark"]
 	path = src/third_party/google_benchmark
 	url = https://github.com/google/benchmark.git
+[submodule "src/third_party/googletest"]
+	path = src/third_party/googletest
+	url = https://github.com/google/googletest
+	ignore = dirty

@@ -61,7 +61,7 @@ add_subdirectory(rpc)
 add_subdirectory(demo_apps)
 
 if(ENABLE_UNIT_TESTS)
-  add_subdirectory(googletest/googlemock)
+  add_subdirectory(third_party/googletest/googlemock)
 endif()
 
 if(ENABLE_BENCHMARK_TESTS)
