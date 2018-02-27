@@ -1,16 +1,14 @@
 add_subdirectory(third_party/HdrHistogram_c)
 add_subdirectory(third_party/fmt)
-
+include_directories(SYSTEM third_party/flat_hash_map)
 add_subdirectory(third_party/flatbuffers)
 include_directories(third_party/flatbuffers/include)
-
-set(ZSTD_BUILD_SHARED ON CACHE BOOL
+set(ZSTD_BUILD_STATIC ON CACHE BOOL
   "Enable building zstd static library")
 set(ZSTD_BUILD_SHARED OFF CACHE BOOL
   "Disable building zstd shared library")
 add_subdirectory(third_party/zstd/build/cmake)
 include_directories(third_party/zstd/lib)
-
 include_directories(third_party/fastrange)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -65,7 +63,11 @@ if(ENABLE_UNIT_TESTS)
 endif()
 
 if(ENABLE_BENCHMARK_TESTS)
+  set(BENCHMARK_ENABLE_GTEST_TESTS OFF)
   set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable Google benchmark testing")
+  set(
+    CMAKE_BUILD_TYPE Release
+    PATH third_party/google_benchmark)
   add_subdirectory(third_party/google_benchmark)
   add_subdirectory(benchmarks)
 endif(ENABLE_BENCHMARK_TESTS)

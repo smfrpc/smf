@@ -47,12 +47,6 @@ def get_git_root():
     return "".join(ret.split())
 
 
-def get_git_user():
-    ret = str(subprocess.check_output("git config user.name", shell=True))
-    assert ret is not None, "Failed getting git user"
-    return "".join(ret.split("\n"))
-
-
 def get_build_dir_type(d):
     build_dir = "%s/build_%s" % (get_git_root(), d)
     if not os.path.isdir(build_dir): return None
@@ -160,7 +154,7 @@ def get_legal_header(filename):
         if is_double_slash(filename): return "//"
         return "#"
 
-    return hdr % (comment_char(), datetime.date.today().year, get_git_user(),
+    return hdr % (comment_char(), datetime.date.today().year, "SMF Authors",
                   comment_char())
 
 

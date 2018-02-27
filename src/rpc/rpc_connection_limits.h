@@ -30,6 +30,7 @@ struct rpc_connection_limits {
     double           bloat_mult            = 1.57,  // same as folly::vector
     uint64_t         max_mem               = uint64_t(1) << 31,  // 2GB per core
     timer_duration_t body_timeout_duration = std::chrono::minutes(1));
+  ~rpc_connection_limits() = default;
 
   /// Minimum request footprint in memory
   const uint64_t basic_request_size;
@@ -42,24 +43,11 @@ struct rpc_connection_limits {
   seastar::semaphore resources_available;
   seastar::gate      reply_gate;
 
-  /// \brief blocks until we have enough memory to allocate payload_size
-  ///
-  seastar::future<> wait_for_payload_resources(uint64_t payload_size);
-
   /// \brief releases the resources allocated by `wait_for_payload_resources`
-  ///
   void release_payload_resources(uint64_t payload_size);
-
-  ~rpc_connection_limits();
-
-  /// \brief - estimates payload + bloat factor
-  /// WARNING:
-  /// If you use manually, be careful not to leak resources
-  /// Please try to use wait_for_payload_resources()
-  /// and release_payload_resources()
+  /// \brief uses a simple formula of (base + serialized_size)
   uint64_t          estimate_request_size(uint64_t serialized_size);
-  seastar::future<> wait_for_resources(uint64_t memory_consumed);
-  void              release_resources(uint64_t memory_consumed);
+
 };
 std::ostream &operator<<(std::ostream &o, const rpc_connection_limits &l);
 

@@ -16,9 +16,9 @@
 #include "rpc/rpc_envelope.h"
 #include "rpc/rpc_filter.h"
 #include "rpc/rpc_recv_typed_context.h"
+#include "utils/stdx.h"
 
 namespace smf {
-namespace stdx = std::experimental;
 
 struct rpc_client_opts {
   seastar::ipv4_addr server_addr;
@@ -32,7 +32,7 @@ struct rpc_client_opts {
   /// some
   /// bytes or expire the connection. Effectively infinite
   ///
-  typename seastar::timer<>::duration recv_timeout = std::chrono::hours(36);
+  typename seastar::timer<>::duration recv_timeout = std::chrono::minutes(1);
   /// \brief 2GB usually. After this limit, each connection to this
   /// server-core
   /// will block until there are enough bytes free in memory to continue
