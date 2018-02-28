@@ -38,6 +38,7 @@ if(DOXYGEN_FOUND)
     COMMENT "Generating API documentation with Doxygen" VERBATIM)
 endif(DOXYGEN_FOUND)
 
+option(SMF_BUILD_PROGRAMS "Build smf programs and demos" ON)
 option(SMF_ENABLE_INTEGRATION_TESTS "control if integrations are bulit and ran" ON)
 option(SMF_ENABLE_UNIT_TESTS "control if unit tests are bulit and ran" ON)
 option(SMF_ENABLE_BENCHMARK_TESTS "control if benchmarks are bulit and ran" OFF)
