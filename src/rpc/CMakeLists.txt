@@ -1,21 +1,4 @@
-smf_generate_cpp(rpc_fbs rpc.fbs)
-
-set(RPC_LIB_SOURCES
-  rpc_handle_router.cc
-  rpc_envelope.cc
-  rpc_server.cc
-  rpc_recv_context.cc
-  rpc_client.cc
-  rpc_client_stats.cc
-  rpc_recv_context.cc
-  rpc_connection_limits.cc
-  rpc_letter.cc
-  filters/zstd_filter.cc
-  filters/lz4_filter.cc
-  ${rpc_fbs_OUTPUTS})
-add_library(smf_rpc STATIC ${RPC_LIB_SOURCES})
-target_link_libraries(smf_rpc smf_utils smf_hashing smf_tracing)
-install(TARGETS smf_rpc DESTINATION lib)
+add_subdirectory(smf_gen)
 
 install(FILES
   load_gen/generator_args.h
@@ -50,5 +33,3 @@ install(FILES
   filters/zstd_filter.h
   DESTINATION include/smf/rpc/filters
   )
-
-add_subdirectory(smf_gen)

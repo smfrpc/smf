@@ -20,7 +20,7 @@ if [[ $1 != "quick" ]]; then
     cmake --graphviz=${build_dir}/dependencies.dot \
       -Wno-dev \
       -DSEASTAR_DIR=${SEASTAR_DIR} \
-      -DENABLE_BENCHMARK_TESTS=ON \
+      -DSMF_ENABLE_BENCHMARK_TESTS=ON \
       -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
       -DCMAKE_BUILD_TYPE=Release ${ROOT_DIR}
 else
@@ -37,8 +37,8 @@ else
     cmake --graphviz=${build_dir}/dependencies.dot \
       -Wno-dev \
       -DSEASTAR_DIR=${SEASTAR_DIR} \
-      -DENABLE_INTEGRATION_TESTS=OFF \
-      -DENABLE_BENCHMARK_TESTS=OFF \
+      -DSMF_ENABLE_INTEGRATION_TESTS=OFF \
+      -DSMF_ENABLE_BENCHMARK_TESTS=OFF \
       -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
       -DCMAKE_BUILD_TYPE=Release ${ROOT_DIR}
 fi
