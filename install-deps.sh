@@ -92,7 +92,7 @@ function rpms() {
 
 source /etc/os-release
 case $ID in
-  debian|ubuntu)
+  debian|ubuntu|linuxmint)
     debs
     ;;
 
