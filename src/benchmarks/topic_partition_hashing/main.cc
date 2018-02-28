@@ -53,7 +53,7 @@ BM_fixed_hash(benchmark::State &state) {
     state.PauseTiming();
     std::string x;
     x.reserve(state.range(0));
-    for (auto i = 0u; i < state.range(0); ++i) { x.push_back('x'); }
+    for (auto i = 0; i < state.range(0); ++i) { x.push_back('x'); }
     state.ResumeTiming();
     benchmark::DoNotOptimize(fixed_hash(x, state.range(0)));
   }
@@ -70,7 +70,7 @@ BM_stackhash(benchmark::State &state) {
     state.PauseTiming();
     std::string x;
     x.reserve(state.range(0));
-    for (auto i = 0u; i < state.range(0); ++i) { x.push_back('x'); }
+    for (auto i = 0; i < state.range(0); ++i) { x.push_back('x'); }
     state.ResumeTiming();
     benchmark::DoNotOptimize(stack_hash(x, state.range(0)));
   }
@@ -87,7 +87,7 @@ BM_dynamichash(benchmark::State &state) {
     state.PauseTiming();
     std::string x;
     x.reserve(state.range(0));
-    for (auto i = 0u; i < state.range(0); ++i) { x.push_back('x'); }
+    for (auto i = 0; i < state.range(0); ++i) { x.push_back('x'); }
     state.ResumeTiming();
     benchmark::DoNotOptimize(dynamic_hash(x, state.range(0)));
   }
@@ -105,7 +105,7 @@ BM_incremental_hash(benchmark::State &state) {
     state.PauseTiming();
     std::string x;
     x.reserve(state.range(0));
-    for (auto i = 0u; i < state.range(0); ++i) { x.push_back('x'); }
+    for (auto i = 0; i < state.range(0); ++i) { x.push_back('x'); }
     state.ResumeTiming();
     benchmark::DoNotOptimize(incremental_hash(x, state.range(0)));
   }

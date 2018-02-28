@@ -9,6 +9,7 @@
 #include <net/api.hh>
 // smf
 #include "platform/log.h"
+#include "rpc/rpc_recv_context.h"
 
 namespace smf {
 rpc_client::rpc_client(seastar::ipv4_addr addr) : server_addr(addr) {
@@ -43,6 +44,7 @@ rpc_client::stop() {
     // proper way of closing connection that is safe
     // of concurrency bugs
     conn->socket.shutdown_input();
+    DLOG_INFO("Limits: {}", *conn->limits);
   }
   return seastar::make_ready_future<>();
 }
@@ -120,18 +122,17 @@ rpc_client::dispatch_write(rpc_envelope e) {
   // must protect the conn->ostream
   return seastar::with_semaphore(
     serialize_writes_, 1,
-    [ ee = std::move(e), self = parent_shared_from_this(), this ]() mutable {
+    [ ee = std::move(e), self = parent_shared_from_this() ]() mutable {
       auto payload_size = ee.size();
-      return self->conn->limits->wait_for_payload_resources(payload_size)
-        .then([ self, e = std::move(ee) ]() mutable {
+      return seastar::with_semaphore(
+        self->conn->limits->resources_available,
+        self->conn->limits->estimate_request_size(payload_size),
+        [ self, e = std::move(ee) ]() mutable {
           return smf::rpc_envelope::send(&self->conn->ostream, std::move(e))
             .handle_exception([self](auto _) {
               LOG_ERROR("Error sending data: {}", _);
               self->is_error_state = true;
             });
-        })
-        .finally([this, self, payload_size] {
-          self->conn->limits->release_payload_resources(payload_size);
         });
     });
 }
@@ -141,23 +142,35 @@ rpc_client::do_reads() {
   return seastar::do_until(
            [c = conn] { return !c->is_valid(); },
            [self = parent_shared_from_this()]() mutable {
-             return smf::rpc_recv_context::parse(self->conn.get())
-               .then([self](exp::optional<rpc_recv_context> &&opt) mutable {
-                 if (self->read_counter > 0) {
-                   if (opt) {
-                     --self->read_counter;
-                     auto &&v    = std::move(opt.value());
-                     auto   sess = v.session();
-                     auto   slot = self->rpc_slots[sess];
-                     self->rpc_slots.erase(sess);
-                     DLOG_THROW_IF(slot->session != v.session(),
-                                   "Invalid client sessions");
-                     using typed_ret = decltype(opt);
-                     slot->pr.set_value(typed_ret(std::move(v)));
-                   } else {
-                     LOG_ERROR("Could not parse response from server");
-                   }
+             return smf::rpc_recv_context::parse_header(self->conn.get())
+               .then([self](auto hdr) {
+                 if (!hdr) {
+                   LOG_ERROR(
+                     "Could not parse response from server. Bad Header");
+                   self->conn->set_error("Could not parse header from server");
+                   return seastar::make_ready_future<>();
                  }
+                 return ::smf::rpc_recv_context::parse_payload(
+                          self->conn.get(), std::move(hdr.value()))
+                   .then([self](stdx::optional<rpc_recv_context> opt) mutable {
+                     if (!opt) {
+                       LOG_ERROR(
+                         "Could not parse response from server. Bad payload");
+                       self->conn->set_error("Invalid payload");
+                     } else if (self->read_counter > 0 && opt) {
+                       --self->read_counter;
+                       auto &&v    = std::move(opt.value());
+                       auto   sess = v.session();
+                       auto   slot = self->rpc_slots[sess];
+                       self->rpc_slots.erase(sess);
+                       DLOG_THROW_IF(slot->session != v.session(),
+                                     "Invalid client sessions");
+                       using typed_ret = decltype(opt);
+                       slot->pr.set_value(typed_ret(std::move(v)));
+                     }
+
+                     return seastar::make_ready_future<>();
+                   });
                });
            })
     .finally([self = parent_shared_from_this()]{})

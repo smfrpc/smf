@@ -137,52 +137,34 @@ rpc_server::handle_client_connection(
   return seastar::do_until(
     [conn] { return !conn->is_valid(); },
     [this, conn]() mutable {
-      return rpc_recv_context::parse(conn.get()).then([
-        this, conn, h = hist_
-      ](stdx::optional<rpc_recv_context> recv_ctx) mutable {
-        if (!recv_ctx) {
-          conn->set_error("Could not parse the request");
-          return seastar::make_ready_future<>();
-        }
-        auto metric = h->auto_measure();
-        /*return*/ stage_apply_incoming_filters(std::move(recv_ctx.value()))
-          .then([ this, conn,
-                  metric = std::move(metric) ](rpc_recv_context ctx) mutable {
-            auto payload_size = ctx.payload.size();
-            return this->dispatch_rpc(conn, std::move(ctx)).finally([
-              this, conn, metric = std::move(metric), payload_size
-            ] {
-              conn->limits->release_payload_resources(payload_size);
-              return conn->ostream.flush().finally([this, conn] {
-                if (conn->has_error()) {
-                  LOG_ERROR("There was an error with the connection: {}",
-                            conn->get_error());
-                  conn->stats->bad_requests++;
-                  conn->stats->active_connections--;
-                  LOG_INFO("Closing connection for client: {}",
-                           conn->remote_address);
-                  if (open_connections_.find(conn->id) !=
-                      open_connections_.end()) {
-                    open_connections_.erase(conn->id);
+      return rpc_recv_context::parse_header(conn.get())
+        .then([this, conn](auto hdr) {
+          if (!hdr) {
+            conn->set_error("Error parsing connection header");
+            return seastar::make_ready_future<>();
+          }
+          auto h            = std::move(hdr.value());
+          auto payload_size = h.size();
+          return seastar::with_semaphore(
+            conn->limits->resources_available, payload_size,
+            [ this, h = std::move(h), conn ] {
+              return rpc_recv_context::parse_payload(conn.get(), std::move(h))
+                .then([conn, this](auto maybe_payload) {
+                  if (!maybe_payload) {
+                    conn->set_error("Could not parse payload");
+                    return seastar::make_ready_future<>();
                   }
-                  return conn->ostream.close();
-                } else {
-                  conn->stats->completed_requests++;
+                  //
+                  // Launch the actual processing on a background future
+                  //
+                  dispatch_rpc(conn, std::move(maybe_payload.value()))
+                    .finally([m = hist_->auto_measure()]{});
+
+                  // dummy return
                   return seastar::make_ready_future<>();
-                }
-              });
-            });  // end finally()
-          })     //  parse_rpc_recv_context.then()
-          .handle_exception([this, conn](auto eptr) {
-            LOG_ERROR("Caught exception dispatching rpc: {}", eptr);
-            conn->set_error("Exception parsing request ");
-            if (open_connections_.find(conn->id) != open_connections_.end()) {
-              open_connections_.erase(conn->id);
-            }
-            return conn->ostream.close().then_wrapped([](auto _) {});
-          });
-        return seastar::make_ready_future<>();
-      });
+                });
+            });
+        });
     });
 }
 
@@ -210,25 +192,47 @@ rpc_server::dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
   return seastar::with_gate(
            conn->limits->reply_gate,
            [ this, ctx = std::move(ctx), conn, method_dispatch ]() mutable {
-             return method_dispatch->apply(std::move(ctx))
-               .then([this](rpc_envelope e) {
-                 return stage_apply_outgoing_filters(std::move(e));
-               })
-               .then([this, conn](rpc_envelope e) {
-                 conn->stats->out_bytes += e.letter.size();
-                 return conn->serialize_writes.wait(1)
-                   .then([ conn, ee = std::move(e) ]() mutable {
-                     return smf::rpc_envelope::send(&conn->ostream,
-                                                    std::move(ee));
-
+             stage_apply_incoming_filters(std::move(ctx))
+               .then([this, conn, method_dispatch](auto f_ctx) {
+                 return method_dispatch->apply(std::move(f_ctx))
+                   .then([this](rpc_envelope e) {
+                     return stage_apply_outgoing_filters(std::move(e));
                    })
-                   .finally([conn] { conn->serialize_writes.signal(1); });
+                   .then([this, conn](rpc_envelope e) {
+                     conn->stats->out_bytes += e.letter.size();
+                     return seastar::with_semaphore(
+                       conn->serialize_writes, 1,
+                       [ conn, ee = std::move(e) ]() mutable {
+                         return smf::rpc_envelope::send(&conn->ostream,
+                                                        std::move(ee));
+
+                       });
+                   });
+
                });
            })
+    .then([this, conn] {
+      return conn->ostream.flush().finally([this, conn] {
+        if (conn->has_error()) {
+          LOG_ERROR("There was an error with the connection: {}",
+                    conn->get_error());
+          conn->stats->bad_requests++;
+          conn->stats->active_connections--;
+          LOG_INFO("Closing connection for client: {}", conn->remote_address);
+          auto it = open_connections_.find(conn->id);
+          if (it != open_connections_.end()) { open_connections_.erase(it); }
+          return conn->ostream.close();
+        } else {
+          conn->stats->completed_requests++;
+          return seastar::make_ready_future<>();
+        }
+      });
+
+    })
     .handle_exception([this, conn](auto ptr) {
       LOG_INFO("Cannot dispatch rpc. Server is shutting down...");
       conn->disable();
-      return seastar::make_ready_future<>();
+      return conn->ostream.close().then_wrapped([](auto _) {});
     });
 }
 static thread_local auto incoming_stage = seastar::make_execution_stage(

@@ -6,16 +6,16 @@
 // seastar
 #include <core/iostream.hh>
 // smf
-#include "rpc/fbs_typed_buf.h"
-#include "rpc/rpc_generated.h"
 #include "hashing/hashing_utils.h"
 #include "platform/log.h"
 #include "platform/macros.h"
+#include "rpc/fbs_typed_buf.h"
 #include "rpc/rpc_connection.h"
 #include "rpc/rpc_connection_limits.h"
+#include "rpc/rpc_generated.h"
+#include "utils/stdx.h"
 
 namespace smf {
-namespace exp = std::experimental;
 struct rpc_recv_context {
   /// \brief determines if we've correctly parsed the request
   /// \return  optional fully parsed request, iff the request is supported
@@ -25,8 +25,10 @@ struct rpc_recv_context {
   /// size of the header, so we parse sizeof(Header). We with this information
   /// we parse the body of the request
   ///
-  static seastar::future<exp::optional<rpc_recv_context>> parse(
+  static seastar::future<stdx::optional<rpc::header>> parse_header(
     rpc_connection *conn);
+  static seastar::future<stdx::optional<rpc_recv_context>> parse_payload(
+    rpc_connection *conn, rpc::header hdr);
 
   rpc_recv_context(rpc::header hdr, seastar::temporary_buffer<char> body);
   rpc_recv_context(rpc_recv_context &&o) noexcept;

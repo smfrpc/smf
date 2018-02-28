@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# Copyright 2018 SMF Authors
+#
+
 set -e
 
 function debs() {

@@ -19,7 +19,6 @@ seastar::future<>
 rpc_envelope::send(seastar::output_stream<char> *out, rpc_envelope e) {
   seastar::temporary_buffer<char> header_buf(kHeaderSize);
   DLOG_THROW_IF(e.letter.header.size() == 0, "Invalid header size");
-  DLOG_THROW_IF(e.letter.header.session() == 0, "Invalid session");
   DLOG_ERROR_IF(e.letter.body.size() == 0, "Invalid payload. 0-size");
   // use 0 copy iface in seastar
   // prepare the header locally

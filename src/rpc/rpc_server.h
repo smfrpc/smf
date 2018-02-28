@@ -1,15 +1,16 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #pragma once
-// std
+
 #include <algorithm>
 #include <type_traits>
-// seastar
+
 #include <core/distributed.hh>
 #include <core/metrics_registration.hh>
 #include <core/timer.hh>
+#include <flat_hash_map.hpp>
 #include <http/httpd.hh>
-// smf
+
 #include "histogram/histogram.h"
 #include "platform/macros.h"
 #include "rpc/filters/zstd_filter.h"
@@ -97,6 +98,7 @@ class rpc_server {
  private:
   seastar::future<> handle_client_connection(
     seastar::lw_shared_ptr<rpc_server_connection> conn);
+
   seastar::future<> dispatch_rpc(
     seastar::lw_shared_ptr<rpc_server_connection> conn, rpc_recv_context &&ctx);
 
@@ -131,7 +133,7 @@ class rpc_server {
 
   // this is needed for shutdown procedures
   uint64_t connection_idx_{0};
-  std::unordered_map<uint64_t, seastar::lw_shared_ptr<rpc_server_connection>>
+  ska::flat_hash_map<uint64_t, seastar::lw_shared_ptr<rpc_server_connection>>
     open_connections_;
 
  private:

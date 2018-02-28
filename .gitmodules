@@ -27,3 +27,6 @@
 	path = src/third_party/googletest
 	url = https://github.com/google/googletest
 	ignore = dirty
+[submodule "src/third_party/flat_hash_map"]
+	path = src/third_party/flat_hash_map
+	url = https://github.com/skarupke/flat_hash_map.git
