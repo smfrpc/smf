@@ -1,12 +1,20 @@
 add_subdirectory(third_party/HdrHistogram_c)
 add_subdirectory(third_party/fmt)
 include_directories(SYSTEM third_party/flat_hash_map)
+set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL
+  "Disable building flatbuffers tests")
+set(FLATBUFFERS_INSTALL OFF CACHE BOOL
+  "Disable installing flatbuffers")
+set(FLATBUFFERS_BUILD_FLATHASH OFF CACHE BOOL
+  "Disable building flathash")
 add_subdirectory(third_party/flatbuffers)
 include_directories(third_party/flatbuffers/include)
 set(ZSTD_BUILD_STATIC ON CACHE BOOL
   "Enable building zstd static library")
 set(ZSTD_BUILD_SHARED OFF CACHE BOOL
   "Disable building zstd shared library")
+set(ZSTD_BUILD_PROGRAMS OFF CACHE BOOL
+  "Disable building zstd programs")
 add_subdirectory(third_party/zstd/build/cmake)
 include_directories(third_party/zstd/lib)
 include_directories(third_party/fastrange)
