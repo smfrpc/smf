@@ -27,9 +27,9 @@ std::ostream &
 operator<<(std::ostream &o, const rpc_connection_limits &l) {
   o << "rpc_connection_limits{'basic_req_size':"
     << human_bytes(l.basic_request_size)
-    << ",'bloat_factor': " << human_bytes(l.bloat_factor)
-    << ",'max_mem':" << human_bytes(l.max_memory)
-    << ",'res_avail':" << human_bytes(l.resources_available.current()) << "( "
+    << ", 'bloat_factor': " << l.bloat_factor
+    << ", 'max_mem':" << human_bytes(l.max_memory)
+    << ", 'res_avail':" << human_bytes(l.resources_available.current()) << "( "
     << l.resources_available.current() << " )}";
   return o;
 }
