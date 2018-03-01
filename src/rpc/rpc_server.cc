@@ -192,7 +192,7 @@ rpc_server::dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
   return seastar::with_gate(
            conn->limits->reply_gate,
            [ this, ctx = std::move(ctx), conn, method_dispatch ]() mutable {
-             stage_apply_incoming_filters(std::move(ctx))
+             return stage_apply_incoming_filters(std::move(ctx))
                .then([this, conn, method_dispatch](auto f_ctx) {
                  return method_dispatch->apply(std::move(f_ctx))
                    .then([this](rpc_envelope e) {
