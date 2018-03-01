@@ -232,7 +232,7 @@ rpc_server::dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
     .handle_exception([this, conn](auto ptr) {
       LOG_INFO("Cannot dispatch rpc. Server is shutting down...");
       conn->disable();
-      return conn->ostream.close().then_wrapped([](auto _) {});
+      return conn->ostream.close();
     });
 }
 static thread_local auto incoming_stage = seastar::make_execution_stage(
