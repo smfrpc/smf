@@ -4,8 +4,8 @@
 #include <core/app-template.hh>
 #include <core/distributed.hh>
 // smf
-#include "histogram/histogram_seastar_utils.h"
-#include "platform/log.h"
+#include "smf/histogram_seastar_utils.h"
+#include "smf/log.h"
 
 int
 main(int args, char **argv, char **env) {

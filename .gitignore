@@ -58,7 +58,6 @@ CTestTestfile.cmake
 CMakeDoxyfile.in
 CMakeDoxygenDefaults.cmake
 
-src/rpc/smf_gen/smf_gen
 src/demo_apps/demo_client
 src/demo_apps/demo_server
 

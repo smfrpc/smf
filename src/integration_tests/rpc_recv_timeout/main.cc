@@ -9,13 +9,13 @@
 #include <core/sleep.hh>
 #include <net/api.hh>
 // smf
-#include "rpc/rpc_generated.h"
 #include "integration_tests/non_root_port.h"
-#include "platform/log.h"
-#include "rpc/rpc_handle_router.h"
-#include "rpc/rpc_recv_context.h"
-#include "rpc/rpc_server.h"
-#include "utils/random.h"
+#include "smf/log.h"
+#include "smf/random.h"
+#include "smf/rpc_generated.h"
+#include "smf/rpc_handle_router.h"
+#include "smf/rpc_recv_context.h"
+#include "smf/rpc_server.h"
 // templates
 #include "integration_tests/demo_service.smf.fb.h"
 
