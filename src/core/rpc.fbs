@@ -11,9 +11,7 @@ namespace smf.rpc;
 enum compression_flags:byte {
   none,
   disabled,
-  /// brief uses zstandard 1.0
   zstd,
-  /// lz4 is pending 
   lz4
 }
 enum header_bit_flags:byte (bit_flags) {
@@ -38,7 +36,7 @@ struct header {
   session:        ushort;
   /// size of the next payload
   size:           uint;
-  /// currently we use xxhash32
+  /// currently we use (xxhash64 & UINT32_MAX)
   checksum:       uint;
   /// \brief used for sending and receiving, read carefully.
   ///
@@ -76,3 +74,9 @@ table payload_headers {
   checksum: uint = 0;
   compression: compression_flags = none;
 }
+
+/// \brief, useful when the type is empty
+/// i.e.: void foo();
+/// rpc my_rpc { null_type MutateOnlyOnServerMethod(int); }
+///
+table null_type {}
