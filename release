@@ -16,6 +16,7 @@ if [[ $1 != "quick" ]]; then
     cmake --graphviz=${build_dir}/dependencies.dot \
       -Wno-dev \
       -DSEASTAR_DIR=${SEASTAR_DIR} \
+      -DCMAKE_INSTALL_PREFIX=${build_dir} \
       -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
       -DSMF_ENABLE_BENCHMARK_TESTS=ON \
       -DCMAKE_BUILD_TYPE=Release ${ROOT_DIR}
@@ -33,6 +34,7 @@ else
     cmake --graphviz=${build_dir}/dependencies.dot \
       -Wno-dev \
       -DSEASTAR_DIR=${SEASTAR_DIR} \
+      -DCMAKE_INSTALL_PREFIX=${build_dir} \
       -DSMF_ENABLE_TESTS=OFF \
       -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
       -DCMAKE_BUILD_TYPE=Release ${ROOT_DIR}
@@ -49,3 +51,4 @@ fi
 
 ninja
 ctest -V -j$(nproc) --force-new-ctest-process -N -R "^smf"
+ninja install
