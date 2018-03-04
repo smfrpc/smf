@@ -7,19 +7,18 @@
 #include <core/app-template.hh>
 #include <core/distributed.hh>
 // smf
-#include "histogram/histogram_seastar_utils.h"
-#include "histogram/unique_histogram_adder.h"
-#include "integration_tests/non_root_port.h"
-#include "platform/log.h"
-#include "rpc/filters/zstd_filter.h"
-#include "rpc/load_gen/load_channel.h"
-#include "rpc/load_gen/load_generator.h"
-#include "rpc/rpc_filter.h"
-#include "rpc/rpc_handle_router.h"
-#include "rpc/rpc_server.h"
-#include "utils/random.h"
-// templates
 #include "integration_tests/demo_service.smf.fb.h"
+#include "integration_tests/non_root_port.h"
+#include "smf/histogram_seastar_utils.h"
+#include "smf/load_channel.h"
+#include "smf/load_generator.h"
+#include "smf/log.h"
+#include "smf/random.h"
+#include "smf/rpc_filter.h"
+#include "smf/rpc_handle_router.h"
+#include "smf/rpc_server.h"
+#include "smf/unique_histogram_adder.h"
+#include "smf/zstd_filter.h"
 
 
 static const char *kPoem = "How do I love thee? Let me count the ways."
@@ -52,7 +51,7 @@ static const char *kPoem = "How do I love thee? Let me count the ways."
                            "I shall but love thee better after death.";
 
 using client_t   = smf_gen::demo::SmfStorageClient;
-using load_gen_t = smf::load_gen::load_generator<client_t>;
+using load_gen_t = smf::load_generator<client_t>;
 
 struct method_callback {
   seastar::future<>
@@ -155,7 +154,7 @@ main(int args, char **argv, char **env) {
       .then([&load, &cfg] {
         LOG_INFO("About to start the client");
 
-        ::smf::load_gen::generator_args largs(
+        ::smf::load_generator_args largs(
           cfg["ip"].as<std::string>().c_str(), cfg["port"].as<uint16_t>(),
           cfg["req-num"].as<uint32_t>(), cfg["concurrency"].as<uint32_t>(),
           static_cast<uint64_t>(0.4 * seastar::memory::stats().total_memory()),

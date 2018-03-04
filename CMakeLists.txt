@@ -1,19 +1,10 @@
 cmake_minimum_required(VERSION 3.3)
 project(SMF VERSION "0.0.1" LANGUAGES CXX C)
-
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake/")
-
 # https://cmake.org/cmake/help/v3.4/policy/CMP0065.html
 cmake_policy(SET CMP0065 OLD)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
-
-find_package(GFlags)
-find_package(Glog)
-find_package(LZ4)
-find_package(Boost COMPONENTS
-  system
-  program_options
-  REQUIRED)
+set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -v")
 find_package(Doxygen)
 
 # https://github.com/ceph/ceph/blob/master/CMakeLists.txt
@@ -38,10 +29,23 @@ if(DOXYGEN_FOUND)
     COMMENT "Generating API documentation with Doxygen" VERBATIM)
 endif(DOXYGEN_FOUND)
 
-option(SMF_BUILD_PROGRAMS "Build smf programs and demos" ON)
+option(SMF_ENABLE_TESTS "Build smf programs and demos" ON)
 option(SMF_ENABLE_INTEGRATION_TESTS "control if integrations are bulit and ran" ON)
 option(SMF_ENABLE_UNIT_TESTS "control if unit tests are bulit and ran" ON)
 option(SMF_ENABLE_BENCHMARK_TESTS "control if benchmarks are bulit and ran" OFF)
+if(NOT SMF_ENABLE_TESTS)
+  set(SMF_ENABLE_INTEGRATION_TESTS  OFF)
+  set(SMF_ENABLE_UNIT_TESTS  OFF)
+  set(SMF_ENABLE_BENCHMARK_TESTS  OFF)
+endif()
+
+
+option(SMF_BUILD_PROGRAMS "Build smf programs and demos" ON)
+option(SMF_BUILD_COMPILER "Control if smfc is built" ON)
+option(SMF_BUILD_LIBSMF "Control if libsmf is built" ON)
+
+# TODO(validate options. for example libsmf without compiler
+# makes no sense)
 
 include(CMake/packaging.cmake)
 include(CMake/tests.cmake)
@@ -51,3 +55,8 @@ include_directories(
   ${PROJECT_BINARY_DIR}/src)
 
 add_subdirectory(src)
+
+if(SMF_BUILD_PROGRAMS)
+  add_subdirectory(demo_apps)
+endif()
+
