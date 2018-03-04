@@ -16,8 +16,8 @@ if [[ $1 != "quick" ]]; then
     cmake --graphviz=${build_dir}/dependencies.dot \
       -Wno-dev \
       -DSEASTAR_DIR=${SEASTAR_DIR} \
-      -DSMF_ENABLE_TESTS=OFF \
       -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
+      -DSMF_ENABLE_BENCHMARK_TESTS=ON \
       -DCMAKE_BUILD_TYPE=Release ${ROOT_DIR}
 else
     echo

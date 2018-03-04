@@ -6,10 +6,7 @@
 #include <thread>
 
 #include <benchmark/benchmark.h>
-
-#include "hashing/hashing_utils.h"
-
-using namespace smf;  // NOLINT
+#include <xxhash.h>
 
 static constexpr uint32_t kPayloadSize = 1 << 29;
 static char               kPayload[kPayloadSize]{};
@@ -20,7 +17,7 @@ BM_hash32(benchmark::State &state) {
     state.PauseTiming();
     std::memset(kPayload, 'x', state.range(0));
     state.ResumeTiming();
-    benchmark::DoNotOptimize(xxhash_32(kPayload, state.range(0)));
+    benchmark::DoNotOptimize(XXH32(kPayload, state.range(0), 0));
   }
 }
 BENCHMARK(BM_hash32)
@@ -36,7 +33,7 @@ BM_hash64(benchmark::State &state) {
     std::memset(kPayload, 'x', state.range(0));
     state.ResumeTiming();
     benchmark::DoNotOptimize(std::numeric_limits<uint32_t>::max() &
-                             xxhash_64(kPayload, state.range(0)));
+                             XXH64(kPayload, state.range(0), 0));
   }
 }
 BENCHMARK(BM_hash64)
