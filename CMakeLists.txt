@@ -29,7 +29,7 @@ if(DOXYGEN_FOUND)
     COMMENT "Generating API documentation with Doxygen" VERBATIM)
 endif(DOXYGEN_FOUND)
 
-option(SMF_ENABLE_TESTS "Build smf programs and demos" ON)
+option(SMF_ENABLE_TESTS "Useful for disabling all tests" ON)
 option(SMF_ENABLE_INTEGRATION_TESTS "control if integrations are bulit and ran" ON)
 option(SMF_ENABLE_UNIT_TESTS "control if unit tests are bulit and ran" ON)
 option(SMF_ENABLE_BENCHMARK_TESTS "control if benchmarks are bulit and ran" OFF)
@@ -40,6 +40,7 @@ if(NOT SMF_ENABLE_TESTS)
 endif()
 
 
+option(SMF_BUILD_REGENERATE_RPC_FBS "regenerate the rpc.fbs file" OFF)
 option(SMF_BUILD_PROGRAMS "Build smf programs and demos" ON)
 option(SMF_BUILD_COMPILER "Control if smfc is built" ON)
 option(SMF_BUILD_LIBSMF "Control if libsmf is built" ON)

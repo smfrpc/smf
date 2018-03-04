@@ -4,14 +4,7 @@ find_package(Boost COMPONENTS
   program_options
   REQUIRED)
 find_package(PkgConfig REQUIRED)
-smfc_gen(
-  CPP
-  TARGET_NAME raw_rpc_gen
-  OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/src/smf
-  SOURCES ${PROJECT_SOURCE_DIR}/src/core/rpc.fbs)
-
 # seastar dep
-
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${SEASTAR_DIR}/build/debug")
 else()
@@ -35,6 +28,20 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   endif()
 endif()
 
+if(SMF_BUILD_REGENERATE_RPC_FBS)
+  # This is an exception to what we suggest people to use
+  # when using this cmake function
+  # We want to generate the rpc.fbs *inside* include/smf
+  # so that when other projects link against it, they will
+  # be able to build regardless if they are or aren't cmake projects
+  #
+  smfc_gen(
+    CPP
+    TARGET_NAME raw_rpc_gen
+    OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/src/include/smf
+    SOURCES ${PROJECT_SOURCE_DIR}/src/core/rpc.fbs)
+endif()
+
 
 add_library(smf STATIC
   compression.cc
@@ -50,14 +57,14 @@ add_library(smf STATIC
   rpc_server.cc
   lz4_filter.cc
   zstd_filter.cc
-  ${raw_rpc_gen})
-
+  # make sure when the dep change, it triggers a rebuild
+  ${PROJECT_SOURCE_DIR}/src/include/smf/rpc_generated.h
+  )
 target_compile_options(smf
   PUBLIC ${SEASTAR_CFLAGS})
-
 target_include_directories(smf
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
   PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
+  PUBLIC ${PROJECT_SOURCE_DIR}/src/include
   )
 target_include_directories(smf
   SYSTEM
@@ -82,5 +89,8 @@ target_link_libraries(smf
 
 install(TARGETS smf DESTINATION lib)
 install(
-  DIRECTORY ${PROJECT_SOURCE_DIR}/src/smf
+  FILES ${PROJECT_SOURCE_DIR}/src/core/rpc.fbs
+  DESTINATION include/smf)
+install(
+  DIRECTORY ${PROJECT_SOURCE_DIR}/src/include/smf
   DESTINATION include)
