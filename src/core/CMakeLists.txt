@@ -81,4 +81,6 @@ target_link_libraries(smf
   lz4)
 
 install(TARGETS smf DESTINATION lib)
-install(DIRECTORY smf DESTINATION include)
+install(
+  DIRECTORY ${PROJECT_SOURCE_DIR}/src/smf
+  DESTINATION include)
