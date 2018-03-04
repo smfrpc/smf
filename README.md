@@ -57,8 +57,23 @@ Build smf
 git clone https://github.com/senior7515/smf
 cd smf
 git submodule update --init --recursive
+mkdir build
+cd build
+cmake -DSEASTAR_DIR=/path/to/seastar ..
+make 
+
+# to run test do 
+ctest -V
+```
+
+Maintainers have a few handy scripts:
+```bash
+
+SEASTAR_DIR=/path/to/seastar ./release
+
+# or
+
 SEASTAR_DIR=/path/to/seastar ./debug
-# or: SEASTAR_DIR=/path/to/seastar ./release
 ```
 
 That's about it! 

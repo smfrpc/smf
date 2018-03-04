@@ -56,29 +56,28 @@ to get started.
 ## Getting started
 
 
-```bash
-
-
-cd $(git rev-parse --show-toplevel)/misc
-./provision_vagrant.sh
-
-
-```
-
-This will give you a working VirtualBox machine to edit & run code.
-
-Development happens on Fedora25 OS & gcc6 environment, 
-but we have Ubuntu support as long as you have gcc6.
-
-Simply run:
+Build Seastar
 
 ```bash
-
-ROOT=$(git rev-parse --show-toplevel)
-cd $ROOT/meta
-source source_ansible_bash
-ansible-playbook playbooks/devbox_all.yml
-
+git clone https://github.com/scylladb/seastar.git
+cd seastar
+git submodule update --init --recursive
+./configure 
+ninja
 ```
 
+Build smf
+
+```bash
+git clone https://github.com/senior7515/smf
+cd smf
+git submodule update --init --recursive
+mkdir build
+cd build
+cmake -DSEASTAR_DIR=/path/to/seastar ..
+make 
+
+# to run test do 
+ctest -V
+```
 
