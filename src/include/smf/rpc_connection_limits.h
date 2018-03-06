@@ -50,7 +50,7 @@ struct rpc_connection_limits {
   uint64_t estimate_request_size(uint64_t serialized_size);
 };
 inline std::ostream &
-operator<<(std::ostream &o, const ::smf::rpc_connection_limits l) {
+operator<<(std::ostream &o, const ::smf::rpc_connection_limits &l) {
   o << "rpc_connection_limits{'basic_req_size':"
     << ::smf::human_bytes(l.basic_request_size)
     << ", 'bloat_factor': " << l.bloat_factor

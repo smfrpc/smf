@@ -45,7 +45,6 @@ rpc_client::stop() {
     // proper way of closing connection that is safe
     // of concurrency bugs
     conn->socket.shutdown_input();
-    // DLOG_INFO("Limits: {}", *conn->limits);
   }
   return seastar::make_ready_future<>();
 }

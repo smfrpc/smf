@@ -9,8 +9,8 @@
 
 #include "smf/histogram_seastar_utils.h"
 #include "smf/log.h"
+#include "smf/rpc_connection_limits.h"
 #include "smf/rpc_envelope.h"
-
 
 namespace smf {
 namespace stdx = std::experimental;
@@ -20,7 +20,7 @@ operator<<(std::ostream &o, const smf::rpc_server &s) {
   o << "rpc_server{args.ip=" << s.args_.ip << ", args.flags=" << s.args_.flags
     << ", args.rpc_port=" << s.args_.rpc_port
     << ", args.http_port=" << s.args_.http_port << ", rpc_routes=" << s.routes_
-    << ", limits=" /*<< *s.limits_*/ << "}";
+    << ", limits=" << *s.limits_ << "}";
   return o;
 }
 
