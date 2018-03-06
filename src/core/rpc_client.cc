@@ -45,7 +45,7 @@ rpc_client::stop() {
     // proper way of closing connection that is safe
     // of concurrency bugs
     conn->socket.shutdown_input();
-    //DLOG_INFO("Limits: {}", *conn->limits);
+    // DLOG_INFO("Limits: {}", *conn->limits);
   }
   return seastar::make_ready_future<>();
 }
@@ -145,10 +145,16 @@ rpc_client::do_reads() {
            [self = parent_shared_from_this()]() mutable {
              return smf::rpc_recv_context::parse_header(self->conn.get())
                .then([self](auto hdr) {
-                 if (!hdr) {
-                   LOG_ERROR(
-                     "Could not parse response from server. Bad Header");
-                   self->conn->set_error("Could not parse header from server");
+                 if (SMF_UNLIKELY(!hdr)) {
+                   if (!self->rpc_slots.empty()) {
+                     LOG_ERROR(
+                       "Could not parse response from server. Bad Header");
+                     self->conn->set_error(
+                       "Could not parse header from server");
+                   } else {
+                     // expected. no outstanding reqs
+                     self->conn->disable();
+                   }
                    return seastar::make_ready_future<>();
                  }
                  return ::smf::rpc_recv_context::parse_payload(

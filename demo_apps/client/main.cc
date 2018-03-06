@@ -113,7 +113,7 @@ main(int args, char **argv, char **env) {
           load_gen_t::generator_cb_t gen    = generator{};
           load_gen_t::method_cb_t    method = method_callback{};
           return server.benchmark(gen, method).then([](auto test) {
-            LOG_INFO("Test ran in:{}ms", test.duration_in_millis());
+            LOG_INFO("Bench: {}", test);
             return seastar::make_ready_future<>();
           });
         });
