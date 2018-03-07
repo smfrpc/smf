@@ -8,6 +8,4 @@
 namespace std {
 namespace experimental {}
 }  // namespace std
-namespace smf {
 namespace stdx = std::experimental;
-}
