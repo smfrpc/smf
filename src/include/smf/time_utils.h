@@ -10,21 +10,21 @@ namespace smf {
 inline uint64_t
 time_now_millis() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
-           std::chrono::system_clock::now().time_since_epoch())
+    std::chrono::system_clock::now().time_since_epoch())
     .count();
 }
 
 inline uint64_t
 time_now_micros() {
   return std::chrono::duration_cast<std::chrono::microseconds>(
-           std::chrono::high_resolution_clock::now().time_since_epoch())
+    std::chrono::high_resolution_clock::now().time_since_epoch())
     .count();
 }
 
 inline uint64_t
 lowres_time_now_millis() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
-           seastar::lowres_clock::now().time_since_epoch())
+    seastar::lowres_clock::now().time_since_epoch())
     .count();
 }
 // Extracted out of gmock
@@ -33,7 +33,7 @@ lowres_time_now_millis() {
 inline seastar::sstring
 time_as_iso_8601(uint64_t millisecs) {
   // Using non-reentrant version as localtime_r is not portable.
-  time_t                 seconds     = static_cast<time_t>(millisecs / 1000);
+  time_t seconds = static_cast<time_t>(millisecs / 1000);
   const struct tm *const time_struct = localtime(&seconds);  // NOLINT
   if (time_struct == NULL) {
     return "";  // Invalid ms value

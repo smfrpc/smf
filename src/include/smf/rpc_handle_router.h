@@ -31,7 +31,7 @@ class rpc_handle_router {
  private:
   std::vector<std::unique_ptr<rpc_service>> services_{};
 
-  friend std::ostream &operator<<(std::ostream &,
-                                  const smf::rpc_handle_router &);
+  friend std::ostream &operator<<(
+    std::ostream &, const smf::rpc_handle_router &);
 };
 }  // namespace smf

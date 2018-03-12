@@ -23,7 +23,7 @@ lz4_compression_filter::operator()(rpc_envelope &&e) {
     return seastar::make_ready_future<rpc_envelope>(std::move(e));
   }
 
-  auto buf      = compressor->compress(e.letter.body);
+  auto buf = compressor->compress(e.letter.body);
   e.letter.body = std::move(buf);
   e.letter.header.mutate_compression(
     rpc::compression_flags::compression_flags_lz4);
@@ -37,7 +37,7 @@ seastar::future<rpc_recv_context>
 lz4_decompression_filter::operator()(rpc_recv_context &&ctx) {
   if (ctx.header.compression() ==
       rpc::compression_flags::compression_flags_lz4) {
-    auto buf    = compressor->uncompress(ctx.payload);
+    auto buf = compressor->uncompress(ctx.payload);
     ctx.payload = std::move(buf);
     ctx.header.mutate_compression(
       rpc::compression_flags::compression_flags_none);

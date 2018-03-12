@@ -11,7 +11,7 @@ class smf_printer {
 
   void
   print(const std::map<std::string, std::string> &vars,
-        const char *                              string_template) {
+    const char *string_template) {
     std::string s = string_template;
     // Replace any occurrences of strings in "vars" that are surrounded
     // by the escape character by what they're mapped to.
@@ -61,7 +61,7 @@ class smf_printer {
 
  private:
   std::string *str_;
-  char         escape_char_;
-  int          indent_;
+  char escape_char_;
+  int indent_;
 };
 }  // namespace smf_gen

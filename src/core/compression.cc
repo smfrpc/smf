@@ -36,18 +36,17 @@ class zstd_codec : public codec {
       static_cast<const void *>(data.get()), data.size());
 
     LOG_THROW_IF(zstd_size == ZSTD_CONTENTSIZE_ERROR,
-                 "Cannot decompress. Not compressed by zstd");
+      "Cannot decompress. Not compressed by zstd");
     LOG_THROW_IF(zstd_size == ZSTD_CONTENTSIZE_UNKNOWN,
-                 "Cannot decompress. Unknown payload size");
+      "Cannot decompress. Unknown payload size");
 
     seastar::temporary_buffer<char> new_body(zstd_size);
 
     auto size_decompressed =
       ZSTD_decompress(static_cast<void *>(new_body.get_write()), zstd_size,
-                      static_cast<const void *>(data.get()), data.size());
+        static_cast<const void *>(data.get()), data.size());
 
-    LOG_THROW_IF(
-      zstd_size != size_decompressed,
+    LOG_THROW_IF(zstd_size != size_decompressed,
       "zstd decompression failed. Size expected: {}, decompressed size: {}",
       zstd_size, size_decompressed);
 
@@ -67,18 +66,18 @@ class zstd_codec : public codec {
     seastar::temporary_buffer<char> buf(body_size);
 
     // prepare inputs
-    void *      dst = static_cast<void *>(buf.get_write());
+    void *dst = static_cast<void *>(buf.get_write());
     const void *src = reinterpret_cast<const void *>(data);
 
     // create compressed buffers
-    auto zstd_compressed_size = ZSTD_compress(dst, buf.size(), src, size,
-                                              3 /*default compression level*/);
+    auto zstd_compressed_size = ZSTD_compress(
+      dst, buf.size(), src, size, 3 /*default compression level*/);
     // check erros
     auto zstd_err = ZSTD_isError(zstd_compressed_size);
     LOG_THROW_IF(zstd_err != 0,
-                 "Error compressing zstd buffer. defaulting to uncompressed. "
-                 "Code: {}, Desciption: {}",
-                 zstd_err, ZSTD_getErrorName(zstd_err));
+      "Error compressing zstd buffer. defaulting to uncompressed. "
+      "Code: {}, Desciption: {}",
+      zstd_err, ZSTD_getErrorName(zstd_err));
 
     buf.trim(zstd_compressed_size);
     return buf;
@@ -110,15 +109,15 @@ class lz4_fast_codec : public codec {
       LZ4_compress_default(data, buf.get_write() + 4, size, max_dst_size);
 
     LOG_THROW_IF(compressed_data_size < 0, ,
-                 "A negative result from LZ4_compress_default indicates a "
-                 "failure trying to compress the data.  See exit code {} "
-                 "for value returned.",
-                 compressed_data_size);
+      "A negative result from LZ4_compress_default indicates a "
+      "failure trying to compress the data.  See exit code {} "
+      "for value returned.",
+      compressed_data_size);
 
     LOG_THROW_IF(compressed_data_size == 0,
-                 "A result of 0 means compression worked, but was stopped "
-                 "because the destination buffer couldn't hold all the "
-                 "information.");
+      "A result of 0 means compression worked, but was stopped "
+      "because the destination buffer couldn't hold all the "
+      "information.");
 
     seastar::write_le<uint32_t>(buf.get_write(), size);
     buf.trim(compressed_data_size + 4);
@@ -132,18 +131,17 @@ class lz4_fast_codec : public codec {
 
     seastar::temporary_buffer<char> buf(orig);
 
-    const int decompressed_size = LZ4_decompress_safe(
-      data.get() + 4 /*src*/, buf.get_write() /*dest*/,
-      data.size() - 4 /*compressed size*/, orig /*max decompressed size*/);
-    LOG_THROW_IF(
-      decompressed_size < 0,
+    const int decompressed_size =
+      LZ4_decompress_safe(data.get() + 4 /*src*/, buf.get_write() /*dest*/,
+        data.size() - 4 /*compressed size*/, orig /*max decompressed size*/);
+    LOG_THROW_IF(decompressed_size < 0,
       "A negative result from LZ4_decompress_safe indicates a "
       "failure trying to decompress the data.  See exit code "
       "{} for value returned. Expected original size: {}, compressed size: {}",
       decompressed_size, orig, data.size() - 4);
     LOG_THROW_IF(decompressed_size == 0,
-                 "I'm not sure this function can ever return 0.  "
-                 "Documentation in lz4.h doesn't indicate so.");
+      "I'm not sure this function can ever return 0.  "
+      "Documentation in lz4.h doesn't indicate so.");
     buf.trim(decompressed_size);
     return buf;
   }

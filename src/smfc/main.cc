@@ -34,8 +34,8 @@ main(int argc, char **argv, char **env) {
           << ", Include dirs: " << FLAGS_include_dirs;
   // generate code!
   flatbuffers::IDLOptions opts;
-  flatbuffers::Parser     parser(opts);
-  std::string             contents;
+  flatbuffers::Parser parser(opts);
+  std::string contents;
   if (!flatbuffers::LoadFile(FLAGS_filename.c_str(), true, &contents)) {
     LOG(ERROR) << "Could not load file: " << FLAGS_filename;
     std::exit(1);
@@ -47,8 +47,8 @@ main(int argc, char **argv, char **env) {
   auto local_include_directory = flatbuffers::StripFileName(FLAGS_filename);
   include_directories.push_back(local_include_directory.c_str());
   include_directories.push_back(nullptr);
-  if (!parser.Parse(contents.c_str(), &include_directories[0],
-                    FLAGS_filename.c_str())) {
+  if (!parser.Parse(
+        contents.c_str(), &include_directories[0], FLAGS_filename.c_str())) {
     LOG(ERROR) << "Could not PARSE file: " << parser.error_;
     std::exit(1);
   }

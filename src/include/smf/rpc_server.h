@@ -24,9 +24,9 @@ namespace smf {
 enum rpc_server_flags : uint32_t { rpc_server_flags_disable_http_server = 1 };
 
 struct rpc_server_args {
-  seastar::sstring ip        = "";
-  uint16_t         rpc_port  = 11225;
-  uint16_t         http_port = 33140;
+  seastar::sstring ip = "";
+  uint16_t rpc_port = 11225;
+  uint16_t http_port = 33140;
 
   /// \brief rpc_server_flags are bitwise flags.
   ///
@@ -60,7 +60,7 @@ class rpc_server {
   explicit rpc_server(rpc_server_args args);
   ~rpc_server();
 
-  void              start();
+  void start();
   seastar::future<> stop();
 
   seastar::future<std::unique_ptr<smf::histogram>>
@@ -74,8 +74,8 @@ class rpc_server {
   void
   register_service(Args &&... args) {
     static_assert(std::is_base_of<rpc_service, T>::value,
-                  "register_service can only be called with a derived class of "
-                  "smf::rpc_service");
+      "register_service can only be called with a derived class of "
+      "smf::rpc_service");
     routes_.register_service(std::make_unique<T>(std::forward<Args>(args)...));
   }
   template <typename Function, typename... Args>
@@ -94,7 +94,7 @@ class rpc_server {
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_server);
 
   seastar::future<rpc_recv_context> apply_incoming_filters(rpc_recv_context);
-  seastar::future<rpc_envelope>     apply_outgoing_filters(rpc_envelope);
+  seastar::future<rpc_envelope> apply_outgoing_filters(rpc_envelope);
 
 
  private:
@@ -114,7 +114,7 @@ class rpc_server {
   const rpc_server_args args_;
 
   seastar::lw_shared_ptr<seastar::server_socket> listener_;
-  rpc_handle_router                              routes_;
+  rpc_handle_router routes_;
 
   using in_filter_t =
     std::function<seastar::future<rpc_recv_context>(rpc_recv_context)>;
@@ -125,7 +125,7 @@ class rpc_server {
 
   seastar::lw_shared_ptr<histogram> hist_ = histogram::make_lw_shared();
   seastar::lw_shared_ptr<rpc_connection_limits> limits_ = nullptr;
-  seastar::lw_shared_ptr<seastar::http_server>  admin_  = nullptr;
+  seastar::lw_shared_ptr<seastar::http_server> admin_ = nullptr;
 
   seastar::metrics::metric_groups metrics_{};
   // connection counting happens in different future

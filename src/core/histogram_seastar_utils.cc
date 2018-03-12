@@ -15,9 +15,9 @@ namespace smf {
 seastar::future<seastar::temporary_buffer<char>>
 histogram_seastar_utils::print_histogram(histogram *h) {
   // HdrHistogram/GoogleChartsExample/example1.txt is 5K
-  char *      buf;
+  char *buf;
   std::size_t len;
-  FILE *      fp = open_memstream(&buf, &len);
+  FILE *fp = open_memstream(&buf, &len);
   LOG_THROW_IF(fp == nullptr, "Failed to allocate filestream");
   h->print(fp);
   // MUST fflush in order to have len update
@@ -29,8 +29,8 @@ histogram_seastar_utils::print_histogram(histogram *h) {
   return seastar::make_ready_future<decltype(ret)>(std::move(ret));
 }
 seastar::future<>
-histogram_seastar_utils::write_histogram(seastar::sstring filename,
-                                         histogram *      h) {
+histogram_seastar_utils::write_histogram(
+  seastar::sstring filename, histogram *h) {
   return open_file_dma(filename, seastar::open_flags::rw |
                                    seastar::open_flags::create |
                                    seastar::open_flags::truncate)

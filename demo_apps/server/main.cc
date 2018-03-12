@@ -46,18 +46,18 @@ int
 main(int args, char **argv, char **env) {
   std::setvbuf(stdout, nullptr, _IOLBF, 1024);
   seastar::distributed<smf::rpc_server> rpc;
-  seastar::app_template                 app;
+  seastar::app_template app;
   cli_opts(app.add_options());
 
   return app.run_deprecated(args, argv, [&] {
     seastar::engine().at_exit([&] {
       return rpc
-        .map_reduce(smf::unique_histogram_adder(),
-                    &smf::rpc_server::copy_histogram)
+        .map_reduce(
+          smf::unique_histogram_adder(), &smf::rpc_server::copy_histogram)
         .then([](auto h) {
           LOG_INFO("Writing server histograms");
-          return smf::histogram_seastar_utils::write("server_hdr.hgrm",
-                                                     std::move(h));
+          return smf::histogram_seastar_utils::write(
+            "server_hdr.hgrm", std::move(h));
         })
         .then([&rpc] { return rpc.stop(); });
     });
@@ -65,14 +65,14 @@ main(int args, char **argv, char **env) {
     auto &cfg = app.configuration();
 
     smf::rpc_server_args args;
-    args.ip        = cfg["ip"].as<std::string>().c_str();
-    args.rpc_port  = cfg["port"].as<uint16_t>();
+    args.ip = cfg["ip"].as<std::string>().c_str();
+    args.rpc_port = cfg["port"].as<uint16_t>();
     args.http_port = cfg["httpport"].as<uint16_t>();
 
     // Normal services would either use the defaults or something smarter
     // This triggers the memory pressure
     args.basic_req_size = 60 /*payload size*/;
-    args.bloat_mult     = 1;  // no bloat
+    args.bloat_mult = 1;  // no bloat
     args.memory_avail_per_core =
       static_cast<uint64_t>(0.9 * seastar::memory::stats().total_memory());
 

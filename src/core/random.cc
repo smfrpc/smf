@@ -18,16 +18,16 @@ random::next() {
 
 
 seastar::sstring
-randstr(const seastar::sstring &                 dict,
-        std::uniform_int_distribution<uint32_t> &dist,
-        std::mt19937 &                           rand,
-        uint32_t                                 size) {
+randstr(const seastar::sstring &dict,
+  std::uniform_int_distribution<uint32_t> &dist,
+  std::mt19937 &rand,
+  uint32_t size) {
   seastar::sstring retval;
   retval.resize(size);
   // this could use a simd
   for (uint32_t i = 0; i < size; ++i) {
     uint32_t idx = dist(rand);
-    retval[i]    = dict[idx];
+    retval[i] = dict[idx];
   }
   return retval;
 }

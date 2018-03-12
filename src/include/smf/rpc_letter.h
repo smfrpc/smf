@@ -13,8 +13,8 @@ namespace smf {
 struct rpc_letter {
   rpc_letter();
   rpc_letter(rpc::header,
-             std::unordered_map<seastar::sstring, seastar::sstring>,
-             seastar::temporary_buffer<char>);
+    std::unordered_map<seastar::sstring, seastar::sstring>,
+    seastar::temporary_buffer<char>);
   rpc_letter &operator=(rpc_letter &&l) noexcept;
   rpc_letter(rpc_letter &&) noexcept;
   ~rpc_letter();
@@ -30,9 +30,9 @@ struct rpc_letter {
   /// \brief does it have a valid body
   bool empty() const;
 
-  rpc::header                                            header;
+  rpc::header header;
   std::unordered_map<seastar::sstring, seastar::sstring> dynamic_headers;
-  seastar::temporary_buffer<char>                        body;
+  seastar::temporary_buffer<char> body;
 };
 
 }  // namespace smf

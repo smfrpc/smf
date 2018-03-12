@@ -23,17 +23,17 @@ struct rpc_service_method_handle {
   rpc_service_method_handle(const rpc_service_method_handle &o)
     : method_name(o.method_name), method_id(o.method_id), apply(o.apply) {}
 
-  const char *   method_name;
+  const char *method_name;
   const uint32_t method_id;
-  fn_t           apply;
+  fn_t apply;
 };
 
 struct rpc_service {
   virtual const char *service_name() const = 0;
   /// \brief crc32(service_name())
-  virtual uint32_t                                      service_id() const = 0;
-  virtual const std::vector<rpc_service_method_handle> &methods()          = 0;
-  virtual rpc_service_method_handle *method_for_request_id(uint32_t idx)   = 0;
+  virtual uint32_t service_id() const = 0;
+  virtual const std::vector<rpc_service_method_handle> &methods() = 0;
+  virtual rpc_service_method_handle *method_for_request_id(uint32_t idx) = 0;
   virtual ~rpc_service() {}
 };
 }  // namespace smf

@@ -5,17 +5,16 @@
 namespace smf {
 
 rpc_letter::rpc_letter() {}
-rpc_letter::rpc_letter(
-  rpc::header                                            _h,
+rpc_letter::rpc_letter(rpc::header _h,
   std::unordered_map<seastar::sstring, seastar::sstring> _hdrs,
-  seastar::temporary_buffer<char>                        _buf)
+  seastar::temporary_buffer<char> _buf)
   : header(_h), dynamic_headers(std::move(_hdrs)), body(std::move(_buf)) {}
 
 rpc_letter &
 rpc_letter::operator=(rpc_letter &&l) noexcept {
-  header          = l.header;
+  header = l.header;
   dynamic_headers = std::move(l.dynamic_headers);
-  body            = std::move(l.body);
+  body = std::move(l.body);
   return *this;
 }
 rpc_letter

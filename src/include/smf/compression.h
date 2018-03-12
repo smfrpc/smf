@@ -34,18 +34,18 @@ class codec {
   }
 
   virtual seastar::temporary_buffer<char> compress(
-    const seastar::temporary_buffer<char> &data)                = 0;
-  virtual seastar::temporary_buffer<char> compress(const char *data,
-                                                   size_t      size) = 0;
+    const seastar::temporary_buffer<char> &data) = 0;
+  virtual seastar::temporary_buffer<char> compress(
+    const char *data, size_t size) = 0;
   virtual seastar::temporary_buffer<char> uncompress(
     const seastar::temporary_buffer<char> &data) = 0;
 
 
-  static std::unique_ptr<codec> make_unique(codec_type        type,
-                                            compression_level level);
+  static std::unique_ptr<codec> make_unique(
+    codec_type type, compression_level level);
 
  private:
-  codec_type        type_;
+  codec_type type_;
   compression_level level_;
 };
 

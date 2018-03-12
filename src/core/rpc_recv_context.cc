@@ -12,16 +12,16 @@ namespace std {
 ostream &
 operator<<(ostream &o, const smf::rpc::header &h) {
   o << "rpc::header="
-    << flatbuffers::FlatBufferToString(reinterpret_cast<const uint8_t *>(&h),
-                                       smf::rpc::headerTypeTable());
+    << flatbuffers::FlatBufferToString(
+         reinterpret_cast<const uint8_t *>(&h), smf::rpc::headerTypeTable());
   return o;
 }
 }  // namespace std
 
 namespace smf {
 
-rpc_recv_context::rpc_recv_context(rpc::header                     hdr,
-                                   seastar::temporary_buffer<char> body)
+rpc_recv_context::rpc_recv_context(
+  rpc::header hdr, seastar::temporary_buffer<char> body)
   : header(hdr), payload(std::move(body)) {
   assert(header.size() == payload.size());
 }
@@ -44,11 +44,10 @@ rpc_recv_context::status() const {
 
 seastar::future<seastar::temporary_buffer<char>>
 read_payload(rpc_connection *conn, size_t payload_size) {
-  auto             timeout = conn->limits->max_body_parsing_duration;
+  auto timeout = conn->limits->max_body_parsing_duration;
   seastar::timer<> body_timeout;
   body_timeout.set_callback([timeout, conn] {
-    LOG_ERROR(
-      "Parsing the body of the connnection exceeded max_timeout: {}ms",
+    LOG_ERROR("Parsing the body of the connnection exceeded max_timeout: {}ms",
       std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
     conn->set_error("Connection body parsing exceeded timeout");
     conn->socket.shutdown_input();
@@ -77,7 +76,7 @@ rpc_recv_context::parse_payload(rpc_connection *conn, rpc::header hdr) {
     .then([hdr](seastar::temporary_buffer<char> body) mutable {
       if (hdr.size() != body.size()) {
         LOG_ERROR("Read incorrect number of bytes `{}`, expected header: `{}`",
-                  body.size(), hdr);
+          body.size(), hdr);
         return seastar::make_ready_future<ret_type>(stdx::nullopt);
       }
       if (hdr.size() > max_flatbuffers_size()) {
@@ -93,7 +92,7 @@ rpc_recv_context::parse_payload(rpc_connection *conn, rpc::header hdr) {
       const uint32_t xx = rpc_checksum_payload(body.get(), body.size());
       if (xx != hdr.checksum()) {
         LOG_ERROR("Payload checksum `{}` does not match header checksum `{}`",
-                  xx, hdr.checksum());
+          xx, hdr.checksum());
         return seastar::make_ready_future<ret_type>(stdx::nullopt);
       }
 
@@ -108,8 +107,7 @@ rpc_recv_context::parse_header(rpc_connection *conn) {
   using ret_type = stdx::optional<rpc::header>;
 
   static constexpr size_t kRPCHeaderSize = sizeof(rpc::header);
-  DLOG_THROW_IF(
-    conn->istream_active_parser != 0,
+  DLOG_THROW_IF(conn->istream_active_parser != 0,
     "without this line you can have interleaved reads on the buffer");
 
   conn->istream_active_parser++;
@@ -117,8 +115,8 @@ rpc_recv_context::parse_header(rpc_connection *conn) {
     .then([conn](seastar::temporary_buffer<char> header) {
       if (kRPCHeaderSize != header.size()) {
         LOG_ERROR_IF(conn->is_valid(),
-                     "Invalid header size `{}`, expected `{}`, skipping req",
-                     header.size(), kRPCHeaderSize);
+          "Invalid header size `{}`, expected `{}`, skipping req",
+          header.size(), kRPCHeaderSize);
         return seastar::make_ready_future<ret_type>(stdx::nullopt);
       }
       rpc::header hdr;

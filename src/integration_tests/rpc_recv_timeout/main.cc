@@ -35,13 +35,13 @@ main(int args, char **argv, char **env) {
   seastar::app_template app;
 
   smf::random rand;
-  uint16_t    random_port =
+  uint16_t random_port =
     smf::non_root_port(rand.next() % std::numeric_limits<uint16_t>::max());
   return app.run(args, argv, [&]() -> seastar::future<int> {
     DLOG_DEBUG("Setting up at_exit hooks");
     seastar::engine().at_exit([&] { return rpc.stop(); });
 
-    smf::random          r;
+    smf::random r;
     smf::rpc_server_args sargs;
     sargs.rpc_port = random_port;
     sargs.http_port =
@@ -65,7 +65,7 @@ main(int args, char **argv, char **env) {
         return seastar::engine()
           .net()
           .connect(seastar::make_ipv4_address(random_port), local,
-                   seastar::transport::TCP)
+            seastar::transport::TCP)
           .then([](auto skt) {
             auto conn =
               seastar::make_lw_shared<smf::rpc_connection>(std::move(skt));
@@ -77,8 +77,8 @@ main(int args, char **argv, char **env) {
             header.mutate_checksum(1234234);
             seastar::temporary_buffer<char> header_buf(kHeaderSize);
             std::copy(reinterpret_cast<char *>(&header),
-                      reinterpret_cast<char *>(&header) + kHeaderSize,
-                      header_buf.get_write());
+              reinterpret_cast<char *>(&header) + kHeaderSize,
+              header_buf.get_write());
             return conn->ostream.write(std::move(header_buf))
               .then([conn] { return conn->ostream.flush(); })
               .then([conn] {

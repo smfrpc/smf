@@ -9,10 +9,9 @@
 
 namespace smf {
 
-rpc_connection_limits::rpc_connection_limits(
-  uint64_t                                _basic_req_size,
-  double                                  _bloat_mult,
-  uint64_t                                _max_mem,
+rpc_connection_limits::rpc_connection_limits(uint64_t _basic_req_size,
+  double _bloat_mult,
+  uint64_t _max_mem,
   rpc_connection_limits::timer_duration_t _body_duration)
   : basic_request_size(_basic_req_size)
   , bloat_factor(_bloat_mult)

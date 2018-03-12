@@ -42,7 +42,7 @@ struct rpc_recv_context {
     return header.session();
   }
 
-  rpc::header                     header;
+  rpc::header header;
   seastar::temporary_buffer<char> payload;
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_recv_context);
 };

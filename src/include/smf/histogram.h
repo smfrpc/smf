@@ -21,10 +21,10 @@ namespace smf {
 // per instance
 struct hist_t {
   hist_t() {
-    ::hdr_init(1,                    // 1 microsec - minimum value
-               INT64_C(3600000000),  // 1 hour in microsecs - max value
-               3,                    // Number of significant figures
-               &hist);               // Pointer to initialize
+    ::hdr_init(1,           // 1 microsec - minimum value
+      INT64_C(3600000000),  // 1 hour in microsecs - max value
+      3,                    // Number of significant figures
+      &hist);               // Pointer to initialize
   }
 
   hist_t(hist_t &&o) noexcept : hist(o.hist) {}
@@ -59,12 +59,12 @@ class histogram : public seastar::enable_lw_shared_from_this<histogram> {
 
   void record(const uint64_t &v);
 
-  void    record_multiple_times(const uint64_t &v, const uint32_t &times);
-  void    record_corrected(const uint64_t &v, const uint64_t &interval);
+  void record_multiple_times(const uint64_t &v, const uint32_t &times);
+  void record_corrected(const uint64_t &v, const uint64_t &interval);
   int64_t value_at(double percentile) const;
-  double  stddev() const;
-  double  mean() const;
-  size_t  memory_size() const;
+  double stddev() const;
+  double mean() const;
+  size_t memory_size() const;
 
   hdr_histogram *get();
 
@@ -100,14 +100,14 @@ struct histogram_measure {
   ~histogram_measure() {
     if (h && trace_) {
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
-                        std::chrono::high_resolution_clock::now() - begin_t)
+        std::chrono::high_resolution_clock::now() - begin_t)
                         .count();
       h->record(duration);
     }
   }
 
-  bool                                           trace_ = true;
-  seastar::lw_shared_ptr<histogram>              h      = nullptr;
+  bool trace_ = true;
+  seastar::lw_shared_ptr<histogram> h = nullptr;
   std::chrono::high_resolution_clock::time_point begin_t;
 };
 }  // namespace smf

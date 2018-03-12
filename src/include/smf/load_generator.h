@@ -27,7 +27,7 @@ namespace smf {
 template <typename ClientService>
 class __attribute__((visibility("default"))) load_generator {
  public:
-  using channel_t     = load_channel<ClientService>;
+  using channel_t = load_channel<ClientService>;
   using channel_t_ptr = std::unique_ptr<channel_t>;
 
   using method_cb_t =
@@ -40,9 +40,8 @@ class __attribute__((visibility("default"))) load_generator {
     random rand;
     channels_.reserve(args.concurrency);
     for (uint32_t i = 0u; i < args.concurrency; ++i) {
-      channels_.push_back(std::make_unique<channel_t>(
-        rand.next(), args.ip, args.port,
-        args.memory_per_core / args.concurrency, args.compression));
+      channels_.push_back(std::make_unique<channel_t>(rand.next(), args.ip,
+        args.port, args.memory_per_core / args.concurrency, args.compression));
     }
   }
   ~load_generator() {}
@@ -63,14 +62,14 @@ class __attribute__((visibility("default"))) load_generator {
 
   seastar::future<>
   stop() {
-    return seastar::do_for_each(channels_.begin(), channels_.end(),
-                                [](auto &c) { return c->stop(); });
+    return seastar::do_for_each(
+      channels_.begin(), channels_.end(), [](auto &c) { return c->stop(); });
   }
   seastar::future<>
   connect() {
     LOG_INFO("Making {} connections on this core.", channels_.size());
-    return seastar::do_for_each(channels_.begin(), channels_.end(),
-                                [](auto &c) { return c->connect(); });
+    return seastar::do_for_each(
+      channels_.begin(), channels_.end(), [](auto &c) { return c->connect(); });
   }
   seastar::future<load_generator_duration>
   benchmark(generator_cb_t gen, method_cb_t method_cb) {
@@ -80,32 +79,27 @@ class __attribute__((visibility("default"))) load_generator {
     auto duration =
       seastar::make_lw_shared<load_generator_duration>(reqs_per_channel);
 
-    return seastar::do_with(
-             seastar::semaphore(args.concurrency),
-             [this, duration, method_cb, gen,
-              reqs_per_channel](auto &limit) mutable {
-               duration->begin();
-               return seastar::do_for_each(
-                        channels_.begin(), channels_.end(),
-                        [this, &limit, gen, method_cb, reqs_per_channel,
-                         duration](auto &c) mutable {
-                          return limit.wait(1).then([this, gen, &c, &limit,
-                                                     reqs_per_channel, duration,
-                                                     method_cb]() mutable {
-                            // notice that this does not return, hence
-                            // executing concurrently
-                            c->invoke(reqs_per_channel, args.cfg, duration, gen,
-                                      method_cb)
-                              .finally([&limit] { limit.signal(1); });
-                          });
-                        })
-                 .then([this, &limit, duration] {
-                   // now let's wait for ALL to finish
-                   return limit.wait(args.concurrency).finally([duration] {
-                     duration->end();
-                   });
-                 });
-             })
+    return seastar::do_with(seastar::semaphore(args.concurrency),
+      [this, duration, method_cb, gen, reqs_per_channel](auto &limit) mutable {
+        duration->begin();
+        return seastar::do_for_each(channels_.begin(), channels_.end(),
+          [this, &limit, gen, method_cb, reqs_per_channel, duration](
+            auto &c) mutable {
+            return limit.wait(1).then([this, gen, &c, &limit, reqs_per_channel,
+                                        duration, method_cb]() mutable {
+              // notice that this does not return, hence
+              // executing concurrently
+              c->invoke(reqs_per_channel, args.cfg, duration, gen, method_cb)
+                .finally([&limit] { limit.signal(1); });
+            });
+          })
+          .then([this, &limit, duration] {
+            // now let's wait for ALL to finish
+            return limit.wait(args.concurrency).finally([duration] {
+              duration->end();
+            });
+          });
+      })
       .then([duration] {
         return seastar::make_ready_future<load_generator_duration>(
           std::move(*duration));

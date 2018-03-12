@@ -9,8 +9,8 @@
 #include "smfc/smf_file.h"
 
 DEFINE_bool(print_smf_gen_to_stderr,
-            false,
-            "prints to stderr the outputs of the generated header");
+  false,
+  "prints to stderr the outputs of the generated header");
 DEFINE_string(output_path, "", "output path of the generated files");
 
 

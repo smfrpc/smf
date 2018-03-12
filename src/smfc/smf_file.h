@@ -58,6 +58,6 @@ class smf_file {
 
  private:
   const flatbuffers::Parser &parser_;
-  const std::string &        file_name_;
+  const std::string &file_name_;
 };
 }  // namespace smf_gen

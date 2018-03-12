@@ -14,19 +14,18 @@ namespace smf {
 
 class rpc_connection {
  public:
-  explicit rpc_connection(
-    seastar::connected_socket                     fd,
+  explicit rpc_connection(seastar::connected_socket fd,
     seastar::lw_shared_ptr<rpc_connection_limits> conn_limits = nullptr)
     : socket(std::move(fd))
     , istream(socket.input())
     , ostream(socket.output())
     , limits(conn_limits) {}
 
-  seastar::connected_socket                     socket;
-  seastar::input_stream<char>                   istream;
-  seastar::output_stream<char>                  ostream;
+  seastar::connected_socket socket;
+  seastar::input_stream<char> istream;
+  seastar::output_stream<char> ostream;
   seastar::lw_shared_ptr<rpc_connection_limits> limits;
-  uint32_t                                      istream_active_parser{0};
+  uint32_t istream_active_parser{0};
 
   void
   disable() {
@@ -60,6 +59,6 @@ class rpc_connection {
 
  private:
   std::experimental::optional<seastar::sstring> error_;
-  bool                                          enabled_{true};
+  bool enabled_{true};
 };
 }  // namespace smf

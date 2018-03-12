@@ -50,7 +50,7 @@ static const char *kPoem = "How do I love thee? Let me count the ways."
                            "Smiles, tears, of all my life; and, if God choose,"
                            "I shall but love thee better after death.";
 
-using client_t   = smf_gen::demo::SmfStorageClient;
+using client_t = smf_gen::demo::SmfStorageClient;
 using load_gen_t = smf::load_generator<client_t>;
 
 struct method_callback {
@@ -115,7 +115,7 @@ main(int args, char **argv, char **env) {
   SET_LOG_LEVEL(seastar::log_level::trace);
   LOG_INFO("About to start the RPC test");
   seastar::distributed<smf::rpc_server> rpc;
-  seastar::distributed<load_gen_t>      load;
+  seastar::distributed<load_gen_t> load;
 
   seastar::app_template app;
 
@@ -129,11 +129,11 @@ main(int args, char **argv, char **env) {
     auto &cfg = app.configuration();
 
     smf::rpc_server_args args;
-    args.rpc_port  = cfg["port"].as<uint16_t>();
+    args.rpc_port = cfg["port"].as<uint16_t>();
     args.http_port = cfg["httpport"].as<uint16_t>();
     args.flags |= smf::rpc_server_flags::rpc_server_flags_disable_http_server;
     args.basic_req_size = std::strlen(kPoem);
-    args.bloat_mult     = 1;
+    args.bloat_mult = 1;
     args.memory_avail_per_core =
       static_cast<uint64_t>(0.4 * seastar::memory::stats().total_memory());
 
@@ -154,9 +154,9 @@ main(int args, char **argv, char **env) {
       .then([&load, &cfg] {
         LOG_INFO("About to start the client");
 
-        ::smf::load_generator_args largs(
-          cfg["ip"].as<std::string>().c_str(), cfg["port"].as<uint16_t>(),
-          cfg["req-num"].as<uint32_t>(), cfg["concurrency"].as<uint32_t>(),
+        ::smf::load_generator_args largs(cfg["ip"].as<std::string>().c_str(),
+          cfg["port"].as<uint16_t>(), cfg["req-num"].as<uint32_t>(),
+          cfg["concurrency"].as<uint32_t>(),
           static_cast<uint64_t>(0.4 * seastar::memory::stats().total_memory()),
           smf::rpc::compression_flags::compression_flags_none, cfg);
 
@@ -170,8 +170,8 @@ main(int args, char **argv, char **env) {
       .then([&load] {
         LOG_INFO("Benchmarking server");
         return load.invoke_on_all([](load_gen_t &server) {
-          load_gen_t::generator_cb_t gen    = generator{};
-          load_gen_t::method_cb_t    method = method_callback{};
+          load_gen_t::generator_cb_t gen = generator{};
+          load_gen_t::method_cb_t method = method_callback{};
           return server.benchmark(gen, method).then([](auto test) {
             LOG_INFO("Test ran in:{}ms", test.duration_in_millis());
             return seastar::make_ready_future<>();
@@ -182,21 +182,21 @@ main(int args, char **argv, char **env) {
         LOG_INFO("MapReducing stats");
         return load
           .map_reduce(smf::unique_histogram_adder(),
-                      [](load_gen_t &shard) { return shard.copy_histogram(); })
+            [](load_gen_t &shard) { return shard.copy_histogram(); })
           .then([](auto h) {
             LOG_INFO("Writing client histograms");
-            return smf::histogram_seastar_utils::write("clients_hdr.hgrm",
-                                                       std::move(h));
+            return smf::histogram_seastar_utils::write(
+              "clients_hdr.hgrm", std::move(h));
           });
       })
       .then([&] {
         return rpc
-          .map_reduce(smf::unique_histogram_adder(),
-                      &smf::rpc_server::copy_histogram)
+          .map_reduce(
+            smf::unique_histogram_adder(), &smf::rpc_server::copy_histogram)
           .then([](auto h) {
             LOG_INFO("Writing server histograms");
-            return smf::histogram_seastar_utils::write("server_hdr.hgrm",
-                                                       std::move(h));
+            return smf::histogram_seastar_utils::write(
+              "server_hdr.hgrm", std::move(h));
           });
       })
       .then([] {

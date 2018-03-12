@@ -13,8 +13,8 @@
 
 namespace smf {
 struct rpc_server_connection_options {
-  explicit rpc_server_connection_options(bool _nodelay   = false,
-                                         bool _keepalive = false)
+  explicit rpc_server_connection_options(
+    bool _nodelay = false, bool _keepalive = false)
     : nodelay(_nodelay), enable_keepalive(_keepalive) {}
   rpc_server_connection_options(rpc_server_connection_options &&o) noexcept
     : nodelay(o.nodelay)
@@ -64,14 +64,13 @@ struct rpc_server_connection_options {
 
 class rpc_server_connection : public rpc_connection {
  public:
-  rpc_server_connection(
-    seastar::connected_socket                     sock,
+  rpc_server_connection(seastar::connected_socket sock,
     seastar::lw_shared_ptr<rpc_connection_limits> conn_limits,
-    seastar::socket_address                       address,
-    seastar::lw_shared_ptr<rpc_server_stats>      _stats,
-    uint64_t                                      connection_id,
-    rpc_server_connection_options opts = rpc_server_connection_options(false,
-                                                                       false))
+    seastar::socket_address address,
+    seastar::lw_shared_ptr<rpc_server_stats> _stats,
+    uint64_t connection_id,
+    rpc_server_connection_options opts = rpc_server_connection_options(
+      false, false))
     : rpc_connection(std::move(sock), conn_limits)
     , remote_address(address)
     , id(connection_id)
@@ -88,10 +87,10 @@ class rpc_server_connection : public rpc_connection {
 
   ~rpc_server_connection() { stats->active_connections--; }
 
-  const seastar::socket_address            remote_address;
-  const uint64_t                           id;
+  const seastar::socket_address remote_address;
+  const uint64_t id;
   seastar::lw_shared_ptr<rpc_server_stats> stats;
-  seastar::semaphore                       serialize_writes{1};
+  seastar::semaphore serialize_writes{1};
 
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_server_connection);
 

@@ -25,7 +25,7 @@ struct rpc_client_opts {
 
   /// `req_mem = basic_request_size + sizeof(letter.body) * bloat_factor`
   uint64_t basic_req_bloat_size = 0;
-  double   bloat_mult           = 1.0;
+  double bloat_mult = 1.0;
   /// \ brief The default timeout PER connection body. After we parse the
   /// header
   /// of the connection we need to make sure that we at some point receive
@@ -76,7 +76,7 @@ class rpc_client {
     SMF_DISALLOW_COPY_AND_ASSIGN(work_item);
 
     promise_t pr;
-    uint16_t  session{0};
+    uint16_t session{0};
   };
 
   using in_filter_t =
@@ -147,18 +147,18 @@ class rpc_client {
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_client);
 
  public:
-  const seastar::ipv4_addr                      server_addr;
+  const seastar::ipv4_addr server_addr;
   seastar::lw_shared_ptr<rpc_connection_limits> limits;
 
  public:
   // need to be public for parent_shared_from_this()
-  bool                                   is_error_state{false};
-  uint64_t                               read_counter{0};
+  bool is_error_state{false};
+  uint64_t read_counter{0};
   seastar::lw_shared_ptr<rpc_connection> conn;
   std::unordered_map<uint16_t, seastar::lw_shared_ptr<work_item>> rpc_slots;
   // needed public by execution stage
   seastar::future<rpc_recv_context> apply_incoming_filters(rpc_recv_context);
-  seastar::future<rpc_envelope>     apply_outgoing_filters(rpc_envelope);
+  seastar::future<rpc_envelope> apply_outgoing_filters(rpc_envelope);
 
 
  private:
@@ -172,12 +172,12 @@ class rpc_client {
   seastar::future<rpc_envelope> stage_apply_outgoing_filters(rpc_envelope);
 
 
-  std::vector<in_filter_t>  in_filters_;
+  std::vector<in_filter_t> in_filters_;
   std::vector<out_filter_t> out_filters_;
 
-  seastar::semaphore                serialize_writes_{1};
+  seastar::semaphore serialize_writes_{1};
   seastar::lw_shared_ptr<histogram> hist_ = nullptr;
-  uint16_t                          session_idx_{0};
+  uint16_t session_idx_{0};
 };
 
 

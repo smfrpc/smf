@@ -80,14 +80,15 @@ def run_subprocess(cmd):
 
 
 def get_cpplint():
-    cmd = "%s/%s" % (get_git_root(), "src/third_party/google-styleguide/cpplint/cpplint.py")
+    cmd = "%s/%s" % (get_git_root(),
+                     "src/third_party/google-styleguide/cpplint/cpplint.py")
     assert os.path.exists(cmd)
     return cmd
 
 
 def get_clang_prog(prog):
     """ALL tools for clang should be pinned to one version"""
-    CLANG_SOURCE_VERSION = "4.0.1"
+    CLANG_SOURCE_VERSION = "5.0.1"
     ret = subprocess.check_output("which %s" % prog, shell=True)
     if ret != None:
         original = "".join(str(ret).split())

@@ -22,8 +22,7 @@ seastar::temporary_buffer<char> native_table_as_buffer(
   builder.Finish(RootType::Pack(builder, &t, nullptr));
   seastar::temporary_buffer<char> retval(builder.GetSize());
   std::memcpy(retval.get_write(),
-              reinterpret_cast<const char *>(builder.GetBufferPointer()),
-              retval.size());
+    reinterpret_cast<const char *>(builder.GetBufferPointer()), retval.size());
   return std::move(retval);
 }
 

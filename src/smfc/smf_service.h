@@ -36,6 +36,6 @@ class smf_service {
 
  private:
   const flatbuffers::ServiceDef *service_;
-  uint32_t                       id_{0};
+  uint32_t id_{0};
 };
 }  // namespace smf_gen

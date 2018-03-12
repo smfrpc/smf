@@ -19,19 +19,19 @@ template <typename T>
 class fbs_typed_buf {
  public:
   static_assert(std::is_base_of<flatbuffers::Table, T>::value,
-                "Should ONLY be Table derived classes");
+    "Should ONLY be Table derived classes");
   using type = T;
   explicit fbs_typed_buf(seastar::temporary_buffer<char> body)
     : buf_(std::move(body)) {
     DLOG_THROW_IF(buf_.size() == 0, "Empty flatbuffers buffer");
     auto ptr = static_cast<void *>(buf_.get_write());
-    cache_   = flatbuffers::GetMutableRoot<T>(ptr);
+    cache_ = flatbuffers::GetMutableRoot<T>(ptr);
   }
   fbs_typed_buf(fbs_typed_buf &&o) noexcept
     : buf_(std::move(o.buf_)), cache_(std::move(o.cache_)) {}
   fbs_typed_buf &
   operator=(fbs_typed_buf &&o) {
-    buf_   = std::move(o.buf_);
+    buf_ = std::move(o.buf_);
     cache_ = std::move(o.cache_);
     return *this;
   }
@@ -60,7 +60,7 @@ class fbs_typed_buf {
 
  private:
   seastar::temporary_buffer<char> buf_;
-  T *                             cache_{nullptr};
+  T *cache_{nullptr};
 };
 
 }  // namespace smf

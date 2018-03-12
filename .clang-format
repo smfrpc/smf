@@ -1,7 +1,6 @@
 BasedOnStyle: Google
 AlignEscapedNewlinesLeft: true
-AlignConsecutiveAssignments: true
-AlignConsecutiveDeclarations: true
+AlignAfterOpenBracket: false
 AllowShortLoopsOnASingleLine: true
 AllowShortBlocksOnASingleLine: true
 AlwaysBreakBeforeMultilineStrings: false
@@ -18,6 +17,7 @@ IndentFunctionDeclarationAfterType: false
 MaxEmptyLinesToKeep: 2
 DerivePointerAlignment: false
 PointerAlignment: Right
+ReflowComments: true
 TabWidth: 2
 IncludeCategories:
   - Regex:           '^<smf/.*>'

@@ -16,7 +16,7 @@
 // templates
 #include "demo_service.smf.fb.h"
 
-using client_t   = smf_gen::demo::SmfStorageClient;
+using client_t = smf_gen::demo::SmfStorageClient;
 using load_gen_t = smf::load_generator<client_t>;
 static const char *kPayload1Kbytes =
   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -87,16 +87,16 @@ cli_opts(boost::program_options::options_description_easy_init o) {
 int
 main(int args, char **argv, char **env) {
   seastar::distributed<load_gen_t> load;
-  seastar::app_template            app;
+  seastar::app_template app;
   cli_opts(app.add_options());
 
   return app.run(args, argv, [&] {
     seastar::engine().at_exit([&] { return load.stop(); });
     auto &cfg = app.configuration();
 
-    ::smf::load_generator_args largs(
-      cfg["ip"].as<std::string>().c_str(), cfg["port"].as<uint16_t>(),
-      cfg["req-num"].as<uint32_t>(), cfg["concurrency"].as<uint32_t>(),
+    ::smf::load_generator_args largs(cfg["ip"].as<std::string>().c_str(),
+      cfg["port"].as<uint16_t>(), cfg["req-num"].as<uint32_t>(),
+      cfg["concurrency"].as<uint32_t>(),
       static_cast<uint64_t>(0.9 * seastar::memory::stats().total_memory()),
       smf::rpc::compression_flags::compression_flags_none, cfg);
 
@@ -110,8 +110,8 @@ main(int args, char **argv, char **env) {
       .then([&load] {
         LOG_INFO("Benchmarking server");
         return load.invoke_on_all([](load_gen_t &server) {
-          load_gen_t::generator_cb_t gen    = generator{};
-          load_gen_t::method_cb_t    method = method_callback{};
+          load_gen_t::generator_cb_t gen = generator{};
+          load_gen_t::method_cb_t method = method_callback{};
           return server.benchmark(gen, method).then([](auto test) {
             LOG_INFO("Bench: {}", test);
             return seastar::make_ready_future<>();
@@ -122,11 +122,11 @@ main(int args, char **argv, char **env) {
         LOG_INFO("MapReducing stats");
         return load
           .map_reduce(smf::unique_histogram_adder(),
-                      [](load_gen_t &shard) { return shard.copy_histogram(); })
+            [](load_gen_t &shard) { return shard.copy_histogram(); })
           .then([](std::unique_ptr<smf::histogram> h) {
             LOG_INFO("Writing client histograms");
-            return smf::histogram_seastar_utils::write("clients_hdr.hgrm",
-                                                       std::move(h));
+            return smf::histogram_seastar_utils::write(
+              "clients_hdr.hgrm", std::move(h));
           });
       })
       .then([] {

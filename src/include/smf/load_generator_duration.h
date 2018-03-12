@@ -19,7 +19,7 @@ struct load_generator_duration {
     , test_end(std::move(d.test_end))
     , total_bytes(std::move(d.total_bytes)) {}
 
-  uint64_t                                       num_of_req;
+  uint64_t num_of_req;
   std::chrono::high_resolution_clock::time_point test_begin;
   std::chrono::high_resolution_clock::time_point test_end;
 
@@ -37,18 +37,18 @@ struct load_generator_duration {
   inline uint64_t
   duration_in_millis() const {
     namespace co = std::chrono;
-    auto d       = test_end - test_begin;
+    auto d = test_end - test_begin;
     return co::duration_cast<co::milliseconds>(d).count();
   }
 
   inline uint64_t
   qps() const {
-    auto       milli = duration_in_millis();
-    const auto reqs  = static_cast<double>(num_of_req);
+    auto milli = duration_in_millis();
+    const auto reqs = static_cast<double>(num_of_req);
 
     // some times the test run under 1 millisecond
     const auto safe_denom = std::max<uint64_t>(milli, 1);
-    const auto denom      = static_cast<double>(safe_denom);
+    const auto denom = static_cast<double>(safe_denom);
 
     auto queries_per_milli = reqs / denom;
 

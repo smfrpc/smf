@@ -26,10 +26,9 @@ namespace smf {
 ///
 struct rpc_connection_limits {
   using timer_duration_t = seastar::timer<>::duration;
-  rpc_connection_limits(
-    uint64_t         basic_req_size        = 256,
-    double           bloat_mult            = 1.57,  // same as folly::vector
-    uint64_t         max_mem               = uint64_t(1) << 31,  // 2GB per core
+  rpc_connection_limits(uint64_t basic_req_size = 256,
+    double bloat_mult = 1.57,              // same as folly::vector
+    uint64_t max_mem = uint64_t(1) << 31,  // 2GB per core
     timer_duration_t body_timeout_duration = std::chrono::minutes(1));
   ~rpc_connection_limits() = default;
 
@@ -37,12 +36,12 @@ struct rpc_connection_limits {
   const uint64_t basic_request_size;
   /// Serialized size multiplied by this to estimate
   /// memory used by request
-  const uint64_t         bloat_factor;
-  const uint64_t         max_memory;
+  const uint64_t bloat_factor;
+  const uint64_t max_memory;
   const timer_duration_t max_body_parsing_duration;
 
   seastar::semaphore resources_available;
-  seastar::gate      reply_gate;
+  seastar::gate reply_gate;
 
   /// \brief releases the resources allocated by `wait_for_payload_resources`
   void release_payload_resources(uint64_t payload_size);

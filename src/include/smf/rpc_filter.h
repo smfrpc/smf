@@ -26,8 +26,8 @@ rpc_filter_apply(const Iterator &b, const Iterator &end, Arg &&arg) {
   return (*begin)(std::forward<Arg>(arg)).then([
     begin = std::next(begin), end
   ](Arg && a) {
-    return rpc_filter_apply<Iterator, Arg, Ret...>(begin, end,
-                                                   std::forward<Arg>(a));
+    return rpc_filter_apply<Iterator, Arg, Ret...>(
+      begin, end, std::forward<Arg>(a));
   });
 }
 

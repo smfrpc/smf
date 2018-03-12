@@ -9,7 +9,7 @@
 #include <xxhash.h>
 
 static constexpr uint32_t kPayloadSize = 1 << 29;
-static char               kPayload[kPayloadSize]{};
+static char kPayload[kPayloadSize]{};
 
 static void
 BM_hash32(benchmark::State &state) {

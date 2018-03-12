@@ -11,7 +11,7 @@ namespace smf {
 template <typename T>
 class rpc_recv_typed_context {
  public:
-  using type           = T;
+  using type = T;
   using opt_recv_ctx_t = std::experimental::optional<rpc_recv_context>;
 
 
@@ -48,7 +48,7 @@ class rpc_recv_typed_context {
   ///     if(obj){}
   /// \endcode
   /// simply forward the bool operator to the option
-  inline         operator bool() const { return ctx.operator bool(); }
+  inline operator bool() const { return ctx.operator bool(); }
   opt_recv_ctx_t ctx;
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_recv_typed_context);
 
