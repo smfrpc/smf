@@ -1,9 +1,9 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #pragma once
+#include <cstddef>
 
-
-template <typename T, size_t N>
+template <typename T, std::size_t N>
 char (&smf_array_size_helper(T (&array)[N]))[N];
 #define SMF_ARRAYSIZE(array) (sizeof(::smf_array_size_helper(array)))
 
