@@ -67,8 +67,8 @@ function (smf_test)
       )
   endif()
 endfunction ()
-
-
-add_custom_target(check
-  COMMAND ctest --output-on-failure -N -R "^smf"
-  DEPENDS "${UNIT_TESTS} ${INTEGRATION_TESTS} ${BENCHMARK_TESTS}")
+if(SMF_ENABLE_TESTS)
+  add_custom_target(check
+    COMMAND ctest --output-on-failure -N -R "^smf"
+    DEPENDS "${UNIT_TESTS} ${INTEGRATION_TESTS} ${BENCHMARK_TESTS}")
+endif()
