@@ -7,6 +7,7 @@
 #include <flatbuffers/flatbuffers.h>
 
 #include "smf/flatbuffers_concepts.h"
+#include "smf/log.h"
 
 namespace smf {
 /// \brief converts a flatbuffers::NativeTableType into a buffer.
