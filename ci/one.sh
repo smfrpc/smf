@@ -5,7 +5,7 @@
 
 set -e
 set -x
-
+export DEBIAN_FRONTEND=noninteractive
 THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 name="smf/ci_base_${IMAGE/:/_}"
