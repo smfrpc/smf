@@ -24,5 +24,4 @@ matrix:
     - os: linux
       env: IMAGE=ubuntu:artful USE_NINJA=1
 
-script:
-  - ci/one.sh
+script: travis_retry ci/one.sh
