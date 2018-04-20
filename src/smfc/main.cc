@@ -10,26 +10,39 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include "smfc/idl.h"
+#include "smfc/codegen.h"
 
 DEFINE_string(filename, "", "filename to parse");
-DEFINE_string(include_dirs, "", "extra include directories: not supported yet");
+DEFINE_string(include_dirs, "", "extra include directories");
+DEFINE_string(
+  language, "cpp", "coma separated list of language to generate: go, cpp");
+DEFINE_string(output_path, ".", "output path of the generated files");
 
-std::tuple<std::vector<std::string>, std::vector<const char *>>
-include_directories_split(
-  const std::string &dirs, const std::string &current_filename) {
+
+std::vector<std::string>
+split_coma(const std::string &dirs) {
   std::vector<std::string> retval;
   boost::algorithm::split(retval, dirs, boost::is_any_of(","));
+  if (retval.empty() && !dirs.empty()) { retval.push_back(dirs); }
   for (auto &s : retval) { boost::algorithm::trim(s); }
-  retval.push_back(flatbuffers::StripFileName(current_filename));
-  // UGH THE FLATBUFFERS C-looking API sucks. :'(
-  //
-  std::vector<const char *> noown;
-  noown.reserve(retval.size() + 1);
-  for (auto &s : retval) { noown.push_back(s.c_str()); }
-  // always end in null :'(
-  noown.push_back(nullptr);
-  return {std::move(retval), std::move(noown)};
+  return retval;
+}
+
+std::vector<smf_gen::language>
+split_langs(const std::string &lang) {
+  // Note: be sure to add the generator in codegen.cc
+  std::vector<smf_gen::language> retval;
+  auto str_langs = split_coma(lang);
+  for (auto &l : str_langs) {
+    if (l == "cpp") {
+      retval.push_back(smf_gen::language::cpp);
+    } else if (l == "go") {
+      retval.push_back(smf_gen::language::go);
+    } else {
+      LOG(ERROR) << "Skipping unknown language: " << l;
+    }
+  }
+  return retval;
 }
 
 int
@@ -39,6 +52,7 @@ main(int argc, char **argv, char **env) {
   google::InstallFailureSignalHandler();
   google::InitGoogleLogging(argv[0]);
 
+  // validate flags
   if (FLAGS_filename.empty()) {
     LOG(ERROR) << "No filename to parse";
     std::exit(1);
@@ -48,29 +62,26 @@ main(int argc, char **argv, char **env) {
                << " ' - does not exists or could not be found";
     std::exit(1);
   }
-  VLOG(1) << "Parsing file: " << FLAGS_filename
-          << ", Include dirs: " << FLAGS_include_dirs;
+  if (FLAGS_output_path.empty()) {
+    LOG(ERROR) << " ` " << FLAGS_output_path << " ' - empty output path";
+    std::exit(1);
+  }
+  FLAGS_output_path =
+    boost::filesystem::canonical(FLAGS_output_path.c_str()).string();
+  if (!flatbuffers::DirExists(FLAGS_output_path.c_str())) {
+    LOG(ERROR) << "--output_path specified, but directory: "
+               << FLAGS_output_path << " does not exist;";
+    std::exit(1);
+  }
+
+  auto codegenerator =
+    std::make_unique<smf_gen::codegen>(FLAGS_filename, FLAGS_output_path,
+      split_coma(FLAGS_include_dirs), split_langs(FLAGS_language));
   // generate code!
-  flatbuffers::IDLOptions opts;
-  flatbuffers::Parser parser(opts);
-  std::string contents;
-  if (!flatbuffers::LoadFile(FLAGS_filename.c_str(), true, &contents)) {
-    LOG(ERROR) << "Could not load file: " << FLAGS_filename;
+  auto status = codegenerator->gen();
+  if (status) {
+    LOG(ERROR) << "Errors generating code: " << *status;
     std::exit(1);
   }
-  VLOG(1) << FLAGS_filename << " loaded.";
-  auto includes = include_directories_split(FLAGS_include_dirs, FLAGS_filename);
-  if (!parser.Parse(
-        contents.c_str(), &std::get<1>(includes)[0], FLAGS_filename.c_str())) {
-    LOG(ERROR) << "Could not PARSE file: " << parser.error_;
-    std::exit(1);
-  }
-
-  VLOG(1) << "File `" << FLAGS_filename << "` parsed. Generating";
-
-  if (!smf_gen::generate(parser, flatbuffers::StripExtension(FLAGS_filename))) {
-    LOG(ERROR) << "Could not generate file";
-    std::exit(1);
-  }
-  parser.MarkGenerated();
+  VLOG(1) << "Success";
 }
