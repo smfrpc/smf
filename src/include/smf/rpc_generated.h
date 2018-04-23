@@ -20,6 +20,14 @@ struct payload_headersT;
 struct null_type;
 struct null_typeT;
 
+inline const flatbuffers::TypeTable *headerTypeTable();
+
+inline const flatbuffers::TypeTable *dynamic_headerTypeTable();
+
+inline const flatbuffers::TypeTable *payload_headersTypeTable();
+
+inline const flatbuffers::TypeTable *null_typeTypeTable();
+
 /// \brief: headers that are stored in an int
 /// so they need to be inclusive. That is, you can turn on
 /// many flags at the same time, i.e.: enable checksum and
@@ -34,8 +42,8 @@ enum compression_flags {
   compression_flags_MAX = compression_flags_lz4
 };
 
-inline compression_flags (&EnumValuescompression_flags())[4] {
-  static compression_flags values[] = {
+inline const compression_flags (&EnumValuescompression_flags())[4] {
+  static const compression_flags values[] = {
     compression_flags_none,
     compression_flags_disabled,
     compression_flags_zstd,
@@ -44,8 +52,8 @@ inline compression_flags (&EnumValuescompression_flags())[4] {
   return values;
 }
 
-inline const char **EnumNamescompression_flags() {
-  static const char *names[] = {
+inline const char * const *EnumNamescompression_flags() {
+  static const char * const names[] = {
     "none",
     "disabled",
     "zstd",
@@ -66,15 +74,15 @@ enum header_bit_flags {
   header_bit_flags_ANY = 1
 };
 
-inline header_bit_flags (&EnumValuesheader_bit_flags())[1] {
-  static header_bit_flags values[] = {
+inline const header_bit_flags (&EnumValuesheader_bit_flags())[1] {
+  static const header_bit_flags values[] = {
     header_bit_flags_has_payload_headers
   };
   return values;
 }
 
-inline const char **EnumNamesheader_bit_flags() {
-  static const char *names[] = {
+inline const char * const *EnumNamesheader_bit_flags() {
+  static const char * const names[] = {
     "has_payload_headers",
     nullptr
   };
@@ -94,7 +102,7 @@ inline const char *EnumNameheader_bit_flags(header_bit_flags e) {
 /// [ 8bits(compression) + 8bits(bitflags) + 16bits(session) + 32bits(size) + 32bits(checksum) + 32bits(meta) ]
 /// total = 128bits == 16bytes
 ///
-MANUALLY_ALIGNED_STRUCT(4) header FLATBUFFERS_FINAL_CLASS {
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) header FLATBUFFERS_FINAL_CLASS {
  private:
   int8_t compression_;
   int8_t bitflags_;
@@ -174,7 +182,7 @@ MANUALLY_ALIGNED_STRUCT(4) header FLATBUFFERS_FINAL_CLASS {
     flatbuffers::WriteScalar(&meta_, _meta);
   }
 };
-STRUCT_END(header, 16);
+FLATBUFFERS_STRUCT_END(header, 16);
 
 struct dynamic_headerT : public flatbuffers::NativeTable {
   typedef dynamic_header TableType;
@@ -192,6 +200,9 @@ struct dynamic_headerT : public flatbuffers::NativeTable {
 /// zipkin/google-Dapper style tracing
 struct dynamic_header FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef dynamic_headerT NativeTableType;
+  static const flatbuffers::TypeTable *MiniReflectTypeTable() {
+    return dynamic_headerTypeTable();
+  }
   static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
     return "smf.rpc.dynamic_header";
   }
@@ -294,6 +305,9 @@ struct payload_headersT : public flatbuffers::NativeTable {
 
 struct payload_headers FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef payload_headersT NativeTableType;
+  static const flatbuffers::TypeTable *MiniReflectTypeTable() {
+    return payload_headersTypeTable();
+  }
   static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
     return "smf.rpc.payload_headers";
   }
@@ -416,6 +430,9 @@ struct null_typeT : public flatbuffers::NativeTable {
 ///
 struct null_type FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef null_typeT NativeTableType;
+  static const flatbuffers::TypeTable *MiniReflectTypeTable() {
+    return null_typeTypeTable();
+  }
   static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
     return "smf.rpc.null_type";
   }
@@ -538,55 +555,47 @@ inline flatbuffers::Offset<null_type> Createnull_type(flatbuffers::FlatBufferBui
       _fbb);
 }
 
-inline flatbuffers::TypeTable *headerTypeTable();
-
-inline flatbuffers::TypeTable *dynamic_headerTypeTable();
-
-inline flatbuffers::TypeTable *payload_headersTypeTable();
-
-inline flatbuffers::TypeTable *null_typeTypeTable();
-
-inline flatbuffers::TypeTable *compression_flagsTypeTable() {
-  static flatbuffers::TypeCode type_codes[] = {
+inline const flatbuffers::TypeTable *compression_flagsTypeTable() {
+  static const flatbuffers::TypeCode type_codes[] = {
     { flatbuffers::ET_CHAR, 0, 0 },
     { flatbuffers::ET_CHAR, 0, 0 },
     { flatbuffers::ET_CHAR, 0, 0 },
     { flatbuffers::ET_CHAR, 0, 0 }
   };
-  static flatbuffers::TypeFunction type_refs[] = {
+  static const flatbuffers::TypeFunction type_refs[] = {
     compression_flagsTypeTable
   };
-  static const char *names[] = {
+  static const char * const names[] = {
     "none",
     "disabled",
     "zstd",
     "lz4"
   };
-  static flatbuffers::TypeTable tt = {
+  static const flatbuffers::TypeTable tt = {
     flatbuffers::ST_ENUM, 4, type_codes, type_refs, nullptr, names
   };
   return &tt;
 }
 
-inline flatbuffers::TypeTable *header_bit_flagsTypeTable() {
-  static flatbuffers::TypeCode type_codes[] = {
+inline const flatbuffers::TypeTable *header_bit_flagsTypeTable() {
+  static const flatbuffers::TypeCode type_codes[] = {
     { flatbuffers::ET_CHAR, 0, 0 }
   };
-  static flatbuffers::TypeFunction type_refs[] = {
+  static const flatbuffers::TypeFunction type_refs[] = {
     header_bit_flagsTypeTable
   };
   static const int32_t values[] = { 1 };
-  static const char *names[] = {
+  static const char * const names[] = {
     "has_payload_headers"
   };
-  static flatbuffers::TypeTable tt = {
+  static const flatbuffers::TypeTable tt = {
     flatbuffers::ST_ENUM, 1, type_codes, type_refs, values, names
   };
   return &tt;
 }
 
-inline flatbuffers::TypeTable *headerTypeTable() {
-  static flatbuffers::TypeCode type_codes[] = {
+inline const flatbuffers::TypeTable *headerTypeTable() {
+  static const flatbuffers::TypeCode type_codes[] = {
     { flatbuffers::ET_CHAR, 0, 0 },
     { flatbuffers::ET_CHAR, 0, 1 },
     { flatbuffers::ET_USHORT, 0, -1 },
@@ -594,12 +603,12 @@ inline flatbuffers::TypeTable *headerTypeTable() {
     { flatbuffers::ET_UINT, 0, -1 },
     { flatbuffers::ET_UINT, 0, -1 }
   };
-  static flatbuffers::TypeFunction type_refs[] = {
+  static const flatbuffers::TypeFunction type_refs[] = {
     compression_flagsTypeTable,
     header_bit_flagsTypeTable
   };
   static const int32_t values[] = { 0, 1, 2, 4, 8, 12, 16 };
-  static const char *names[] = {
+  static const char * const names[] = {
     "compression",
     "bitflags",
     "session",
@@ -607,52 +616,52 @@ inline flatbuffers::TypeTable *headerTypeTable() {
     "checksum",
     "meta"
   };
-  static flatbuffers::TypeTable tt = {
+  static const flatbuffers::TypeTable tt = {
     flatbuffers::ST_STRUCT, 6, type_codes, type_refs, values, names
   };
   return &tt;
 }
 
-inline flatbuffers::TypeTable *dynamic_headerTypeTable() {
-  static flatbuffers::TypeCode type_codes[] = {
+inline const flatbuffers::TypeTable *dynamic_headerTypeTable() {
+  static const flatbuffers::TypeCode type_codes[] = {
     { flatbuffers::ET_STRING, 0, -1 },
     { flatbuffers::ET_STRING, 0, -1 }
   };
-  static const char *names[] = {
+  static const char * const names[] = {
     "key",
     "value"
   };
-  static flatbuffers::TypeTable tt = {
+  static const flatbuffers::TypeTable tt = {
     flatbuffers::ST_TABLE, 2, type_codes, nullptr, nullptr, names
   };
   return &tt;
 }
 
-inline flatbuffers::TypeTable *payload_headersTypeTable() {
-  static flatbuffers::TypeCode type_codes[] = {
+inline const flatbuffers::TypeTable *payload_headersTypeTable() {
+  static const flatbuffers::TypeCode type_codes[] = {
     { flatbuffers::ET_SEQUENCE, 1, 0 },
     { flatbuffers::ET_UINT, 0, -1 },
     { flatbuffers::ET_UINT, 0, -1 },
     { flatbuffers::ET_CHAR, 0, 1 }
   };
-  static flatbuffers::TypeFunction type_refs[] = {
+  static const flatbuffers::TypeFunction type_refs[] = {
     dynamic_headerTypeTable,
     compression_flagsTypeTable
   };
-  static const char *names[] = {
+  static const char * const names[] = {
     "dynamic_headers",
     "size",
     "checksum",
     "compression"
   };
-  static flatbuffers::TypeTable tt = {
+  static const flatbuffers::TypeTable tt = {
     flatbuffers::ST_TABLE, 4, type_codes, type_refs, nullptr, names
   };
   return &tt;
 }
 
-inline flatbuffers::TypeTable *null_typeTypeTable() {
-  static flatbuffers::TypeTable tt = {
+inline const flatbuffers::TypeTable *null_typeTypeTable() {
+  static const flatbuffers::TypeTable tt = {
     flatbuffers::ST_TABLE, 0, nullptr, nullptr, nullptr, nullptr
   };
   return &tt;

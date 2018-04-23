@@ -36,6 +36,7 @@ else
       -Wno-dev \
       -DSEASTAR_DIR=${SEASTAR_DIR} \
       -DSMF_ENABLE_TESTS=OFF \
+      -DSMF_BUILD_REGENERATE_RPC_FBS=ON \
       -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
       -DCMAKE_BUILD_TYPE=Release ${ROOT_DIR}
 fi
