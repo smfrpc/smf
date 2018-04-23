@@ -35,7 +35,7 @@ class smf_printer {
     // Add this string, but for each part separated by \n, add indentation.
     for (;;) {
       // Current indentation.
-      out_.insert(out_.end(), indent_ * 2, ' ');
+      out_.insert(out_.end(), indent_ * indent_step_, indent_char_);
       // See if this contains more than one line.
       const char *lf = strchr(s, '\n');
       if (lf) {
@@ -67,8 +67,19 @@ class smf_printer {
     return out_;
   }
 
+  void
+  set_indent_char(char i) {
+    indent_char_ = i;
+  }
+  void
+  set_indent_step(uint16_t step) {
+    indent_step_ = step;
+  }
+
  private:
   std::string out_;
-  uint32_t indent_{0};
+  int32_t indent_{0};
+  char indent_char_ = ' ';
+  uint16_t indent_step_ = 2;
 };
 }  // namespace smf_gen

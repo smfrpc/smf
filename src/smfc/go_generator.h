@@ -10,7 +10,11 @@ class go_generator : public generator {
   go_generator(const flatbuffers::Parser &p,
     const std::string &ifname,
     const std::string &output_dir)
-    : generator(p, ifname, output_dir) {}
+    : generator(p, ifname, output_dir) {
+    // go uses tabs
+    printer_.set_indent_char('\t');
+    printer_.set_indent_step(1);
+  }
   virtual ~go_generator() = default;
 
   virtual std::string
@@ -26,8 +30,16 @@ class go_generator : public generator {
 
   virtual std::experimental::optional<std::string>
   gen() final {
-    return std::experimental::nullopt;
+    generate_header_prologue();
+    generate_header_includes();
+    generate_header_services();
+    return save_conents_to_file();
   }
+
+ private:
+  void generate_header_prologue();
+  void generate_header_includes();
+  void generate_header_services();
 };
 
 }  // namespace smf_gen
