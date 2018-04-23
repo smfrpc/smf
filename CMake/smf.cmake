@@ -10,6 +10,16 @@ function(smfc_gen)
   #
   set(flatc_generated_includes)
   set(smfc_generated_includes)
+
+  # need to know the language we are generating
+  set(smfc_language)
+  set(flatc_language)
+  if(CPP)
+    set(smfc_language "--language=cpp")
+  endif()
+  if(GOLANG)
+    set(smfc_language "--language=go")
+  endif()
   # needed for the 'return' value
   set(SMF_GEN_OUTPUTS)
 
@@ -48,6 +58,7 @@ function(smfc_gen)
     add_custom_command(OUTPUT ${SMF_GEN_OUTPUT}
       COMMAND smfc
       ARGS --logtostderr --filename ${FILE}
+           ${smfc_language}
            ${smfc_generated_includes}
            --output_path=${SMFC_GEN_OUTPUT_DIRECTORY}
       COMMENT "Generating smf rpc stubs for ${FILE}"
