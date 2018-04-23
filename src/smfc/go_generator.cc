@@ -1,3 +1,6 @@
+// Copyright 2018 SMF Authors
+//
+
 #include "go_generator.h"
 
 #include <string>
@@ -144,8 +147,7 @@ print_client_method(smf_printer &printer, const smf_method *method) {
   printer.print("return nil, err\n");
   printer.outdent();
   printer.print("}\n");
-  printer.print(
-    vars, "return smf.GetRootAsResponse(res, 0), nil\n");
+  printer.print(vars, "return smf.GetRootAsResponse(res, 0), nil\n");
   printer.outdent();
   printer.print("}\n");
 
