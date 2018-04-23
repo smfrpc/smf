@@ -38,17 +38,6 @@ class cpp_generator : public generator {
     return save_conents_to_file();
   }
 
-
-  std::experimental::optional<std::string>
-  save_conents_to_file() {
-    LOG(INFO) << "Contents size: " << printer_.contents().size();
-    auto outname = output_filename();
-    if (!flatbuffers::SaveFile(outname.c_str(), printer_.contents(), false)) {
-      return "Could not create filename: " + outname;
-    }
-    return std::experimental::nullopt;
-  }
-
   std::string
   message_header_ext() const {
     return "_generated.h";
