@@ -41,19 +41,19 @@ class smf_method {
   }
 
   std::string
-  type(const flatbuffers::StructDef &sd) const {
+  type(const flatbuffers::StructDef &sd, std::string join_method_token) const {
     std::vector<std::string> tmp = sd.defined_namespace->components;
     tmp.push_back(sd.name);
-    return boost::algorithm::join(tmp, "::");
+    return boost::algorithm::join(tmp, join_method_token);
   }
 
   std::string
-  input_type_name() const {
-    return type(*method_->request);
+  input_type_name(std::string join_method_token = "::") const {
+    return type(*method_->request, join_method_token);
   }
   std::string
-  output_type_name() const {
-    return type(*method_->response);
+  output_type_name(std::string join_method_token = "::") const {
+    return type(*method_->response, join_method_token);
   }
 
  private:
