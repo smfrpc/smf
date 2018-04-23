@@ -5,6 +5,14 @@ language: cpp
 services:
   - docker
 
+
+# Add debian back to environment after this bug is resolved:
+# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=896644
+# Severity: serious
+#
+#    - os: linux
+#      env: IMAGE=debian:sid
+
 matrix:
   include:
     - os: linux
@@ -12,15 +20,11 @@ matrix:
     - os: linux
       env: IMAGE=fedora:26
     - os: linux
-      env: IMAGE=debian:sid
-    - os: linux
       env: IMAGE=debian:buster
     - os: linux
       env: IMAGE=ubuntu:artful
     - os: linux
       env: IMAGE=fedora:27 USE_NINJA=1
-    - os: linux
-      env: IMAGE=debian:sid USE_NINJA=1
     - os: linux
       env: IMAGE=ubuntu:artful USE_NINJA=1
 
