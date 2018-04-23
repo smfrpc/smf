@@ -61,6 +61,16 @@ class generator {
   }
 
 
+  virtual std::experimental::optional<std::string>
+  save_conents_to_file() {
+    auto outname = output_filename();
+    if (!flatbuffers::SaveFile(outname.c_str(), printer_.contents(), false)) {
+      return "Could not create filename: " + outname;
+    }
+    return std::experimental::nullopt;
+  }
+
+
  protected:
   smf_printer printer_;
 

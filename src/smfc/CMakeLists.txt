@@ -8,6 +8,7 @@ find_package(Boost COMPONENTS
 set(SMFC_SOURCES
   codegen.cc
   cpp_generator.cc
+  go_generator.cc
   main.cc)
 
 set(SMFC_LIBS
