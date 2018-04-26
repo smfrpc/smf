@@ -43,10 +43,6 @@ endif()
 option(SMF_BUILD_REGENERATE_RPC_FBS "regenerate the rpc.fbs file" OFF)
 option(SMF_BUILD_PROGRAMS "Build smf programs and demos" ON)
 option(SMF_BUILD_COMPILER "Control if smfc is built" ON)
-option(SMF_BUILD_LIBSMF "Control if libsmf is built" ON)
-
-# TODO(validate options. for example libsmf without compiler
-# makes no sense)
 
 include(CMake/packaging.cmake)
 include(CMake/tests.cmake)

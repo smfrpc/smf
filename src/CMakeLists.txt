@@ -11,10 +11,7 @@ if(SMF_BUILD_COMPILER)
   add_subdirectory(smfc)
 endif()
 
-if(SMF_BUILD_LIBSMF)
-  add_subdirectory(core)
-endif()
-
+add_subdirectory(core)
 
 if(SMF_ENABLE_BENCHMARK_TESTS)
   add_subdirectory(benchmarks)

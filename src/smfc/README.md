@@ -9,7 +9,6 @@ mkdir build
 cd build
 cmake -DSMF_ENABLE_TESTS=OFF  \
       -DSMF_BUILD_COMPILER=ON \
-      -DSMF_BUILD_LIBSMF=OFF  \
       -DSMF_BUILD_PROGRAMS=OFF  $ROOT
 make
 ```
