@@ -5,23 +5,11 @@ find_package(Boost COMPONENTS
   REQUIRED)
 find_package(PkgConfig REQUIRED)
 
-set(CMAKE_CXX_FLAGS
-  ${CMAKE_CXX_FLAGS}
-  -fdiagnostics-color=auto
-  -Wall
-  -Werror
-  -Wextra
-  -Wformat
-  -Wmissing-braces
-  -Wparentheses
-  -Wpointer-arith
-  -Wformat-security
-  -Wunused
-  -Wno-unused-parameter
-  -Wcast-align
-  -Wno-missing-field-initializers
-  -Wdelete-non-virtual-dtor
-  -Wno-ignored-qualifiers)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=auto -Wall -Werror -Wextra -Wformat")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wmissing-braces -Wparentheses -Wpointer-arith")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wformat-security -Wunused -Wno-unused-parameter")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wcast-align -Wno-missing-field-initializers")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wdelete-non-virtual-dtor -Wno-ignored-qualifiers")
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.1)
