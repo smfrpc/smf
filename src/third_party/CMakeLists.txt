@@ -10,29 +10,27 @@ set(FLATBUFFERS_BUILD_FLATHASH OFF CACHE BOOL
 add_subdirectory(flatbuffers)
 
 
-if(SMF_BUILD_LIBSMF)
-  set(SEASTAR_ENABLE_DPDK OFF CACHE BOOL "enable seastar DPDK")
-  add_subdirectory(seastar)
+set(SEASTAR_ENABLE_DPDK OFF CACHE BOOL "enable seastar DPDK")
+add_subdirectory(seastar)
 
 
-  set(HDR_HISTOGRAM_BUILD_SHARED OFF CACHE BOOL
-    "Disable building hdr_histogram shared library")
-  set(HDR_HISTOGRAM_BUILD_PROGRAMS OFF CACHE BOOL
-    "Disable building hdr_histogram tests and examples")
-  add_subdirectory(HdrHistogram_c)
+set(HDR_HISTOGRAM_BUILD_SHARED OFF CACHE BOOL
+  "Disable building hdr_histogram shared library")
+set(HDR_HISTOGRAM_BUILD_PROGRAMS OFF CACHE BOOL
+  "Disable building hdr_histogram tests and examples")
+add_subdirectory(HdrHistogram_c)
 
-  set(ZSTD_MULTITHREAD_SUPPORT OFF CACHE BOOL
-    "No need for multi threads")
-  set(ZSTD_LEGACY_SUPPORT OFF CACHE BOOL
-    "No need to support pre 1.0")
-  set(ZSTD_BUILD_STATIC ON CACHE BOOL
-    "Enable building zstd static library")
-  set(ZSTD_BUILD_SHARED OFF CACHE BOOL
-    "Disable building zstd shared library")
-  set(ZSTD_BUILD_PROGRAMS OFF CACHE BOOL
-    "Disable building zstd programs")
-  add_subdirectory(zstd/build/cmake)
-endif()
+set(ZSTD_MULTITHREAD_SUPPORT OFF CACHE BOOL
+  "No need for multi threads")
+set(ZSTD_LEGACY_SUPPORT OFF CACHE BOOL
+  "No need to support pre 1.0")
+set(ZSTD_BUILD_STATIC ON CACHE BOOL
+  "Enable building zstd static library")
+set(ZSTD_BUILD_SHARED OFF CACHE BOOL
+  "Disable building zstd shared library")
+set(ZSTD_BUILD_PROGRAMS OFF CACHE BOOL
+  "Disable building zstd programs")
+add_subdirectory(zstd/build/cmake)
 
 
 if(SMF_ENABLE_UNIT_TESTS)
