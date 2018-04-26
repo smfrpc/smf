@@ -38,19 +38,6 @@ Current benchmarks in microseconds
 
 # Getting started
 
-Build Seastar
-
-```bash
-git clone https://github.com/scylladb/seastar.git
-cd seastar
-git submodule update --init --recursive
-
-# --enable-dpdk to build w/ dpdk 
-#
-./configure 
-ninja
-```
-
 Build smf
 
 ```bash
@@ -59,21 +46,9 @@ cd smf
 git submodule update --init --recursive
 mkdir build
 cd build
-cmake -DSEASTAR_DIR=/path/to/seastar ..
 make 
 
 # to run test do 
 ctest -V
 ```
-
-Maintainers have a few handy scripts:
-```bash
-
-SEASTAR_DIR=/path/to/seastar ./release
-
-# or
-
-SEASTAR_DIR=/path/to/seastar ./debug
-```
-
 That's about it! 

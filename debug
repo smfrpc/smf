@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# SEASTAR_DIR=/path/seastar ./debug
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -10,7 +9,6 @@ cd ${build_dir}
 cmake -Wdev \
   --debug-output \
   -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
-  -DSEASTAR_DIR=${SEASTAR_DIR} \
   -DCMAKE_INSTALL_PREFIX=${build_dir} \
   -DCMAKE_BUILD_TYPE=Debug ${ROOT_DIR}
 

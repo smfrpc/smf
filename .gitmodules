@@ -17,9 +17,6 @@
 [submodule "src/third_party/google-styleguide"]
 	path = src/third_party/google-styleguide
 	url = https://github.com/google/styleguide
-[submodule "src/third_party/fmt"]
-	path = src/third_party/fmt
-	url = https://github.com/fmtlib/fmt
 [submodule "src/third_party/google_benchmark"]
 	path = src/third_party/google_benchmark
 	url = https://github.com/google/benchmark.git
@@ -30,3 +27,6 @@
 [submodule "src/third_party/flat_hash_map"]
 	path = src/third_party/flat_hash_map
 	url = https://github.com/skarupke/flat_hash_map.git
+[submodule "src/third_party/seastar"]
+	path = src/third_party/seastar
+	url = https://github.com/scylladb/seastar.git

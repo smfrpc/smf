@@ -15,7 +15,6 @@ if [[ $1 != "quick" ]]; then
     ${ROOT_DIR}/misc/fmt.py
     cmake --graphviz=${build_dir}/dependencies.dot \
       -Wno-dev \
-      -DSEASTAR_DIR=${SEASTAR_DIR} \
       -DCMAKE_INSTALL_PREFIX=${build_dir} \
       -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
       -DSMF_BUILD_REGENERATE_RPC_FBS=ON \
@@ -34,7 +33,6 @@ else
     # Disable integration tests for this
     cmake --graphviz=${build_dir}/dependencies.dot \
       -Wno-dev \
-      -DSEASTAR_DIR=${SEASTAR_DIR} \
       -DSMF_ENABLE_TESTS=OFF \
       -DSMF_BUILD_REGENERATE_RPC_FBS=ON \
       -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \

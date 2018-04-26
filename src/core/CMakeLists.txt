@@ -4,19 +4,24 @@ find_package(Boost COMPONENTS
   program_options
   REQUIRED)
 find_package(PkgConfig REQUIRED)
-# seastar dep
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-  set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${SEASTAR_DIR}/build/debug")
-else()
-  set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${SEASTAR_DIR}/build/release")
-endif()
-pkg_search_module(SEASTAR REQUIRED seastar)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=auto -Wall -Werror -Wextra -Wformat")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wmissing-braces -Wparentheses -Wpointer-arith")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wformat-security -Wunused -Wno-unused-parameter")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wcast-align -Wno-missing-field-initializers")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wdelete-non-virtual-dtor -Wno-ignored-qualifiers")
+set(CMAKE_CXX_FLAGS
+  ${CMAKE_CXX_FLAGS}
+  -fdiagnostics-color=auto
+  -Wall
+  -Werror
+  -Wextra
+  -Wformat
+  -Wmissing-braces
+  -Wparentheses
+  -Wpointer-arith
+  -Wformat-security
+  -Wunused
+  -Wno-unused-parameter
+  -Wcast-align
+  -Wno-missing-field-initializers
+  -Wdelete-non-virtual-dtor
+  -Wno-ignored-qualifiers)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.1)
@@ -60,8 +65,7 @@ add_library(smf STATIC
   # make sure when the dep change, it triggers a rebuild
   ${PROJECT_SOURCE_DIR}/src/include/smf/rpc_generated.h
   )
-target_compile_options(smf
-  PUBLIC ${SEASTAR_CFLAGS})
+
 target_include_directories(smf
   PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
   PUBLIC ${PROJECT_SOURCE_DIR}/src/include
@@ -75,13 +79,13 @@ target_include_directories(smf
   PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/zstd/lib
   PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/fastrange
   PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/xxHash
-  PUBLIC ${SEASTAR_INCLUDE_DIRS})
+  )
 
 target_compile_definitions(smf
   PUBLIC -DXXH_PRIVATE_API)
 
 target_link_libraries(smf
-  ${SEASTAR_LDFLAGS}
+  seastar
   libzstd_static
   hdr_histogram_static
   fmt

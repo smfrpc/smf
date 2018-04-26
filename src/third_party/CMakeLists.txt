@@ -9,8 +9,11 @@ set(FLATBUFFERS_BUILD_FLATHASH OFF CACHE BOOL
   "Disable building flathash")
 add_subdirectory(flatbuffers)
 
+
 if(SMF_BUILD_LIBSMF)
-  add_subdirectory(fmt)
+  set(SEASTAR_ENABLE_DPDK OFF CACHE BOOL "enable seastar DPDK")
+  add_subdirectory(seastar)
+
 
   set(HDR_HISTOGRAM_BUILD_SHARED OFF CACHE BOOL
     "Disable building hdr_histogram shared library")
