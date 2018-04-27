@@ -19,8 +19,8 @@ codegen::codegen(std::string ifname,
   std::vector<language> langs)
   : input_filename(std::move(ifname))
   , output_dir(std::move(out_dir))
-  , include_dirs_(std::move(includes))
-  , languages(std::move(langs)) {
+  , languages(std::move(langs))
+  , include_dirs_(std::move(includes)) {
   LOG_IF(FATAL, languages.empty()) << "No programming langues";
   LOG_IF(FATAL, output_dir.empty()) << "No place to put generated code";
 
@@ -71,7 +71,7 @@ std::experimental::optional<std::string>
 codegen::gen() {
   auto x = parse();
   if (x) { return x; }
-  for (auto l : languages) {
+  for (const auto &l : languages) {
     switch (l) {
     case language::cpp: {
       VLOG(1) << "Adding cpp generator";
@@ -91,6 +91,8 @@ codegen::gen() {
       VLOG(1) << "Generated: " << g->output_filename();
       break;
     }
+    default:
+      LOG(ERROR) << "Uknown code generator";
     }
   }
   return std::experimental::nullopt;

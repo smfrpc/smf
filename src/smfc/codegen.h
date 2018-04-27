@@ -4,6 +4,8 @@
 
 #include <experimental/optional>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include <flatbuffers/flatbuffers.h>
 #include <flatbuffers/idl.h>
