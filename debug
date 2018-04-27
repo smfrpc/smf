@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
+set -evx
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 build_dir=${ROOT_DIR}/build_debug

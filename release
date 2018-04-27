@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -evx
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -10,16 +10,23 @@ cd ${build_dir}
 echo "./release quick"
 echo "To build and run tests only, no formatting, validation, etc"
 
+common_args=(
+    -Wno-dev
+    -DCMAKE_VERBOSE_MAKEFILE=ON
+    -GNinja
+    -DSMF_BUILD_REGENERATE_RPC_FBS=ON
+    -DSEASTAR_ENABLE_DPDK=ON
+    -DCMAKE_BUILD_TYPE=Release
+    ${ROOT_DIR}
+)
+
 if [[ $1 != "quick" ]]; then
     echo "Generating version file"
     ${ROOT_DIR}/misc/fmt.py
     cmake --graphviz=${build_dir}/dependencies.dot \
-      -Wno-dev \
       -DCMAKE_INSTALL_PREFIX=${build_dir} \
-      -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
-      -DSMF_BUILD_REGENERATE_RPC_FBS=ON \
       -DSMF_ENABLE_BENCHMARK_TESTS=ON \
-      -DCMAKE_BUILD_TYPE=Release ${ROOT_DIR}
+      "${common_args[@]}"
 else
     echo
     echo
@@ -31,12 +38,7 @@ else
     echo
     echo
     # Disable integration tests for this
-    cmake --graphviz=${build_dir}/dependencies.dot \
-      -Wno-dev \
-      -DSMF_ENABLE_TESTS=OFF \
-      -DSMF_BUILD_REGENERATE_RPC_FBS=ON \
-      -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
-      -DCMAKE_BUILD_TYPE=Release ${ROOT_DIR}
+    cmake -DSMF_ENABLE_TESTS=OFF "${common_args[@]}"
 fi
 
 # for fmt.py
