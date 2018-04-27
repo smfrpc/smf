@@ -5,10 +5,6 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake/")
 cmake_policy(SET CMP0065 OLD)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -v")
-# workaround a seastar bug
-# TODO(agallego) - submit patch to seastar to remove -Werror
-# from release builds
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-variable")
 find_package(Doxygen)
 
 # https://github.com/ceph/ceph/blob/master/CMakeLists.txt
