@@ -10,7 +10,7 @@ set(FLATBUFFERS_BUILD_FLATHASH OFF CACHE BOOL
 add_subdirectory(flatbuffers)
 
 
-set(SEASTAR_ENABLE_DPDK OFF CACHE BOOL "enable seastar DPDK")
+set(SEASTAR_ENABLE_DPDK ON CACHE BOOL "enable seastar DPDK")
 add_subdirectory(seastar)
 
 
