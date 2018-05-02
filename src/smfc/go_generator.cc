@@ -112,7 +112,7 @@ print_server(smf_printer &printer, const smf_service *service) {
   // gen service id
   printer.print(vars, "func (s *$ServiceName$) ServiceID() uint32 {\n");
   printer.indent();
-  printer.print(vars, "return \"$ServiceID$\"\n");
+  printer.print(vars, "return $ServiceID$\n");
   printer.outdent();
   printer.print("}\n");
 
