@@ -27,7 +27,7 @@ print_server_method(smf_printer &printer, const smf_method *method) {
   vars["MethodName"] = go_public_name(method->name());
 
   printer.print(vars, "func (s *$ServiceName$) $RawMethodName$(ctx "
-                      "context.Context, req []byte) ([]byte, error)  {\n");
+                      "context.Context, req []byte) ([]byte, error) {\n");
   printer.indent();
   printer.print(vars, "return s.$InterfaceName$.$MethodName$(ctx, "
                       "demo.GetRootAsRequest(req, 0))\n");
@@ -74,7 +74,7 @@ print_server(smf_printer &printer, const smf_service *service) {
   vars["InterfaceName"] = go_public_name(service->name());
   vars["ServiceName"] = vars["InterfaceName"] + "Service";
   vars["ServiceID"] = std::to_string(service->service_id());
-  printer.print("\n\n// Server\n\n");
+  printer.print("\n// Server\n");
 
   // gen the interface for service
   printer.print(vars, "type $InterfaceName$ interface {\n");
@@ -92,7 +92,7 @@ print_server(smf_printer &printer, const smf_service *service) {
   printer.indent();
   printer.print(vars, "$InterfaceName$\n");
   printer.outdent();
-  printer.print("}\n");
+  printer.print("}\n\n");
 
   // gen ctor
   printer.print(
@@ -139,7 +139,7 @@ print_client_method(smf_printer &printer, const smf_method *method) {
   // high level
   printer.print(vars,
     "func (s *$ClientName$) $MethodName$(ctx "
-    "context.Context, req []byte) (*$OutputType$, error)  {\n");
+    "context.Context, req []byte) (*$OutputType$, error) {\n");
   printer.indent();
   printer.print(vars, "res, err := s.$RawMethodName$(ctx, req)\n"
                       "if err != nil {\n");
@@ -153,10 +153,10 @@ print_client_method(smf_printer &printer, const smf_method *method) {
 
   // raw
   printer.print(vars, "func (s *$ClientName$) $RawMethodName$(ctx "
-                      "context.Context, req []byte) ([]byte, error)  {\n");
+                      "context.Context, req []byte) ([]byte, error) {\n");
   printer.indent();
   printer.print(
-    vars, "return s.Client.SendRecv(req, $ServiceID$ ^ $MethodID$)\n");
+    vars, "return s.Client.SendRecv(req, $ServiceID$^$MethodID$)\n");
   printer.outdent();
   printer.print("}\n");
 }
@@ -170,13 +170,13 @@ print_client(smf_printer &printer, const smf_service *service) {
   vars["ClientName"] = vars["InterfaceName"] + "Client";
   vars["ServiceID"] = std::to_string(service->service_id());
 
-  printer.print("\n\n// Client\n\n");
+  printer.print("\n// Client\n");
   // gen the client
   printer.print(vars, "type $ClientName$ struct {\n");
   printer.indent();
   printer.print(vars, "*smf.Client\n");
   printer.outdent();
-  printer.print("}\n");
+  printer.print("}\n\n");
 
   // gen ctor
   printer.print(vars, "func New$ClientName$(c *smf.Client) *$ClientName$ {\n");
@@ -219,13 +219,11 @@ go_generator::generate_header_services() {
   // server code
   for (auto &srv : services()) {
     print_server(printer_, srv.get());
-    printer_.print("\n");
   }
 
   // client code
   for (auto &srv : services()) {
     print_client(printer_, srv.get());
-    printer_.print("\n");
   }
 }
 

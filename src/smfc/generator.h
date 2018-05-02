@@ -6,6 +6,7 @@
 #include <experimental/optional>
 #include <string>
 
+#include <boost/filesystem.hpp>
 #include <flatbuffers/flatbuffers.h>
 
 #include "smf_printer.h"
@@ -67,6 +68,9 @@ class generator {
   virtual std::experimental::optional<std::string>
   save_conents_to_file() {
     auto outname = output_filename();
+    if (boost::filesystem::exists(outname)) {
+      boost::filesystem::remove(outname);
+    }
     if (!flatbuffers::SaveFile(outname.c_str(), printer_.contents(), false)) {
       return "Could not create filename: " + outname;
     }
