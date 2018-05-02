@@ -134,7 +134,7 @@ print_client_method(smf_printer &printer, const smf_method *method) {
   vars["ServiceID"] = std::to_string(method->service_id());
   vars["RawMethodName"] = "Raw" + go_public_name(method->name());
   vars["MethodName"] = go_public_name(method->name());
-  vars["OutputType"] = method->output_type_name(".");
+  vars["OutputType"] = method->output_type_name(language::go);
 
   // high level
   printer.print(vars,

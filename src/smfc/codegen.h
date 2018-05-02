@@ -10,9 +10,9 @@
 #include <flatbuffers/flatbuffers.h>
 #include <flatbuffers/idl.h>
 
-namespace smf_gen {
+#include "language.h"
 
-enum class language { none, cpp, go, all };
+namespace smf_gen {
 
 class codegen {
  public:

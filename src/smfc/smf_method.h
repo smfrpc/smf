@@ -2,15 +2,19 @@
 //
 #pragma once
 
-#include <boost/algorithm/string/join.hpp>
+#include <deque>
 
+#include <boost/algorithm/string/join.hpp>
 #include <flatbuffers/idl.h>
-#include "smfc/crc.h"
+
+#include "crc.h"
+#include "language.h"
 
 namespace smf_gen {
 class smf_method {
  public:
   enum Streaming { kNone, kClient, kServer, kBiDi };
+
   smf_method(const flatbuffers::RPCCall *method,
     std::string service_name,
     uint32_t service_id)
@@ -41,19 +45,30 @@ class smf_method {
   }
 
   std::string
-  type(const flatbuffers::StructDef &sd, std::string join_method_token) const {
-    std::vector<std::string> tmp = sd.defined_namespace->components;
-    tmp.push_back(sd.name);
-    return boost::algorithm::join(tmp, join_method_token);
+  type(const flatbuffers::StructDef &sd, language lang) const {
+    std::deque<std::string> tmp(sd.defined_namespace->components.begin(),
+      sd.defined_namespace->components.end());
+
+   tmp.push_back(sd.name);
+    switch (lang) {
+    case language::cpp:
+      return boost::algorithm::join(tmp, "::");
+    case language::go:
+      // for go we only want the last package and the name of method
+      for (auto i = 0u; i < tmp.size() - 2; ++i) { tmp.pop_front(); }
+      return boost::algorithm::join(tmp, ".");
+    default:
+      throw std::runtime_error("Unknown language for the method.h");
+    }
   }
 
   std::string
-  input_type_name(std::string join_method_token = "::") const {
-    return type(*method_->request, join_method_token);
+  input_type_name(language l = language::cpp) const {
+    return type(*method_->request, l);
   }
   std::string
-  output_type_name(std::string join_method_token = "::") const {
-    return type(*method_->response, join_method_token);
+  output_type_name(language l = language::cpp) const {
+    return type(*method_->response, l);
   }
 
  private:
