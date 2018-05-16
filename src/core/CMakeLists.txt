@@ -5,15 +5,6 @@ find_package(Boost COMPONENTS
   REQUIRED)
 find_package(PkgConfig REQUIRED)
 
-
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=auto -Wall -Werror -Wextra -Wformat")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wmissing-braces -Wparentheses -Wpointer-arith")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wformat-security -Wunused -Wno-unused-parameter")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wcast-align -Wno-missing-field-initializers")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wdelete-non-virtual-dtor -Wno-ignored-qualifiers")
-endif()
-
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.1)
     add_definitions(-DSMF_GCC_CONCEPTS=1)
@@ -70,7 +61,30 @@ target_include_directories(smf
   PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/zstd/lib
   PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/fastrange
   PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/xxHash
+  PUBLIC "${seastar_INCLUDE_DIRS}"
   )
+if(CMAKE_BUILD_TYPE MATCHES Release)
+  target_compile_options(smf PRIVATE -O3 -g)
+else()
+  target_compile_options(smf PRIVATE
+    -O0
+    -ggdb
+    -fdiagnostics-color=auto
+    -Wall
+    -Werror
+    -Wextra
+    -Wformat
+    -Wmissing-braces
+    -Wparentheses
+    -Wpointer-arith
+    -Wformat-security
+    -Wunused
+    -Wno-unused-parameter
+    -Wcast-align
+    -Wno-missing-field-initializers
+    -Wdelete-non-virtual-dtor
+    -Wno-ignored-qualifiers)
+endif()
 
 target_compile_definitions(smf
   PUBLIC -DXXH_PRIVATE_API)

@@ -49,7 +49,7 @@ class smf_method {
     std::deque<std::string> tmp(sd.defined_namespace->components.begin(),
       sd.defined_namespace->components.end());
 
-   tmp.push_back(sd.name);
+    tmp.push_back(sd.name);
     switch (lang) {
     case language::cpp:
       return boost::algorithm::join(tmp, "::");

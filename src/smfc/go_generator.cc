@@ -217,14 +217,10 @@ void
 go_generator::generate_header_services() {
   VLOG(1) << "Generating (" << services().size() << ") services";
   // server code
-  for (auto &srv : services()) {
-    print_server(printer_, srv.get());
-  }
+  for (auto &srv : services()) { print_server(printer_, srv.get()); }
 
   // client code
-  for (auto &srv : services()) {
-    print_client(printer_, srv.get());
-  }
+  for (auto &srv : services()) { print_client(printer_, srv.get()); }
 }
 
 

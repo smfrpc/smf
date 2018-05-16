@@ -4,8 +4,8 @@
 #pragma once
 #include <sstream>
 
-#include <boost/filesystem.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/filesystem.hpp>
 
 #include "generator.h"
 
