@@ -1,4 +1,5 @@
 # [smf - the fastest RPC in the West](http://senior7515.github.io/smf/) [![Travis-ci Build Status](https://travis-ci.org/senior7515/smf.svg?branch=master)](https://travis-ci.org/senior7515/smf)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fsenior7515%2Fsmf.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fsenior7515%2Fsmf?ref=badge_shield)
 
 
 **smf** is pronounced **/smɝf/**
@@ -52,3 +53,7 @@ make
 ctest -V
 ```
 That's about it! 
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fsenior7515%2Fsmf.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fsenior7515%2Fsmf?ref=badge_large)
