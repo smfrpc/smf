@@ -15,3 +15,6 @@ endif(SMF_ENABLE_BENCHMARK_TESTS)
 if(SMF_ENABLE_INTEGRATION_TESTS)
   add_subdirectory(integration_tests)
 endif(SMF_ENABLE_INTEGRATION_TESTS)
+
+# add go
+add_subdirectory(go)
