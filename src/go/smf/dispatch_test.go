@@ -2,9 +2,7 @@ package smf
 
 import (
 	"hash/crc32"
-	. "testing"
-
-	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestDispatch(t *T) {
@@ -24,9 +22,13 @@ func TestDispatch(t *T) {
 	/// ServiceID: 212494116 == crc32("SmfStorage")
 	/// MethodID:  1719559449 == crc32("Get:smf_gen::demo::Request:smf_gen::demo::Response")
 
-	assert.Equal(t, uint32(212494116), crc32str("SmfStorage"))
-	assert.Equal(t, uint32(1719559449), crc32str("Get:smf_gen::demo::Request:smf_gen::demo::Response"))
-	assert.Equal(t, 1719559449^212494116, 1792279101)
+	if uint32(212494116) != crc32str("SmfStorage") {
+		t.Fatal("Failed to compute crc32 for SmfStorage")
+	}
+	if uint32(1719559449) != crc32str("Get:smf_gen::demo::Request:smf_gen::demo::Response") {
+
+		t.Fatal("Failed to compute crc32 for Get:smf_gen::demo::Request:smf_gen::demo::Response")
+	}
 }
 
 func crc32str(s string) uint32 {
