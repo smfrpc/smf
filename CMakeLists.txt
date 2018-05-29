@@ -43,7 +43,7 @@ endif()
 option(SMF_BUILD_REGENERATE_RPC_FBS "regenerate the rpc.fbs file" OFF)
 option(SMF_BUILD_PROGRAMS "Build smf programs and demos" ON)
 option(SMF_BUILD_COMPILER "Control if smfc is built" ON)
-
+option(SMF_ENABLE_GO "Skips go building If OFF" ON)
 include(CMake/packaging.cmake)
 include(CMake/tests.cmake)
 
