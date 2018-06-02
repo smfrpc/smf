@@ -8,7 +8,7 @@ set(FLATBUFFERS_INSTALL OFF CACHE BOOL
 set(FLATBUFFERS_BUILD_FLATHASH OFF CACHE BOOL
   "Disable building flathash")
 add_subdirectory(flatbuffers)
-set(SEASTAR_ENABLE_TESTING OFF CACHE BOOL "disable seastar testing altogether")
+set(SEASTAR_ENABLE_TESTS OFF CACHE BOOL "disable seastar tests")
 add_subdirectory(seastar)
 
 

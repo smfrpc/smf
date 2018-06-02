@@ -5,10 +5,10 @@
 #include <algorithm>
 #include <type_traits>
 
+#include <bytell_hash_map.hpp>
 #include <core/distributed.hh>
 #include <core/metrics_registration.hh>
 #include <core/timer.hh>
-#include <flat_hash_map.hpp>
 #include <http/httpd.hh>
 
 #include "smf/histogram.h"
@@ -135,7 +135,7 @@ class rpc_server {
 
   // this is needed for shutdown procedures
   uint64_t connection_idx_{0};
-  ska::flat_hash_map<uint64_t, seastar::lw_shared_ptr<rpc_server_connection>>
+  ska::bytell_hash_map<uint64_t, seastar::lw_shared_ptr<rpc_server_connection>>
     open_connections_;
 
  private:

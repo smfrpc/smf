@@ -11,8 +11,8 @@ message(STATUS "SMF_ENABLE_BENCHMARK_TESTS=${SMF_ENABLE_BENCHMARK_TESTS}")
 
 function (smf_test)
   set(options INTEGRATION_TEST UNIT_TEST BENCHMARK_TEST)
-  set(oneValueArgs BINARY_NAME SOURCE_DIRECTORY)
-  set(multiValueArgs SOURCES LIBRARIES)
+  set(oneValueArgs BINARY_NAME SOURCE_DIRECTORY TIMEOUT)
+  set(multiValueArgs INCLUDES SOURCES LIBRARIES)
   cmake_parse_arguments(SMF_TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   if(SMF_TEST_INTEGRATION_TEST AND SMF_ENABLE_INTEGRATION_TESTS)
@@ -66,6 +66,15 @@ function (smf_test)
       --directory ${SMF_TEST_SOURCE_DIRECTORY}
       )
   endif()
+  if(SMF_TEST_TIMEOUT)
+    set_tests_properties(${SMF_TEST_BINARY_NAME}
+      PROPERTIES TIMEOUT ${SMF_TEST_TIMEOUT})
+  endif()
+
+
+  foreach(i ${SMF_TEST_INCLUDES})
+    target_include_directories(${SMF_TEST_BINARY_NAME} PUBLIC ${i})
+  endforeach()
 endfunction ()
 if(SMF_ENABLE_TESTS)
   add_custom_target(check
