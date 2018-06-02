@@ -24,8 +24,7 @@ matrix:
     - os: linux
       env: IMAGE=ubuntu:artful
     - os: linux
-      env: IMAGE=fedora:27 USE_NINJA=1
-    - os: linux
-      env: IMAGE=ubuntu:artful USE_NINJA=1
+      env: IMAGE=ubuntu:bionic
+
 
 script: travis_retry ci/one.sh
