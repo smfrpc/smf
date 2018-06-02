@@ -2,7 +2,7 @@ package smf
 
 import (
 	"hash/crc32"
-	"testing"
+	. "testing"
 )
 
 func TestDispatch(t *T) {
@@ -25,8 +25,7 @@ func TestDispatch(t *T) {
 	if uint32(212494116) != crc32str("SmfStorage") {
 		t.Fatal("Failed to compute crc32 for SmfStorage")
 	}
-	if uint32(1719559449) != crc32str("Get:smf_gen::demo::Request:smf_gen::demo::Response") {
-
+	if uint32(1719559449) != crc32str("Get:smf_gen::democd::Request:smf_gen::demo::Response") {
 		t.Fatal("Failed to compute crc32 for Get:smf_gen::demo::Request:smf_gen::demo::Response")
 	}
 }
