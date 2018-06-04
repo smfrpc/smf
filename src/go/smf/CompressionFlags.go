@@ -8,18 +8,17 @@ package smf
 /// have the payload be zlib compressed.
 ///
 const (
-	CompressionFlagsNone = 0
+	CompressionFlagsNone     = 0
 	CompressionFlagsDisabled = 1
 	/// brief uses zstandard 1.0
 	CompressionFlagsZstd = 2
-	/// lz4 is pending 
+	/// lz4 is pending
 	CompressionFlagsLz4 = 3
 )
 
 var EnumNamesCompressionFlags = map[int]string{
-	CompressionFlagsNone:"None",
-	CompressionFlagsDisabled:"Disabled",
-	CompressionFlagsZstd:"Zstd",
-	CompressionFlagsLz4:"Lz4",
+	CompressionFlagsNone:     "None",
+	CompressionFlagsDisabled: "Disabled",
+	CompressionFlagsZstd:     "Zstd",
+	CompressionFlagsLz4:      "Lz4",
 }
-
