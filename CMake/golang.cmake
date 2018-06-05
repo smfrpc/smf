@@ -7,7 +7,7 @@ file(MAKE_DIRECTORY
   )
 set(symlink_name "godep_symlink_${GOPATH}")
 string(REGEX REPLACE "/" "_" symlink_name ${symlink_name})
-add_custom_target("${symlink_name}" ALL
+add_custom_target("${symlink_name}"
   COMMAND ${CMAKE_COMMAND}
   -E create_symlink "${PROJECT_SOURCE_DIR}" "${SMF_GO_SOURCE}/smf")
 
@@ -25,7 +25,7 @@ endif()
 function(go_build_lib)
   set(options VERBOSE)
   set(oneValueArgs TARGET_NAME FOLDER)
-  set(multiValueArgs INCLUDE_DIRS GO_GET_TARGETS)
+  set(multiValueArgs INCLUDE_DIRS)
   cmake_parse_arguments(GO_BUILD "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   if(NOT SMF_ENABLE_GO)
@@ -36,18 +36,10 @@ function(go_build_lib)
     return()
   endif()
 
-  set(GO_GET_DEPS)
-
-  foreach(GET_TARGET ${GO_BUILD_GO_GET_TARGETS})
-    string(SHA1 DEP_HASH "${GET_TARGET}")
-    set(DEP_NAME "${GO_BUILD_TARGET_NAME}_${DEP_HASH}")
-    add_custom_target(${DEP_NAME}
-      env GOPATH=${GOPATH} "${GOPATH}/bin/dep ensure ${GET_TARGET}"
-      WORKING_DIRECTORY ${GOPATH}
-      )
-    list(APPEND GO_GET_DEPS ${DEP_NAME})
-  endforeach()
-
+  add_custom_target(GO_GET_DEPS
+    env GOPATH=${GOPATH} "${GOPATH}/bin/dep ensure"
+    WORKING_DIRECTORY ${GOPATH}
+    )
   add_custom_target(${GO_BUILD_TARGET_NAME})
 
   set(clean_subdir ${GO_BUILD_FOLDER})
@@ -63,7 +55,7 @@ function(go_build_lib)
     -o "${GOPATH}/pkg/linux_amd64/${GO_BUILD_TARGET_NAME}/${GO_BUILD_TARGET_NAME}.a"
     "./..."
     WORKING_DIRECTORY "${actual_source_directory}"
-    DEPENDS ${GO_GET_DEPS})
+    DEPENDS ${GO_GET_DEPS} ${symlink_name})
 
   add_custom_target(${GO_BUILD_TARGET_NAME}_all ALL DEPENDS ${GO_BUILD_TARGET_NAME})
 endfunction()
