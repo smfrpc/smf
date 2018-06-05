@@ -25,13 +25,12 @@ class codegen {
   ~codegen() = default;
 
   status gen();
+  status parse();
+  std::size_t service_count() const;
 
   const std::string input_filename;
   const std::string output_dir;
   const std::vector<language> languages;
-
- private:
-  status parse();
 
  private:
   std::vector<std::string> include_dirs_;

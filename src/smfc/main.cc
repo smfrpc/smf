@@ -3,12 +3,12 @@
 #include <iostream>
 #include <vector>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
 #include <flatbuffers/flatbuffers.h>
 #include <flatbuffers/util.h>
 #include <gflags/gflags.h>
 #include <glog/logging.h>
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
 
 #include "smfc/codegen.h"
 
@@ -78,10 +78,20 @@ main(int argc, char **argv, char **env) {
     std::make_unique<smf_gen::codegen>(FLAGS_filename, FLAGS_output_path,
       split_coma(FLAGS_include_dirs), split_langs(FLAGS_language));
   // generate code!
-  auto status = codegenerator->gen();
+  auto status = codegenerator->parse();
+  if (status) {
+    LOG(ERROR) << "Failed to parse file: " << status.value();
+    std::exit(1);
+  }
+  if (codegenerator->service_count() == 0) {
+    LOG(INFO) << "No services need to be generated";
+    return 0;
+  }
+  status = codegenerator->gen();
   if (status) {
     LOG(ERROR) << "Errors generating code: " << *status;
     std::exit(1);
   }
   VLOG(1) << "Success";
+  return 0;
 }

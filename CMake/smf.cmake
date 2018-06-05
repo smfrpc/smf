@@ -14,11 +14,13 @@ function(smfc_gen)
   # need to know the language we are generating
   set(smfc_language)
   set(flatc_language)
-  if(CPP)
+  if(SMFC_GEN_CPP)
     set(smfc_language "--language=cpp")
+    set(flatc_language "--cpp")
   endif()
-  if(GOLANG)
+  if(SMFC_GEN_GOLANG)
     set(smfc_language "--language=go")
+    set(flatc_language "--go")
   endif()
   # needed for the 'return' value
   set(SMF_GEN_OUTPUTS)
@@ -45,11 +47,11 @@ function(smfc_gen)
     # flatc
     add_custom_command(OUTPUT ${FLATC_OUTPUT}
       COMMAND flatc
-      ARGS --gen-name-strings --gen-object-api --cpp
+      ARGS --gen-name-strings --gen-object-api "${flatc_language}"
            --keep-prefix --json --reflect-names --defaults-json
            --gen-mutable --cpp-str-type 'seastar::sstring'
-           ${flatc_generated_includes}
-           -o "${SMFC_GEN_OUTPUT_DIRECTORY}/" ${FILE}
+           "${flatc_generated_includes}"
+           -o "${SMFC_GEN_OUTPUT_DIRECTORY}/" "${FILE}"
       COMMENT "Building C++ header for ${FILE}"
       DEPENDS flatc
       DEPENDS ${FILE}
@@ -58,9 +60,9 @@ function(smfc_gen)
     add_custom_command(OUTPUT ${SMF_GEN_OUTPUT}
       COMMAND smfc
       ARGS --logtostderr --filename ${FILE}
-           ${smfc_language}
-           ${smfc_generated_includes}
-           --output_path=${SMFC_GEN_OUTPUT_DIRECTORY}
+           "${smfc_language}"
+           "${smfc_generated_includes}"
+           --output_path="${SMFC_GEN_OUTPUT_DIRECTORY}"
       COMMENT "Generating smf rpc stubs for ${FILE}"
       DEPENDS smfc
       DEPENDS ${FILE}
