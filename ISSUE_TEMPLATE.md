@@ -2,14 +2,25 @@
 
 - [ ] operating system
 - [ ] git hash
-- [ ] dpdk 
-- [ ] libevent
+- [ ] compiler
 
+## Language
 
-Which subproject (rpc, filesystem)?
+- [ ] C++
+- [ ] Go
+- [ ] Java
+
+## Iff C++
+- [ ] using dpdk 
+- [ ] using native TCP
+- [ ] epoll networking
+
 
 
 ----
 
 
-# Details, Logs, core dump logs, debugger logs, etc.
+# Details
+### Logs, core dumps, debugger logs, etc.
+
+### How to reproduce. Be as detailed as you can.
