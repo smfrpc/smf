@@ -56,28 +56,20 @@ to get started.
 ## Getting started
 
 
-Build Seastar
-
 ```bash
-git clone https://github.com/scylladb/seastar.git
-cd seastar
-git submodule update --init --recursive
-./configure 
-ninja
-```
-
-Build smf
-
-```bash
-git clone https://github.com/senior7515/smf
+git clone https://github.com/senior7515/smf --recursive
 cd smf
-git submodule update --init --recursive
+
+# alternatively if you didn't clone recursively
+#
+# git submodule update --init --recursive
+#
+
 mkdir build
+
 cd build
-cmake -DSEASTAR_DIR=/path/to/seastar ..
+cmake ..
 make 
 
-# to run test do 
-ctest -V
 ```
 
