@@ -19,9 +19,9 @@
 // templates
 #include "integration_tests/demo_service.smf.fb.h"
 
-class storage_service : public smf_gen::demo::SmfStorage {
-  virtual seastar::future<smf::rpc_typed_envelope<smf_gen::demo::Response>>
-  Get(smf::rpc_recv_typed_context<smf_gen::demo::Request> &&rec) final {
+class storage_service : public demo::SmfStorage {
+  virtual seastar::future<smf::rpc_typed_envelope<demo::Response>>
+  Get(smf::rpc_recv_typed_context<demo::Request> &&rec) final {
     LOG_THROW("SHOULD NOT REACH THIS W/ A TIMEOUT");
   }
 };

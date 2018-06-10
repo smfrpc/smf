@@ -26,3 +26,7 @@ install(TARGETS
   demo_server
   demo_client
   DESTINATION bin)
+
+if(SMF_ENABLE_GO)
+  add_subdirectory(go)
+endif()

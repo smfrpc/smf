@@ -16,7 +16,7 @@
 // templates
 #include "demo_service.smf.fb.h"
 
-using client_t = smf_gen::demo::SmfStorageClient;
+using client_t = demo::SmfStorageClient;
 using load_gen_t = smf::load_generator<client_t>;
 static const char *kPayload1Kbytes =
   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -59,7 +59,7 @@ struct method_callback {
 struct generator {
   smf::rpc_envelope
   operator()(const boost::program_options::variables_map &cfg) {
-    smf::rpc_typed_envelope<smf_gen::demo::Request> req;
+    smf::rpc_typed_envelope<demo::Request> req;
     req.data->name = kPayload1Kbytes;
     return req.serialize_data();
   }

@@ -16,17 +16,17 @@
 
 #include "demo_service.smf.fb.h"
 
-class storage_service : public smf_gen::demo::SmfStorage {
-  virtual seastar::future<smf::rpc_typed_envelope<smf_gen::demo::Response>>
-  Get(smf::rpc_recv_typed_context<smf_gen::demo::Request> &&rec) final {
-    smf::rpc_typed_envelope<smf_gen::demo::Response> data;
+class storage_service : public demo::SmfStorage {
+  virtual seastar::future<smf::rpc_typed_envelope<demo::Response>>
+  Get(smf::rpc_recv_typed_context<demo::Request> &&rec) final {
+    smf::rpc_typed_envelope<demo::Response> data;
 
     // return the same payload
     if (rec) { data.data->name = rec->name()->c_str(); }
 
     data.envelope.set_status(200);
-    return seastar::make_ready_future<
-      smf::rpc_typed_envelope<smf_gen::demo::Response>>(std::move(data));
+    return seastar::make_ready_future<smf::rpc_typed_envelope<demo::Response>>(
+      std::move(data));
   }
 };
 
@@ -78,7 +78,7 @@ main(int args, char **argv, char **env) {
 
     return rpc.start(args)
       .then([&rpc] {
-        LOG_INFO("Registering smf_gen::demo::storage_service");
+        LOG_INFO("Registering demo::storage_service");
         return rpc.invoke_on_all(
           &smf::rpc_server::register_service<storage_service>);
       })

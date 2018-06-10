@@ -50,7 +50,7 @@ static const char *kPoem = "How do I love thee? Let me count the ways."
                            "Smiles, tears, of all my life; and, if God choose,"
                            "I shall but love thee better after death.";
 
-using client_t = smf_gen::demo::SmfStorageClient;
+using client_t = demo::SmfStorageClient;
 using load_gen_t = smf::load_generator<client_t>;
 
 struct method_callback {
@@ -65,20 +65,20 @@ struct method_callback {
 struct generator {
   smf::rpc_envelope
   operator()(const boost::program_options::variables_map &cfg) {
-    smf::rpc_typed_envelope<smf_gen::demo::Request> req;
+    smf::rpc_typed_envelope<demo::Request> req;
     req.data->name = kPoem;
     return req.serialize_data();
   }
 };
 
 
-class storage_service : public smf_gen::demo::SmfStorage {
-  virtual seastar::future<smf::rpc_typed_envelope<smf_gen::demo::Response>>
-  Get(smf::rpc_recv_typed_context<smf_gen::demo::Request> &&rec) final {
-    smf::rpc_typed_envelope<smf_gen::demo::Response> data;
+class storage_service : public demo::SmfStorage {
+  virtual seastar::future<smf::rpc_typed_envelope<demo::Response>>
+  Get(smf::rpc_recv_typed_context<demo::Request> &&rec) final {
+    smf::rpc_typed_envelope<demo::Response> data;
     data.envelope.set_status(200);
-    return seastar::make_ready_future<
-      smf::rpc_typed_envelope<smf_gen::demo::Response>>(std::move(data));
+    return seastar::make_ready_future<smf::rpc_typed_envelope<demo::Response>>(
+      std::move(data));
   }
 };
 
@@ -139,7 +139,7 @@ main(int args, char **argv, char **env) {
 
     return rpc.start(args)
       .then([&rpc] {
-        LOG_INFO("Registering smf_gen::demo::storage_service");
+        LOG_INFO("Registering demo::storage_service");
         return rpc.invoke_on_all(
           &smf::rpc_server::register_service<storage_service>);
       })

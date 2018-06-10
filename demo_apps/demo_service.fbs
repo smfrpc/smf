@@ -1,7 +1,7 @@
 // Copyright 2017 Alexander Gallego
 //
 
-namespace smf_gen.demo;
+namespace demo;
 
 table Request {
   name: string;
