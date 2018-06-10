@@ -5,8 +5,8 @@
 
 #include <iostream>
 
-#include <boost/filesystem.hpp>
 #include <glog/logging.h>
+#include <boost/filesystem.hpp>
 
 #include "cpp_generator.h"
 #include "go_generator.h"
@@ -34,6 +34,16 @@ codegen::codegen(std::string ifname,
         [this](auto &s) { return s == input_filename; })) {
     include_dirs_.push_back(flatbuffers::StripFileName(input_filename));
   }
+}
+
+
+std::size_t
+codegen::service_count() const {
+  if (!parsed_) {
+    LOG(ERROR) << "Generator not parsed, please call ::parse() first";
+    return 0;
+  }
+  return parser_->services_.vec.size();
 }
 
 std::experimental::optional<std::string>
