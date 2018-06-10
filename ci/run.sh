@@ -3,8 +3,7 @@
 # Copyright 2018 SMF Authors
 #
 
-set -e
-set -x
+set -evx
 
 THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR=${THIS_DIR}/../
