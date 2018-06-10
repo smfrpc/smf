@@ -28,8 +28,7 @@ function(smfc_gen)
   # gen include dirs for each
   if(SMFC_GEN_INCLUDE_DIRS)
     foreach(d ${SMFC_GEN_INCLUDE_DIRS})
-      set(flatc_generated_includes
-          -I ${d} ${flatc_generated_includes})
+      list(APPEND flatc_generated_includes -I ${d})
     endforeach()
     string(REGEX REPLACE ";" ","
         smfc_generated_includes ${SMFC_GEN_INCLUDE_DIRS})
@@ -47,11 +46,11 @@ function(smfc_gen)
     # flatc
     add_custom_command(OUTPUT ${FLATC_OUTPUT}
       COMMAND flatc
-      ARGS --gen-name-strings --gen-object-api "${flatc_language}"
-           --keep-prefix --json --reflect-names --defaults-json
-           --gen-mutable --cpp-str-type 'seastar::sstring'
-           "${flatc_generated_includes}"
-           -o "${SMFC_GEN_OUTPUT_DIRECTORY}/" "${FILE}"
+      ARGS --gen-name-strings --gen-object-api ${flatc_language}
+      ARGS ${flatc_generated_includes}
+      ARGS --keep-prefix --json --reflect-names --defaults-json
+      ARGS --gen-mutable --cpp-str-type 'seastar::sstring'
+      ARGS -o "${SMFC_GEN_OUTPUT_DIRECTORY}/" "${FILE}"
       COMMENT "Building C++ header for ${FILE}"
       DEPENDS flatc
       DEPENDS ${FILE}
@@ -60,9 +59,9 @@ function(smfc_gen)
     add_custom_command(OUTPUT ${SMF_GEN_OUTPUT}
       COMMAND smfc
       ARGS --logtostderr --filename ${FILE}
-           "${smfc_language}"
-           "${smfc_generated_includes}"
-           --output_path="${SMFC_GEN_OUTPUT_DIRECTORY}"
+      ARGS "${smfc_language}"
+      ARGS "${smfc_generated_includes}"
+      ARGS --output_path="${SMFC_GEN_OUTPUT_DIRECTORY}"
       COMMENT "Generating smf rpc stubs for ${FILE}"
       DEPENDS smfc
       DEPENDS ${FILE}
