@@ -31,9 +31,14 @@ class zstd_codec : public codec {
   zstd_codec(codec_type type, compression_level level) : codec(type, level) {}
 
   virtual seastar::temporary_buffer<char>
-  uncompress(const seastar::temporary_buffer<char> &data) {
-    auto zstd_size = ZSTD_findDecompressedSize(
-      static_cast<const void *>(data.get()), data.size());
+  uncompress(const seastar::temporary_buffer<char> &data) final {
+    return uncompress(data.get(), data.size());
+  }
+
+  virtual seastar::temporary_buffer<char>
+  uncompress(const char *data, std::size_t sz) final {
+    auto zstd_size =
+      ZSTD_findDecompressedSize(static_cast<const void *>(data), sz);
 
     LOG_THROW_IF(zstd_size == ZSTD_CONTENTSIZE_ERROR,
       "Cannot decompress. Not compressed by zstd");
@@ -44,7 +49,7 @@ class zstd_codec : public codec {
 
     auto size_decompressed =
       ZSTD_decompress(static_cast<void *>(new_body.get_write()), zstd_size,
-        static_cast<const void *>(data.get()), data.size());
+        static_cast<const void *>(data), sz);
 
     LOG_THROW_IF(zstd_size != size_decompressed,
       "zstd decompression failed. Size expected: {}, decompressed size: {}",
@@ -55,13 +60,13 @@ class zstd_codec : public codec {
 
 
   virtual seastar::temporary_buffer<char>
-  compress(const seastar::temporary_buffer<char> &data) {
+  compress(const seastar::temporary_buffer<char> &data) final {
     return compress(data.get(), data.size());
   }
 
   virtual seastar::temporary_buffer<char>
-  compress(const char *data, size_t size) {
-    auto const body_size = ZSTD_compressBound(size);
+  compress(const char *data, std::size_t sz) final {
+    auto const body_size = ZSTD_compressBound(sz);
 
     seastar::temporary_buffer<char> buf(body_size);
 
@@ -70,8 +75,8 @@ class zstd_codec : public codec {
     const void *src = reinterpret_cast<const void *>(data);
 
     // create compressed buffers
-    auto zstd_compressed_size = ZSTD_compress(
-      dst, buf.size(), src, size, 3 /*default compression level*/);
+    auto zstd_compressed_size =
+      ZSTD_compress(dst, buf.size(), src, sz, 3 /*default compression level*/);
     // check erros
     auto zstd_err = ZSTD_isError(zstd_compressed_size);
     LOG_THROW_IF(zstd_err != 0,
@@ -95,12 +100,12 @@ class lz4_fast_codec : public codec {
 
 
   virtual seastar::temporary_buffer<char>
-  compress(const seastar::temporary_buffer<char> &data) {
+  compress(const seastar::temporary_buffer<char> &data) final {
     return compress(data.get(), data.size());
   }
 
   virtual seastar::temporary_buffer<char>
-  compress(const char *data, size_t size) {
+  compress(const char *data, std::size_t size) final {
     const int max_dst_size = LZ4_compressBound(size);
 
     seastar::temporary_buffer<char> buf(max_dst_size + 4);
@@ -124,21 +129,25 @@ class lz4_fast_codec : public codec {
     return buf;
   }
 
+  virtual seastar::temporary_buffer<char>
+  uncompress(const seastar::temporary_buffer<char> &data) final {
+    return uncompress(data.get(), data.size());
+  }
 
   virtual seastar::temporary_buffer<char>
-  uncompress(const seastar::temporary_buffer<char> &data) {
-    uint32_t orig = seastar::read_le<uint32_t>(data.get());
+  uncompress(const char *data, std::size_t sz) final {
+    uint32_t orig = seastar::read_le<uint32_t>(data);
 
     seastar::temporary_buffer<char> buf(orig);
 
     const int decompressed_size =
-      LZ4_decompress_safe(data.get() + 4 /*src*/, buf.get_write() /*dest*/,
-        data.size() - 4 /*compressed size*/, orig /*max decompressed size*/);
+      LZ4_decompress_safe(data + 4 /*src*/, buf.get_write() /*dest*/,
+        sz - 4 /*compressed size*/, orig /*max decompressed size*/);
     LOG_THROW_IF(decompressed_size < 0,
       "A negative result from LZ4_decompress_safe indicates a "
       "failure trying to decompress the data.  See exit code "
       "{} for value returned. Expected original size: {}, compressed size: {}",
-      decompressed_size, orig, data.size() - 4);
+      decompressed_size, orig, sz - 4);
     LOG_THROW_IF(decompressed_size == 0,
       "I'm not sure this function can ever return 0.  "
       "Documentation in lz4.h doesn't indicate so.");
