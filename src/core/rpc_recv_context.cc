@@ -21,13 +21,13 @@ operator<<(ostream &o, const smf::rpc::header &h) {
 namespace smf {
 
 rpc_recv_context::rpc_recv_context(
-  rpc::header hdr, seastar::temporary_buffer<char> body)
-  : header(hdr), payload(std::move(body)) {
+  seastar::socket_address address, rpc::header hdr, seastar::temporary_buffer<char> body)
+  : remote_address(address), header(hdr), payload(std::move(body)) {
   assert(header.size() == payload.size());
 }
 
 rpc_recv_context::rpc_recv_context(rpc_recv_context &&o) noexcept
-  : header(o.header), payload(std::move(o.payload)) {}
+  : remote_address(std::move(o.remote_address)), header(o.header), payload(std::move(o.payload)) {}
 
 rpc_recv_context::~rpc_recv_context() {}
 
@@ -73,7 +73,7 @@ seastar::future<stdx::optional<rpc_recv_context>>
 rpc_recv_context::parse_payload(rpc_connection *conn, rpc::header hdr) {
   using ret_type = stdx::optional<rpc_recv_context>;
   return read_payload(conn, hdr.size())
-    .then([hdr](seastar::temporary_buffer<char> body) mutable {
+    .then([conn, hdr](seastar::temporary_buffer<char> body) mutable {
       if (hdr.size() != body.size()) {
         LOG_ERROR("Read incorrect number of bytes `{}`, expected header: `{}`",
           body.size(), hdr);
@@ -96,7 +96,7 @@ rpc_recv_context::parse_payload(rpc_connection *conn, rpc::header hdr) {
         return seastar::make_ready_future<ret_type>(stdx::nullopt);
       }
 
-      rpc_recv_context ctx(hdr, std::move(body));
+      rpc_recv_context ctx(conn->remote_address, hdr, std::move(body));
       return seastar::make_ready_future<ret_type>(
         stdx::optional<rpc_recv_context>(std::move(ctx)));
     });
