@@ -15,13 +15,16 @@ namespace smf {
 class rpc_connection {
  public:
   explicit rpc_connection(seastar::connected_socket fd,
+    seastar::socket_address address,
     seastar::lw_shared_ptr<rpc_connection_limits> conn_limits = nullptr)
     : socket(std::move(fd))
+    , remote_address(address)
     , istream(socket.input())
     , ostream(socket.output())
     , limits(conn_limits) {}
 
   seastar::connected_socket socket;
+  const seastar::socket_address remote_address;
   seastar::input_stream<char> istream;
   seastar::output_stream<char> ostream;
   seastar::lw_shared_ptr<rpc_connection_limits> limits;

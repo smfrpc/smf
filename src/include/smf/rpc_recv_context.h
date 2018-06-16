@@ -5,6 +5,7 @@
 #include <experimental/optional>
 // seastar
 #include <core/iostream.hh>
+#include <net/api.hh>
 // smf
 #include "smf/macros.h"
 #include "smf/rpc_connection.h"
@@ -26,7 +27,7 @@ struct rpc_recv_context {
   static seastar::future<stdx::optional<rpc_recv_context>> parse_payload(
     rpc_connection *conn, rpc::header hdr);
 
-  rpc_recv_context(rpc::header hdr, seastar::temporary_buffer<char> body);
+  rpc_recv_context(const seastar::socket_address remote_address, rpc::header hdr, seastar::temporary_buffer<char> body);
   rpc_recv_context(rpc_recv_context &&o) noexcept;
   ~rpc_recv_context();
 
@@ -42,6 +43,7 @@ struct rpc_recv_context {
     return header.session();
   }
 
+  const seastar::socket_address remote_address;
   rpc::header header;
   seastar::temporary_buffer<char> payload;
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_recv_context);

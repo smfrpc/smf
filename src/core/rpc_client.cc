@@ -111,8 +111,8 @@ rpc_client::connect() {
     .net()
     .connect(
       seastar::make_ipv4_address(server_addr), local, seastar::transport::TCP)
-    .then([this](seastar::connected_socket fd) mutable {
-      conn = seastar::make_lw_shared<rpc_connection>(std::move(fd), limits);
+    .then([this, local](seastar::connected_socket fd) mutable {
+      conn = seastar::make_lw_shared<rpc_connection>(std::move(fd), local, limits);
       do_reads();
       return seastar::make_ready_future<>();
     });

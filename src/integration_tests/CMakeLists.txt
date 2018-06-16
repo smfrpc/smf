@@ -27,3 +27,10 @@ smf_test(
   SOURCE_DIRECTORY ${IT_ROOT}/rpc_recv_timeout
   LIBRARIES smf
   )
+smf_test(
+  INTEGRATION_TEST
+  BINARY_NAME rpc_multiple_remote_addrs
+  SOURCES ${IT_ROOT}/rpc_multiple_remote_addrs/main.cc ${demo_test_fbs}
+  SOURCE_DIRECTORY ${IT_ROOT}/rpc_multiple_remote_addrs
+  LIBRARIES smf
+  )

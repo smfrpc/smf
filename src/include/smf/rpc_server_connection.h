@@ -71,8 +71,7 @@ class rpc_server_connection : public rpc_connection {
     uint64_t connection_id,
     rpc_server_connection_options opts = rpc_server_connection_options(
       false, false))
-    : rpc_connection(std::move(sock), conn_limits)
-    , remote_address(address)
+    : rpc_connection(std::move(sock), std::move(address), conn_limits)
     , id(connection_id)
     , stats(_stats)
     , opts_(std::move(opts)) {
@@ -87,7 +86,6 @@ class rpc_server_connection : public rpc_connection {
 
   ~rpc_server_connection() { stats->active_connections--; }
 
-  const seastar::socket_address remote_address;
   const uint64_t id;
   seastar::lw_shared_ptr<rpc_server_stats> stats;
   seastar::semaphore serialize_writes{1};
