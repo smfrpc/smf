@@ -4,6 +4,14 @@ smfc_gen(
   OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   SOURCES ${PROJECT_SOURCE_DIR}/demo_apps/demo_service.fbs)
 
+smfc_gen(
+    CPP
+    TARGET_NAME bad_msg_fbs
+    OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/bad_msg.fbs
+        ${CMAKE_CURRENT_SOURCE_DIR}/bad_svc.fbs)
+
 set(IT_ROOT ${PROJECT_SOURCE_DIR}/src/integration_tests)
 
 smf_test(
@@ -32,5 +40,12 @@ smf_test(
   BINARY_NAME rpc_multiple_remote_addrs
   SOURCES ${IT_ROOT}/rpc_multiple_remote_addrs/main.cc ${demo_test_fbs}
   SOURCE_DIRECTORY ${IT_ROOT}/rpc_multiple_remote_addrs
+  LIBRARIES smf
+  )
+smf_test(
+  INTEGRATION_TEST
+  BINARY_NAME rpc_bad_msg_t
+  SOURCES ${IT_ROOT}/rpc_bad_msg_t/main.cc ${bad_msg_fbs}
+  SOURCE_DIRECTORY ${IT_ROOT}/rpc_bad_msg_t
   LIBRARIES smf
   )

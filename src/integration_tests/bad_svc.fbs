@@ -1,0 +1,7 @@
+include "bad_msg.fbs";
+
+namespace bad.svc;
+
+rpc_service bad_svc {
+  go(bad.msg.test):bad.msg.ack;
+}
