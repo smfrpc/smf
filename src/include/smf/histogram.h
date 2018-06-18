@@ -33,7 +33,7 @@ struct hist_t {
 
   ~hist_t() {
     if (hist) {
-      free(hist);
+      hdr_close(hist);
       hist = nullptr;
     }
   }
