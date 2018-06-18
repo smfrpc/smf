@@ -40,9 +40,8 @@ ipv4_addr_to_ip_str(seastar::ipv4_addr addr) {
 struct client_info {
   explicit client_info(seastar::ipv4_addr ip)
     : client(smf_gen::demo::SmfStorageClient::make_shared(ip)), ip(ip.ip){};
-  client_info(client_info &&o) noexcept
-    : client(std::move(o.client)), ip(o.ip){};
-  ~client_info(){};
+  client_info(client_info &&o) noexcept : client(o.client), ip(o.ip){};
+  ~client_info() = default;
   seastar::shared_ptr<smf_gen::demo::SmfStorageClient> client = nullptr;
   uint32_t ip = 0;
   SMF_DISALLOW_COPY_AND_ASSIGN(client_info);
@@ -50,19 +49,23 @@ struct client_info {
 
 struct ifaddrs_t {
   ifaddrs_t() {
-    LOG_THROW_IF(getifaddrs(&ifaddr_) == -1, "failed to getifaddrs()");
+    LOG_THROW_IF(getifaddrs(&addr) == -1, "failed to getifaddrs()");
   }
-  ~ifaddrs_t() { freeifaddrs(ifaddr_); }
-  struct ifaddrs *ifaddr_ = nullptr;
+  ifaddrs_t(ifaddrs_t &&o) noexcept : addr(std::move(o.addr)) {}
+  ~ifaddrs_t() {
+    if (addr) { freeifaddrs(addr); }
+  }
+  struct ifaddrs *addr = nullptr;
+  SMF_DISALLOW_COPY_AND_ASSIGN(ifaddrs_t);
 };
 
-class clients {
+class client_dispatcher {
  public:
-  explicit clients(uint16_t port) {
-    auto ifaddr = ifaddrs_t();
-    struct ifaddrs *ifa = clients::next_valid_interface(ifaddr.ifaddr_);
+  explicit client_dispatcher(uint16_t port) {
+    ifaddrs_t ifaddr;
+    struct ifaddrs *ifa = client_dispatcher::next_valid_interface(ifaddr.addr);
     for (int i = 0; i < kMaxClients; ifa = ifa->ifa_next, i++) {
-      ifa = THROW_IFNULL(clients::next_valid_interface(ifa));
+      ifa = THROW_IFNULL(client_dispatcher::next_valid_interface(ifa));
       auto sa_in = reinterpret_cast<struct sockaddr_in *>(ifa->ifa_addr);
       auto ip = ntohl(sa_in->sin_addr.s_addr);
       clients_.push_back(client_info(seastar::make_ipv4_address(ip, port)));
@@ -86,10 +89,10 @@ class clients {
                     ifa->ifa_flags & IFF_RUNNING)) {
       ifa = ifa->ifa_next;
     }
-    DLOG_DEBUG("Next valid interface {}", ifa->ifa_name);
+    LOG_INFO("Next valid interface {}", ifa->ifa_name);
     return ifa;
   }
-  std::vector<struct client_info> clients_;
+  std::vector<client_info> clients_;
 };
 
 class storage_service : public smf_gen::demo::SmfStorage {
@@ -108,64 +111,71 @@ class storage_service : public smf_gen::demo::SmfStorage {
 
 int
 main(int args, char **argv, char **env) {
-  DLOG_DEBUG("About to start the RPC test");
+  SET_LOG_LEVEL(seastar::log_level::trace);
+  std::cout.setf(std::ios::unitbuf);
   seastar::distributed<smf::rpc_server> rpc;
-
   seastar::app_template app;
 
-  smf::random rand;
-  uint16_t random_port =
-    smf::non_root_port(rand.next() % std::numeric_limits<uint16_t>::max());
+  try {
+    return app.run(args, argv, [&]() -> seastar::future<int> {
+      DLOG_DEBUG("Setting up at_exit hooks");
+      seastar::engine().at_exit([&] { return rpc.stop(); });
 
-  return app.run(args, argv, [&]() -> seastar::future<int> {
-    DLOG_DEBUG("Setting up at_exit hooks");
-    seastar::engine().at_exit([&] { return rpc.stop(); });
+      smf::random r;
+      const uint16_t random_port =
+        smf::non_root_port(r.next() % std::numeric_limits<uint16_t>::max());
 
-    smf::random r;
-    smf::rpc_server_args sargs;
-    sargs.ip = "0.0.0.0";
-    sargs.rpc_port = random_port;
-    sargs.http_port =
-      smf::non_root_port(rand.next() % std::numeric_limits<uint16_t>::max());
-    sargs.flags |= smf::rpc_server_flags::rpc_server_flags_disable_http_server;
-    return rpc.start(sargs)
-      .then([&rpc] {
-        return rpc.invoke_on_all(
-          &smf::rpc_server::register_service<storage_service>);
-      })
-      .then([&rpc] {
-        DLOG_DEBUG("Invoking rpc start on all cores");
-        return rpc.invoke_on_all(&smf::rpc_server::start);
-      })
-      .then([random_port] {
-        return seastar::do_with(clients(random_port), [](auto &clients) {
-          return seastar::do_for_each(clients, [](auto &client) {
-            DLOG_DEBUG("Connecting client to {}", client.client->server_addr);
-            return client.client->connect()
-              .then([&client] {
-                DLOG_DEBUG("Connected to {}", client.client->server_addr);
-                smf::rpc_typed_envelope<smf_gen::demo::Request> req;
-                req.data->name =
-                  ipv4_addr_to_ip_str(client.client->server_addr);
-                return client.client->Get(req.serialize_data());
-              })
-              .then([&client](auto reply) {
-                std::string name = reply->name()->str();
-                DLOG_DEBUG("Got reply {}", name);
-                if (seastar::to_sstring(name) !=
-                    ipv4_addr_to_ip_str(client.client->server_addr)) {
-                  LOG_THROW("Server did not see our IP {} != {}", name,
-                    client.client->server_addr);
-                }
-                return seastar::make_ready_future<>();
-              })
-              .then([&client] { return client.client->stop(); });
-          });
+      smf::rpc_server_args sargs;
+      sargs.ip = "0.0.0.0";
+      sargs.rpc_port = random_port;
+      sargs.flags |=
+        smf::rpc_server_flags::rpc_server_flags_disable_http_server;
+      return rpc.start(sargs)
+        .then([&rpc] {
+          return rpc.invoke_on_all(
+            &smf::rpc_server::register_service<storage_service>);
+        })
+        .then([&rpc] {
+          DLOG_DEBUG("Invoking rpc start on all cores");
+          return rpc.invoke_on_all(&smf::rpc_server::start);
+        })
+        .then([random_port] {
+          return seastar::do_with(
+            client_dispatcher(random_port), [](auto &clients) {
+              return seastar::do_for_each(clients, [](auto &client) {
+                LOG_INFO("Connecting client to {}", client.client->server_addr);
+                return client.client->connect()
+                  .then([&client] {
+                    DLOG_DEBUG("Connected to {}", client.client->server_addr);
+                    smf::rpc_typed_envelope<smf_gen::demo::Request> req;
+                    req.data->name =
+                      ipv4_addr_to_ip_str(client.client->server_addr);
+                    return client.client->Get(req.serialize_data());
+                  })
+                  .then([&client](auto reply) {
+                    std::string name = reply->name()->str();
+                    DLOG_DEBUG("Got reply {}", name);
+                    if (seastar::to_sstring(name) !=
+                        ipv4_addr_to_ip_str(client.client->server_addr)) {
+                      LOG_THROW("Server did not see our IP {} != {}", name,
+                        client.client->server_addr);
+                    }
+                    return seastar::make_ready_future<>();
+                  })
+                  .then([&client] {
+                    return client.client->stop().finally(
+                      [c = client.client] {});
+                  });
+              });
+            });
+        })
+        .then([] {
+          DLOG_DEBUG("Exiting");
+          return seastar::make_ready_future<int>(0);
         });
-      })
-      .then([] {
-        DLOG_DEBUG("Exiting");
-        return seastar::make_ready_future<int>(0);
-      });
-  });
+    });
+  } catch (const std::exception &e) {
+    LOG_ERROR("Exception running app: {}", e);
+    return 1;
+  }
 }

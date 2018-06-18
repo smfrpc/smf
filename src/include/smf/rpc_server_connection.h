@@ -62,7 +62,7 @@ struct rpc_server_connection_options {
     9 /*Probs count, Linux default*/}};
 };
 
-class rpc_server_connection : public rpc_connection {
+class rpc_server_connection final {
  public:
   rpc_server_connection(seastar::connected_socket sock,
     seastar::lw_shared_ptr<rpc_connection_limits> conn_limits,
@@ -71,14 +71,14 @@ class rpc_server_connection : public rpc_connection {
     uint64_t connection_id,
     rpc_server_connection_options opts = rpc_server_connection_options(
       false, false))
-    : rpc_connection(std::move(sock), std::move(address), conn_limits)
+    : conn(std::move(sock), address, conn_limits)
     , id(connection_id)
     , stats(_stats)
     , opts_(std::move(opts)) {
-    socket.set_nodelay(opts_.nodelay);
+    conn.socket.set_nodelay(opts_.nodelay);
     if (opts_.enable_keepalive) {
-      socket.set_keepalive(true);
-      socket.set_keepalive_parameters(opts_.keepalive);
+      conn.socket.set_keepalive(true);
+      conn.socket.set_keepalive_parameters(opts_.keepalive);
     }
     stats->active_connections++;
     stats->total_connections++;
@@ -86,6 +86,29 @@ class rpc_server_connection : public rpc_connection {
 
   ~rpc_server_connection() { stats->active_connections--; }
 
+  inline void
+  set_error(const char *e) {
+    conn.set_error(e);
+  }
+  inline bool
+  has_error() const {
+    return conn.has_error();
+  }
+  inline seastar::sstring
+  get_error() const {
+    return conn.get_error();
+  }
+
+  inline bool
+  is_valid() {
+    return conn.is_valid();
+  }
+  inline seastar::lw_shared_ptr<rpc_connection_limits>
+  limits() {
+    return conn.limits;
+  }
+
+  rpc_connection conn;
   const uint64_t id;
   seastar::lw_shared_ptr<rpc_server_stats> stats;
   seastar::semaphore serialize_writes{1};

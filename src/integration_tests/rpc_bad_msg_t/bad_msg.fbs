@@ -1,0 +1,12 @@
+// Copyright 2018 SMF Authors
+//
+
+namespace bad.msg;
+
+table ack {}
+table node { 
+  name: string;
+}
+table test { 
+  test_node: node; 
+}
