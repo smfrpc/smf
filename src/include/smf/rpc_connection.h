@@ -12,7 +12,14 @@
 
 namespace smf {
 
-class rpc_connection {
+/// \brief this class is called a *lot*
+/// to test if we should keep consuming or not.
+/// Do not make virtual. Instead use type embedding.
+/// Currently only the rpc_server_connection is used - instead of doing
+/// seastar::shared_ptr we can use seastar::lw_shared_ptr and have
+/// effectively no cost of pointer ownership.
+///
+class rpc_connection final {
  public:
   explicit rpc_connection(seastar::connected_socket fd,
     seastar::socket_address address,
@@ -30,33 +37,33 @@ class rpc_connection {
   seastar::lw_shared_ptr<rpc_connection_limits> limits;
   uint32_t istream_active_parser{0};
 
-  void
+  inline void
   disable() {
     enabled_ = false;
   }
-  bool
+  inline bool
   is_enabled() const {
     return enabled_;
   }
-  bool
+  inline bool
   is_valid() {
     return !istream.eof() && !has_error() && enabled_;
   }
-  bool
+  inline bool
   has_error() const {
     return error_.operator bool();
   }
-  void
+  inline void
   set_error(const char *e) {
     error_ = seastar::sstring(e);
   }
 
-  virtual seastar::sstring
+  inline seastar::sstring
   get_error() const {
     return error_.value();
   }
 
-  virtual ~rpc_connection() {}
+  ~rpc_connection() {}
 
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_connection);
 

@@ -20,27 +20,19 @@ operator<<(ostream &o, const smf::rpc::header &h) {
 
 namespace smf {
 
-rpc_recv_context::rpc_recv_context(
-  seastar::socket_address address, rpc::header hdr, seastar::temporary_buffer<char> body)
+rpc_recv_context::rpc_recv_context(seastar::socket_address address,
+  rpc::header hdr,
+  seastar::temporary_buffer<char> body)
   : remote_address(address), header(hdr), payload(std::move(body)) {
   assert(header.size() == payload.size());
 }
 
 rpc_recv_context::rpc_recv_context(rpc_recv_context &&o) noexcept
-  : remote_address(std::move(o.remote_address)), header(o.header), payload(std::move(o.payload)) {}
+  : remote_address(o.remote_address)
+  , header(o.header)
+  , payload(std::move(o.payload)) {}
 
 rpc_recv_context::~rpc_recv_context() {}
-
-uint32_t
-rpc_recv_context::request_id() const {
-  return header.meta();
-}
-
-uint32_t
-rpc_recv_context::status() const {
-  return header.meta();
-}
-
 
 seastar::future<seastar::temporary_buffer<char>>
 read_payload(rpc_connection *conn, size_t payload_size) {

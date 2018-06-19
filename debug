@@ -9,7 +9,6 @@ cd ${build_dir}
 cmake -Wdev \
   --debug-output \
   -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
-  -DSMF_ENABLE_GO=ON \
   -DCMAKE_INSTALL_PREFIX=${build_dir} \
   -DCMAKE_BUILD_TYPE=Debug ${ROOT_DIR}
 

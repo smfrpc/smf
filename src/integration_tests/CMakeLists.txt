@@ -34,3 +34,5 @@ smf_test(
   SOURCE_DIRECTORY ${IT_ROOT}/rpc_multiple_remote_addrs
   LIBRARIES smf
   )
+
+add_subdirectory(rpc_bad_msg_t)
