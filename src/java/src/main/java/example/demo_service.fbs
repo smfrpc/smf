@@ -1,0 +1,16 @@
+// Copyright 2017 Alexander Gallego
+//
+
+namespace demo;
+
+table Request {
+  name: string;
+}
+
+table Response {
+  name: string;
+}
+
+rpc_service SmfStorage {
+  Get(Request):Response;
+}

@@ -1,0 +1,84 @@
+//
+// smf rpc flatbuffers changed to conform Go language style.
+//
+// Original source of the code:
+// https://github.com/senior7515/smf/blob/master/src/rpc/rpc.fbs
+//
+// Copyright 2017 Alexander Gallego
+//
+
+namespace smf;
+
+/// \brief: headers that are stored in an int
+/// so they need to be inclusive. That is, you can turn on
+/// many flags at the same time, i.e.: enable checksum and
+/// have the payload be zlib compressed.
+///
+enum CompressionFlags:byte {
+  None,
+  Disabled,
+  /// brief uses zstandard 1.0
+  Zstd,
+  /// lz4 is pending
+  Lz4
+}
+enum HeaderBitFlags:byte (bit_flags) {
+  HasPayloadHeaders
+}
+
+
+
+/// \brief: header parsed by rpc engine
+/// must be sizeof()'able
+/// that is, must be a struct in fbs language
+///
+/// layout
+/// [ 8bits(compression) + 8bits(bitflags) + 16bits(session) + 32bits(size) + 32bits(checksum) + 32bits(meta) ]
+/// total = 128bits == 16bytes
+///
+struct Header {
+  compression:    CompressionFlags;
+  bitflags:       HeaderBitFlags;
+  /// 16 bits for storing the actual session id.
+  /// used for streaming client and slot allocation
+  session:        ushort;
+  /// size of the next payload
+  size:           uint;
+  /// currently we use xxhash32
+  checksum:       uint;
+  /// \brief used for sending and receiving, read carefully.
+  ///
+  /// Receiving:
+  ///
+  /// Uses the same as HTTP status - on the receiving end
+  /// We don't want to pay the cost of parsing a header
+  /// On every response as does HTTP. std::to_string and std::stol()
+  /// are needlesly expensive
+  ///
+  /// Sending:
+  ///
+  /// Used with the xor hash of Service::ID() ^ Service::Method::ID()
+  /// This is how the server multiplexer figures out what function pointer
+  /// to call
+  ///
+  meta: uint;
+}
+
+/// \brief used for extra headers, ala HTTP
+/// The use case for the core is to support
+/// zipkin/google-Dapper style tracing
+table DynamicHeader {
+  /// alows for binary search lookup
+  /// use with CreateVectorOfSortedTables<> instead of the CreateVector
+  key: string (key);
+  value: string;
+}
+
+table PayloadHeaders {
+  /// Headers for forward compat.
+  dynamic_headers: [DynamicHeader];
+  /// We need to chain the actual payload
+  size: uint = 0;
+  checksum: uint = 0;
+  compression: CompressionFlags = None;
+}
