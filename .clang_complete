@@ -1,4 +1,0 @@
--std=c++1z
--Isrc/third_party/include
--Imeta/tmp/seastar
--Isrc

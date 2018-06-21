@@ -27,4 +27,4 @@ matrix:
       env: IMAGE=ubuntu:bionic
 
 
-script: travis_retry ci/one.sh
+script: travis_retry tools/one.sh
