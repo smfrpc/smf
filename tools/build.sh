@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Copyright 2018 SMF Authors
+#
+
+
 set -e
 
 . /etc/os-release
@@ -103,7 +107,7 @@ EOM
 }
 
 
-while getopts ":drtfph" optKey; do
+while getopts ":drtfp" optKey; do
     case $optKey in
         d)
             debug
