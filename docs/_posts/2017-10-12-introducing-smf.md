@@ -57,19 +57,38 @@ to get started.
 
 
 ```bash
-git clone https://github.com/senior7515/smf --recursive
+git clone https://github.com/senior7515/smf.git
 cd smf
+git clone https://github.com/senior7515/smf --recursive
+./install-deps.sh
+./src/third_party/seastar/install-dependencies.sh
+./tools/run.sh
 
-# alternatively if you didn't clone recursively
-#
-# git submodule update --init --recursive
-#
-
-mkdir build
-
-cd build
-cmake ..
-make 
-
+cmake CMakeLists.txt
+make
+```
+then, you can run sample server 
+```
+./demo_apps/demo_server -c 1 --ip 0.0.0.0 --port 7000 &
+```
+or client
+```
+./demo_apps/demo_client -c 1 --ip 0.0.0.0 --port 7000
 ```
 
+Alternatively, you can use Dockerfile, enter tools/local_development, and then
+```bash
+docker build -t smf_base . 
+```
+and run 
+```bash
+docker run -p 7000:7000 -it smf_base bash
+```
+now, you have SMF build and sample apps, you can run for example demo_server, just type
+```bash
+./demo_apps/demo_server -c 1 --ip 0.0.0.0 --port 7000 &
+```
+and client (on the same machine)
+```bash
+./demo_apps/demo_client -c 1 --ip 0.0.0.0 --port 7000
+```
