@@ -16,8 +16,8 @@ struct histogram_seastar_utils {
   inline static seastar::future<>
   write(seastar::sstring filename, std::unique_ptr<histogram> h) {
     auto p = h.get();
-    return write_histogram(std::move(filename), p)
-      .finally([hh = std::move(h)]{});
+    return write_histogram(std::move(filename), p).finally([hh = std::move(h)] {
+    });
   }
   inline static seastar::future<>
   write(seastar::sstring filename, seastar::lw_shared_ptr<histogram> h) {

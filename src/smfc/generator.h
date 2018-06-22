@@ -6,8 +6,8 @@
 #include <experimental/optional>
 #include <string>
 
-#include <boost/filesystem.hpp>
 #include <flatbuffers/flatbuffers.h>
+#include <boost/filesystem.hpp>
 
 #include "smf_printer.h"
 #include "smf_service.h"

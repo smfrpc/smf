@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include <core/temporary_buffer.hh>
 #include <flatbuffers/flatbuffers.h>
+#include <core/temporary_buffer.hh>
 
 #include "smf/log.h"
 #include "smf/macros.h"

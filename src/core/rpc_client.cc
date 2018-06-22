@@ -84,7 +84,7 @@ rpc_client::raw_send(rpc_envelope e) {
       dispatch_write(std::move(e));
       return work->pr.get_future();
     })
-    .then([ this, m = std::move(measure) ](opt_recv_t r) mutable {
+    .then([this, m = std::move(measure)](opt_recv_t r) mutable {
       if (!r) {
         // nothing to do
         return seastar::make_ready_future<opt_recv_t>(std::move(r));
@@ -112,7 +112,8 @@ rpc_client::connect() {
     .connect(
       seastar::make_ipv4_address(server_addr), local, seastar::transport::TCP)
     .then([this, local](seastar::connected_socket fd) mutable {
-      conn = seastar::make_lw_shared<rpc_connection>(std::move(fd), local, limits);
+      conn =
+        seastar::make_lw_shared<rpc_connection>(std::move(fd), local, limits);
       do_reads();
       return seastar::make_ready_future<>();
     });
@@ -121,11 +122,11 @@ seastar::future<>
 rpc_client::dispatch_write(rpc_envelope e) {
   // must protect the conn->ostream
   return seastar::with_semaphore(serialize_writes_, 1,
-    [ ee = std::move(e), self = parent_shared_from_this() ]() mutable {
+    [ee = std::move(e), self = parent_shared_from_this()]() mutable {
       auto payload_size = ee.size();
       return seastar::with_semaphore(self->conn->limits->resources_available,
         self->conn->limits->estimate_request_size(payload_size),
-        [ self, e = std::move(ee) ]() mutable {
+        [self, e = std::move(ee)]() mutable {
           return smf::rpc_envelope::send(&self->conn->ostream, std::move(e))
             .handle_exception([self](auto _) {
               LOG_ERROR("Error sending data: {}", _);
@@ -173,7 +174,7 @@ rpc_client::do_reads() {
             });
         });
     })
-    .finally([self = parent_shared_from_this()]{})
+    .finally([self = parent_shared_from_this()] {})
     .handle_exception([self = parent_shared_from_this()](auto ep) mutable {
       self->is_error_state = true;
       LOG_ERROR_IF(self->read_counter > 0,

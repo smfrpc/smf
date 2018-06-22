@@ -4,8 +4,8 @@
 
 #include <deque>
 
-#include <boost/algorithm/string/join.hpp>
 #include <flatbuffers/idl.h>
+#include <boost/algorithm/string/join.hpp>
 
 #include "crc.h"
 #include "language.h"

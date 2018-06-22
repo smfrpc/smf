@@ -27,7 +27,7 @@ rpc_envelope::send(seastar::output_stream<char> *out, rpc_envelope e) {
 
   // needs to be moved so we can do zero copy output buffer
   return out->write(std::move(header_buf))
-    .then([ out, e = std::move(e) ]() mutable {
+    .then([out, e = std::move(e)]() mutable {
       // TODO(agalleg) - need to see if we need to write headers
       return out->write(std::move(e.letter.body));
     })

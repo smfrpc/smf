@@ -1,3 +1,6 @@
+// Copyright 2018 SMF Authors
+//
+
 package smf.core;
 
 import io.netty.buffer.ByteBuf;
@@ -15,41 +18,39 @@ import java.util.List;
  * Parse incoming byte-stream into logical [smf.Header + response] pairs.
  * Logic behind is simple and of course not efficient - but is highly probable that it just works.
  *
- * RpcCallDecoder will try to decode each received bytes at once, if this operation fails, it will postpone
- * this operation and try when next chunk arrive.
+ * RpcCallDecoder will try to decode each received bytes at once, if this operation fails, it will
+ * postpone this operation and try when next chunk arrive.
  */
 public class RpcCallDecoder extends ByteToMessageDecoder {
-    private final static Logger LOG = LogManager.getLogger();
+  private final static Logger LOG = LogManager.getLogger();
 
-    @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf response, List<Object> out) {
+  @Override
+  protected void
+  decode(ChannelHandlerContext ctx, ByteBuf response, List<Object> out) {
+    response.markReaderIndex();
+    response.markWriterIndex();
 
-        response.markReaderIndex();
-        response.markWriterIndex();
+    try {
+      byte[] hdrbytes = new byte[16];
+      response.readBytes(hdrbytes);
+      ByteBuffer bb = ByteBuffer.wrap(hdrbytes);
+      bb.order(ByteOrder.LITTLE_ENDIAN);
+      smf.Header header = new smf.Header();
+      header.__init(0, bb);
 
-        try {
-            byte[] hdrbytes = new byte[16];
-            response.readBytes(hdrbytes);
-            ByteBuffer bb = ByteBuffer.wrap(hdrbytes);
-            bb.order(ByteOrder.LITTLE_ENDIAN);
-            smf.Header header = new smf.Header();
-            header.__init(0, bb);
+      final byte[] responseBody = new byte[(int) header.size()];
+      response.readBytes(responseBody);
 
-            final byte[] responseBody = new byte[(int) header.size()];
-            response.readBytes(responseBody);
+      LOG.debug("[session {}] Decoding response", header.session());
 
-            LOG.debug("[session {}] Decoding response", header.session());
+      out.add(new RpcResponse(header, ByteBuffer.wrap(responseBody)));
 
-            out.add(new RpcResponse(header, ByteBuffer.wrap(responseBody)));
-
-        } catch (final Exception ex) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Failed to parse ! postpone ...");
-
-            }
-            response.resetReaderIndex();
-            response.resetWriterIndex();
-        }
-
+    } catch (final Exception ex) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Failed to parse ! postpone ...");
+      }
+      response.resetReaderIndex();
+      response.resetWriterIndex();
     }
+  }
 }

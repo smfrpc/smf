@@ -88,7 +88,7 @@ def get_cpplint():
 
 def get_clang_prog(prog):
     """ALL tools for clang should be pinned to one version"""
-    CLANG_SOURCE_VERSION = "5.0.1"
+    CLANG_SOURCE_VERSION = "6.0.0"
     ret = subprocess.check_output("which %s" % prog, shell=True)
     if ret != None:
         original = "".join(str(ret).split())
@@ -241,8 +241,9 @@ def main():
                 if clang_fmt != None:
                     run_subprocess("%s -i %s" % (clang_fmt, f))
                 # always run
-                cpplint_process("%s --verbose=5 --counting=detailed" % cpplint,
-                                f)
+                if ".java" not in f:
+                    cpplint_process(
+                        "%s --verbose=5 --counting=detailed" % cpplint, f)
         except Exception as e:
             logger.exception("Error %s, file: %s" % (e, f))
             sys.exit(1)

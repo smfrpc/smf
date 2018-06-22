@@ -2,9 +2,9 @@
 //
 #include "smf/histogram.h"
 
-#include <cstdlib>
 #include <hdr_histogram.h>
 #include <hdr_histogram_log.h>
+#include <cstdlib>
 
 #include <iostream>
 

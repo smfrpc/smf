@@ -1,0 +1,29 @@
+package(default_visibility=["//visibility:public"])
+
+java_library(
+    name="smf",
+    srcs=glob(["src/main/java/smf/**/*.java"]),
+    resources=glob(["src/main/resources/*.properties"]),
+    deps=[
+        "@io_netty//jar",
+        "@com_github_davidmoten//jar",
+        "@net_openhft//jar",
+        "@org_apache_logging_log4j_core//jar",
+        "@org_apache_logging_log4j_api//jar",
+    ],
+)
+
+java_binary(
+    name="smf_client",
+    main_class="example.demo.DemoApp",
+    create_executable=True,
+    srcs=glob(["src/main/java/example/**/*.java"]),
+    deps=[
+        ":smf",
+        "@io_netty//jar",
+        "@com_github_davidmoten//jar",
+        "@net_openhft//jar",
+        "@org_apache_logging_log4j_core//jar",
+        "@org_apache_logging_log4j_api//jar",
+    ],
+)

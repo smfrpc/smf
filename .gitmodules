@@ -1,6 +1,7 @@
 [submodule "src/third_party/flatbuffers"]
 	path = src/third_party/flatbuffers
 	url = https://github.com/google/flatbuffers
+	ignore = dirty
 [submodule "src/third_party/xxHash"]
 	path = src/third_party/xxHash
 	url = https://github.com/Cyan4973/xxHash
@@ -20,6 +21,7 @@
 [submodule "src/third_party/google_benchmark"]
 	path = src/third_party/google_benchmark
 	url = https://github.com/google/benchmark.git
+	ignore = dirty
 [submodule "src/third_party/googletest"]
 	path = src/third_party/googletest
 	url = https://github.com/google/googletest
@@ -30,3 +32,4 @@
 [submodule "src/third_party/seastar"]
 	path = src/third_party/seastar
 	url = https://github.com/scylladb/seastar.git
+	ignore = dirty

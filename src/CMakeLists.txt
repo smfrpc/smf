@@ -16,6 +16,3 @@ if(SMF_ENABLE_INTEGRATION_TESTS)
   add_subdirectory(integration_tests)
 endif(SMF_ENABLE_INTEGRATION_TESTS)
 
-if(SMF_ENABLE_GO)
-  add_subdirectory(go)
-endif()

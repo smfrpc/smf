@@ -1,10 +1,13 @@
+// Copyright 2018 SMF Authors
+//
+
 package smf.core.exceptions;
 
 /**
  * Indicate
  */
 public class SessionIdGenerationException extends RuntimeException {
-    public SessionIdGenerationException(final String message) {
-        super(message);
-    }
+  public SessionIdGenerationException(final String message) {
+    super(message);
+  }
 }

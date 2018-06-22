@@ -67,8 +67,8 @@ main(int args, char **argv, char **env) {
           .connect(seastar::make_ipv4_address(random_port), local,
             seastar::transport::TCP)
           .then([local](auto skt) {
-            auto conn =
-              seastar::make_lw_shared<smf::rpc_connection>(std::move(skt), local);
+            auto conn = seastar::make_lw_shared<smf::rpc_connection>(
+              std::move(skt), local);
 
             uint32_t kHeaderSize = sizeof(smf::rpc::header);
 

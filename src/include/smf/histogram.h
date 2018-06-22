@@ -6,8 +6,8 @@
 #include <memory>
 #include <utility>
 
-#include <core/shared_ptr.hh>
 #include <hdr_histogram.h>
+#include <core/shared_ptr.hh>
 
 #include "smf/macros.h"
 
