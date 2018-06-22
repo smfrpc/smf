@@ -23,8 +23,6 @@ set(SMFC_LIBS
 add_executable (smfc ${SMFC_SOURCES})
 target_link_libraries (smfc ${SMFC_LIBS})
 target_include_directories(smfc
-  PUBLIC ${SEASTAR_INCLUDE_DIRS}
-  ${PROJECT_SOURCE_DIR}/src/third_party/flatbuffers/include
-  ${PROJECT_SOURCE_DIR}/src/third_party/xxHash)
+  PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/flatbuffers/include)
 install(TARGETS smfc RUNTIME DESTINATION bin)
 target_compile_definitions(smfc PRIVATE -DXXH_PRIVATE_API)
