@@ -59,10 +59,13 @@ function release {
     builddir=$root/build/release
     mkdir -p $builddir
     cd ${builddir}
+
+    # TODO(agallego) - waiting for seastar to merge my patch
+    # https://groups.google.com/forum/#!topic/seastar-dev/LHkVIH6m7GQ
+    # -DSEASTAR_ENABLE_DPDK=ON \
     cmake     -Wno-dev \
               -DCMAKE_VERBOSE_MAKEFILE=ON \
               -GNinja \
-              -DSEASTAR_ENABLE_DPDK=ON \
               -DCMAKE_INSTALL_PREFIX=${builddir} \
               -DSMF_ENABLE_BENCHMARK_TESTS=ON \
               -DCMAKE_BUILD_TYPE=Release \
@@ -111,7 +114,7 @@ EOM
 }
 
 
-while getopts ":drtfp" optKey; do
+while getopts ":drtfpb" optKey; do
     case $optKey in
         d)
             debug
@@ -132,7 +135,7 @@ while getopts ":drtfp" optKey; do
             ${this_dir}/bazel.sh -a
             ;;
 
-        h|*)
+        *)
             usage
             ;;
     esac
