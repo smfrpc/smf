@@ -6,8 +6,9 @@
 
 set -e
 
-THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd ${THIS_DIR}
+original_dir=${PWD}
+this_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd ${this_dir}
 
 . /etc/os-release
 root=$(git rev-parse --show-toplevel)
@@ -103,6 +104,8 @@ Usage: $(basename "$0") [OPTION]...
 
   -p          package code
 
+  -b          build bazel
+
   -h          display help
 EOM
 
@@ -127,9 +130,15 @@ while getopts ":drtfp" optKey; do
         p)
             package
             ;;
+        b)
+            ${this_dir}/bazel.sh -a
+            ;;
 
         h|*)
             usage
             ;;
     esac
 done
+
+# reset original directory
+cd $original_dir
