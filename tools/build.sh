@@ -122,7 +122,7 @@ while getopts ":drtfp" optKey; do
             format
             ;;
         p)
-            format
+            package
             ;;
 
         h|*)

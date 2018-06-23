@@ -65,13 +65,6 @@ go_repository(
     importpath="github.com/cespare/xxhash",
 )
 
-go_repository(
-    name="com_github_google_flatbuffers",
-    commit="00b741e5fbd4f2a9c970514a0748833521ca88a9",
-    importpath="github.com/google/flatbuffers",
-)
-
-
 # local repos
 local_repository(
     name = "third_party_flatbuffers",
