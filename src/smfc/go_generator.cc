@@ -4,6 +4,7 @@
 #include "go_generator.h"
 
 #include <string>
+#include <memory>
 
 #include <glog/logging.h>
 

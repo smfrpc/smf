@@ -1,13 +1,13 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
-#include "smfc/cpp_generator.h"
+#include "cpp_generator.h"
 
 #include <map>
 #include <sstream>
 
 #include <glog/logging.h>
 
-#include "smfc/smf_printer.h"
+#include "smf_printer.h"
 
 namespace smf_gen {
 namespace utils {

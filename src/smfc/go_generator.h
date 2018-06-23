@@ -2,7 +2,9 @@
 //
 
 #pragma once
+#include <experimental/optional>
 #include <sstream>
+#include <string>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>

@@ -1,8 +1,8 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #pragma once
-
 #include <deque>
+#include <memory>
 
 #include <flatbuffers/idl.h>
 #include <boost/algorithm/string/join.hpp>

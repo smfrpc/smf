@@ -2,11 +2,12 @@
 //
 #pragma once
 #include <memory>
+#include <string>
 
 #include <flatbuffers/idl.h>
 
-#include "smfc/crc.h"
-#include "smfc/smf_method.h"
+#include "crc.h"
+#include "smf_method.h"
 
 namespace smf_gen {
 class smf_service {
@@ -17,7 +18,7 @@ class smf_service {
 
     // populate methods
     for (auto i = 0u; i < service_->calls.vec.size(); ++i) {
-      methods_.push_back(std::make_unique<smf_method>(
+      methods_.emplace_back(std::make_unique<smf_method>(
         service_->calls.vec[i], name(), service_id()));
     }
   }

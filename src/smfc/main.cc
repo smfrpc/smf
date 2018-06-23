@@ -2,6 +2,8 @@
 //
 #include <iostream>
 #include <vector>
+#include <memory>
+#include <experimental/optional>
 
 #include <flatbuffers/flatbuffers.h>
 #include <flatbuffers/util.h>
@@ -10,7 +12,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 
-#include "smfc/codegen.h"
+#include "codegen.h"
 
 DEFINE_string(filename, "", "filename to parse");
 DEFINE_string(include_dirs, "", "extra include directories");

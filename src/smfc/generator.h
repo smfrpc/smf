@@ -2,7 +2,7 @@
 //
 
 #pragma once
-
+#include <memory>
 #include <experimental/optional>
 #include <string>
 

@@ -1,0 +1,43 @@
+_smfc_linkopts = [
+    "-lboost_system",
+    "-lboost_filesystem",
+    "-lgflags",
+    "-lglog",
+    "-lpthread",
+]
+_smfc_copts = [
+    "-std=gnu++14",
+]
+cc_library(
+    name="smfc_lib",
+    srcs=[
+        "codegen.cc",
+        "cpp_generator.cc",
+        "go_generator.cc",
+    ],
+    hdrs=[
+        "codegen.h",
+        "generator.h",
+        "cpp_generator.h",
+        "crc.h",
+        "go_generator.h",
+        "language.h",
+        "smf_method.h",
+        "smf_printer.h",
+        "smf_service.h",
+    ],
+    includes=["."],
+    linkstatic=1,
+    copts=_smfc_copts,
+    linkopts=_smfc_linkopts,
+    deps=["@third_party_flatbuffers//:flatc_library"],
+)
+cc_binary(
+    name="smfc",
+    copts=_smfc_copts,
+    linkopts=_smfc_linkopts,
+    srcs=[
+        "main.cc",
+    ],
+    deps=[":smfc_lib"],
+)
