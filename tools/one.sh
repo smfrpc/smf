@@ -13,4 +13,4 @@ ROOT=$(git rev-parse --show-toplevel)
 cd $ROOT
 name="smf/ci_base_${IMAGE/:/_}"
 docker build -t ${name} --build-arg BASE=${IMAGE} -f ${THIS_DIR}/base/Dockerfile .
-docker run --rm ${name} -w /smf/ ./tools/build.sh -dt
+docker run -w /smf --rm ${name}  ./tools/build.sh -dt
