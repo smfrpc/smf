@@ -1,3 +1,4 @@
+package(default_visibility=["//visibility:public"])
 _smfc_linkopts = [
     "-lboost_system",
     "-lboost_filesystem",
