@@ -1,12 +1,12 @@
 ARG BASE
 FROM ${BASE}
+# Always install git
+RUN apt-get install -y git || yum install -y  git || true
+
 
 # install smf dependencies
 COPY install-deps.sh /src/smf/
 RUN /src/smf/install-deps.sh
-
-# build seastar
-RUN apt-get install -y git || yum install -y  git || true
 
 
 COPY src/third_party/seastar/install-dependencies.sh /src/smf/seastar-deps.sh
