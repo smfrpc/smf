@@ -6,12 +6,10 @@
 
 set -e
 
-original_dir=${PWD}
-this_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd ${this_dir}
-
 . /etc/os-release
-root=$(git rev-parse --show-toplevel)
+
+this_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+root="${this_dir}/../"
 buildcmd="ninja"
 buildtype="debug"
 builddir=$root/build/debug
@@ -140,5 +138,3 @@ while getopts ":drtfp" optKey; do
     esac
 done
 
-# reset original directory
-cd $original_dir
