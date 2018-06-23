@@ -6,6 +6,9 @@
 
 set -e
 
+THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd ${THIS_DIR}
+
 . /etc/os-release
 root=$(git rev-parse --show-toplevel)
 buildcmd="ninja"
