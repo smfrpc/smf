@@ -5,7 +5,7 @@
 set -e
 . /etc/os-release
 function redhat {
-    dnf update
+    dnf update -y
     dnf install \
         git \
         curl \
@@ -18,7 +18,7 @@ function redhat {
 
 }
 function debian {
-    apt-get update
+    apt-get update -y
     apt-get install \
             git-core \
             curl \
