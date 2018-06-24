@@ -83,7 +83,7 @@ std::experimental::optional<std::string>
 codegen::gen() {
   auto x = parse();
   if (x) { return x; }
-  // Since language is only known at compile time we can't use
+  // Since language is only known at runtime time we can't use
   // template expressions
   auto lang_ptr_fn = [this](auto l) -> std::unique_ptr<generator> {
     switch (l) {
