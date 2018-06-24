@@ -6,6 +6,7 @@ set -e
 . /etc/os-release
 function redhat {
     dnf install \
+        curl \
         pkgconfig \
         zip \
         gcc-c++ \
@@ -16,6 +17,7 @@ function redhat {
 }
 function debian {
     apt-get install \
+            curl \
             pkg-config \
             zip \
             g++ \
