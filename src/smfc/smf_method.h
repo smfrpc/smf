@@ -53,6 +53,7 @@ class smf_method {
     switch (lang) {
     case language::cpp:
       return boost::algorithm::join(tmp, "::");
+    case language::java:
     case language::go:
       // for go we only want the last package and the name of method
       for (auto i = 0u; i < tmp.size() - 2; ++i) { tmp.pop_front(); }
