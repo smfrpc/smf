@@ -5,22 +5,22 @@
 set -e
 . /etc/os-release
 function redhat {
-    sudo dnf install \
-         pkgconfig \
-         zip \
-         gcc-c++ \
-         zlib-devel \
-         unzip \
-         which -y
+    dnf install \
+        pkgconfig \
+        zip \
+        gcc-c++ \
+        zlib-devel \
+        unzip \
+        which -y
 
 }
 function debian {
-    sudo apt-get install \
-         pkg-config \
-         zip \
-         g++ \
-         zlib1g-dev \
-         unzip -y
+    apt-get install \
+            pkg-config \
+            zip \
+            g++ \
+            zlib1g-dev \
+            unzip -y
 
 }
 case $ID in
