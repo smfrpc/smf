@@ -10,6 +10,7 @@
 
 #include "cpp_generator.h"
 #include "go_generator.h"
+#include "java_generator.h"
 
 namespace smf_gen {
 
@@ -77,32 +78,39 @@ codegen::parse() {
   return std::experimental::nullopt;
 }
 
+
 std::experimental::optional<std::string>
 codegen::gen() {
   auto x = parse();
   if (x) { return x; }
-  for (const auto &l : languages) {
+  // Since language is only known at compile time we can't use
+  // template expressions
+  auto lang_ptr_fn = [this](auto l) -> std::unique_ptr<generator> {
     switch (l) {
     case language::cpp: {
-      VLOG(1) << "Adding cpp generator";
-      auto g = std::make_unique<cpp_generator>(
+      return std::make_unique<cpp_generator>(
         *parser_.get(), input_filename, output_dir);
-      x = g->gen();
-      if (x) { return x; }
-      VLOG(1) << "Generated: " << g->output_filename();
-      break;
     }
     case language::go: {
-      VLOG(1) << "Adding golang generator";
-      auto g = std::make_unique<go_generator>(
+      return std::make_unique<go_generator>(
         *parser_.get(), input_filename, output_dir);
-      x = g->gen();
-      if (x) { return x; }
-      VLOG(1) << "Generated: " << g->output_filename();
-      break;
+    }
+    case language::java: {
+      return std::make_unique<java_generator>(
+        *parser_.get(), input_filename, output_dir);
     }
     default:
-      LOG(ERROR) << "Uknown code generator";
+      return nullptr;
+    }
+  };
+  for (const auto &l : languages) {
+    auto lang = lang_ptr_fn(l);
+    if (lang) {
+      x = lang->gen();
+      if (x) { return x; }
+      VLOG(1) << "Generated: " << lang->output_filename();
+    } else {
+      LOG(ERROR) << "Uknown language";
     }
   }
   return std::experimental::nullopt;

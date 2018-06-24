@@ -14,6 +14,7 @@ cc_library(
         "codegen.cc",
         "cpp_generator.cc",
         "go_generator.cc",
+        "java_generator.cc",
     ],
     hdrs=[
         "codegen.h",
@@ -21,6 +22,7 @@ cc_library(
         "cpp_generator.h",
         "crc.h",
         "go_generator.h",
+        "java_generator.h",
         "language.h",
         "smf_method.h",
         "smf_printer.h",

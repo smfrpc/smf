@@ -9,6 +9,7 @@ set(SMFC_SOURCES
   codegen.cc
   cpp_generator.cc
   go_generator.cc
+  java_generator.cc
   main.cc)
 
 set(SMFC_LIBS
