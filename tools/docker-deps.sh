@@ -6,6 +6,7 @@ set -e
 . /etc/os-release
 function redhat {
     dnf install \
+        git \
         curl \
         pkgconfig \
         zip \
@@ -17,6 +18,7 @@ function redhat {
 }
 function debian {
     apt-get install \
+            git-core \
             curl \
             pkg-config \
             zip \
