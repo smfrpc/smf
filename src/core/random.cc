@@ -26,7 +26,7 @@ randstr(const seastar::sstring &dict,
   retval.resize(size);
   // this could use a simd
   for (uint32_t i = 0; i < size; ++i) {
-    uint32_t idx = dist(rand);
+    uint32_t idx = dist(rand) % dict.size();
     retval[i] = dict[idx];
   }
   return retval;
