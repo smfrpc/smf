@@ -2,8 +2,8 @@
 //
 
 #pragma once
-#include <memory>
 #include <experimental/optional>
+#include <memory>
 #include <string>
 
 #include <flatbuffers/flatbuffers.h>

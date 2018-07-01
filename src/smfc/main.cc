@@ -1,9 +1,9 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
-#include <iostream>
-#include <vector>
-#include <memory>
 #include <experimental/optional>
+#include <iostream>
+#include <memory>
+#include <vector>
 
 #include <flatbuffers/flatbuffers.h>
 #include <flatbuffers/util.h>

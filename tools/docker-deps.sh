@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Copyright 2018 SMF Authors
+#
+
+
 # targeted to be used by a Dockerfile
 
 set -e

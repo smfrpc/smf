@@ -126,7 +126,10 @@ def get_git_files(options):
         subprocess.check_output(
             "cd %s && git %s" % (get_git_root(), git_args), shell=True))
     assert ret is not None, "Failed getting files tracked by git"
-    return ret.split("\n")
+
+    # Ensure that you keep this up to date w/ files you want to skip
+    white_list = ["src/include/smf/rpc_generated.h"]
+    return list(filter(lambda x: x not in white_list, ret.split("\n")))
 
 
 def is_clang_fmt_file(filename):
