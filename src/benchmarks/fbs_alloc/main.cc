@@ -22,10 +22,8 @@
 static inline kvpairT
 gen_kv(uint32_t sz) {
   kvpairT ret;
-  ret.key.resize(sz);
-  ret.value.resize(sz);
-  std::fill(ret.key.begin(), ret.key.end(), 'x');
-  std::fill(ret.value.begin(), ret.value.end(), 'x');
+  ret.key.resize(sz, 'x');
+  ret.value.resize(sz, 'y');
   return ret;
 }
 
