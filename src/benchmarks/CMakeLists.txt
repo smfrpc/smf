@@ -1,5 +1,5 @@
+add_subdirectory(fbs_alloc)
 set(BENCH_ROOT ${PROJECT_SOURCE_DIR}/src/benchmarks)
-
 smf_test(
   BENCHMARK_TEST
   BINARY_NAME checksum
@@ -16,3 +16,4 @@ smf_test(
   INCLUDES ${PROJECT_SOURCE_DIR}/src/third_party/flat_hash_map
   LIBRARIES benchmark
   )
+

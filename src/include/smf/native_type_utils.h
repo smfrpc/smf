@@ -4,6 +4,7 @@
 #pragma once
 
 #include <flatbuffers/flatbuffers.h>
+#include <core/print.hh>
 #include <core/temporary_buffer.hh>
 
 #include "smf/flatbuffers_concepts.h"

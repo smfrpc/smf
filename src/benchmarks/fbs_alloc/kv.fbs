@@ -1,0 +1,4 @@
+table kvpair {
+  key:   string;
+  value: string;
+}
