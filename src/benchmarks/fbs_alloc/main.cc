@@ -42,7 +42,9 @@ BM_alloc_simple(benchmark::State &state) {
     auto mem = bdr.Release();
     auto ptr = reinterpret_cast<char *>(mem.data());
     auto sz = mem.size();
-    benchmark::DoNotOptimize(mem);
+    auto buf = seastar::temporary_buffer<char>(
+      ptr, sz, seastar::make_object_deleter(std::move(mem)));
+    benchmark::DoNotOptimize(buf);
   }
 }
 BENCHMARK(BM_alloc_simple)
