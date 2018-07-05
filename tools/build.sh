@@ -37,6 +37,7 @@ function debug {
           --debug-output \
           -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
           -DCMAKE_INSTALL_PREFIX=${builddir} \
+          -DSMF_ENABLE_CMAKE_PROJECT_FLAGS=ON \
           -DCMAKE_BUILD_TYPE=Debug ${root}
 
     # for fmt.py
@@ -65,6 +66,7 @@ function release {
               -DSEASTAR_ENABLE_DPDK=ON \
               -DCMAKE_INSTALL_PREFIX=${builddir} \
               -DSMF_ENABLE_BENCHMARK_TESTS=ON \
+              -DSMF_ENABLE_CMAKE_PROJECT_FLAGS=ON \
               -DCMAKE_BUILD_TYPE=Release \
               ${root}
 
