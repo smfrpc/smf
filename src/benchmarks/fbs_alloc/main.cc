@@ -28,6 +28,26 @@ gen_kv(uint32_t sz) {
 }
 
 static void
+BM_malloc_base(benchmark::State &state) {
+  for (auto _ : state) {
+    auto buf = reinterpret_cast<char *>(std::malloc(2 * state.range(0)));
+    std::memset(buf, 'x', 2 * state.range(0));
+    benchmark::DoNotOptimize(buf);
+    std::free(buf);
+  }
+}
+BENCHMARK(BM_malloc_base)
+  ->Args({1 << 1, 1 << 1})
+  ->Args({1 << 2, 1 << 2})
+  ->Args({1 << 4, 1 << 4})
+  ->Args({1 << 8, 1 << 8})
+  ->Args({1 << 12, 1 << 12})
+  ->Args({1 << 16, 1 << 16})
+  ->Args({1 << 18, 1 << 18})
+  ->Threads(1);
+
+
+static void
 BM_alloc_simple(benchmark::State &state) {
   for (auto _ : state) {
     state.PauseTiming();
@@ -52,8 +72,8 @@ BENCHMARK(BM_alloc_simple)
   ->Args({1 << 8, 1 << 8})
   ->Args({1 << 12, 1 << 12})
   ->Args({1 << 16, 1 << 16})
-  ->Args({1 << 18, 1 << 18});
-// OOMs after this! ->Args({1 << 20, 1 << 20});
+  ->Args({1 << 18, 1 << 18})
+  ->Threads(1);
 
 static void
 BM_alloc_thread_local(benchmark::State &state) {
@@ -94,7 +114,8 @@ BENCHMARK(BM_alloc_thread_local)
   ->Args({1 << 8, 1 << 8})
   ->Args({1 << 12, 1 << 12})
   ->Args({1 << 16, 1 << 16})
-  ->Args({1 << 18, 1 << 18});
+  ->Args({1 << 18, 1 << 18})
+  ->Threads(1);
 
 static void
 BM_alloc_hybrid(benchmark::State &state) {
@@ -113,7 +134,8 @@ BENCHMARK(BM_alloc_hybrid)
   ->Args({1 << 8, 1 << 8})
   ->Args({1 << 12, 1 << 12})
   ->Args({1 << 16, 1 << 16})
-  ->Args({1 << 18, 1 << 18});
+  ->Args({1 << 18, 1 << 18})
+  ->Threads(1);
 
 
 BENCHMARK_MAIN();
