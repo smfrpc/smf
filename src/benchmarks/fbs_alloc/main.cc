@@ -117,13 +117,56 @@ BENCHMARK(BM_alloc_thread_local)
   ->Args({1 << 18, 1 << 18})
   ->Threads(1);
 
+
+template <typename RootType>
+seastar::temporary_buffer<char>
+hybrid(const typename RootType::NativeTableType &t) {
+  static thread_local auto builder =
+    std::make_unique<flatbuffers::FlatBufferBuilder>();
+
+  auto &bdr = *builder.get();
+  bdr.Clear();
+  bdr.Finish(RootType::Pack(bdr, &t, nullptr));
+
+  if (SMF_UNLIKELY(bdr.GetSize() > 2048)) {
+    auto mem = bdr.Release();
+    auto ptr = reinterpret_cast<char *>(mem.data());
+    auto sz = mem.size();
+
+    // fix the original builder
+    builder = std::make_unique<flatbuffers::FlatBufferBuilder>();
+
+    return seastar::temporary_buffer<char>(
+      ptr, sz, seastar::make_object_deleter(std::move(mem)));
+  }
+
+
+  // always allocate to the largest member 8-bytes
+  void *ret = nullptr;
+  auto r = posix_memalign(&ret, 8, bdr.GetSize());
+  if (r == ENOMEM) {
+    throw std::bad_alloc();
+  } else if (r == EINVAL) {
+    throw std::runtime_error(seastar::sprint(
+      "Invalid alignment of %d; allocating %d bytes", 8, bdr.GetSize()));
+  }
+  DLOG_THROW_IF(r != 0,
+    "ERRNO: {}, Bad aligned allocation of {} with alignment: {}", r,
+    bdr.GetSize(), 8);
+  seastar::temporary_buffer<char> retval(reinterpret_cast<char *>(ret),
+    bdr.GetSize(), seastar::make_free_deleter(ret));
+  std::memcpy(retval.get_write(),
+    reinterpret_cast<const char *>(bdr.GetBufferPointer()), retval.size());
+  return std::move(retval);
+}
+
 static void
 BM_alloc_hybrid(benchmark::State &state) {
   for (auto _ : state) {
     state.PauseTiming();
     auto kv = gen_kv(state.range(0));
     state.ResumeTiming();
-    auto buf = smf::native_table_as_buffer<kvpair>(kv);
+    auto buf = hybrid<kvpair>(kv);
     benchmark::DoNotOptimize(buf);
   }
 }
