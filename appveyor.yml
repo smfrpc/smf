@@ -19,7 +19,7 @@ before_build:
 
 build_script:
 - IF "%BUILD_SYSTEM%"=="bazel" (
-   %ROOT%\bazel.exe build --verbose_failures --sandbox_debug //src/go/...
+   %ROOT%\bazel.exe run //:gazelle -- update-repos github.com/cespare/xxhash && %ROOT%\bazel.exe build --verbose_failures --sandbox_debug //src/go/...
   )
 
 test_script:
