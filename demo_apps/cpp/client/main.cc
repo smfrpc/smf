@@ -126,7 +126,7 @@ main(int args, char **argv, char **env) {
           .then([](std::unique_ptr<smf::histogram> h) {
             LOG_INFO("Writing client histograms");
             return smf::histogram_seastar_utils::write(
-              "clients_hdr.hgrm", std::move(h));
+              "clients_latency.csv", std::move(h));
           });
       })
       .then([] {

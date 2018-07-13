@@ -86,10 +86,10 @@ int
 histogram::print(FILE *fp) const {
   assert(fp != nullptr);
   return ::hdr_percentiles_print(hist_->hist,
-    fp,        // File to write to
-    5,         // Granularity of printed values
-    1.0,       // Multiplier for results
-    CLASSIC);  // Format CLASSIC/CSV supported.
+    fp,    // File to write to
+    5,     // Granularity of printed values
+    1.0,   // Multiplier for results
+    CSV);  // Format CLASSIC/CSV supported.
 }
 
 histogram::~histogram() {}

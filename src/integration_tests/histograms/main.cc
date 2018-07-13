@@ -16,7 +16,7 @@ main(int args, char **argv, char **env) {
       auto h = smf::histogram::make_lw_shared();
       for (auto i = 0u; i < 1000; i++) { h->record(i * i); }
       LOG_DEBUG("Writing histogram");
-      return smf::histogram_seastar_utils::write("hist.testing.hgrm", h)
+      return smf::histogram_seastar_utils::write("hist.testing.csv", h)
         .then([] { return seastar::make_ready_future<int>(0); });
     });  // app.run
   } catch (const std::exception &e) {
