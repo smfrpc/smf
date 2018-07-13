@@ -59,7 +59,6 @@ target_include_directories(smf
   PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/flatbuffers/include
   PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/flat_hash_map
   PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/zstd/lib
-  PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/fastrange
   PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/xxHash
   PUBLIC "${seastar_INCLUDE_DIRS}"
   )

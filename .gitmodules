@@ -12,9 +12,6 @@
 	path = src/third_party/HdrHistogram_c
 	url = https://github.com/HdrHistogram/HdrHistogram_c.git
 	ignore = dirty
-[submodule "src/third_party/fastrange"]
-	path = src/third_party/fastrange
-	url = https://github.com/lemire/fastrange.git
 [submodule "src/third_party/google-styleguide"]
 	path = src/third_party/google-styleguide
 	url = https://github.com/google/styleguide
