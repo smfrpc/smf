@@ -6,6 +6,7 @@ _jar_deps = [
     "@net_openhft//jar",
     "@org_apache_logging_log4j_api//jar",
     "@org_apache_logging_log4j_core//jar",
+    "@com_github_luben_zstd_jni//jar",
 ]
 java_library(
     name="smf",

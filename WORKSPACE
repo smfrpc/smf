@@ -54,6 +54,11 @@ maven_jar(
     artifact="org.apache.logging.log4j:log4j-api:2.11.0",
 )
 
+maven_jar(
+    name="com_github_luben_zstd_jni",
+    artifact="com.github.luben:zstd-jni:1.3.5-1",
+)
+
 go_repository(
     name="com_github_cespare_xxhash",
     commit="48099fad606eafc26e3a569fad19ff510fff4df6",
