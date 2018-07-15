@@ -13,26 +13,67 @@ Currently we have tested the system to work on Fedora, Debian, Ubuntu.
 
 We require gcc6 or greater.
 
+It is a fully compliant CMake project. If you know CMake you can skip this part.
 
 
 ```bash
-git clone https://github.com/senior7515/smf --recursive
+git clone https://github.com/senior7515/smf.git
 cd smf
+git clone https://github.com/senior7515/smf --recursive
 
-# alternatively if you didn't clone recursively
+# Install smf deps
 #
-# git submodule update --init --recursive
+
+./install-deps.sh
+
+# Install seastar system deps
 #
 
-mkdir build
+./src/third_party/seastar/install-dependencies.sh
 
-cd build
-cmake ..
-make 
-
+# We have a wrapper script to build the project
+# try build.sh -h for more advanced usage!
+# -r == release
+#
+./tools/build.sh -r
 ```
 
 Please drop us a line and tell us what you are using 
 **smf** for. 
 
+## Sample programs:
 
+Server:
+
+```
+# Run on one core (-c 1)! change --ip and --port as needed
+#
+./build/release/demo_apps/cpp/demo_server -c 1 
+```
+
+Client: 
+```
+# Run on one core (-c 1)! change --ip and --port as needed
+#
+./build/release/demo_apps/cpp/demo_client -c 1 
+```
+
+
+## Docker
+
+Alternatively, you can use Dockerfile, 
+enter `cd tools/local_development`, and then:
+
+```bash
+docker build -t smf . 
+```
+
+To run a shell inside the docker: 
+
+```bash
+docker run -it smf /usr/bin/bash
+```
+
+Note: This re-clones the repo inside the Docker image
+from the `master` tag. It does not use the current local copy.
+The base image is `fedora27`

@@ -55,39 +55,8 @@ to get started.
 
 ## Getting started
 
+Please see our quick
+[getting started!](https://senior7515.github.io/smf/getting_started/)
 
-```bash
-git clone https://github.com/senior7515/smf.git
-cd smf
-git clone https://github.com/senior7515/smf --recursive
-./install-deps.sh
-./src/third_party/seastar/install-dependencies.sh
-./tools/build.sh -r
-```
-then, you can run sample server 
-```
-./build/release/demo_apps/cpp/demo_server -c 1 --ip 0.0.0.0 --port 7000 &
-```
-or client
-```
-./build/release/demo_apps/cpp/demo_client -c 1 --ip 0.0.0.0 --port 7000
-```
-
-Alternatively, you can use Dockerfile, enter tools/local_development, and then
-```bash
-docker build -t smf_base . 
-```
-and run 
-```bash
-docker run -p 7000:7000 -it smf_base bash
-```
-now, you have SMF build and sample apps, you can run for example demo_server, just type
-```bash
-./build/release/demo_apps/cpp/demo_server -c 1 --ip 0.0.0.0 --port 7000 &
-```
-and client (on the same machine)
-```bash
-./build/release/demo_apps/cpp/demo_client -c 1 --ip 0.0.0.0 --port 7000
-```
 
 

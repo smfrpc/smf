@@ -18,7 +18,6 @@ If you are using **smf**, drop us a line on the mailing list introducing your pr
 
 [![Analytics](https://ga-beacon.appspot.com/UA-99983285-1/chromeskel_a/readme?pixel)]()
 
-
 # What is smf?
 
 **smf** is a new RPC system and code generation like gRPC, Cap n Proto,
@@ -38,17 +37,6 @@ Current benchmarks in microseconds
 
 # Getting started
 
-Build smf
+Please see our quick
+[getting started on our official docs!](https://senior7515.github.io/smf//getting_started/)
 
-```bash
-git clone https://github.com/senior7515/smf
-cd smf
-git submodule update --init --recursive
-mkdir build
-cd build
-make 
-
-# to run test do 
-ctest -V
-```
-That's about it! 
