@@ -51,10 +51,9 @@ class rpc_connection final {
     return error_.operator bool();
   }
   inline void
-  set_error(const char *e) {
-    error_ = seastar::sstring(e);
+  set_error(seastar::sstring e) {
+    error_ = e;
   }
-
   inline seastar::sstring
   get_error() const {
     return error_.value();

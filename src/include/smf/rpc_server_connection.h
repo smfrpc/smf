@@ -84,8 +84,8 @@ class rpc_server_connection final {
   ~rpc_server_connection() { stats->active_connections--; }
 
   inline void
-  set_error(const char *e) {
-    conn.set_error(e);
+  set_error(seastar::sstring e) {
+    conn.set_error(std::move(e));
   }
   inline bool
   has_error() const {

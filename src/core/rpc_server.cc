@@ -199,8 +199,16 @@ rpc_server::dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
            conn->limits()->reply_gate,
            [this, ctx = std::move(ctx), conn, method_dispatch]() mutable {
              return stage_apply_incoming_filters(std::move(ctx))
-               .then([this, conn, method_dispatch](auto f_ctx) {
-                 return method_dispatch->apply(std::move(f_ctx))
+               .then([this, conn, method_dispatch](auto ctx) {
+                 if (ctx.header.compression() !=
+                     rpc::compression_flags::compression_flags_none) {
+                   conn->set_error(
+                     fmt::format("There was no decompression filter for "
+                                 "compression enum: {}",
+                                 ctx.header.compression()));
+                   return seastar::make_ready_future<>();
+                 }
+                 return method_dispatch->apply(std::move(ctx))
                    .then([this](rpc_envelope e) {
                      return stage_apply_outgoing_filters(std::move(e));
                    })
