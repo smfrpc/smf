@@ -5,28 +5,29 @@
 #include <memory>
 #include <vector>
 
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
 #include <flatbuffers/flatbuffers.h>
 #include <flatbuffers/util.h>
 #include <gflags/gflags.h>
 #include <glog/logging.h>
-#include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
 
 #include "codegen.h"
 
 DEFINE_string(filename, "", "filename to parse");
 DEFINE_string(include_dirs, "", "extra include directories");
-DEFINE_string(
-  language, "cpp", "coma separated list of language to generate: go, cpp");
+DEFINE_string(language, "cpp",
+              "coma separated list of language to generate: go, cpp");
 DEFINE_string(output_path, ".", "output path of the generated files");
-
 
 std::vector<std::string>
 split_coma(const std::string &dirs) {
   std::vector<std::string> retval;
   boost::algorithm::split(retval, dirs, boost::is_any_of(","));
   if (retval.empty() && !dirs.empty()) { retval.push_back(dirs); }
-  for (auto &s : retval) { boost::algorithm::trim(s); }
+  for (auto &s : retval) {
+    boost::algorithm::trim(s);
+  }
   return retval;
 }
 
@@ -76,9 +77,9 @@ main(int argc, char **argv, char **env) {
     std::exit(1);
   }
 
-  auto codegenerator =
-    std::make_unique<smf_gen::codegen>(FLAGS_filename, FLAGS_output_path,
-      split_coma(FLAGS_include_dirs), split_langs(FLAGS_language));
+  auto codegenerator = std::make_unique<smf_gen::codegen>(
+    FLAGS_filename, FLAGS_output_path, split_coma(FLAGS_include_dirs),
+    split_langs(FLAGS_language));
   // generate code!
   auto status = codegenerator->parse();
   if (status) {

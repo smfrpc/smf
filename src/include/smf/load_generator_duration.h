@@ -14,10 +14,8 @@ namespace smf {
 struct load_generator_duration {
   explicit load_generator_duration(uint64_t reqs) : num_of_req(reqs) {}
   load_generator_duration(load_generator_duration &&d) noexcept
-    : num_of_req(std::move(d.num_of_req))
-    , test_begin(std::move(d.test_begin))
-    , test_end(std::move(d.test_end))
-    , total_bytes(std::move(d.total_bytes)) {}
+    : num_of_req(std::move(d.num_of_req)), test_begin(std::move(d.test_begin)),
+      test_end(std::move(d.test_end)), total_bytes(std::move(d.total_bytes)) {}
 
   uint64_t num_of_req;
   std::chrono::high_resolution_clock::time_point test_begin;

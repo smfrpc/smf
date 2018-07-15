@@ -18,5 +18,4 @@ struct rpc_server_stats {
   uint64_t too_large_requests{};
 };
 
-
 }  // namespace smf

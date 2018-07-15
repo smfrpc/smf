@@ -22,15 +22,12 @@ class storage_service : public smf_gen::demo::SmfStorage {
   Get(smf::rpc_recv_typed_context<smf_gen::demo::Request> &&rec) final {
     smf::rpc_typed_envelope<smf_gen::demo::Response> data;
     // return the same payload
-    if (rec) {
-      data.data->name = rec->name()->c_str();
-    }
+    if (rec) { data.data->name = rec->name()->c_str(); }
     data.envelope.set_status(200);
     return seastar::make_ready_future<
       smf::rpc_typed_envelope<smf_gen::demo::Response>>(std::move(data));
   }
 };
-
 
 void
 cli_opts(boost::program_options::options_description_easy_init o) {
@@ -42,7 +39,6 @@ cli_opts(boost::program_options::options_description_easy_init o) {
     "port for http stats service");
 }
 
-
 int
 main(int args, char **argv, char **env) {
   std::setvbuf(stdout, nullptr, _IOLBF, 1024);
@@ -53,12 +49,12 @@ main(int args, char **argv, char **env) {
   return app.run_deprecated(args, argv, [&] {
     seastar::engine().at_exit([&] {
       return rpc
-        .map_reduce(
-          smf::unique_histogram_adder(), &smf::rpc_server::copy_histogram)
+        .map_reduce(smf::unique_histogram_adder(),
+                    &smf::rpc_server::copy_histogram)
         .then([](auto h) {
           LOG_INFO("Writing server histograms");
-          return smf::histogram_seastar_utils::write(
-            "server_latency.csv", std::move(h));
+          return smf::histogram_seastar_utils::write("server_latency.csv",
+                                                     std::move(h));
         })
         .then([&rpc] { return rpc.stop(); });
     });

@@ -13,8 +13,8 @@ namespace smf {
 struct rpc_letter {
   rpc_letter();
   rpc_letter(rpc::header,
-    std::unordered_map<seastar::sstring, seastar::sstring>,
-    seastar::temporary_buffer<char>);
+             std::unordered_map<seastar::sstring, seastar::sstring>,
+             seastar::temporary_buffer<char>);
   rpc_letter &operator=(rpc_letter &&l) noexcept;
   rpc_letter(rpc_letter &&) noexcept;
   ~rpc_letter();

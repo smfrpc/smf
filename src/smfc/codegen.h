@@ -18,10 +18,8 @@ class codegen {
  public:
   using status = std::experimental::optional<std::string>;
 
-  codegen(std::string ifname,
-    std::string output_dir,
-    std::vector<std::string> include_dirs,
-    std::vector<language> langs);
+  codegen(std::string ifname, std::string output_dir,
+          std::vector<std::string> include_dirs, std::vector<language> langs);
   ~codegen() = default;
 
   status gen();

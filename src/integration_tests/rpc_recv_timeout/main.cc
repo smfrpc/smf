@@ -26,7 +26,6 @@ class storage_service : public smf_gen::demo::SmfStorage {
   }
 };
 
-
 int
 main(int args, char **argv, char **env) {
   DLOG_DEBUG("About to start the RPC test");
@@ -65,7 +64,7 @@ main(int args, char **argv, char **env) {
         return seastar::engine()
           .net()
           .connect(seastar::make_ipv4_address(random_port), local,
-            seastar::transport::TCP)
+                   seastar::transport::TCP)
           .then([local](auto skt) {
             auto conn = seastar::make_lw_shared<smf::rpc_connection>(
               std::move(skt), local);
@@ -77,8 +76,8 @@ main(int args, char **argv, char **env) {
             header.mutate_checksum(1234234);
             seastar::temporary_buffer<char> header_buf(kHeaderSize);
             std::copy(reinterpret_cast<char *>(&header),
-              reinterpret_cast<char *>(&header) + kHeaderSize,
-              header_buf.get_write());
+                      reinterpret_cast<char *>(&header) + kHeaderSize,
+                      header_buf.get_write());
             return conn->ostream.write(std::move(header_buf))
               .then([conn] { return conn->ostream.flush(); })
               .then([conn] {

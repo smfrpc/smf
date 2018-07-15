@@ -21,5 +21,4 @@ struct zstd_decompression_filter : rpc_filter<rpc_envelope> {
   seastar::future<rpc_recv_context> operator()(rpc_recv_context &&ctx);
 };
 
-
 }  // namespace smf

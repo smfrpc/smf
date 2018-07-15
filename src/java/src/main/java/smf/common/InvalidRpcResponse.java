@@ -6,8 +6,8 @@ package smf.common;
 import smf.Header;
 
 /**
- * Instance of {@class smf.client.core.InvalidRpcResponse} allows to propagate parsing exception
- * downstream to next handlers.
+ * Instance of {@class smf.client.core.InvalidRpcResponse} allows to propagate
+ * parsing exception downstream to next handlers.
  */
 public class InvalidRpcResponse extends RpcResponse {
   final Throwable cause;
@@ -16,8 +16,5 @@ public class InvalidRpcResponse extends RpcResponse {
     this.cause = cause;
   }
 
-  public Throwable
-  getCause() {
-    return cause;
-  }
+  public Throwable getCause() { return cause; }
 }

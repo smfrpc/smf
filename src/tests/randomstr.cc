@@ -12,7 +12,9 @@ TEST(bloom, random_alphanum) {
   smf::random r;
   for (auto i = 0u; i < 1000; ++i) {
     auto x = r.next_alphanum(i);
-    for (char c : x) { ASSERT_TRUE(std::isalnum(c)); }
+    for (char c : x) {
+      ASSERT_TRUE(std::isalnum(c));
+    }
   }
 }
 

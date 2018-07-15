@@ -5,25 +5,20 @@
 
 #include <iostream>
 
-#include <glog/logging.h>
 #include <boost/filesystem.hpp>
+#include <glog/logging.h>
 
 #include "cpp_generator.h"
 #include "go_generator.h"
 
 namespace smf_gen {
 
-codegen::codegen(std::string ifname,
-  std::string out_dir,
-  std::vector<std::string> includes,
-  std::vector<language> langs)
-  : input_filename(std::move(ifname))
-  , output_dir(std::move(out_dir))
-  , languages(std::move(langs))
-  , include_dirs_(std::move(includes)) {
+codegen::codegen(std::string ifname, std::string out_dir,
+                 std::vector<std::string> includes, std::vector<language> langs)
+  : input_filename(std::move(ifname)), output_dir(std::move(out_dir)),
+    languages(std::move(langs)), include_dirs_(std::move(includes)) {
   LOG_IF(FATAL, languages.empty()) << "No programming langues";
   LOG_IF(FATAL, output_dir.empty()) << "No place to put generated code";
-
 
   parser_ = std::make_unique<flatbuffers::Parser>(opts_);
 
@@ -31,11 +26,10 @@ codegen::codegen(std::string ifname,
   //
   if (include_dirs_.end() ==
       std::find_if(include_dirs_.begin(), include_dirs_.end(),
-        [this](auto &s) { return s == input_filename; })) {
+                   [this](auto &s) { return s == input_filename; })) {
     include_dirs_.push_back(flatbuffers::StripFileName(input_filename));
   }
 }
-
 
 std::size_t
 codegen::service_count() const {
@@ -60,7 +54,9 @@ codegen::parse() {
   //
   std::vector<const char *> cincludes;
   cincludes.reserve(include_dirs_.size() + 1);
-  for (auto &s : include_dirs_) { cincludes.push_back(s.c_str()); }
+  for (auto &s : include_dirs_) {
+    cincludes.push_back(s.c_str());
+  }
   // always end in null :'(
   cincludes.push_back(nullptr);
 
@@ -69,8 +65,8 @@ codegen::parse() {
     return "Could not load file: " + input_filename;
   }
 
-  if (!parser_->Parse(
-        contents.c_str(), cincludes.data(), input_filename.c_str())) {
+  if (!parser_->Parse(contents.c_str(), cincludes.data(),
+                      input_filename.c_str())) {
     return "Could not PARSE file: " + parser_->error_;
   }
 
@@ -85,8 +81,8 @@ codegen::gen() {
     switch (l) {
     case language::cpp: {
       VLOG(1) << "Adding cpp generator";
-      auto g = std::make_unique<cpp_generator>(
-        *parser_.get(), input_filename, output_dir);
+      auto g = std::make_unique<cpp_generator>(*parser_.get(), input_filename,
+                                               output_dir);
       x = g->gen();
       if (x) { return x; }
       VLOG(1) << "Generated: " << g->output_filename();
@@ -94,8 +90,8 @@ codegen::gen() {
     }
     case language::go: {
       VLOG(1) << "Adding golang generator";
-      auto g = std::make_unique<go_generator>(
-        *parser_.get(), input_filename, output_dir);
+      auto g = std::make_unique<go_generator>(*parser_.get(), input_filename,
+                                              output_dir);
       x = g->gen();
       if (x) { return x; }
       VLOG(1) << "Generated: " << g->output_filename();

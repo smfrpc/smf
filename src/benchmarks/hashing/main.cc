@@ -11,7 +11,6 @@
 #include <bytell_hash_map.hpp>
 #include <flat_hash_map.hpp>
 
-
 struct simple_random {
   simple_random() {
     std::random_device rd;

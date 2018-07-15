@@ -12,7 +12,6 @@ struct rpc_filter {
   seastar::future<T> operator()(T t);
 };
 
-
 /// brief - applies a functor `future<T> operator()(T t)` to all the filters
 /// useful for incoming and outgoing filters. Taking a pair of iterators
 ///
@@ -25,8 +24,8 @@ rpc_filter_apply(const Iterator &b, const Iterator &end, Arg &&arg) {
   }
   return (*begin)(std::forward<Arg>(arg))
     .then([begin = std::next(begin), end](Arg &&a) {
-      return rpc_filter_apply<Iterator, Arg, Ret...>(
-        begin, end, std::forward<Arg>(a));
+      return rpc_filter_apply<Iterator, Arg, Ret...>(begin, end,
+                                                     std::forward<Arg>(a));
     });
 }
 
@@ -36,6 +35,5 @@ rpc_filter_apply(Container *c, Arg &&arg) {
   return rpc_filter_apply<typename Container::iterator, Arg, Arg>(
     c->begin(), c->end(), std::forward<Arg>(arg));
 }
-
 
 }  // namespace smf

@@ -18,18 +18,19 @@ import java.util.function.Function;
 
 @ChannelHandler.Sharable
 public class RequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
-  final CopyOnWriteArrayList<RpcService> serviceIdToFunctionHandler = new CopyOnWriteArrayList<>();
+  final CopyOnWriteArrayList<RpcService> serviceIdToFunctionHandler =
+    new CopyOnWriteArrayList<>();
 
   @Override
-  protected void
-  channelRead0(final ChannelHandlerContext ctx, final RpcRequest request) {
+  protected void channelRead0(
+    final ChannelHandlerContext ctx, final RpcRequest request) {
     final Header header = request.getHeader();
-    long meta = header.meta();
+    long         meta   = header.meta();
 
     Optional<Function<byte[], byte[]>> requestHandler =
       serviceIdToFunctionHandler.stream()
-        .map(rpcService -> rpcService.getHandler(meta)) //
-        .filter(Objects::nonNull) //
+        .map(rpcService -> rpcService.getHandler(meta))  //
+        .filter(Objects::nonNull)                        //
         .findFirst();
 
     if (!requestHandler.isPresent()) {
@@ -44,12 +45,12 @@ public class RequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
     byte[] response = rpcRequestFunction.apply(body);
 
     // kek XD
-    final RpcResponse rpcResponse = new RpcResponse(header, ByteBuffer.wrap(response));
+    final RpcResponse rpcResponse =
+      new RpcResponse(header, ByteBuffer.wrap(response));
     ctx.channel().writeAndFlush(rpcResponse);
   }
 
-  public void
-  registerStorageService(final RpcService rpcService) {
+  public void registerStorageService(final RpcService rpcService) {
     serviceIdToFunctionHandler.add(rpcService);
   }
 }

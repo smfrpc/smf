@@ -21,14 +21,11 @@ namespace smf {
 ///
 class rpc_connection final {
  public:
-  explicit rpc_connection(seastar::connected_socket fd,
-    seastar::socket_address address,
+  explicit rpc_connection(
+    seastar::connected_socket fd, seastar::socket_address address,
     seastar::lw_shared_ptr<rpc_connection_limits> conn_limits = nullptr)
-    : socket(std::move(fd))
-    , remote_address(address)
-    , istream(socket.input())
-    , ostream(socket.output())
-    , limits(conn_limits) {}
+    : socket(std::move(fd)), remote_address(address), istream(socket.input()),
+      ostream(socket.output()), limits(conn_limits) {}
 
   seastar::connected_socket socket;
   const seastar::socket_address remote_address;

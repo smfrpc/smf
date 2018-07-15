@@ -1,7 +1,6 @@
 // Copyright 2018 SMF Authors
 //
 
-
 //
 // Note
 // Important as we upgrade / change the flatbuffers versions or their internal
@@ -45,7 +44,6 @@ BENCHMARK(BM_malloc_base)
   ->Args({1 << 16, 1 << 16})
   ->Args({1 << 18, 1 << 18})
   ->Threads(1);
-
 
 static void
 BM_alloc_simple(benchmark::State &state) {
@@ -99,10 +97,10 @@ BM_alloc_thread_local(benchmark::State &state) {
         "Invalid alignment of %d; allocating %d bytes", 8, bdr.GetSize()));
     }
     DLOG_THROW_IF(r != 0,
-      "ERRNO: {}, Bad aligned allocation of {} with alignment: {}", r,
-      bdr.GetSize(), 8);
+                  "ERRNO: {}, Bad aligned allocation of {} with alignment: {}",
+                  r, bdr.GetSize(), 8);
     std::memcpy(ret, reinterpret_cast<const char *>(bdr.GetBufferPointer()),
-      bdr.GetSize());
+                bdr.GetSize());
     benchmark::DoNotOptimize(ret);
     std::free(ret);
   }
@@ -116,7 +114,6 @@ BENCHMARK(BM_alloc_thread_local)
   ->Args({1 << 16, 1 << 16})
   ->Args({1 << 18, 1 << 18})
   ->Threads(1);
-
 
 template <typename RootType>
 seastar::temporary_buffer<char>
@@ -140,7 +137,6 @@ hybrid(const typename RootType::NativeTableType &t) {
       ptr, sz, seastar::make_object_deleter(std::move(mem)));
   }
 
-
   // always allocate to the largest member 8-bytes
   void *ret = nullptr;
   auto r = posix_memalign(&ret, 8, bdr.GetSize());
@@ -151,12 +147,14 @@ hybrid(const typename RootType::NativeTableType &t) {
       "Invalid alignment of %d; allocating %d bytes", 8, bdr.GetSize()));
   }
   DLOG_THROW_IF(r != 0,
-    "ERRNO: {}, Bad aligned allocation of {} with alignment: {}", r,
-    bdr.GetSize(), 8);
+                "ERRNO: {}, Bad aligned allocation of {} with alignment: {}", r,
+                bdr.GetSize(), 8);
   seastar::temporary_buffer<char> retval(reinterpret_cast<char *>(ret),
-    bdr.GetSize(), seastar::make_free_deleter(ret));
+                                         bdr.GetSize(),
+                                         seastar::make_free_deleter(ret));
   std::memcpy(retval.get_write(),
-    reinterpret_cast<const char *>(bdr.GetBufferPointer()), retval.size());
+              reinterpret_cast<const char *>(bdr.GetBufferPointer()),
+              retval.size());
   return std::move(retval);
 }
 
@@ -179,6 +177,5 @@ BENCHMARK(BM_alloc_hybrid)
   ->Args({1 << 16, 1 << 16})
   ->Args({1 << 18, 1 << 18})
   ->Threads(1);
-
 
 BENCHMARK_MAIN();

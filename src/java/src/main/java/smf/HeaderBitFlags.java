@@ -13,8 +13,5 @@ public final class HeaderBitFlags {
     "HasPayloadHeaders",
   };
 
-  public static String
-  name(int e) {
-    return names[e - HasPayloadHeaders];
-  }
+  public static String name(int e) { return names[e - HasPayloadHeaders]; }
 }

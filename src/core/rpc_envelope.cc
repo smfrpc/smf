@@ -11,7 +11,6 @@
 
 #include "smf/rpc_header_utils.h"
 
-
 namespace smf {
 
 seastar::future<>
@@ -23,7 +22,7 @@ rpc_envelope::send(seastar::output_stream<char> *out, rpc_envelope e) {
   // prepare the header locally
   //
   std::memcpy(header_buf.get_write(),
-    reinterpret_cast<char *>(&e.letter.header), header_buf.size());
+              reinterpret_cast<char *>(&e.letter.header), header_buf.size());
 
   // needs to be moved so we can do zero copy output buffer
   return out->write(std::move(header_buf))

@@ -12,22 +12,19 @@ import com.google.flatbuffers.*;
 
 @SuppressWarnings("unused")
 public final class PayloadHeaders extends Table {
-  public static PayloadHeaders
-  getRootAsPayloadHeaders(ByteBuffer _bb) {
+  public static PayloadHeaders getRootAsPayloadHeaders(ByteBuffer _bb) {
     return getRootAsPayloadHeaders(_bb, new PayloadHeaders());
   }
-  public static PayloadHeaders
-  getRootAsPayloadHeaders(ByteBuffer _bb, PayloadHeaders obj) {
+  public static PayloadHeaders getRootAsPayloadHeaders(
+    ByteBuffer _bb, PayloadHeaders obj) {
     _bb.order(ByteOrder.LITTLE_ENDIAN);
     return (obj.__assign(_bb.getInt(_bb.position()) + _bb.position(), _bb));
   }
-  public void
-  __init(int _i, ByteBuffer _bb) {
+  public void __init(int _i, ByteBuffer _bb) {
     bb_pos = _i;
-    bb = _bb;
+    bb     = _bb;
   }
-  public PayloadHeaders
-  __assign(int _i, ByteBuffer _bb) {
+  public PayloadHeaders __assign(int _i, ByteBuffer _bb) {
     __init(_i, _bb);
     return this;
   }
@@ -35,52 +32,45 @@ public final class PayloadHeaders extends Table {
   /**
    * Headers for forward compat.
    */
-  public DynamicHeader
-  dynamicHeaders(int j) {
+  public DynamicHeader dynamicHeaders(int j) {
     return dynamicHeaders(new DynamicHeader(), j);
   }
-  public DynamicHeader
-  dynamicHeaders(DynamicHeader obj, int j) {
+  public DynamicHeader dynamicHeaders(DynamicHeader obj, int j) {
     int o = __offset(4);
     return o != 0 ? obj.__assign(__indirect(__vector(o) + j * 4), bb) : null;
   }
-  public int
-  dynamicHeadersLength() {
+  public int dynamicHeadersLength() {
     int o = __offset(4);
     return o != 0 ? __vector_len(o) : 0;
   }
-  public DynamicHeader
-  dynamicHeadersByKey(String key) {
+  public DynamicHeader dynamicHeadersByKey(String key) {
     int o = __offset(4);
-    return o != 0 ? DynamicHeader.__lookup_by_key(null, __vector(o), key, bb) : null;
+    return o != 0 ? DynamicHeader.__lookup_by_key(null, __vector(o), key, bb) :
+                    null;
   }
-  public DynamicHeader
-  dynamicHeadersByKey(DynamicHeader obj, String key) {
+  public DynamicHeader dynamicHeadersByKey(DynamicHeader obj, String key) {
     int o = __offset(4);
-    return o != 0 ? DynamicHeader.__lookup_by_key(obj, __vector(o), key, bb) : null;
+    return o != 0 ? DynamicHeader.__lookup_by_key(obj, __vector(o), key, bb) :
+                    null;
   }
   /**
    * We need to chain the actual payload
    */
-  public long
-  size() {
+  public long size() {
     int o = __offset(6);
     return o != 0 ? (long) bb.getInt(o + bb_pos) & 0xFFFFFFFFL : 0L;
   }
-  public long
-  checksum() {
+  public long checksum() {
     int o = __offset(8);
     return o != 0 ? (long) bb.getInt(o + bb_pos) & 0xFFFFFFFFL : 0L;
   }
-  public byte
-  compression() {
+  public byte compression() {
     int o = __offset(10);
     return o != 0 ? bb.get(o + bb_pos) : 0;
   }
 
-  public static int
-  createPayloadHeaders(FlatBufferBuilder builder,
-    int dynamic_headersOffset,
+  public static int createPayloadHeaders(FlatBufferBuilder builder,
+    int  dynamic_headersOffset,
     long size,
     long checksum,
     byte compression) {
@@ -92,38 +82,35 @@ public final class PayloadHeaders extends Table {
     return PayloadHeaders.endPayloadHeaders(builder);
   }
 
-  public static void
-  startPayloadHeaders(FlatBufferBuilder builder) {
+  public static void startPayloadHeaders(FlatBufferBuilder builder) {
     builder.startObject(4);
   }
-  public static void
-  addDynamicHeaders(FlatBufferBuilder builder, int dynamicHeadersOffset) {
+  public static void addDynamicHeaders(
+    FlatBufferBuilder builder, int dynamicHeadersOffset) {
     builder.addOffset(0, dynamicHeadersOffset, 0);
   }
-  public static int
-  createDynamicHeadersVector(FlatBufferBuilder builder, int[] data) {
+  public static int createDynamicHeadersVector(
+    FlatBufferBuilder builder, int[] data) {
     builder.startVector(4, data.length, 4);
-    for (int i = data.length - 1; i >= 0; i--) builder.addOffset(data[i]);
+    for (int i = data.length - 1; i >= 0; i--)
+      builder.addOffset(data[i]);
     return builder.endVector();
   }
-  public static void
-  startDynamicHeadersVector(FlatBufferBuilder builder, int numElems) {
+  public static void startDynamicHeadersVector(
+    FlatBufferBuilder builder, int numElems) {
     builder.startVector(4, numElems, 4);
   }
-  public static void
-  addSize(FlatBufferBuilder builder, long size) {
+  public static void addSize(FlatBufferBuilder builder, long size) {
     builder.addInt(1, (int) size, (int) 0L);
   }
-  public static void
-  addChecksum(FlatBufferBuilder builder, long checksum) {
+  public static void addChecksum(FlatBufferBuilder builder, long checksum) {
     builder.addInt(2, (int) checksum, (int) 0L);
   }
-  public static void
-  addCompression(FlatBufferBuilder builder, byte compression) {
+  public static void addCompression(
+    FlatBufferBuilder builder, byte compression) {
     builder.addByte(3, compression, 0);
   }
-  public static int
-  endPayloadHeaders(FlatBufferBuilder builder) {
+  public static int endPayloadHeaders(FlatBufferBuilder builder) {
     int o = builder.endObject();
     return o;
   }

@@ -12,7 +12,6 @@
 
 namespace smf {
 
-
 enum class codec_type { lz4, zstd };
 enum class compression_level { fastest, best };
 
@@ -33,19 +32,18 @@ class codec {
     return level_;
   }
 
-  virtual seastar::temporary_buffer<char> compress(
-    const seastar::temporary_buffer<char> &data) = 0;
-  virtual seastar::temporary_buffer<char> compress(
-    const char *data, std::size_t size) = 0;
+  virtual seastar::temporary_buffer<char>
+  compress(const seastar::temporary_buffer<char> &data) = 0;
+  virtual seastar::temporary_buffer<char> compress(const char *data,
+                                                   std::size_t size) = 0;
 
-  virtual seastar::temporary_buffer<char> uncompress(
-    const seastar::temporary_buffer<char> &data) = 0;
-  virtual seastar::temporary_buffer<char> uncompress(
-    const char *data, std::size_t sz) = 0;
+  virtual seastar::temporary_buffer<char>
+  uncompress(const seastar::temporary_buffer<char> &data) = 0;
+  virtual seastar::temporary_buffer<char> uncompress(const char *data,
+                                                     std::size_t sz) = 0;
 
-
-  static std::unique_ptr<codec> make_unique(
-    codec_type type, compression_level level);
+  static std::unique_ptr<codec> make_unique(codec_type type,
+                                            compression_level level);
 
  private:
   codec_type type_;

@@ -2,7 +2,6 @@
 //
 #include "smf/rpc_handle_router.h"
 
-
 namespace smf {
 
 std::ostream &

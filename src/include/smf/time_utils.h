@@ -10,21 +10,21 @@ namespace smf {
 inline uint64_t
 time_now_millis() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
-    std::chrono::system_clock::now().time_since_epoch())
+           std::chrono::system_clock::now().time_since_epoch())
     .count();
 }
 
 inline uint64_t
 time_now_micros() {
   return std::chrono::duration_cast<std::chrono::microseconds>(
-    std::chrono::high_resolution_clock::now().time_since_epoch())
+           std::chrono::high_resolution_clock::now().time_since_epoch())
     .count();
 }
 
 inline uint64_t
 lowres_time_now_millis() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
-    seastar::lowres_clock::now().time_since_epoch())
+           seastar::lowres_clock::now().time_since_epoch())
     .count();
 }
 // Extracted out of gmock

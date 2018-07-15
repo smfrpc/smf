@@ -26,15 +26,18 @@ public class SmfClient {
   private volatile Channel channel;
   private final SessionIdGenerator sessionIdGenerator;
 
-  public SmfClient(final String host, final int port) throws InterruptedException {
+  public SmfClient(final String host, final int port)
+    throws InterruptedException {
     sessionIdGenerator = new SessionIdGenerator();
-    group = new NioEventLoopGroup(1);
-    dispatcher = new Dispatcher(sessionIdGenerator);
+    group              = new NioEventLoopGroup(1);
+    dispatcher         = new Dispatcher(sessionIdGenerator);
 
     final CompressionService compressionService = new CompressionService();
 
-    final RpcRequestEncoder rpcRequestEncoder = new RpcRequestEncoder(compressionService);
-    final RpcResponseDecoder rpcResponseDecoder = new RpcResponseDecoder(compressionService);
+    final RpcRequestEncoder rpcRequestEncoder =
+      new RpcRequestEncoder(compressionService);
+    final RpcResponseDecoder rpcResponseDecoder =
+      new RpcResponseDecoder(compressionService);
 
     bootstrap = new Bootstrap();
     bootstrap.group(group)
@@ -45,7 +48,8 @@ public class SmfClient {
         protected void initChannel(final SocketChannel ch) {
           ChannelPipeline p = ch.pipeline();
           // paranoid debug
-          //                        p.addLast("debug", new LoggingHandler(LogLevel.INFO));
+          //                        p.addLast("debug", new
+          //                        LoggingHandler(LogLevel.INFO));
           p.addLast(rpcRequestEncoder);
           p.addLast(rpcResponseDecoder);
           p.addLast(dispatcher);
@@ -62,15 +66,17 @@ public class SmfClient {
   }
 
   /**
-   * schedule RPC call and assign callback invocation to feature result of scheduled request.
+   * schedule RPC call and assign callback invocation to feature result of
+   * scheduled request.
    *
    * @param methodMeta
    * @param body
    * @return CompletableFuture representing result of RPC request.
    */
-  public CompletableFuture<ByteBuffer>
-  executeAsync(long methodMeta, byte[] body) {
-    final CompletableFuture<ByteBuffer> resultFuture = new CompletableFuture<>();
+  public CompletableFuture<ByteBuffer> executeAsync(
+    long methodMeta, byte[] body) {
+    final CompletableFuture<ByteBuffer> resultFuture =
+      new CompletableFuture<>();
     int sessionId = sessionIdGenerator.next();
     LOG.info("Constructing RPC call for sessionId {}", sessionId);
     final PreparedRpcRequest preparedRpcRequest =
@@ -81,8 +87,7 @@ public class SmfClient {
     return resultFuture;
   }
 
-  public void
-  closeGracefully() throws InterruptedException {
+  public void closeGracefully() throws InterruptedException {
     group.shutdownGracefully().await().sync();
   }
 }

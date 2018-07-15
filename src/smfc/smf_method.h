@@ -4,8 +4,8 @@
 #include <deque>
 #include <memory>
 
-#include <flatbuffers/idl.h>
 #include <boost/algorithm/string/join.hpp>
+#include <flatbuffers/idl.h>
 
 #include "crc.h"
 #include "language.h"
@@ -15,9 +15,8 @@ class smf_method {
  public:
   enum Streaming { kNone, kClient, kServer, kBiDi };
 
-  smf_method(const flatbuffers::RPCCall *method,
-    std::string service_name,
-    uint32_t service_id)
+  smf_method(const flatbuffers::RPCCall *method, std::string service_name,
+             uint32_t service_id)
     : method_(method), service_name_(service_name), service_id_(service_id) {
     streaming_ = kNone;
     // you can have the same method name w/ different arguments, so in that
@@ -47,7 +46,7 @@ class smf_method {
   std::string
   type(const flatbuffers::StructDef &sd, language lang) const {
     std::deque<std::string> tmp(sd.defined_namespace->components.begin(),
-      sd.defined_namespace->components.end());
+                                sd.defined_namespace->components.end());
 
     tmp.push_back(sd.name);
     switch (lang) {
@@ -55,7 +54,9 @@ class smf_method {
       return boost::algorithm::join(tmp, "::");
     case language::go:
       // for go we only want the last package and the name of method
-      for (auto i = 0u; i < tmp.size() - 2; ++i) { tmp.pop_front(); }
+      for (auto i = 0u; i < tmp.size() - 2; ++i) {
+        tmp.pop_front();
+      }
       return boost::algorithm::join(tmp, ".");
     default:
       throw std::runtime_error("Unknown language for the method.h");

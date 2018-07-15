@@ -17,7 +17,6 @@ struct rpc_typed_envelope {
   rpc_envelope envelope;
   std::unique_ptr<native_type> data;
 
-
   rpc_typed_envelope() : data(std::make_unique<native_type>()) {}
   ~rpc_typed_envelope() {}
   explicit rpc_typed_envelope(std::unique_ptr<native_type> &&ptr) noexcept
@@ -39,7 +38,7 @@ struct rpc_typed_envelope {
     envelope.letter.body =
       std::move(smf::native_table_as_buffer<RootType>(*(data.get())));
     smf::checksum_rpc(envelope.letter.header, envelope.letter.body.get(),
-      envelope.letter.body.size());
+                      envelope.letter.body.size());
     data = nullptr;
     return std::move(envelope);
   }

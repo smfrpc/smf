@@ -105,9 +105,8 @@ class rpc_client {
     });
   }
 
-
-  virtual seastar::future<stdx::optional<rpc_recv_context>> raw_send(
-    rpc_envelope e) final;
+  virtual seastar::future<stdx::optional<rpc_recv_context>>
+  raw_send(rpc_envelope e) final;
   virtual seastar::future<> connect() final;
 
   virtual seastar::future<> stop();
@@ -160,17 +159,14 @@ class rpc_client {
   seastar::future<rpc_recv_context> apply_incoming_filters(rpc_recv_context);
   seastar::future<rpc_envelope> apply_outgoing_filters(rpc_envelope);
 
-
  private:
   seastar::future<> do_reads();
   seastar::future<> dispatch_write(rpc_envelope e);
 
-
   /// brief use SEDA pipelines for filtering
-  seastar::future<rpc_recv_context> stage_apply_incoming_filters(
-    rpc_recv_context);
+  seastar::future<rpc_recv_context>
+    stage_apply_incoming_filters(rpc_recv_context);
   seastar::future<rpc_envelope> stage_apply_outgoing_filters(rpc_envelope);
-
 
   std::vector<in_filter_t> in_filters_;
   std::vector<out_filter_t> out_filters_;
@@ -179,6 +175,5 @@ class rpc_client {
   seastar::lw_shared_ptr<histogram> hist_ = nullptr;
   uint16_t session_idx_{0};
 };
-
 
 }  // namespace smf

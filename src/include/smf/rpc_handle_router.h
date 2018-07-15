@@ -21,8 +21,8 @@ class rpc_handle_router {
 
   seastar::future<> stop();
 
-  smf::rpc_service_method_handle *get_handle_for_request(
-    const uint32_t &request_id);
+  smf::rpc_service_method_handle *
+  get_handle_for_request(const uint32_t &request_id);
 
   /// \brief multiple rpc_services can register w/ this  handle router
   void register_rpc_service(rpc_service *s);
@@ -31,7 +31,7 @@ class rpc_handle_router {
  private:
   std::vector<std::unique_ptr<rpc_service>> services_{};
 
-  friend std::ostream &operator<<(
-    std::ostream &, const smf::rpc_handle_router &);
+  friend std::ostream &operator<<(std::ostream &,
+                                  const smf::rpc_handle_router &);
 };
 }  // namespace smf

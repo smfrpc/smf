@@ -39,7 +39,9 @@ is_camel_case(const std::string &s) {
 inline std::string
 lower_vec(const std::vector<std::string> &vec) {
   std::stringstream ss;
-  for (auto &x : vec) { ss << x; }
+  for (auto &x : vec) {
+    ss << x;
+  }
   auto retval = ss.str();
   for (auto i = 0u; i < retval.length(); ++i) {
     if (std::isalnum(retval[i])) { retval[i] = std::tolower(retval[i]); }
@@ -69,10 +71,9 @@ proper_prefix_token(std::string prefix, std::string s) {
   return lower_vec({prefix, std::string("_"), s});
 }
 
-
 static void
-print_header_service_ctor_dtor(
-  smf_printer &printer, const smf_service *service) {
+print_header_service_ctor_dtor(smf_printer &printer,
+                               const smf_service *service) {
   VLOG(1) << "print_header_service_ctor_dtor for service: " << service->name();
   std::map<std::string, std::string> vars;
 
@@ -112,8 +113,8 @@ print_header_service_ctor_dtor(
 }
 
 static void
-print_header_service_handle_request_id(
-  smf_printer &printer, const smf_service *service) {
+print_header_service_handle_request_id(smf_printer &printer,
+                                       const smf_service *service) {
   printer.print("virtual smf::rpc_service_method_handle *\n"
                 "method_for_request_id(uint32_t idx) override final {\n");
   printer.indent();
@@ -126,7 +127,8 @@ print_header_service_handle_request_id(
     vars["ServiceID"] = std::to_string(method->service_id());
     vars["MethodId"] = std::to_string(method->method_id());
     vars["VectorIdx"] = std::to_string(i);
-    printer.print(vars,
+    printer.print(
+      vars,
       "case ($ServiceID$ ^ $MethodId$): return &handles_[$VectorIdx$];\n");
   }
   printer.print("default: return nullptr;\n");
@@ -161,20 +163,20 @@ print_header_service_method(smf_printer &printer, const smf_method *method) {
   printer.print(
     vars, "$MethodName$(smf::rpc_recv_typed_context<$InType$> &&rec) {\n");
   printer.indent();
-  printer.print(vars,
-    "using out_type = $OutType$;\n"
-    "using env_t = smf::rpc_typed_envelope<out_type>;\n"
-    "env_t data;\n"
-    "//\n"
-    "//\n"
-    "// USER SHOULD OVERRIDE THIS METHOD.\n"
-    "//\n"
-    "//\n"
-    "// Helpful for clients to set the status.\n"
-    "// Typically follows HTTP style. Not imposed by smf whatsoever.\n"
-    "// i.e. 501 == Method not implemented\n"
-    "data.envelope.set_status(501);\n"
-    "return seastar::make_ready_future<env_t>(std::move(data));\n");
+  printer.print(
+    vars, "using out_type = $OutType$;\n"
+          "using env_t = smf::rpc_typed_envelope<out_type>;\n"
+          "env_t data;\n"
+          "//\n"
+          "//\n"
+          "// USER SHOULD OVERRIDE THIS METHOD.\n"
+          "//\n"
+          "//\n"
+          "// Helpful for clients to set the status.\n"
+          "// Typically follows HTTP style. Not imposed by smf whatsoever.\n"
+          "// i.e. 501 == Method not implemented\n"
+          "data.envelope.set_status(501);\n"
+          "return seastar::make_ready_future<env_t>(std::move(data));\n");
   printer.outdent();
   printer.print("}\n");
 
@@ -184,10 +186,10 @@ print_header_service_method(smf_printer &printer, const smf_method *method) {
                       "seastar::future<smf::rpc_envelope>\n");
   printer.print(vars, "$RawMethodName$(smf::rpc_recv_context &&c) {\n");
   printer.indent();
-  printer.print(vars,
-    "using inner_t = $InType$;\n"
-    "using input_t = smf::rpc_recv_typed_context<inner_t>;\n"
-    "return $MethodName$(input_t(std::move(c))).then([this](auto x){\n");
+  printer.print(
+    vars, "using inner_t = $InType$;\n"
+          "using input_t = smf::rpc_recv_typed_context<inner_t>;\n"
+          "return $MethodName$(input_t(std::move(c))).then([this](auto x){\n");
   printer.indent();
   printer.print("return "
                 "seastar::make_ready_future<smf::rpc_envelope>(x.serialize_"
@@ -229,7 +231,6 @@ print_header_service(smf_printer &printer, const smf_service *service) {
   print_header_service_handles(printer);
   print_header_service_handle_request_id(printer, service);
 
-
   for (auto &method : service->methods()) {
     print_header_service_method(printer, method.get());
   }
@@ -237,7 +238,6 @@ print_header_service(smf_printer &printer, const smf_service *service) {
   printer.outdent();
   printer.print(vars, "}; // end of service: $Service$\n");
 }
-
 
 void
 print_header_client_method(smf_printer &printer, const smf_method *method) {
@@ -251,9 +251,9 @@ print_header_client_method(smf_printer &printer, const smf_method *method) {
   vars["OutType"] = method->output_type_name();
 
   printer.print(vars,
-    "inline virtual\n"
-    "seastar::future<smf::rpc_recv_typed_context<$OutType$>>\n"
-    "$MethodName$(smf::rpc_envelope e) {\n");
+                "inline virtual\n"
+                "seastar::future<smf::rpc_recv_typed_context<$OutType$>>\n"
+                "$MethodName$(smf::rpc_envelope e) {\n");
   printer.indent();
   printer.print(vars, "/// RequestID: $ServiceID$ ^ $MethodID$\n"
                       "/// ServiceID: $ServiceID$ == crc32(\"$ServiceName$\")\n"
@@ -264,7 +264,8 @@ print_header_client_method(smf_printer &printer, const smf_method *method) {
   printer.print("}\n");
 
   // RAW
-  printer.print(vars,
+  printer.print(
+    vars,
     "inline virtual\n"
     "seastar::future<std::experimental::optional<smf::rpc_recv_context>>\n"
     "$RawMethodName$(smf::rpc_envelope e) {\n");
@@ -289,8 +290,8 @@ print_header_client(smf_printer &printer, const smf_service *service) {
   printer.print(vars, "class $ClientName$:\n");
   printer.indent();
   printer.print("public smf::rpc_client,\n");
-  printer.print(
-    vars, "public seastar::enable_shared_from_this<$ClientName$> {\n");
+  printer.print(vars,
+                "public seastar::enable_shared_from_this<$ClientName$> {\n");
   printer.outdent();
   printer.print("\n");
   printer.indent();
@@ -316,8 +317,8 @@ print_header_client(smf_printer &printer, const smf_service *service) {
   printer.print("make_shared(seastar::ipv4_addr addr) {\n");
   printer.indent();
   printer.print(vars, "$ClientName$ c(std::move(addr));\n");
-  printer.print(
-    vars, "return seastar::make_shared<$ClientName$>(std::move(c));\n");
+  printer.print(vars,
+                "return seastar::make_shared<$ClientName$>(std::move(c));\n");
   printer.outdent();
   printer.print("}\n");
 
@@ -326,8 +327,8 @@ print_header_client(smf_printer &printer, const smf_service *service) {
   printer.print("make_shared(smf::rpc_client_opts o) {\n");
   printer.indent();
   printer.print(vars, "$ClientName$ c(std::move(o));\n");
-  printer.print(
-    vars, "return seastar::make_shared<$ClientName$>(std::move(c));\n");
+  printer.print(vars,
+                "return seastar::make_shared<$ClientName$>(std::move(c));\n");
   printer.outdent();
   printer.print("}\n");
 
@@ -351,7 +352,6 @@ print_header_client(smf_printer &printer, const smf_service *service) {
   printer.print(vars, "return shared_from_this();\n");
   printer.outdent();
   printer.print("}\n");
-
 
   for (auto &method : service->methods()) {
     print_header_client_method(printer, method.get());
@@ -394,9 +394,14 @@ cpp_generator::generate_header_includes() {
   VLOG(1) << "get_header_includes";
   std::map<std::string, std::string> vars;
 
-  static const std::vector<std::string> headers = {"core/sstring.hh",
-    "experimental/optional", "smf/rpc_service.h", "smf/rpc_client.h",
-    "smf/rpc_recv_typed_context.h", "smf/rpc_typed_envelope.h", "smf/log.h"};
+  static const std::vector<std::string> headers = {
+    "core/sstring.hh",
+    "experimental/optional",
+    "smf/rpc_service.h",
+    "smf/rpc_client.h",
+    "smf/rpc_recv_typed_context.h",
+    "smf/rpc_typed_envelope.h",
+    "smf/log.h"};
 
   for (auto &hdr : headers) {
     vars["header"] = hdr;
@@ -454,6 +459,5 @@ cpp_generator::generate_header_services() {
     printer_.print("\n");
   }
 }
-
 
 }  // namespace smf_gen

@@ -20,7 +20,6 @@
 #include "smf/unique_histogram_adder.h"
 #include "smf/zstd_filter.h"
 
-
 static const char *kPoem = "How do I love thee? Let me count the ways."
                            "I love thee to the depth and breadth and height"
                            "My soul can reach, when feeling out of sight"
@@ -71,7 +70,6 @@ struct generator {
   }
 };
 
-
 class storage_service : public smf_gen::demo::SmfStorage {
   virtual seastar::future<smf::rpc_typed_envelope<smf_gen::demo::Response>>
   Get(smf::rpc_recv_typed_context<smf_gen::demo::Request> &&rec) final {
@@ -81,7 +79,6 @@ class storage_service : public smf_gen::demo::SmfStorage {
       smf::rpc_typed_envelope<smf_gen::demo::Response>>(std::move(data));
   }
 };
-
 
 void
 cli_opts(boost::program_options::options_description_easy_init o) {
@@ -101,14 +98,12 @@ cli_opts(boost::program_options::options_description_easy_init o) {
       smf::non_root_port(rand.next() % std::numeric_limits<uint16_t>::max())),
     "port for http stats service");
 
-
   o("req-num", po::value<uint32_t>()->default_value(100),
     "number of request per concurrenct connection");
 
   o("concurrency", po::value<uint32_t>()->default_value(10),
     "number of green threads per real thread (seastar::futures<>)");
 }
-
 
 int
 main(int args, char **argv, char **env) {
@@ -154,9 +149,9 @@ main(int args, char **argv, char **env) {
       .then([&load, &cfg] {
         LOG_INFO("About to start the client");
 
-        ::smf::load_generator_args largs(cfg["ip"].as<std::string>().c_str(),
-          cfg["port"].as<uint16_t>(), cfg["req-num"].as<uint32_t>(),
-          cfg["concurrency"].as<uint32_t>(),
+        ::smf::load_generator_args largs(
+          cfg["ip"].as<std::string>().c_str(), cfg["port"].as<uint16_t>(),
+          cfg["req-num"].as<uint32_t>(), cfg["concurrency"].as<uint32_t>(),
           static_cast<uint64_t>(0.4 * seastar::memory::stats().total_memory()),
           smf::rpc::compression_flags::compression_flags_none, cfg);
 
@@ -182,21 +177,21 @@ main(int args, char **argv, char **env) {
         LOG_INFO("MapReducing stats");
         return load
           .map_reduce(smf::unique_histogram_adder(),
-            [](load_gen_t &shard) { return shard.copy_histogram(); })
+                      [](load_gen_t &shard) { return shard.copy_histogram(); })
           .then([](auto h) {
             LOG_INFO("Writing client histograms");
-            return smf::histogram_seastar_utils::write(
-              "clients_latency.csv", std::move(h));
+            return smf::histogram_seastar_utils::write("clients_latency.csv",
+                                                       std::move(h));
           });
       })
       .then([&] {
         return rpc
-          .map_reduce(
-            smf::unique_histogram_adder(), &smf::rpc_server::copy_histogram)
+          .map_reduce(smf::unique_histogram_adder(),
+                      &smf::rpc_server::copy_histogram)
           .then([](auto h) {
             LOG_INFO("Writing server histograms");
-            return smf::histogram_seastar_utils::write(
-              "server_latency.csv", std::move(h));
+            return smf::histogram_seastar_utils::write("server_latency.csv",
+                                                       std::move(h));
           });
       })
       .then([] {

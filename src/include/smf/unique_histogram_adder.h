@@ -31,5 +31,4 @@ class unique_histogram_adder {
   }
 };
 
-
 }  // namespace smf

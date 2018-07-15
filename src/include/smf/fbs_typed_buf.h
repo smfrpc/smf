@@ -3,15 +3,13 @@
 
 #pragma once
 
-#include <flatbuffers/flatbuffers.h>
 #include <core/temporary_buffer.hh>
+#include <flatbuffers/flatbuffers.h>
 
 #include "smf/log.h"
 #include "smf/macros.h"
 
-
 namespace smf {
-
 
 /// No validation done here. Just a buffer containing a type
 ///
@@ -19,7 +17,7 @@ template <typename T>
 class fbs_typed_buf {
  public:
   static_assert(std::is_base_of<flatbuffers::Table, T>::value,
-    "Should ONLY be Table derived classes");
+                "Should ONLY be Table derived classes");
   using type = T;
   explicit fbs_typed_buf(seastar::temporary_buffer<char> body)
     : buf_(std::move(body)) {

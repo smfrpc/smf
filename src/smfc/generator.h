@@ -6,8 +6,8 @@
 #include <memory>
 #include <string>
 
-#include <flatbuffers/flatbuffers.h>
 #include <boost/filesystem.hpp>
+#include <flatbuffers/flatbuffers.h>
 
 #include "smf_printer.h"
 #include "smf_service.h"
@@ -15,9 +15,8 @@
 namespace smf_gen {
 class generator {
  public:
-  generator(const flatbuffers::Parser &p,
-    const std::string &ifname,
-    const std::string &out_dir)
+  generator(const flatbuffers::Parser &p, const std::string &ifname,
+            const std::string &out_dir)
     : parser(p), input_filename(ifname), output_dir(out_dir) {
     for (auto i = 0u; i < parser.services_.vec.size(); ++i) {
       services_.emplace_back(
@@ -37,7 +36,6 @@ class generator {
   const flatbuffers::Parser &parser;
   const std::string &input_filename;
   const std::string &output_dir;
-
 
   virtual const std::vector<std::unique_ptr<smf_service>> &
   services() const final {
@@ -64,7 +62,6 @@ class generator {
     return flatbuffers::StripExtension(input_filename_without_path());
   }
 
-
   virtual std::experimental::optional<std::string>
   save_conents_to_file() {
     auto outname = output_filename();
@@ -76,7 +73,6 @@ class generator {
     }
     return std::experimental::nullopt;
   }
-
 
  protected:
   smf_printer printer_;

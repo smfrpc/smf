@@ -10,7 +10,6 @@
 
 namespace smf_gen {
 
-
 // helpers
 
 static inline std::string
@@ -47,7 +46,6 @@ print_server_jump_table(smf_printer &printer, const smf_service *service) {
     vars, "func (s *$ServiceName$) MethodHandle(id uint32) smf.RawHandle {\n");
   printer.indent();
 
-
   printer.print("switch id {\n");
   for (auto &m : service->methods()) {
     vars["MethodID"] = std::to_string(m->method_id());
@@ -62,7 +60,6 @@ print_server_jump_table(smf_printer &printer, const smf_service *service) {
   printer.print("return nil\n");
   printer.outdent();
   printer.print("}\n");
-
 
   printer.outdent();
   printer.print("}\n");
@@ -96,8 +93,8 @@ print_server(smf_printer &printer, const smf_service *service) {
   printer.print("}\n\n");
 
   // gen ctor
-  printer.print(
-    vars, "func New$ServiceName$(s $InterfaceName$) *$ServiceName$ {\n");
+  printer.print(vars,
+                "func New$ServiceName$(s $InterfaceName$) *$ServiceName$ {\n");
   printer.indent();
   printer.print(vars, "return &$ServiceName${$InterfaceName$: s}\n");
   printer.outdent();
@@ -117,14 +114,14 @@ print_server(smf_printer &printer, const smf_service *service) {
   printer.outdent();
   printer.print("}\n");
 
-
   // gen jump table
   print_server_jump_table(printer, service);
 
   // gen all methods
-  for (auto &m : service->methods()) { print_server_method(printer, m.get()); }
+  for (auto &m : service->methods()) {
+    print_server_method(printer, m.get());
+  }
 }
-
 
 static void
 print_client_method(smf_printer &printer, const smf_method *method) {
@@ -139,8 +136,8 @@ print_client_method(smf_printer &printer, const smf_method *method) {
 
   // high level
   printer.print(vars,
-    "func (s *$ClientName$) $MethodName$(ctx "
-    "context.Context, req []byte) (*$OutputType$, error) {\n");
+                "func (s *$ClientName$) $MethodName$(ctx "
+                "context.Context, req []byte) (*$OutputType$, error) {\n");
   printer.indent();
   printer.print(vars, "res, err := s.$RawMethodName$(ctx, req)\n"
                       "if err != nil {\n");
@@ -156,8 +153,8 @@ print_client_method(smf_printer &printer, const smf_method *method) {
   printer.print(vars, "func (s *$ClientName$) $RawMethodName$(ctx "
                       "context.Context, req []byte) ([]byte, error) {\n");
   printer.indent();
-  printer.print(
-    vars, "return s.Client.SendRecv(req, $ServiceID$^$MethodID$)\n");
+  printer.print(vars,
+                "return s.Client.SendRecv(req, $ServiceID$^$MethodID$)\n");
   printer.outdent();
   printer.print("}\n");
 }
@@ -187,7 +184,9 @@ print_client(smf_printer &printer, const smf_service *service) {
   printer.print("}\n");
 
   // gen all methods
-  for (auto &m : service->methods()) { print_client_method(printer, m.get()); }
+  for (auto &m : service->methods()) {
+    print_client_method(printer, m.get());
+  }
 }
 
 // members
@@ -218,11 +217,14 @@ void
 go_generator::generate_header_services() {
   VLOG(1) << "Generating (" << services().size() << ") services";
   // server code
-  for (auto &srv : services()) { print_server(printer_, srv.get()); }
+  for (auto &srv : services()) {
+    print_server(printer_, srv.get());
+  }
 
   // client code
-  for (auto &srv : services()) { print_client(printer_, srv.get()); }
+  for (auto &srv : services()) {
+    print_client(printer_, srv.get());
+  }
 }
-
 
 }  // namespace smf_gen

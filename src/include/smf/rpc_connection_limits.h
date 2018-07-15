@@ -26,7 +26,8 @@ namespace smf {
 ///
 struct rpc_connection_limits {
   using timer_duration_t = seastar::timer<>::duration;
-  rpc_connection_limits(uint64_t basic_req_size = 256,
+  rpc_connection_limits(
+    uint64_t basic_req_size = 256,
     double bloat_mult = 1.57,              // same as folly::vector
     uint64_t max_mem = uint64_t(1) << 31,  // 2GB per core
     timer_duration_t body_timeout_duration = std::chrono::minutes(1));

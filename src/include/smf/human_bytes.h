@@ -5,7 +5,6 @@
 #include <ostream>
 namespace smf {
 
-
 /// \brief prints a double as bytes, KB, MB, GB, TB, etc.
 /// \code `std::cout << human_bytes(x) << std::endl;` \endcode
 ///

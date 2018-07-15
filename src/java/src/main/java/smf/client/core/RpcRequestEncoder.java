@@ -19,9 +19,10 @@ import smf.common.compression.CompressionService;
 
 import java.util.List;
 
-public class RpcRequestEncoder extends MessageToMessageEncoder<PreparedRpcRequest> {
-  private final static Logger LOG = LogManager.getLogger();
-  private final static long MAX_UNSIGNED_INT = (long) (Math.pow(2, 32) - 1);
+public class RpcRequestEncoder
+  extends MessageToMessageEncoder<PreparedRpcRequest> {
+  private final static Logger LOG              = LogManager.getLogger();
+  private final static long   MAX_UNSIGNED_INT = (long) (Math.pow(2, 32) - 1);
 
   private final CompressionService compressionService;
 
@@ -30,28 +31,31 @@ public class RpcRequestEncoder extends MessageToMessageEncoder<PreparedRpcReques
   }
 
   @Override
-  protected void
-  encode(final ChannelHandlerContext ctx, final PreparedRpcRequest msg, final List<Object> out) {
+  protected void encode(final ChannelHandlerContext ctx,
+    final PreparedRpcRequest msg,
+    final List<Object> out) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("[session {}] encoding PreparedRpcRequest", msg.getSessionId());
     }
 
     final byte[] body = msg.getBody();
-    //        final byte[] body = compressionService.compressBody(CompressionFlags.Zstd,
+    //        final byte[] body =
+    //        compressionService.compressBody(CompressionFlags.Zstd,
     //        msg.getBody()); /* FIXME */
 
-    final long length = body.length;
-    final long meta = msg.getMethodMeta();
-    final int sessionId = msg.getSessionId();
+    final long length      = body.length;
+    final long meta        = msg.getMethodMeta();
+    final int  sessionId   = msg.getSessionId();
     final byte compression = CompressionFlags.Zstd;
-    final byte bitFlags = (byte) 0;
+    final byte bitFlags    = (byte) 0;
 
     final long maxUnsignedInt = MAX_UNSIGNED_INT;
-    final long checkSum = maxUnsignedInt & LongHashFunction.xx().hashBytes(body);
+    final long checkSum =
+      maxUnsignedInt & LongHashFunction.xx().hashBytes(body);
 
     final FlatBufferBuilder internalRequest = new FlatBufferBuilder(20);
-    int headerPosition = Header.createHeader(
-      internalRequest, compression, bitFlags, sessionId, length, checkSum, meta);
+    int headerPosition = Header.createHeader(internalRequest, compression,
+      bitFlags, sessionId, length, checkSum, meta);
     internalRequest.finish(headerPosition);
     byte[] bytes = internalRequest.sizedByteArray();
 
@@ -60,7 +64,8 @@ public class RpcRequestEncoder extends MessageToMessageEncoder<PreparedRpcReques
     // fixme - I cannot even comment on this (｡◕‿‿◕｡)
     System.arraycopy(bytes, 4, dest, 0, 16);
 
-    final ByteBuf byteBuf = ctx.alloc().heapBuffer().writeBytes(dest).writeBytes(body);
+    final ByteBuf byteBuf =
+      ctx.alloc().heapBuffer().writeBytes(dest).writeBytes(body);
 
     out.add(byteBuf);
   }

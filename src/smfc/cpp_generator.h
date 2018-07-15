@@ -6,12 +6,10 @@
 #include <iostream>
 #include <string>
 
-
 #include <flatbuffers/flatbuffers.h>
 #include <flatbuffers/idl.h>
 #include <flatbuffers/util.h>
 #include <glog/logging.h>
-
 
 #include "generator.h"
 
@@ -19,9 +17,8 @@ namespace smf_gen {
 
 class cpp_generator : public generator {
  public:
-  cpp_generator(const flatbuffers::Parser &p,
-    const std::string &ifname,
-    const std::string &output_dir)
+  cpp_generator(const flatbuffers::Parser &p, const std::string &ifname,
+                const std::string &output_dir)
     : generator(p, ifname, output_dir) {}
   virtual ~cpp_generator() = default;
 
@@ -43,7 +40,6 @@ class cpp_generator : public generator {
   message_header_ext() const {
     return "_generated.h";
   }
-
 
  private:
   void generate_header_prologue();

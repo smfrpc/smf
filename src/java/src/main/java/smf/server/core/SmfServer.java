@@ -17,13 +17,14 @@ import smf.common.compression.CompressionService;
 public class SmfServer {
   private final static Logger LOG = LogManager.getLogger();
 
-  private EventLoopGroup bossGroup;
-  private EventLoopGroup workerGroup;
+  private EventLoopGroup   bossGroup;
+  private EventLoopGroup   workerGroup;
   private volatile Channel channel;
   private final RequestHandler requestHandler;
 
-  public SmfServer(final String host, final int port) throws InterruptedException {
-    bossGroup = new NioEventLoopGroup(1);
+  public SmfServer(final String host, final int port)
+    throws InterruptedException {
+    bossGroup   = new NioEventLoopGroup(1);
     workerGroup = new NioEventLoopGroup();
 
     requestHandler = new RequestHandler();
@@ -50,13 +51,11 @@ public class SmfServer {
     channel = b.bind(host, port).sync().channel();
   }
 
-  public void
-  registerStorageService(final RpcService rpcService) {
+  public void registerStorageService(final RpcService rpcService) {
     requestHandler.registerStorageService(rpcService);
   }
 
-  public void
-  closeGracefully() throws InterruptedException {
+  public void closeGracefully() throws InterruptedException {
     bossGroup.shutdownGracefully().await().sync();
     workerGroup.shutdownGracefully().await().sync();
   }

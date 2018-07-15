@@ -17,8 +17,8 @@ public class SmfStorageClient {
     this.smfClient = smfClient;
   }
 
-  public CompletableFuture<Response>
-  get(final byte[] body) {
-    return smfClient.executeAsync(GET_METHOD_META, body).thenApply(Response::getRootAsResponse);
+  public CompletableFuture<Response> get(final byte[] body) {
+    return smfClient.executeAsync(GET_METHOD_META, body)
+      .thenApply(Response::getRootAsResponse);
   }
 }

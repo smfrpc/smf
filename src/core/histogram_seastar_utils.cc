@@ -29,8 +29,8 @@ histogram_seastar_utils::print_histogram(histogram *h) {
   return seastar::make_ready_future<decltype(ret)>(std::move(ret));
 }
 seastar::future<>
-histogram_seastar_utils::write_histogram(
-  seastar::sstring filename, histogram *h) {
+histogram_seastar_utils::write_histogram(seastar::sstring filename,
+                                         histogram *h) {
   return open_file_dma(filename, seastar::open_flags::rw |
                                    seastar::open_flags::create |
                                    seastar::open_flags::truncate)

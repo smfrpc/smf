@@ -13,13 +13,12 @@
 
 namespace smf {
 struct rpc_server_connection_options {
-  explicit rpc_server_connection_options(
-    bool _nodelay = false, bool _keepalive = false)
+  explicit rpc_server_connection_options(bool _nodelay = false,
+                                         bool _keepalive = false)
     : nodelay(_nodelay), enable_keepalive(_keepalive) {}
   rpc_server_connection_options(rpc_server_connection_options &&o) noexcept
-    : nodelay(o.nodelay)
-    , enable_keepalive(o.enable_keepalive)
-    , keepalive(std::move(o.keepalive)) {}
+    : nodelay(o.nodelay), enable_keepalive(o.enable_keepalive),
+      keepalive(std::move(o.keepalive)) {}
 
   const bool nodelay;
   const bool enable_keepalive;
@@ -64,17 +63,15 @@ struct rpc_server_connection_options {
 
 class rpc_server_connection final {
  public:
-  rpc_server_connection(seastar::connected_socket sock,
+  rpc_server_connection(
+    seastar::connected_socket sock,
     seastar::lw_shared_ptr<rpc_connection_limits> conn_limits,
     seastar::socket_address address,
-    seastar::lw_shared_ptr<rpc_server_stats> _stats,
-    uint64_t connection_id,
-    rpc_server_connection_options opts = rpc_server_connection_options(
-      false, false))
-    : conn(std::move(sock), address, conn_limits)
-    , id(connection_id)
-    , stats(_stats)
-    , opts_(std::move(opts)) {
+    seastar::lw_shared_ptr<rpc_server_stats> _stats, uint64_t connection_id,
+    rpc_server_connection_options opts = rpc_server_connection_options(false,
+                                                                       false))
+    : conn(std::move(sock), address, conn_limits), id(connection_id),
+      stats(_stats), opts_(std::move(opts)) {
     conn.socket.set_nodelay(opts_.nodelay);
     if (opts_.enable_keepalive) {
       conn.socket.set_keepalive(true);

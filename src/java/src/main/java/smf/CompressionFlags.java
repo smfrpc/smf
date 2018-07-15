@@ -14,7 +14,7 @@ package smf;
  */
 public final class CompressionFlags {
   private CompressionFlags() {}
-  public static final byte None = 0;
+  public static final byte None     = 0;
   public static final byte Disabled = 1;
   /**
    * brief uses zstandard 1.0
@@ -32,8 +32,5 @@ public final class CompressionFlags {
     "Lz4",
   };
 
-  public static String
-  name(int e) {
-    return names[e];
-  }
+  public static String name(int e) { return names[e]; }
 }

@@ -13,12 +13,12 @@ char (&smf_array_size_helper(T (&array)[N]))[N];
 
 // A macro to disallow the copy constructor and operator= functions
 // This is usually placed in the private: declarations for a class.
-#define SMF_DISALLOW_COPY_AND_ASSIGN(TypeName) \
-  TypeName(const TypeName &) = delete;         \
+#define SMF_DISALLOW_COPY_AND_ASSIGN(TypeName)                                 \
+  TypeName(const TypeName &) = delete;                                         \
   void operator=(const TypeName &) = delete
 
-#define SMF_DISALLOW_IMPLICIT_CONSTRUCTORS(TypeName) \
-  TypeName() = delete;                               \
+#define SMF_DISALLOW_IMPLICIT_CONSTRUCTORS(TypeName)                           \
+  TypeName() = delete;                                                         \
   SMF_DISALLOW_COPY_AND_ASSIGN(TypeName)
 
 // GCC can be told that a certain branch is not likely to be taken (for
@@ -32,7 +32,6 @@ char (&smf_array_size_helper(T (&array)[N]))[N];
 #define SMF_UNLIKELY(x) (x)
 #define SMF_LIKELY(x) (x)
 #endif
-
 
 #ifndef SMF_GCC_CONCEPTS
 #define SMF_CONCEPT(x...)

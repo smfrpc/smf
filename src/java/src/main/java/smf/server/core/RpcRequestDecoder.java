@@ -25,10 +25,12 @@ public class RpcRequestDecoder extends ByteToMessageDecoder {
   }
 
   @Override
-  protected void
-  decode(final ChannelHandlerContext ctx, final ByteBuf request, final List<Object> out) {
+  protected void decode(final ChannelHandlerContext ctx,
+    final ByteBuf request,
+    final List<Object> out) {
     /**
-     * TODO FIXME merge it with encoder/decoder stuff from client.core - remove duplication
+     * TODO FIXME merge it with encoder/decoder stuff from client.core - remove
+     * duplication
      */
     request.markReaderIndex();
     request.markWriterIndex();
@@ -45,7 +47,8 @@ public class RpcRequestDecoder extends ByteToMessageDecoder {
       request.readBytes(requestBody);
 
       // decompress if-needed
-      //            byte[] decompressBody = compressionService.decompressBody(header.compression(),
+      //            byte[] decompressBody =
+      //            compressionService.decompressBody(header.compression(),
       //            requestBody);
 
       // FIXME wait to be unblock by SMF core end-to-end testing
@@ -56,8 +59,8 @@ public class RpcRequestDecoder extends ByteToMessageDecoder {
       }
 
       /**
-       * header indicates size of received body, it will be different than body passed further
-       * because decompression process.
+       * header indicates size of received body, it will be different than body
+       * passed further because decompression process.
        */
       out.add(new RpcRequest(header, ByteBuffer.wrap(requestBody)));
 

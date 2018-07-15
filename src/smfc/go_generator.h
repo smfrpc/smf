@@ -15,9 +15,8 @@ namespace smf_gen {
 
 class go_generator : public generator {
  public:
-  go_generator(const flatbuffers::Parser &p,
-    const std::string &ifname,
-    const std::string &output_dir)
+  go_generator(const flatbuffers::Parser &p, const std::string &ifname,
+               const std::string &output_dir)
     : generator(p, ifname, output_dir) {
     // go uses tabs
     printer_.set_indent_char('\t');

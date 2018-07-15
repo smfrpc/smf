@@ -14,17 +14,17 @@ import java.util.concurrent.CountDownLatch;
 public class DemoApp {
   private final static Logger LOG = LogManager.getLogger();
 
-  public static void
-  main(String... args) throws InterruptedException {
-    final SmfClient smfClient = new SmfClient("127.0.0.1", 7000);
+  public static void main(String... args) throws InterruptedException {
+    final SmfClient smfClient               = new SmfClient("127.0.0.1", 7000);
     final SmfStorageClient smfStorageClient = new SmfStorageClient(smfClient);
 
     final CountDownLatch endLatch = new CountDownLatch(1);
 
     // construct get request.
     final FlatBufferBuilder requestBuilder = new FlatBufferBuilder(0);
-    final String currentThreadName = Thread.currentThread().getName();
-    int requestPosition = requestBuilder.createString("GET /something/ " + currentThreadName);
+    final String currentThreadName         = Thread.currentThread().getName();
+    int          requestPosition =
+      requestBuilder.createString("GET /something/ " + currentThreadName);
 
     Request.startRequest(requestBuilder);
     Request.addName(requestBuilder, requestPosition);
@@ -38,11 +38,13 @@ public class DemoApp {
      */
     smfStorageClient.get(request)
       .thenAccept(response -> {
-        LOG.info("[{}] Got parsed response {}", Thread.currentThread().getName(), response.name());
+        LOG.info("[{}] Got parsed response {}",
+          Thread.currentThread().getName(), response.name());
         endLatch.countDown();
       })
       .exceptionally(throwable -> {
-        LOG.info("[{}] Got exception {}", Thread.currentThread().getName(), throwable);
+        LOG.info(
+          "[{}] Got exception {}", Thread.currentThread().getName(), throwable);
         return null;
       });
 

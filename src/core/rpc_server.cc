@@ -25,31 +25,32 @@ operator<<(std::ostream &o, const smf::rpc_server &s) {
 }
 
 rpc_server::rpc_server(rpc_server_args args)
-  : args_(args)
-  , limits_(seastar::make_lw_shared<rpc_connection_limits>(args.basic_req_size,
-      args.bloat_mult,
-      args.memory_avail_per_core,
-      args.recv_timeout)) {
+  : args_(args), limits_(seastar::make_lw_shared<rpc_connection_limits>(
+                   args.basic_req_size, args.bloat_mult,
+                   args.memory_avail_per_core, args.recv_timeout)) {
   namespace sm = seastar::metrics;
-  metrics_.add_group("smf::rpc_server",
+  metrics_.add_group(
+    "smf::rpc_server",
     {
       sm::make_derive("active_connections", stats_->active_connections,
-        sm::description("Currently active connections")),
+                      sm::description("Currently active connections")),
       sm::make_derive("total_connections", stats_->total_connections,
-        sm::description("Counts a total connetions")),
+                      sm::description("Counts a total connetions")),
       sm::make_derive("incoming_bytes", stats_->in_bytes,
-        sm::description("Total bytes received of healthy "
-                        "connections - ignores bad connections")),
+                      sm::description("Total bytes received of healthy "
+                                      "connections - ignores bad connections")),
       sm::make_derive("outgoing_bytes", stats_->out_bytes,
-        sm::description("Total bytes sent to clients")),
+                      sm::description("Total bytes sent to clients")),
+      sm::make_derive("bad_requests", stats_->bad_requests,
+                      sm::description("Bad requests")),
       sm::make_derive(
-        "bad_requests", stats_->bad_requests, sm::description("Bad requests")),
-      sm::make_derive("no_route_requests", stats_->no_route_requests,
+        "no_route_requests", stats_->no_route_requests,
         sm::description(
           "Requests made to this sersvice with correct header but no handler")),
       sm::make_derive("completed_requests", stats_->completed_requests,
-        sm::description("Correct round-trip returned responses")),
-      sm::make_derive("too_large_requests", stats_->too_large_requests,
+                      sm::description("Correct round-trip returned responses")),
+      sm::make_derive(
+        "too_large_requests", stats_->too_large_requests,
         sm::description(
           "Requests made to this server larger than max allowedd (2GB)")),
     });
@@ -72,8 +73,8 @@ rpc_server::start() {
       .then([http_port = args_.http_port, admin = admin_, ip = args_.ip]() {
         return admin
           ->listen(seastar::make_ipv4_address(
-            ip.empty() ? seastar::ipv4_addr{http_port} :
-                         seastar::ipv4_addr{ip, http_port}))
+            ip.empty() ? seastar::ipv4_addr{http_port}
+                       : seastar::ipv4_addr{ip, http_port}))
           .handle_exception([](auto ep) {
             LOG_ERROR("Exception on HTTP Admin: {}", ep);
             return seastar::make_exception_future<>(ep);
@@ -84,9 +85,9 @@ rpc_server::start() {
   seastar::listen_options lo;
   lo.reuse_address = true;
   listener_ = seastar::listen(
-    seastar::make_ipv4_address(args_.ip.empty() ?
-                                 seastar::ipv4_addr{args_.rpc_port} :
-                                 seastar::ipv4_addr{args_.ip, args_.rpc_port}),
+    seastar::make_ipv4_address(
+      args_.ip.empty() ? seastar::ipv4_addr{args_.rpc_port}
+                       : seastar::ipv4_addr{args_.ip, args_.rpc_port}),
     lo);
   seastar::keep_doing([this] {
     return listener_->accept().then(
@@ -123,10 +124,10 @@ rpc_server::stop() {
   LOG_INFO("Stopped seastar::accept() calls");
   listener_->abort_accept();
 
-  std::for_each(
-    open_connections_.begin(), open_connections_.end(), [](auto &client_conn) {
-      client_conn.second->conn.socket.shutdown_input();
-    });
+  std::for_each(open_connections_.begin(), open_connections_.end(),
+                [](auto &client_conn) {
+                  client_conn.second->conn.socket.shutdown_input();
+                });
 
   return limits_->reply_gate.close().then([admin = admin_ ? admin_ : nullptr] {
     if (!admin) { return seastar::make_ready_future<>(); }
@@ -140,7 +141,8 @@ rpc_server::stop() {
 seastar::future<>
 rpc_server::handle_client_connection(
   seastar::lw_shared_ptr<rpc_server_connection> conn) {
-  return seastar::do_until([conn] { return !conn->is_valid(); },
+  return seastar::do_until(
+    [conn] { return !conn->is_valid(); },
     [this, conn]() mutable {
       return rpc_recv_context::parse_header(&conn->conn)
         .then([this, conn](auto hdr) {
@@ -150,8 +152,9 @@ rpc_server::handle_client_connection(
           }
           auto h = std::move(hdr.value());
           auto payload_size = h.size();
-          return seastar::with_semaphore(conn->limits()->resources_available,
-            payload_size, [this, h = std::move(h), conn] {
+          return seastar::with_semaphore(
+            conn->limits()->resources_available, payload_size,
+            [this, h = std::move(h), conn] {
               return rpc_recv_context::parse_payload(&conn->conn, std::move(h))
                 .then([conn, this](auto maybe_payload) {
                   if (!maybe_payload) {
@@ -173,8 +176,8 @@ rpc_server::handle_client_connection(
 }
 
 seastar::future<>
-rpc_server::dispatch_rpc(
-  seastar::lw_shared_ptr<rpc_server_connection> conn, rpc_recv_context &&ctx) {
+rpc_server::dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
+                         rpc_recv_context &&ctx) {
   if (ctx.request_id() == 0) {
     conn->set_error("Missing request_id. Invalid request");
     return seastar::make_ready_future<>();
@@ -187,39 +190,40 @@ rpc_server::dispatch_rpc(
   }
   conn->stats->in_bytes += ctx.header.size() + ctx.payload.size();
 
-
   /// the request follow [filters] -> handle -> [filters]
   /// the only way for the handle not to receive the information is if
   /// the filters invalidate the request - they have full mutable access
   /// to it, or they throw an exception if they wish to interrupt the entire
   /// connection
-  return seastar::with_gate(conn->limits()->reply_gate,
-    [this, ctx = std::move(ctx), conn, method_dispatch]() mutable {
-      return stage_apply_incoming_filters(std::move(ctx))
-        .then([this, conn, method_dispatch](auto f_ctx) {
-          return method_dispatch->apply(std::move(f_ctx))
-            .then([this](rpc_envelope e) {
-              return stage_apply_outgoing_filters(std::move(e));
-            })
-            .then([this, conn](rpc_envelope e) {
-              conn->stats->out_bytes += e.letter.size();
-              return seastar::with_semaphore(
-                conn->serialize_writes, 1, [conn, ee = std::move(e)]() mutable {
-                  return smf::rpc_envelope::send(
-                    &conn->conn.ostream, std::move(ee));
-                });
-            });
-        });
-    })
+  return seastar::with_gate(
+           conn->limits()->reply_gate,
+           [this, ctx = std::move(ctx), conn, method_dispatch]() mutable {
+             return stage_apply_incoming_filters(std::move(ctx))
+               .then([this, conn, method_dispatch](auto f_ctx) {
+                 return method_dispatch->apply(std::move(f_ctx))
+                   .then([this](rpc_envelope e) {
+                     return stage_apply_outgoing_filters(std::move(e));
+                   })
+                   .then([this, conn](rpc_envelope e) {
+                     conn->stats->out_bytes += e.letter.size();
+                     return seastar::with_semaphore(
+                       conn->serialize_writes, 1,
+                       [conn, ee = std::move(e)]() mutable {
+                         return smf::rpc_envelope::send(&conn->conn.ostream,
+                                                        std::move(ee));
+                       });
+                   });
+               });
+           })
     .then([this, conn] {
       return conn->conn.ostream.flush().finally([this, conn] {
         if (conn->has_error()) {
-          LOG_ERROR(
-            "There was an error with the connection: {}", conn->get_error());
+          LOG_ERROR("There was an error with the connection: {}",
+                    conn->get_error());
           conn->stats->bad_requests++;
           conn->stats->active_connections--;
-          LOG_INFO(
-            "Closing connection for client: {}", conn->conn.remote_address);
+          LOG_INFO("Closing connection for client: {}",
+                   conn->conn.remote_address);
           auto it = open_connections_.find(conn->id);
           if (it != open_connections_.end()) { open_connections_.erase(it); }
           return conn->conn.ostream.close();
@@ -240,7 +244,6 @@ static thread_local auto incoming_stage = seastar::make_execution_stage(
 
 static thread_local auto outgoing_stage = seastar::make_execution_stage(
   "smf::rpc_server::outgoing::filter", &rpc_server::apply_outgoing_filters);
-
 
 seastar::future<rpc_recv_context>
 rpc_server::apply_incoming_filters(rpc_recv_context ctx) {

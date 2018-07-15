@@ -7,13 +7,11 @@
 
 namespace smf {
 
-
 template <typename T>
 class rpc_recv_typed_context {
  public:
   using type = T;
   using opt_recv_ctx_t = std::experimental::optional<rpc_recv_context>;
-
 
   rpc_recv_typed_context() : ctx(std::experimental::nullopt) {}
 

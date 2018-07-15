@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include <flatbuffers/flatbuffers.h>
 #include <core/print.hh>
 #include <core/temporary_buffer.hh>
+#include <flatbuffers/flatbuffers.h>
 
 #include "smf/flatbuffers_concepts.h"
 #include "smf/log.h"

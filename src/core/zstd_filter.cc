@@ -32,7 +32,6 @@ zstd_compression_filter::operator()(rpc_envelope &&e) {
   return seastar::make_ready_future<rpc_envelope>(std::move(e));
 }
 
-
 seastar::future<rpc_recv_context>
 zstd_decompression_filter::operator()(rpc_recv_context &&ctx) {
   if (ctx.header.compression() ==
@@ -44,6 +43,5 @@ zstd_decompression_filter::operator()(rpc_recv_context &&ctx) {
   }
   return seastar::make_ready_future<rpc_recv_context>(std::move(ctx));
 }
-
 
 }  // namespace smf

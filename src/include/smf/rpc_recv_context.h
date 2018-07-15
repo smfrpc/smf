@@ -22,14 +22,13 @@ struct rpc_recv_context {
   /// size of the header, so we parse sizeof(Header). We with this information
   /// we parse the body of the request
   ///
-  static seastar::future<stdx::optional<rpc::header>> parse_header(
-    rpc_connection *conn);
-  static seastar::future<stdx::optional<rpc_recv_context>> parse_payload(
-    rpc_connection *conn, rpc::header hdr);
+  static seastar::future<stdx::optional<rpc::header>>
+  parse_header(rpc_connection *conn);
+  static seastar::future<stdx::optional<rpc_recv_context>>
+  parse_payload(rpc_connection *conn, rpc::header hdr);
 
   rpc_recv_context(const seastar::socket_address remote_address,
-    rpc::header hdr,
-    seastar::temporary_buffer<char> body);
+                   rpc::header hdr, seastar::temporary_buffer<char> body);
   rpc_recv_context(rpc_recv_context &&o) noexcept;
   ~rpc_recv_context();
 

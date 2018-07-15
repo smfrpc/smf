@@ -158,7 +158,7 @@ main(int args, char **argv, char **env) {
                     if (seastar::to_sstring(name) !=
                         ipv4_addr_to_ip_str(client.client->server_addr)) {
                       LOG_THROW("Server did not see our IP {} != {}", name,
-                        client.client->server_addr);
+                                client.client->server_addr);
                     }
                     return seastar::make_ready_future<>();
                   })

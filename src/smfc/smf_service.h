@@ -18,8 +18,8 @@ class smf_service {
 
     // populate methods
     for (auto i = 0u; i < service_->calls.vec.size(); ++i) {
-      methods_.emplace_back(std::make_unique<smf_method>(
-        service_->calls.vec[i], name(), service_id()));
+      methods_.emplace_back(std::make_unique<smf_method>(service_->calls.vec[i],
+                                                         name(), service_id()));
     }
   }
 

@@ -6,8 +6,8 @@
 #include <memory>
 #include <utility>
 
-#include <hdr_histogram.h>
 #include <core/shared_ptr.hh>
+#include <hdr_histogram.h>
 
 #include "smf/macros.h"
 
@@ -21,10 +21,10 @@ namespace smf {
 // per instance
 struct hist_t {
   hist_t() {
-    ::hdr_init(1,           // 1 microsec - minimum value
-      INT64_C(3600000000),  // 1 hour in microsecs - max value
-      3,                    // Number of significant figures
-      &hist);               // Pointer to initialize
+    ::hdr_init(1,                    // 1 microsec - minimum value
+               INT64_C(3600000000),  // 1 hour in microsecs - max value
+               3,                    // Number of significant figures
+               &hist);               // Pointer to initialize
   }
 
   hist_t(hist_t &&o) noexcept : hist(o.hist) {}
@@ -44,11 +44,11 @@ struct hist_t {
 ///
 class histogram : public seastar::enable_lw_shared_from_this<histogram> {
  public:
-  static seastar::lw_shared_ptr<histogram> make_lw_shared(
-    const hdr_histogram *copy = nullptr);
+  static seastar::lw_shared_ptr<histogram>
+  make_lw_shared(const hdr_histogram *copy = nullptr);
 
-  static std::unique_ptr<histogram> make_unique(
-    const hdr_histogram *copy = nullptr);
+  static std::unique_ptr<histogram>
+  make_unique(const hdr_histogram *copy = nullptr);
 
   SMF_DISALLOW_COPY_AND_ASSIGN(histogram);
 
@@ -100,7 +100,7 @@ struct histogram_measure {
   ~histogram_measure() {
     if (h && trace_) {
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::high_resolution_clock::now() - begin_t)
+                        std::chrono::high_resolution_clock::now() - begin_t)
                         .count();
       h->record(duration);
     }

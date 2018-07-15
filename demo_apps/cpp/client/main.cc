@@ -40,7 +40,6 @@ static const char *kPayload1Kbytes =
   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 
-
 // This is just for the load generation.
 // On normal apps you would just do
 // client-><method_name>(params).then().then()
@@ -65,7 +64,6 @@ struct generator {
   }
 };
 
-
 void
 cli_opts(boost::program_options::options_description_easy_init o) {
   namespace po = boost::program_options;
@@ -83,7 +81,6 @@ cli_opts(boost::program_options::options_description_easy_init o) {
     "number of green threads per real thread (seastar::futures<>)");
 }
 
-
 int
 main(int args, char **argv, char **env) {
   seastar::distributed<load_gen_t> load;
@@ -94,9 +91,9 @@ main(int args, char **argv, char **env) {
     seastar::engine().at_exit([&] { return load.stop(); });
     auto &cfg = app.configuration();
 
-    ::smf::load_generator_args largs(cfg["ip"].as<std::string>().c_str(),
-      cfg["port"].as<uint16_t>(), cfg["req-num"].as<uint32_t>(),
-      cfg["concurrency"].as<uint32_t>(),
+    ::smf::load_generator_args largs(
+      cfg["ip"].as<std::string>().c_str(), cfg["port"].as<uint16_t>(),
+      cfg["req-num"].as<uint32_t>(), cfg["concurrency"].as<uint32_t>(),
       static_cast<uint64_t>(0.9 * seastar::memory::stats().total_memory()),
       smf::rpc::compression_flags::compression_flags_none, cfg);
 
@@ -122,11 +119,11 @@ main(int args, char **argv, char **env) {
         LOG_INFO("MapReducing stats");
         return load
           .map_reduce(smf::unique_histogram_adder(),
-            [](load_gen_t &shard) { return shard.copy_histogram(); })
+                      [](load_gen_t &shard) { return shard.copy_histogram(); })
           .then([](std::unique_ptr<smf::histogram> h) {
             LOG_INFO("Writing client histograms");
-            return smf::histogram_seastar_utils::write(
-              "clients_latency.csv", std::move(h));
+            return smf::histogram_seastar_utils::write("clients_latency.csv",
+                                                       std::move(h));
           });
       })
       .then([] {

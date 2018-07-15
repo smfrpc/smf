@@ -14,23 +14,16 @@ namespace smf {
 // exponential distribution, poisson distribution of load
 //
 struct load_generator_args {
-  load_generator_args(const char *_ip,
-    uint16_t _port,
-    size_t _num_of_req,
-    size_t _concurrency,
-    size_t _memory_per_core,
-    smf::rpc::compression_flags _compression,
-    boost::program_options::variables_map _cfg)
-    : ip(_ip)
-    , port(_port)
-    , num_of_req(_num_of_req)
-    , concurrency(_concurrency)
-    , memory_per_core(_memory_per_core)
-    , compression(_compression)
-    , cfg(std::move(_cfg)) {
+  load_generator_args(const char *_ip, uint16_t _port, size_t _num_of_req,
+                      size_t _concurrency, size_t _memory_per_core,
+                      smf::rpc::compression_flags _compression,
+                      boost::program_options::variables_map _cfg)
+    : ip(_ip), port(_port), num_of_req(_num_of_req), concurrency(_concurrency),
+      memory_per_core(_memory_per_core), compression(_compression),
+      cfg(std::move(_cfg)) {
     static const uint64_t kMinMemory = 1 << 24;  // 16MB
     LOG_THROW_IF(memory_per_core < kMinMemory && concurrency > 1,
-      "Cfg error. memory < 16MB per connection.");
+                 "Cfg error. memory < 16MB per connection.");
   }
 
   const char *ip;

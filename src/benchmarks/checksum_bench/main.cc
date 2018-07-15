@@ -25,7 +25,6 @@ BENCHMARK(BM_hash32)
   ->Args({1 << 20, 1 << 20})
   ->Args({1 << 29, 1 << 29});
 
-
 static void
 BM_hash64(benchmark::State &state) {
   for (auto _ : state) {
@@ -40,6 +39,5 @@ BENCHMARK(BM_hash64)
   ->Args({1 << 16, 1 << 16})
   ->Args({1 << 20, 1 << 20})
   ->Args({1 << 29, 1 << 29});
-
 
 BENCHMARK_MAIN();

@@ -22,8 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Dispatcher extends SimpleChannelInboundHandler<RpcResponse> {
   private final static Logger LOG = LogManager.getLogger();
-  private final ConcurrentHashMap<Integer, CompletableFuture<ByteBuffer>> pendingRpcCalls =
-    new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<Integer, CompletableFuture<ByteBuffer>>
+                pendingRpcCalls = new ConcurrentHashMap<>();
   private SessionIdGenerator sessionIdGenerator;
 
   public Dispatcher(final SessionIdGenerator sessionIdGenerator) {
@@ -31,18 +31,20 @@ public class Dispatcher extends SimpleChannelInboundHandler<RpcResponse> {
   }
 
   @Override
-  protected void
-  channelRead0(ChannelHandlerContext ctx, RpcResponse msg) {
+  protected void channelRead0(ChannelHandlerContext ctx, RpcResponse msg) {
     LOG.debug("[session {}] received to dispatch", msg.getHeader().session());
     final Header header = msg.getHeader();
-    final CompletableFuture<ByteBuffer> resultFuture = pendingRpcCalls.remove(header.session());
+    final CompletableFuture<ByteBuffer> resultFuture =
+      pendingRpcCalls.remove(header.session());
 
     if (resultFuture == null) {
-      LOG.debug("[session {}] registered handler is null", msg.getHeader().session());
+      LOG.debug(
+        "[session {}] registered handler is null", msg.getHeader().session());
     } else {
       try {
         if (msg instanceof InvalidRpcResponse) {
-          final InvalidRpcResponse invalidRpcResponse = (InvalidRpcResponse) msg;
+          final InvalidRpcResponse invalidRpcResponse =
+            (InvalidRpcResponse) msg;
           resultFuture.completeExceptionally(invalidRpcResponse.getCause());
 
         } else {
@@ -50,13 +52,15 @@ public class Dispatcher extends SimpleChannelInboundHandler<RpcResponse> {
           resultFuture.complete(msg.getBody());
         }
 
-      } catch (final Exception ex) { resultFuture.completeExceptionally(ex); }
+      } catch (final Exception ex) {
+        resultFuture.completeExceptionally(ex);
+      }
     }
     sessionIdGenerator.release(header.session());
   }
 
-  public void
-  assignCallback(final int sessionId, final CompletableFuture<ByteBuffer> resultFuture) {
+  public void assignCallback(
+    final int sessionId, final CompletableFuture<ByteBuffer> resultFuture) {
     pendingRpcCalls.put(sessionId, resultFuture);
   }
 }
