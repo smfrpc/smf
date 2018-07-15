@@ -16,10 +16,19 @@ java_library(
 )
 
 java_binary(
-    name="smf_client",
+    name="jclient",
     srcs=glob(["src/main/java/example/**/*.java"]),
     create_executable=True,
-    main_class="example.demo.DemoApp",
+    main_class="example.demo.client.DemoApp",
+    deps=[
+        ":smf",
+    ] + _jar_deps,
+)
+java_binary(
+    name="jserver",
+    srcs=glob(["src/main/java/example/**/*.java"]),
+    create_executable=True,
+    main_class="example.demo.server.DemoServer",
     deps=[
         ":smf",
     ] + _jar_deps,
