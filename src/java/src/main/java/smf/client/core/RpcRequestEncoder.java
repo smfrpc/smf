@@ -38,14 +38,16 @@ public class RpcRequestEncoder
       LOG.debug("[session {}] encoding PreparedRpcRequest", msg.getSessionId());
     }
 
-    final byte[] body = msg.getBody();
-    //        final byte[] body =
-    //        compressionService.compressBody(CompressionFlags.Zstd,
-    //        msg.getBody()); /* FIXME */
+    // final byte[] body = msg.getBody();
+    final byte[] body =
+      compressionService.compressBody(CompressionFlags.Zstd, msg.getBody());
 
-    final long length      = body.length;
-    final long meta        = msg.getMethodMeta();
-    final int  sessionId   = msg.getSessionId();
+    final long length    = body.length;
+    final long meta      = msg.getMethodMeta();
+    final int  sessionId = msg.getSessionId();
+
+    // TODO(agallego) - should be dependent on PreparedRpcRequest or smth
+    //
     final byte compression = CompressionFlags.Zstd;
     final byte bitFlags    = (byte) 0;
 

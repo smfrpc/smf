@@ -80,6 +80,10 @@ main(int args, char **argv, char **env) {
           &smf::rpc_server::register_service<storage_service>);
       })
       .then([&rpc] {
+        return rpc.invoke_on_all(&smf::rpc_server::register_incoming_filter<
+                                 smf::zstd_decompression_filter>);
+      })
+      .then([&rpc] {
         LOG_INFO("Invoking rpc start on all cores");
         return rpc.invoke_on_all(&smf::rpc_server::start);
       });
