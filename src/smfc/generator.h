@@ -3,7 +3,9 @@
 
 #pragma once
 #include <experimental/optional>
+#include <map>
 #include <memory>
+#include <set>
 #include <string>
 
 #include <boost/filesystem.hpp>
@@ -18,9 +20,16 @@ class generator {
   generator(const flatbuffers::Parser &p, const std::string &ifname,
             const std::string &out_dir)
     : parser(p), input_filename(ifname), output_dir(out_dir) {
-    for (auto i = 0u; i < parser.services_.vec.size(); ++i) {
-      services_.emplace_back(
-        std::make_unique<smf_service>(parser.services_.vec[i]));
+    // *MUST* user the iterator interface. Otherwise, it returns
+    // *ALL* transitive services for all transitive flatbuffers
+    //
+    for (auto *s : parser.services_.vec) {
+      // *different* than our *own 'generated' field.
+      // this is flatbuffer's generated API
+      if (s->generated) continue;
+
+      // we wrap it in our own service tier
+      services_.emplace_back(std::make_unique<smf_service>(s));
     }
   }
   virtual ~generator() = default;
@@ -37,19 +46,29 @@ class generator {
   const std::string &input_filename;
   const std::string &output_dir;
 
+  virtual const std::map<std::string, std::set<std::string>> &
+  fbs_files_included_per_file() const final {
+    return parser.files_included_per_file_;
+  }
+
+  virtual const std::map<std::string, std::string> &
+  included_files() const final {
+    return parser.included_files_;
+  };
+
   virtual const std::vector<std::unique_ptr<smf_service>> &
-  services() const final {
+  services() final {
     return services_;
   }
 
   virtual std::string
   package() const final {
-    return parser.namespaces_.back()->GetFullyQualifiedName("");
+    return parser.current_namespace_->GetFullyQualifiedName("");
   }
 
   virtual std::vector<std::string>
   package_parts() const final {
-    return parser.namespaces_.back()->components;
+    return parser.current_namespace_->components;
   }
 
   virtual std::string
