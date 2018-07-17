@@ -78,7 +78,7 @@ print_header_service_ctor_dtor(smf_printer &printer,
   std::map<std::string, std::string> vars;
 
   vars["Service"] = service->name();
-  printer.print(vars, "~$Service$() = default;\n");
+  printer.print(vars, "virtual ~$Service$() = default;\n");
   printer.print(vars, "$Service$() {\n");
   printer.indent();
 
@@ -333,7 +333,7 @@ print_header_client(smf_printer &printer, const smf_service *service) {
   printer.print(vars, "$ClientName$($ClientName$ &&o) = default;\n");
 
   // print ctor2
-  printer.print(vars, "~$ClientName$() {}\n");
+  printer.print(vars, "virtual ~$ClientName$() = default;\n");
 
   // name
   printer.print("virtual const char *name() const final {\n");
@@ -394,6 +394,12 @@ void
 cpp_generator::generate_header_includes() {
   VLOG(1) << "get_header_includes";
   std::map<std::string, std::string> vars;
+
+  for (auto &i : native_included_files()) {
+    vars["header"] = i;
+    printer_.print(vars, "#include <$header$> \n");
+  }
+
   static const std::vector<std::string> headers = {
     "experimental/optional",
     "core/sstring.hh",
@@ -405,6 +411,12 @@ cpp_generator::generate_header_includes() {
 
   for (auto &hdr : headers) {
     vars["header"] = hdr;
+    printer_.print(vars, "#include <$header$>\n");
+  }
+  printer_.print("\n");
+  for (auto &i : included_files()) {
+    if (i.first == included_files().begin()->first) { continue; }
+    vars["header"] = flatbuffers::StripExtension(i.first) + "_generated.h";
     printer_.print(vars, "#include <$header$>\n");
   }
   printer_.print("\n");

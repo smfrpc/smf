@@ -11,5 +11,6 @@ smf_test(
   BINARY_NAME rpc_bad_msg_t
   SOURCES main.cc ${bad_msg_fbs}
   SOURCE_DIRECTORY ${IT_ROOT}/rpc_bad_msg_t
+  INCLUDES ${CMAKE_CURRENT_BINARY_DIR}
   LIBRARIES smf
   )

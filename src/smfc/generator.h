@@ -50,11 +50,15 @@ class generator {
   fbs_files_included_per_file() const final {
     return parser.files_included_per_file_;
   }
-
+  virtual const std::vector<std::string> &
+  native_included_files() const final {
+    return parser.native_included_files_;
+  }
   virtual const std::map<std::string, std::string> &
   included_files() const final {
     return parser.included_files_;
   };
+
 
   virtual const std::vector<std::unique_ptr<smf_service>> &
   services() final {
