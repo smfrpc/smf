@@ -394,12 +394,6 @@ void
 cpp_generator::generate_header_includes() {
   VLOG(1) << "get_header_includes";
   std::map<std::string, std::string> vars;
-
-  for (auto &i : native_included_files()) {
-    vars["header"] = i;
-    printer_.print(vars, "#include <$header$> \n");
-  }
-
   static const std::vector<std::string> headers = {
     "experimental/optional",
     "core/sstring.hh",

@@ -20,15 +20,13 @@ class generator {
   generator(const flatbuffers::Parser &p, const std::string &ifname,
             const std::string &out_dir)
     : parser(p), input_filename(ifname), output_dir(out_dir) {
-    // *MUST* user the iterator interface. Otherwise, it returns
-    // *ALL* transitive services for all transitive flatbuffers
-    //
-    for (auto *s : parser.services_.vec) {
-      // *different* than our *own 'generated' field.
-      // this is flatbuffer's generated API
-      if (s->generated) continue;
-
-      // we wrap it in our own service tier
+    for (const auto *s : parser.services_.vec) {
+      if (s->generated) {
+        // True for transitive flatbuffer files.
+        // If you have a.fbs include b.fbs, then the services on b.fbs
+        // will be marked as generated
+        continue;
+      }
       services_.emplace_back(std::make_unique<smf_service>(s));
     }
   }
@@ -58,7 +56,6 @@ class generator {
   included_files() const final {
     return parser.included_files_;
   };
-
 
   virtual const std::vector<std::unique_ptr<smf_service>> &
   services() final {
