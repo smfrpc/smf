@@ -118,6 +118,10 @@ rpc_recv_context::parse_header(rpc_connection *conn) {
         LOG_ERROR("Emty body to parse. skipping");
         return seastar::make_ready_future<ret_type>(stdx::nullopt);
       }
+      if (hdr.compression() ==
+          rpc::compression_flags::compression_flags_disabled) {
+        hdr.mutate_compression(rpc::compression_flags::compression_flags_none);
+      }
       return seastar::make_ready_future<ret_type>(std::move(hdr));
     })
     .finally([conn] { conn->istream_active_parser--; });
