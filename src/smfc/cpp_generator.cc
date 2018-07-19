@@ -408,12 +408,6 @@ cpp_generator::generate_header_includes() {
     printer_.print(vars, "#include <$header$>\n");
   }
   printer_.print("\n");
-  for (auto &i : included_files()) {
-    if (i.first == included_files().begin()->first) { continue; }
-    vars["header"] = flatbuffers::StripExtension(i.first) + "_generated.h";
-    printer_.print(vars, "#include <$header$>\n");
-  }
-  printer_.print("\n");
 
   if (!package().empty()) {
     std::vector<std::string> parts = package_parts();
