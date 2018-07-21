@@ -381,13 +381,13 @@ cpp_generator::generate_header_prologue() {
   printer_.print("// Any local changes WILL BE LOST.\n");
   printer_.print(vars, "// source: $filename$\n");
   for (auto &p : included_files()) {
+    if (p.first == input_filename) { continue; }
     vars["header"] = p.first;
     printer_.print(vars, "// transitive fbs: $header$\n");
   }
   printer_.print("#pragma once\n");
   printer_.print(vars, "#ifndef SMF_$filename_identifier$_INCLUDED\n");
-  printer_.print(vars, "#define SMF_$filename_identifier$_INCLUDED\n");
-  printer_.print(vars, "#include \"$filename_base$$message_header_ext$\"\n\n");
+  printer_.print(vars, "#define SMF_$filename_identifier$_INCLUDED\n\n");
 }
 
 void
@@ -408,6 +408,12 @@ cpp_generator::generate_header_includes() {
     printer_.print(vars, "#include <$header$>\n");
   }
   printer_.print("\n");
+  vars["filename"] = input_filename;
+  vars["filename_identifier"] =
+    file_name_identifier(input_filename_without_ext());
+  vars["filename_base"] = input_filename_without_ext();
+  vars["message_header_ext"] = message_header_ext();
+  printer_.print(vars, "#include \"$filename_base$$message_header_ext$\"\n\n");
 
   if (!package().empty()) {
     std::vector<std::string> parts = package_parts();
