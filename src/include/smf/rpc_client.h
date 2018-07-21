@@ -116,13 +116,13 @@ class rpc_client {
   virtual void disable_histogram_metrics() final;
   virtual void enable_histogram_metrics() final;
 
-  bool
-  is_histogram_enabled() {
+  inline virtual bool
+  is_histogram_enabled() const final {
     return !!hist_;
   }
 
-  seastar::lw_shared_ptr<histogram>
-  get_histogram() {
+  inline virtual seastar::lw_shared_ptr<histogram>
+  get_histogram() final {
     return hist_;
   }
 
@@ -130,16 +130,16 @@ class rpc_client {
   /// \code{.cpp}
   ///    client->incoming_filters().push_back(zstd_decompression_filter());
   /// \endcode
-  std::vector<in_filter_t> &
-  incoming_filters() {
+  virtual std::vector<in_filter_t> &
+  incoming_filters() final {
     return in_filters_;
   }
   /// \brief use to enqueue or dequeue filters
   /// \code{.cpp}
   ///    client->outgoing_filters().push_back(zstd_compression_filter(1000));
   /// \endcode
-  std::vector<out_filter_t> &
-  outgoing_filters() {
+  virtual std::vector<out_filter_t> &
+  outgoing_filters() final {
     return out_filters_;
   }
 
