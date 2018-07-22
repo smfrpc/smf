@@ -25,6 +25,9 @@ SMF_CONCEPT(requires FlatBuffersNativeTable<RootType>)
 seastar::temporary_buffer<char> native_table_as_buffer(
   const typename RootType::NativeTableType &t) {
   flatbuffers::FlatBufferBuilder bdr;
+  // needed for evolution of RPC. You can change the
+  // defaults of your table in between versions
+  bdr.ForceDefaults(true);
   bdr.Finish(RootType::Pack(bdr, &t, nullptr));
   auto mem = bdr.Release();
   auto ptr = reinterpret_cast<char *>(mem.data());
