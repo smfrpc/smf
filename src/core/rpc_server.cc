@@ -20,7 +20,9 @@ operator<<(std::ostream &o, const smf::rpc_server &s) {
   o << "rpc_server{args.ip=" << s.args_.ip << ", args.flags=" << s.args_.flags
     << ", args.rpc_port=" << s.args_.rpc_port
     << ", args.http_port=" << s.args_.http_port << ", rpc_routes=" << s.routes_
-    << ", limits=" << *s.limits_ << "}";
+    << ", limits=" << *s.limits_
+    << ", incoming_filters=" << s.in_filters_.size()
+    << ", outgoing_filters=" << s.out_filters_.size() << "}";
   return o;
 }
 

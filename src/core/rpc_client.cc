@@ -86,6 +86,11 @@ rpc_client::raw_send(rpc_envelope e) {
       // something to do
       return stage_apply_incoming_filters(std::move(r.value()))
         .then([m = std::move(m)](rpc_recv_context ctx) {
+          LOG_THROW_IF(ctx.header.compression() !=
+                         rpc::compression_flags::compression_flags_none,
+                       "client is communicating with a server speaking "
+                       "different compression protocols: {}",
+                       ctx.header.compression());
           return seastar::make_ready_future<opt_recv_t>(
             opt_recv_t(std::move(ctx)));
         });
@@ -122,7 +127,7 @@ rpc_client::dispatch_write(rpc_envelope e) {
         self->conn->limits->resources_available,
         self->conn->limits->estimate_request_size(payload_size),
         [self, e = std::move(ee)]() mutable {
-          return smf::rpc_envelope::send(&self->conn->ostream, std::move(e))
+          return rpc_envelope::send(&self->conn->ostream, std::move(e))
             .handle_exception([self](auto _) {
               LOG_ERROR("Error sending data: {}", _);
               self->is_error_state = true;
@@ -130,13 +135,30 @@ rpc_client::dispatch_write(rpc_envelope e) {
         });
     });
 }
+static seastar::future<>
+process_body_for_self(stdx::optional<rpc_recv_context> opt, auto self) {
+  if (!opt) {
+    LOG_ERROR("Could not parse response from server. Bad payload");
+    self->conn->set_error("Invalid payload");
+  } else if (self->read_counter > 0 && opt) {
+    --self->read_counter;
+    auto &&v = std::move(opt.value());
+    auto sess = v.session();
+    auto slot = self->rpc_slots[sess];
+    self->rpc_slots.erase(sess);
+    DLOG_THROW_IF(slot->session != v.session(), "Invalid client sessions");
+    using typed_ret = decltype(opt);
+    slot->pr.set_value(typed_ret(std::move(v)));
+  }
 
+  return seastar::make_ready_future<>();
+}
 seastar::future<>
 rpc_client::do_reads() {
   return seastar::do_until(
            [c = conn] { return !c->is_valid(); },
            [self = parent_shared_from_this()]() mutable {
-             return smf::rpc_recv_context::parse_header(self->conn.get())
+             return rpc_recv_context::parse_header(self->conn.get())
                .then([self](auto hdr) {
                  if (SMF_UNLIKELY(!hdr)) {
                    if (!self->rpc_slots.empty()) {
@@ -150,26 +172,10 @@ rpc_client::do_reads() {
                    }
                    return seastar::make_ready_future<>();
                  }
-                 return ::smf::rpc_recv_context::parse_payload(
-                          self->conn.get(), std::move(hdr.value()))
+                 return rpc_recv_context::parse_payload(self->conn.get(),
+                                                        std::move(hdr.value()))
                    .then([self](stdx::optional<rpc_recv_context> opt) mutable {
-                     if (!opt) {
-                       LOG_ERROR(
-                         "Could not parse response from server. Bad payload");
-                       self->conn->set_error("Invalid payload");
-                     } else if (self->read_counter > 0 && opt) {
-                       --self->read_counter;
-                       auto &&v = std::move(opt.value());
-                       auto sess = v.session();
-                       auto slot = self->rpc_slots[sess];
-                       self->rpc_slots.erase(sess);
-                       DLOG_THROW_IF(slot->session != v.session(),
-                                     "Invalid client sessions");
-                       using typed_ret = decltype(opt);
-                       slot->pr.set_value(typed_ret(std::move(v)));
-                     }
-
-                     return seastar::make_ready_future<>();
+                     return process_body_for_self(std::move(opt), self);
                    });
                });
            })
