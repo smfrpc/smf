@@ -9,6 +9,9 @@ namespace smf {
 
 template <typename T>
 class rpc_recv_typed_context {
+  static_assert(std::is_base_of<flatbuffers::Table, T>::value,
+                "Should ONLY be Table derived classes");
+
  public:
   using type = T;
   using opt_recv_ctx_t = std::experimental::optional<rpc_recv_context>;
@@ -18,11 +21,7 @@ class rpc_recv_typed_context {
   explicit rpc_recv_typed_context(opt_recv_ctx_t t) : ctx(std::move(t)) {
     if (SMF_LIKELY(ctx)) {
       auto ptr = ctx.value().payload.get_write();
-      if (std::is_base_of<flatbuffers::Table, T>::value) {
-        cache_ = flatbuffers::GetMutableRoot<T>(ptr);
-      } else {
-        cache_ = reinterpret_cast<T *>(ptr);
-      }
+      cache_ = flatbuffers::GetMutableRoot<T>(ptr);
     }
   }
 
