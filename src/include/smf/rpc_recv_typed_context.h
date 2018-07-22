@@ -31,7 +31,7 @@ class rpc_recv_typed_context {
 
   inline T *operator->() { return cache_; }
   inline T *
-  get() {
+  get() const {
     return cache_;
   }
 
@@ -39,6 +39,16 @@ class rpc_recv_typed_context {
   move_to_lw_shared() {
     return seastar::make_lw_shared<rpc_recv_typed_context<T>>(
       std::move(ctx.value()));
+  }
+
+  /// \brief uses the flatbuffers verifier for payload
+  /// can be expensive depending on type - traverses the full type tree
+  bool
+  verify_fbs() const {
+    if (!this->operator bool()) { return false; }
+    auto &buf = ctx.value().payload;
+    flatbuffers::Verifier verifier((const uint8_t *)buf.get(), buf.size());
+    return get()->Verify(verifier);
   }
   /// \brief returns true of this obj
   /// so that it works with
