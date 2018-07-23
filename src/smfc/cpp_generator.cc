@@ -247,31 +247,24 @@ print_header_client_method(smf_printer &printer, const smf_method *method) {
   vars["InType"] = method->input_type_name();
   vars["OutType"] = method->output_type_name();
 
+  // untyped
+  printer.print(vars,
+                "inline virtual\n"
+                "seastar::future<smf::rpc_recv_typed_context<$OutType$>>\n"
+                "$MethodName$(smf::rpc_typed_envelope<$InType$> x) {\n");
+  printer.print(vars, "  return $MethodName$(x.serialize_data());\n");
+  printer.print("}\n");
+
+  // untyped
   printer.print(vars,
                 "inline virtual\n"
                 "seastar::future<smf::rpc_recv_typed_context<$OutType$>>\n"
                 "$MethodName$(smf::rpc_envelope e) {\n");
   printer.indent();
-  printer.print(vars, "/// RequestID: $ServiceID$ ^ $MethodID$\n"
-                      "/// ServiceID: $ServiceID$ == crc32(\"$ServiceName$\")\n"
-                      "/// MethodID:  $MethodID$ == crc32(\"$MethodName$\")\n"
+  printer.print(vars, "/// ServiceID: $ServiceID$\n"
+                      "/// MethodID:  $MethodID$\n"
                       "e.set_request_id($ServiceID$ ^ $MethodID$);\n"
                       "return send<$OutType$>(std::move(e));\n");
-  printer.outdent();
-  printer.print("}\n");
-
-  // RAW
-  printer.print(
-    vars,
-    "inline virtual\n"
-    "seastar::future<std::experimental::optional<smf::rpc_recv_context>>\n"
-    "$RawMethodName$(smf::rpc_envelope e) {\n");
-  printer.indent();
-  printer.print(vars, "/// RequestID: $ServiceID$ ^ $MethodID$\n"
-                      "/// ServiceID: $ServiceID$ == crc32(\"$ServiceName$\")\n"
-                      "/// MethodID:  $MethodID$ == crc32(\"$MethodName$\")\n"
-                      "e.set_request_id($ServiceID$ ^ $MethodID$);\n"
-                      "return raw_send(std::move(e));\n");
   printer.outdent();
   printer.print("}\n");
 }
