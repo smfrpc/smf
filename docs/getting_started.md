@@ -19,17 +19,18 @@ It is a fully compliant CMake project. If you know CMake you can skip this part.
 ```bash
 git clone https://github.com/senior7515/smf.git
 cd smf
-git clone https://github.com/senior7515/smf --recursive
+git submodule update --init --recursive
+
+# Install seastar system deps
+#
+
+./src/third_party/seastar/install-dependencies.sh
 
 # Install smf deps
 #
 
 ./install-deps.sh
 
-# Install seastar system deps
-#
-
-./src/third_party/seastar/install-dependencies.sh
 
 # We have a wrapper script to build the project
 # try build.sh -h for more advanced usage!
