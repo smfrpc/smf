@@ -64,6 +64,7 @@ src/demo_apps/demo_server
 # tests
 src/integration_tests/*_test
 src/test/*_unit_test
+*.test
 
 # docs
 Doxyfile
