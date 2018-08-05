@@ -113,7 +113,8 @@ noop(...) {}
     }                                                                          \
   } while (false)
 
-#ifndef NDEBUG
+#ifdef SMF_DEBUG
+
 #define DTHROW_IFNULL(val)                                                     \
   smf::log_detail::throw_if_null(__FILE__, __LINE__,                           \
                                  "'" #val "' Must be non NULL", (val))
