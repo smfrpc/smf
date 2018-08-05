@@ -53,21 +53,16 @@ target_include_directories(smf
   PUBLIC ${PROJECT_SOURCE_DIR}/src/include
   )
 target_include_directories(smf
-  SYSTEM
-
-  PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/HdrHistogram_c/src
-  PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/flatbuffers/include
-  PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/flat_hash_map
-  PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/zstd/lib
-  PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/xxHash
-  PUBLIC "${seastar_INCLUDE_DIRS}"
+  SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/HdrHistogram_c/src
+  SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/flatbuffers/include
+  SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/flat_hash_map
+  SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/zstd/lib
+  SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/xxHash
+  SYSTEM PUBLIC "${seastar_INCLUDE_DIRS}"
   )
-if(CMAKE_BUILD_TYPE MATCHES Release)
-  target_compile_options(smf PRIVATE -O3 -g)
-else()
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+  target_compile_definitions(smf PUBLIC -DSMF_DEBUG)
   target_compile_options(smf PRIVATE
-    -O0
-    -ggdb
     -fdiagnostics-color=auto
     -Wall
     -Werror
