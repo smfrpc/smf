@@ -111,13 +111,13 @@ class storage_service : public smf_gen::demo::SmfStorage {
 
 int
 main(int args, char **argv, char **env) {
-  SET_LOG_LEVEL(seastar::log_level::trace);
   std::cout.setf(std::ios::unitbuf);
   seastar::distributed<smf::rpc_server> rpc;
   seastar::app_template app;
 
   try {
     return app.run(args, argv, [&]() -> seastar::future<int> {
+      smf::app_run_log_level(seastar::log_level::trace);
       DLOG_DEBUG("Setting up at_exit hooks");
       seastar::engine().at_exit([&] { return rpc.stop(); });
 

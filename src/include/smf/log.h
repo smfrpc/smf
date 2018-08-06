@@ -36,9 +36,18 @@ inline void
 noop(...) {}
 
 }  // namespace log_detail
+
+/// brief Reliably takes effect inside a seastar app_
+///  seastar::app_template::run(argc, argv, []() {
+///    smf::app_run_log_level(seastar::log_level::trace);
+///  });
+inline static void
+app_run_log_level(seastar::log_level l) {
+  smf::internal_logger::get().set_level(l);
+  seastar::global_logger_registry().set_logger_level("smf", l);
+}
 }  // namespace smf
 
-#define SET_LOG_LEVEL(level) smf::internal_logger::get().set_level(level)
 #define __FILENAME__                                                           \
   (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define LOG_INFO(format, args...)                                              \

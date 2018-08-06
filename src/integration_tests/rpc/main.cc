@@ -107,7 +107,6 @@ cli_opts(boost::program_options::options_description_easy_init o) {
 
 int
 main(int args, char **argv, char **env) {
-  SET_LOG_LEVEL(seastar::log_level::trace);
   LOG_INFO("About to start the RPC test");
   seastar::distributed<smf::rpc_server> rpc;
   seastar::distributed<load_gen_t> load;
@@ -117,6 +116,7 @@ main(int args, char **argv, char **env) {
   cli_opts(app.add_options());
 
   return app.run(args, argv, [&]() -> seastar::future<int> {
+    smf::app_run_log_level(seastar::log_level::trace);
     LOG_INFO("Setting up at_exit hooks");
     seastar::engine().at_exit([&] { return load.stop(); });
     seastar::engine().at_exit([&] { return rpc.stop(); });
