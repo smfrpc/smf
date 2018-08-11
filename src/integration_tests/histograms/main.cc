@@ -18,7 +18,7 @@ main(int args, char **argv, char **env) {
         h->record(i * i);
       }
       LOG_DEBUG("Writing histogram");
-      return smf::histogram_seastar_utils::write("hist.testing.csv", h)
+      return smf::histogram_seastar_utils::write("hist.testing.hgrm", h)
         .then([] { return seastar::make_ready_future<int>(0); });
     });  // app.run
   } catch (const std::exception &e) {

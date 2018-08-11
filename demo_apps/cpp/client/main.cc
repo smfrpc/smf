@@ -122,7 +122,7 @@ main(int args, char **argv, char **env) {
                       [](load_gen_t &shard) { return shard.copy_histogram(); })
           .then([](std::unique_ptr<smf::histogram> h) {
             LOG_INFO("Writing client histograms");
-            return smf::histogram_seastar_utils::write("clients_latency.csv",
+            return smf::histogram_seastar_utils::write("clients_latency.hgrm",
                                                        std::move(h));
           });
       })

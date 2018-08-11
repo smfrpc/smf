@@ -53,7 +53,7 @@ main(int args, char **argv, char **env) {
                     &smf::rpc_server::copy_histogram)
         .then([](auto h) {
           LOG_INFO("Writing server histograms");
-          return smf::histogram_seastar_utils::write("server_latency.csv",
+          return smf::histogram_seastar_utils::write("server_latency.hgrm",
                                                      std::move(h));
         })
         .then([&rpc] { return rpc.stop(); });
