@@ -40,26 +40,23 @@ rpc_client::rpc_client(rpc_client &&o) noexcept
 seastar::future<>
 rpc_client::stop() {
   if (conn) {
-    auto fut = seastar::with_timeout(seastar::lowres_clock::now() + 1s,
-                                     conn->ostream.close())
-                 .then_wrapped([this](auto _) {
-                   // after nice shutdow; force it
-                   try {
-                     conn->socket.shutdown_input();
-                     conn->socket.shutdown_output();
-                   } catch (...) {}
-                 });
+    auto force_close = [this]() {
+      try {
+        conn->socket.shutdown_input();
+        conn->socket.shutdown_output();
+      } catch (...) {}
+    };
 
     if (!rpc_slots.empty()) {
       LOG_INFO("Shutting down client with possible sessions open: ",
                rpc_slots.size());
       LOG_INFO("Sleeping for 1 sec before forcing shutdown");
       return seastar::sleep(std::chrono::seconds(1))
-        .then([this, f = std::move(fut)]() mutable { return std::move(f); });
+        .then([this, force_close]() mutable { force_close(); });
     }
     // proper way of closing connection that is safe
     // of concurrency bugs
-    return std::move(fut);
+    force_close();
   }
   return seastar::make_ready_future<>();
 }
