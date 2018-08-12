@@ -236,16 +236,17 @@ rpc_server::dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
                    conn->conn.remote_address);
           auto it = open_connections_.find(conn->id);
           if (it != open_connections_.end()) { open_connections_.erase(it); }
-
           try {
             // after nice shutdow; force it
             conn->conn.socket.shutdown_input();
             conn->conn.socket.shutdown_output();
           } catch (...) {}
+          return seastar::make_exception_future<>(
+            std::runtime_error("Client connection is closed"));
         } else {
           conn->stats->completed_requests++;
+          return seastar::make_ready_future<>();
         }
-        return seastar::make_ready_future<>();
       });
     })
     .handle_exception([this, conn](auto ptr) {
