@@ -42,6 +42,7 @@ rpc_client::stop() {
   if (conn) {
     auto force_close = [this]() {
       try {
+        conn->disable();
         conn->socket.shutdown_input();
         conn->socket.shutdown_output();
       } catch (...) {}
@@ -50,9 +51,9 @@ rpc_client::stop() {
     if (!rpc_slots.empty()) {
       LOG_INFO("Shutting down client with possible sessions open: ",
                rpc_slots.size());
-      LOG_INFO("Sleeping for 1 sec before forcing shutdown");
-      return seastar::sleep(std::chrono::seconds(1))
-        .then([this, force_close]() mutable { force_close(); });
+      LOG_INFO("Sleeping for 100ms before forcing shutdown");
+      return seastar::sleep(100ms).then(
+        [this, force_close]() mutable { force_close(); });
     }
     // proper way of closing connection that is safe
     // of concurrency bugs

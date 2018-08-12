@@ -237,15 +237,15 @@ rpc_server::dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
           auto it = open_connections_.find(conn->id);
           if (it != open_connections_.end()) { open_connections_.erase(it); }
 
-          return conn->conn.ostream.close().then_wrapped([conn](auto _) {
+          try {
             // after nice shutdow; force it
             conn->conn.socket.shutdown_input();
             conn->conn.socket.shutdown_output();
-          });
+          } catch (...) {}
         } else {
           conn->stats->completed_requests++;
-          return seastar::make_ready_future<>();
         }
+        return seastar::make_ready_future<>();
       });
     })
     .handle_exception([this, conn](auto ptr) {
