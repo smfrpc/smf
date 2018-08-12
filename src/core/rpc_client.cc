@@ -13,6 +13,8 @@
 #include "smf/log.h"
 #include "smf/rpc_recv_context.h"
 
+using namespace std::chrono_literals;
+
 namespace smf {
 rpc_client::rpc_client(seastar::ipv4_addr addr) : server_addr(addr) {
   rpc_client_opts opts;
@@ -38,13 +40,15 @@ rpc_client::rpc_client(rpc_client &&o) noexcept
 seastar::future<>
 rpc_client::stop() {
   if (conn) {
-    auto fut = conn->ostream.close().then_wrapped([this](auto _) {
-      // after nice shutdow; force it
-      try {
-        conn->socket.shutdown_input();
-        conn->socket.shutdown_output();
-      } catch (...) {}
-    });
+    auto fut = seastar::with_timeout(seastar::lowres_clock::now() + 1s,
+                                     conn->ostream.close())
+                 .then_wrapped([this](auto _) {
+                   // after nice shutdow; force it
+                   try {
+                     conn->socket.shutdown_input();
+                     conn->socket.shutdown_output();
+                   } catch (...) {}
+                 });
 
     if (!rpc_slots.empty()) {
       LOG_INFO("Shutting down client with possible sessions open: ",
