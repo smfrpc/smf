@@ -40,24 +40,18 @@ rpc_client::rpc_client(rpc_client &&o) noexcept
 seastar::future<>
 rpc_client::stop() {
   if (conn) {
-    auto force_close = [this]() {
-      try {
-        conn->disable();
-        conn->socket.shutdown_input();
-        conn->socket.shutdown_output();
-      } catch (...) {}
-    };
-
     if (!rpc_slots.empty()) {
       LOG_INFO("Shutting down client with possible sessions open: ",
                rpc_slots.size());
-      LOG_INFO("Sleeping for 100ms before forcing shutdown");
-      return seastar::sleep(100ms).then(
-        [this, force_close]() mutable { force_close(); });
+      rpc_slots.clear();
     }
     // proper way of closing connection that is safe
     // of concurrency bugs
-    force_close();
+    try {
+      conn->disable();
+      conn->socket.shutdown_input();
+      conn->socket.shutdown_output();
+    } catch (...) {}
   }
   return seastar::make_ready_future<>();
 }
@@ -162,11 +156,14 @@ process_body_for_self(stdx::optional<rpc_recv_context> opt, auto self) {
     --self->read_counter;
     auto &&v = std::move(opt.value());
     auto sess = v.session();
-    auto slot = self->rpc_slots[sess];
-    self->rpc_slots.erase(sess);
-    DLOG_THROW_IF(slot->session != v.session(), "Invalid client sessions");
-    using typed_ret = decltype(opt);
-    slot->pr.set_value(typed_ret(std::move(v)));
+    auto it = self->rpc_slots.find(sess);
+    if (it != self->rpc_slots.end()) {
+      auto slot = it->second;
+      self->rpc_slots.erase(sess);
+      DLOG_THROW_IF(slot->session != v.session(), "Invalid client sessions");
+      using typed_ret = decltype(opt);
+      slot->pr.set_value(typed_ret(std::move(v)));
+    }
   }
 
   return seastar::make_ready_future<>();

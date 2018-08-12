@@ -6,10 +6,11 @@
 #include <memory>
 #include <utility>
 #include <vector>
-// seastar
+
+#include <bytell_hash_map.hpp>
 #include <core/shared_ptr.hh>
 #include <net/api.hh>
-// smf
+
 #include "smf/histogram.h"
 #include "smf/macros.h"
 #include "smf/rpc_connection.h"
@@ -154,7 +155,7 @@ class rpc_client {
   bool is_error_state{false};
   uint64_t read_counter{0};
   seastar::lw_shared_ptr<rpc_connection> conn;
-  std::unordered_map<uint16_t, seastar::lw_shared_ptr<work_item>> rpc_slots;
+  ska::bytell_hash_map<uint16_t, seastar::lw_shared_ptr<work_item>> rpc_slots;
   // needed public by execution stage
   seastar::future<rpc_recv_context> apply_incoming_filters(rpc_recv_context);
   seastar::future<rpc_envelope> apply_outgoing_filters(rpc_envelope);
