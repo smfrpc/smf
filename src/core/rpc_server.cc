@@ -238,6 +238,7 @@ rpc_server::dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
           if (it != open_connections_.end()) { open_connections_.erase(it); }
           try {
             // after nice shutdow; force it
+            conn->conn.disable();
             conn->conn.socket.shutdown_input();
             conn->conn.socket.shutdown_output();
           } catch (...) {}
