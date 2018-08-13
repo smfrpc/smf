@@ -144,37 +144,43 @@ seastar::future<>
 rpc_server::handle_client_connection(
   seastar::lw_shared_ptr<rpc_server_connection> conn) {
   return seastar::do_until(
-    [conn] { return !conn->is_valid(); },
-    [this, conn]() mutable {
-      return rpc_recv_context::parse_header(&conn->conn)
-        .then([this, conn](auto hdr) {
-          if (!hdr) {
-            conn->set_error("Error parsing connection header");
-            return seastar::make_ready_future<>();
-          }
-          auto h = std::move(hdr.value());
-          auto payload_size = h.size();
-          return seastar::with_semaphore(
-            conn->limits()->resources_available, payload_size,
-            [this, h = std::move(h), conn] {
-              return rpc_recv_context::parse_payload(&conn->conn, std::move(h))
-                .then([conn, this](auto maybe_payload) {
-                  if (!maybe_payload) {
-                    conn->set_error("Could not parse payload");
-                    return seastar::make_ready_future<>();
-                  }
-                  //
-                  // Launch the actual processing on a background future
-                  //
-                  dispatch_rpc(conn, std::move(maybe_payload.value()))
-                    .finally([m = hist_->auto_measure()] {});
+           [conn] { return !conn->is_valid(); },
+           [this, conn]() mutable {
+             return rpc_recv_context::parse_header(&conn->conn)
+               .then([this, conn](auto hdr) {
+                 if (!hdr) {
+                   conn->set_error("Error parsing connection header");
+                   return seastar::make_ready_future<>();
+                 }
+                 auto h = std::move(hdr.value());
+                 auto payload_size = h.size();
+                 return seastar::with_semaphore(
+                   conn->limits()->resources_available, payload_size,
+                   [this, h = std::move(h), conn] {
+                     return rpc_recv_context::parse_payload(&conn->conn,
+                                                            std::move(h))
+                       .then([conn, this](auto maybe_payload) {
+                         if (!maybe_payload) {
+                           conn->set_error("Could not parse payload");
+                           return seastar::make_ready_future<>();
+                         }
+                         //
+                         // Launch the actual processing on a background future
+                         //
+                         dispatch_rpc(conn, std::move(maybe_payload.value()))
+                           .finally([m = hist_->auto_measure()] {})
+                           .handle_exception([](auto ptr) {
+                             LOG_INFO("dispatch rpc error: {}", ptr);
+                           });
 
-                  // dummy return
-                  return seastar::make_ready_future<>();
-                });
-            });
-        });
-    });
+                         // dummy return
+                         return seastar::make_ready_future<>();
+                       });
+                   });
+               });
+           })
+    .handle_exception(
+      [](auto ptr) { LOG_INFO("handle client connecion: {}", ptr); });
 }
 
 seastar::future<>
