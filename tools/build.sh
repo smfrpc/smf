@@ -60,6 +60,11 @@ function release {
     builddir=$root/build/release
     mkdir -p $builddir
     cd ${builddir}
+    local travis=""
+    if [[ "${TRAVIS}" == "1" ]]; then
+        travis_cxx=(-DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG"
+                    -DSMF_ENABLE_BENCHMARK_TESTS=OFF)
+    fi
     cmake     -Wno-dev \
               -DCMAKE_VERBOSE_MAKEFILE=ON \
               -GNinja \
@@ -68,7 +73,7 @@ function release {
               -DSMF_ENABLE_BENCHMARK_TESTS=ON \
               -DSMF_ENABLE_CMAKE_PROJECT_FLAGS=ON \
               -DCMAKE_BUILD_TYPE=Release \
-              ${root}
+              "${travis}" ${root}
 
     # for fmt.py
     ln -sfn "${builddir}/compile_commands.json" "${root}/compile_commands.json"
