@@ -62,6 +62,7 @@ function release {
     cd ${builddir}
     local travis=""
     if [[ "${TRAVIS}" == "1" ]]; then
+        set -x
         echo "Travis build: reducing compilation to only -O1 for speed"
         travis=(-DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG"
                 -DSMF_ENABLE_BENCHMARK_TESTS=OFF)
