@@ -42,7 +42,7 @@ struct hist_t {
 
 /// brief - simple wrapper for hdr_histogram_c project
 ///
-class histogram : public seastar::enable_lw_shared_from_this<histogram> {
+class histogram final : public seastar::enable_lw_shared_from_this<histogram> {
  public:
   static seastar::lw_shared_ptr<histogram>
   make_lw_shared(const hdr_histogram *copy = nullptr);

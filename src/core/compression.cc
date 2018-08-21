@@ -24,7 +24,7 @@
 
 namespace smf {
 
-class zstd_codec : public codec {
+class zstd_codec final : public codec {
  public:
   ~zstd_codec() {}
   zstd_codec(codec_type type, compression_level level) : codec(type, level) {}
@@ -90,7 +90,7 @@ class zstd_codec : public codec {
 
 // Note lz4 funcs are opposite from zstd function on input->output args
 // encodes 4 bytes first
-class lz4_fast_codec : public codec {
+class lz4_fast_codec final : public codec {
  public:
   ~lz4_fast_codec() {}
   lz4_fast_codec(codec_type type, compression_level level)
