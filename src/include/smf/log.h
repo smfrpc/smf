@@ -63,8 +63,14 @@ app_run_log_level(seastar::log_level l) {
   smf::internal_logger::get().debug("{}:{}] " format, __FILENAME__, __LINE__,  \
                                     ##args)
 #define LOG_TRACE(format, args...)                                             \
-  smf::internal_logger::get().trace("{}:{}] " format, __FILENAME__, __LINE__,  \
-                                    ##args)
+  do {                                                                         \
+    if (SMF_UNLIKELY(smf::internal_logger::get().is_enabled(                   \
+          seastar::log_level::trace))) {                                       \
+      smf::internal_logger::get().trace("{}:{}] " format, __FILENAME__,        \
+                                        __LINE__, ##args);                     \
+    }                                                                          \
+  } while (false)
+
 #define LOG_THROW(format, args...)                                             \
   do {                                                                         \
     fmt::MemoryWriter __smflog_w;                                              \
@@ -126,40 +132,46 @@ app_run_log_level(seastar::log_level l) {
 
 #define DTHROW_IFNULL(val)                                                     \
   smf::log_detail::throw_if_null(__FILE__, __LINE__,                           \
-                                 "'" #val "' Must be non NULL", (val))
+                                 "D '" #val "' Must be non NULL", (val))
 #define DLOG_INFO(format, args...)                                             \
-  smf::internal_logger::get().info("{}:{}] " format, __FILENAME__, __LINE__,   \
+  smf::internal_logger::get().info("D {}:{}] " format, __FILENAME__, __LINE__, \
                                    ##args)
 #define DLOG_ERROR(format, args...)                                            \
-  smf::internal_logger::get().error("{}:{}] " format, __FILENAME__, __LINE__,  \
-                                    ##args)
+  smf::internal_logger::get().error("D {}:{}] " format, __FILENAME__,          \
+                                    __LINE__, ##args)
 #define DLOG_WARN(format, args...)                                             \
-  smf::internal_logger::get().warn("{}:{}] " format, __FILENAME__, __LINE__,   \
+  smf::internal_logger::get().warn("D {}:{}] " format, __FILENAME__, __LINE__, \
                                    ##args)
 #define DLOG_DEBUG(format, args...)                                            \
-  smf::internal_logger::get().debug("{}:{}] " format, __FILENAME__, __LINE__,  \
-                                    ##args)
+  smf::internal_logger::get().debug("D {}:{}] " format, __FILENAME__,          \
+                                    __LINE__, ##args)
 #define DLOG_TRACE(format, args...)                                            \
-  smf::internal_logger::get().trace("{}:{}] " format, __FILENAME__, __LINE__,  \
-                                    ##args)
+  do {                                                                         \
+    if (SMF_UNLIKELY(smf::internal_logger::get().is_enabled(                   \
+          seastar::log_level::trace))) {                                       \
+      smf::internal_logger::get().trace("D {}:{}] " format, __FILENAME__,      \
+                                        __LINE__, ##args);                     \
+    }                                                                          \
+  } while (false)
+
 #define DLOG_INFO_IF(condition, format, args...)                               \
   do {                                                                         \
     if (condition) {                                                           \
-      smf::internal_logger::get().info("{}:{}] (" #condition ") " format,      \
+      smf::internal_logger::get().info("D {}:{}] (" #condition ") " format,    \
                                        __FILENAME__, __LINE__, ##args);        \
     }                                                                          \
   } while (false)
 #define DLOG_ERROR_IF(condition, format, args...)                              \
   do {                                                                         \
     if (condition) {                                                           \
-      smf::internal_logger::get().error("{}:{}] (" #condition ") " format,     \
+      smf::internal_logger::get().error("D {}:{}] (" #condition ") " format,   \
                                         __FILENAME__, __LINE__, ##args);       \
     }                                                                          \
   } while (false)
 #define DLOG_DEBUG_IF(condition, format, args...)                              \
   do {                                                                         \
     if (condition) {                                                           \
-      smf::internal_logger::get().debug("{}:{}] (" #condition ") " format,     \
+      smf::internal_logger::get().debug("D {}:{}] (" #condition ") " format,   \
                                         __FILENAME__, __LINE__, ##args);       \
     }                                                                          \
   } while (false)
@@ -167,14 +179,14 @@ app_run_log_level(seastar::log_level l) {
 #define DLOG_WARN_IF(condition, format, args...)                               \
   do {                                                                         \
     if (condition) {                                                           \
-      smf::internal_logger::get().warn("{}:{}] (" #condition ") " format,      \
+      smf::internal_logger::get().warn("D {}:{}] (" #condition ") " format,    \
                                        __FILENAME__, __LINE__, ##args);        \
     }                                                                          \
   } while (false)
 #define DLOG_TRACE_IF(condition, format, args...)                              \
   do {                                                                         \
     if (condition) {                                                           \
-      smf::internal_logger::get().trace("{}:{}] (" #condition ") " format,     \
+      smf::internal_logger::get().trace("D {}:{}] (" #condition ") " format,   \
                                         __FILENAME__, __LINE__, ##args);       \
     }                                                                          \
   } while (false)
@@ -182,7 +194,7 @@ app_run_log_level(seastar::log_level l) {
   do {                                                                         \
     if (SMF_UNLIKELY(condition)) {                                             \
       fmt::MemoryWriter __smflog_w;                                            \
-      __smflog_w.write("{}:{}] (" #condition ") " format, __FILENAME__,        \
+      __smflog_w.write("D {}:{}] (" #condition ") " format, __FILENAME__,      \
                        __LINE__, ##args);                                      \
       smf::internal_logger::get().error(__smflog_w.data());                    \
       throw std::runtime_error(__smflog_w.data());                             \

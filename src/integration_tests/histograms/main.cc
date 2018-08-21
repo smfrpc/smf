@@ -13,6 +13,8 @@ main(int args, char **argv, char **env) {
   seastar::app_template app;
   try {
     return app.run(args, argv, [&app]() -> seastar::future<int> {
+      DLOG_TRACE("Test debug trace");
+      LOG_TRACE("Test non-debug trace");
       auto h = smf::histogram::make_lw_shared();
       for (auto i = 0u; i < 1000; i++) {
         h->record(i * i);
