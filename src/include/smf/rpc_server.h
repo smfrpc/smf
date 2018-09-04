@@ -29,14 +29,12 @@ class rpc_server {
   ~rpc_server();
 
   void start();
+
   seastar::future<> stop();
 
-  seastar::future<std::unique_ptr<smf::histogram>>
-  copy_histogram() {
-    auto h = smf::histogram::make_unique(hist_->get());
-    return seastar::make_ready_future<std::unique_ptr<smf::histogram>>(
-      std::move(h));
-  }
+  /// \brief copy histogram. Cannot be made const due to seastar::map_reduce
+  /// const-ness bugs
+  seastar::future<std::unique_ptr<smf::histogram>> copy_histogram();
 
   template <typename T, typename... Args>
   void

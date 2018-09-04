@@ -60,6 +60,14 @@ rpc_server::rpc_server(rpc_server_args args)
 
 rpc_server::~rpc_server() {}
 
+seastar::future<std::unique_ptr<smf::histogram>>
+rpc_server::copy_histogram() {
+  auto h = smf::histogram::make_unique();
+  *h += *hist_;
+  return seastar::make_ready_future<std::unique_ptr<smf::histogram>>(
+    std::move(h));
+}
+
 void
 rpc_server::start() {
   LOG_INFO("Starging server:{}", *this);

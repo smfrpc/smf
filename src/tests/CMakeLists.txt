@@ -6,3 +6,10 @@ smf_test(
   SOURCE_DIRECTORY ${TOOR}
   LIBRARIES smf gtest
   )
+smf_test(
+  UNIT_TEST
+  BINARY_NAME simple_hist
+  SOURCES ${TOOR}/histogram_tests.cc
+  SOURCE_DIRECTORY ${TOOR}
+  LIBRARIES smf gtest
+  )

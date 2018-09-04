@@ -10,26 +10,30 @@
 
 namespace smf {
 seastar::lw_shared_ptr<histogram>
-histogram::make_lw_shared(const hdr_histogram *o) {
-  auto x = seastar::make_lw_shared<histogram>(histogram{});
+histogram::make_lw_shared(int64_t max_value) {
+  auto x = seastar::make_lw_shared<histogram>(max_value);
   assert(x->hist_->hist);
-  if (o != nullptr) { ::hdr_add(x->hist_->hist, o); }
   return x;
 }
 std::unique_ptr<histogram>
-histogram::make_unique(const hdr_histogram *o) {
-  std::unique_ptr<histogram> p(new histogram());
+histogram::make_unique(int64_t max_value) {
+  std::unique_ptr<histogram> p(new histogram(max_value));
   assert(p->hist_->hist);
-  if (o != nullptr) { ::hdr_add(p->hist_->hist, o); }
   return p;
 }
 
-histogram::histogram() {}
+histogram::histogram(int64_t max_value)
+  : hist_(std::make_unique<hist_t>(max_value)) {}
 histogram::histogram(histogram &&o) noexcept : hist_(std::move(o.hist_)) {}
 
 histogram &
 histogram::operator+=(const histogram &o) {
   ::hdr_add(hist_->hist, o.hist_->hist);
+  return *this;
+}
+histogram &
+histogram::operator+=(const hist_t *o) {
+  ::hdr_add(hist_->hist, o->hist);
   return *this;
 }
 

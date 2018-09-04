@@ -17,17 +17,20 @@ struct histogram_measure;
 }  // namespace smf
 
 namespace smf {
+// 1 hour in microsecs - max value
+static constexpr const int64_t kDefaultHistogramMaxValue = 3600000000;
+
 // VERY Expensive object. At this granularity is about 185KB
 // per instance
 struct hist_t {
-  hist_t() {
-    ::hdr_init(1,                    // 1 microsec - minimum value
-               INT64_C(3600000000),  // 1 hour in microsecs - max value
-               3,                    // Number of significant figures
-               &hist);               // Pointer to initialize
+  explicit hist_t(int64_t max_value) {
+    ::hdr_init(1,          // 1 microsec - minimum value
+               max_value,  // 1 hour in microsecs - max value
+               3,          // Number of significant figures
+               &hist);     // Pointer to initialize
   }
 
-  hist_t(hist_t &&o) noexcept : hist(o.hist) {}
+  hist_t(hist_t &&o) noexcept : hist(std::move(o.hist)) {}
 
   SMF_DISALLOW_COPY_AND_ASSIGN(hist_t);
 
@@ -45,10 +48,10 @@ struct hist_t {
 class histogram final : public seastar::enable_lw_shared_from_this<histogram> {
  public:
   static seastar::lw_shared_ptr<histogram>
-  make_lw_shared(const hdr_histogram *copy = nullptr);
+  make_lw_shared(int64_t max_value = kDefaultHistogramMaxValue);
 
   static std::unique_ptr<histogram>
-  make_unique(const hdr_histogram *copy = nullptr);
+  make_unique(int64_t max_value = kDefaultHistogramMaxValue);
 
   SMF_DISALLOW_COPY_AND_ASSIGN(histogram);
 
@@ -56,6 +59,7 @@ class histogram final : public seastar::enable_lw_shared_from_this<histogram> {
 
   histogram &operator=(histogram &&o) noexcept;
   histogram &operator+=(const histogram &o);
+  histogram &operator+=(const hist_t *o);
 
   void record(const uint64_t &v);
 
@@ -75,11 +79,11 @@ class histogram final : public seastar::enable_lw_shared_from_this<histogram> {
   ~histogram();
 
  private:
-  histogram();
+  explicit histogram(int64_t max_value);
   friend seastar::lw_shared_ptr<histogram>;
 
  private:
-  std::unique_ptr<hist_t> hist_ = std::make_unique<hist_t>();
+  std::unique_ptr<hist_t> hist_;
 };
 /// simple struct that records the measurement at the dtor
 /// similar to boost_scope_exit;
