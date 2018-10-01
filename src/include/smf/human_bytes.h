@@ -29,7 +29,8 @@ operator<<(std::ostream &o, const ::smf::human_bytes &h) {
   } else {
     o << t << " TB";
   }
-  std::setprecision(orig_precision);
+  // reset to original
+  o << std::setprecision(orig_precision);
   return o;
 }
 
