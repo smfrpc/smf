@@ -133,6 +133,14 @@ app_run_log_level(seastar::log_level l) {
 #define DTHROW_IFNULL(val)                                                     \
   smf::log_detail::throw_if_null(__FILE__, __LINE__,                           \
                                  "D '" #val "' Must be non NULL", (val))
+#define DLOG_THROW(format, args...)                                            \
+  do {                                                                         \
+    fmt::MemoryWriter __smflog_w;                                              \
+    __smflog_w.write("D {}:{}] " format, __FILENAME__, __LINE__, ##args);      \
+    smf::internal_logger::get().error(__smflog_w.data());                      \
+    throw std::runtime_error(__smflog_w.data());                               \
+  } while (false)
+
 #define DLOG_INFO(format, args...)                                             \
   smf::internal_logger::get().info("D {}:{}] " format, __FILENAME__, __LINE__, \
                                    ##args)
@@ -208,6 +216,7 @@ app_run_log_level(seastar::log_level l) {
 #define DLOG_WARN(format, args...) ((void)0)
 #define DLOG_DEBUG(format, args...) ((void)0)
 #define DLOG_TRACE(format, args...) ((void)0)
+#define DLOG_THROW(format, args...) ((void)0)
 #define DLOG_INFO_IF(condition, format, args...) ((void)0)
 #define DLOG_ERROR_IF(condition, format, args...) ((void)0)
 #define DLOG_DEBUG_IF(condition, format, args...) ((void)0)

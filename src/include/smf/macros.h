@@ -38,3 +38,6 @@ char (&smf_array_size_helper(T (&array)[N]))[N];
 #else
 #define SMF_CONCEPT(x...) x
 #endif
+
+// we only compile on linux. both clang & gcc support this
+#define SMF_FORCEINLINE __attribute__((always_inline)) inline
