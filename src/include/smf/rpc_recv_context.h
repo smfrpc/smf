@@ -33,19 +33,19 @@ struct rpc_recv_context {
   ~rpc_recv_context();
 
   /// \brief used by the server side to determine the actual RPC
-  uint32_t
+  SMF_ALWAYS_INLINE uint32_t
   request_id() const {
     return header.meta();
   }
 
   /// \brief used by the client side to determine the status from the server
   /// follows the HTTP status codes
-  uint32_t
+  SMF_ALWAYS_INLINE uint32_t
   status() const {
     return header.meta();
   }
 
-  uint16_t
+  SMF_ALWAYS_INLINE uint16_t
   session() const {
     return header.session();
   }

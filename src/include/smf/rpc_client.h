@@ -117,12 +117,12 @@ class rpc_client {
   virtual void disable_histogram_metrics() final;
   virtual void enable_histogram_metrics() final;
 
-  inline virtual bool
+  SMF_ALWAYS_INLINE virtual bool
   is_histogram_enabled() const final {
     return !!hist_;
   }
 
-  inline virtual seastar::lw_shared_ptr<histogram>
+  SMF_ALWAYS_INLINE virtual seastar::lw_shared_ptr<histogram>
   get_histogram() final {
     return hist_;
   }
@@ -131,7 +131,7 @@ class rpc_client {
   /// \code{.cpp}
   ///    client->incoming_filters().push_back(zstd_decompression_filter());
   /// \endcode
-  virtual std::vector<in_filter_t> &
+  SMF_ALWAYS_INLINE virtual std::vector<in_filter_t> &
   incoming_filters() final {
     return in_filters_;
   }
@@ -139,7 +139,7 @@ class rpc_client {
   /// \code{.cpp}
   ///    client->outgoing_filters().push_back(zstd_compression_filter(1000));
   /// \endcode
-  virtual std::vector<out_filter_t> &
+  SMF_ALWAYS_INLINE virtual std::vector<out_filter_t> &
   outgoing_filters() final {
     return out_filters_;
   }

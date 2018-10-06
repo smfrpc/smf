@@ -38,19 +38,19 @@ class rpc_connection final {
   disable() {
     enabled_ = false;
   }
-  inline bool
+  SMF_ALWAYS_INLINE bool
   is_enabled() const {
     return enabled_;
   }
-  inline bool
+  SMF_ALWAYS_INLINE bool
   is_valid() {
     return !istream.eof() && !has_error() && enabled_;
   }
-  inline bool
+  SMF_ALWAYS_INLINE bool
   has_error() const {
     return error_.operator bool();
   }
-  inline void
+  SMF_ALWAYS_INLINE void
   set_error(seastar::sstring e) {
     error_ = e;
   }

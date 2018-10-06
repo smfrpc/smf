@@ -111,7 +111,7 @@ rpc_client::raw_send(rpc_envelope e) {
 
 seastar::future<>
 rpc_client::connect() {
-  LOG_THROW_IF(conn,
+  LOG_THROW_IF(!!conn,
                "Client already connected to server: `{}'. connect "
                "called more than once.",
                server_addr);

@@ -19,7 +19,7 @@ class rpc_recv_typed_context {
   rpc_recv_typed_context() : ctx(std::experimental::nullopt) {}
 
   explicit rpc_recv_typed_context(opt_recv_ctx_t t) : ctx(std::move(t)) {
-    if (SMF_LIKELY(ctx)) {
+    if (SMF_LIKELY(!!ctx)) {
       auto ptr = ctx.value().payload.get_write();
       cache_ = flatbuffers::GetMutableRoot<T>(ptr);
     }
@@ -28,8 +28,8 @@ class rpc_recv_typed_context {
   rpc_recv_typed_context(rpc_recv_typed_context<T> &&o) noexcept
     : ctx(std::move(o.ctx)), cache_(std::move(o.cache_)) {}
 
-  inline T *operator->() { return cache_; }
-  inline T *
+  SMF_ALWAYS_INLINE T *operator->() { return cache_; }
+  SMF_ALWAYS_INLINE T *
   get() const {
     return cache_;
   }

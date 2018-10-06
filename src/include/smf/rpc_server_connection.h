@@ -83,24 +83,24 @@ class rpc_server_connection final {
 
   ~rpc_server_connection() { stats->active_connections--; }
 
-  inline void
+  SMF_ALWAYS_INLINE void
   set_error(seastar::sstring e) {
     conn.set_error(std::move(e));
   }
-  inline bool
+  SMF_ALWAYS_INLINE bool
   has_error() const {
     return conn.has_error();
   }
-  inline seastar::sstring
+  SMF_ALWAYS_INLINE seastar::sstring
   get_error() const {
     return conn.get_error();
   }
 
-  inline bool
+  SMF_ALWAYS_INLINE bool
   is_valid() {
     return conn.is_valid();
   }
-  inline seastar::lw_shared_ptr<rpc_connection_limits>
+  SMF_ALWAYS_INLINE seastar::lw_shared_ptr<rpc_connection_limits>
   limits() {
     return conn.limits;
   }

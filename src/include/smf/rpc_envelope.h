@@ -36,19 +36,19 @@ struct rpc_envelope {
   void add_dynamic_header(const char *header, const char *value);
 
   /// \brief used on the client-sender side
-  inline void
+  SMF_ALWAYS_INLINE void
   set_request_id(uint32_t request_id) {
     letter.header.mutate_meta(request_id);
   }
 
   /// \brief typically used on the server-returning-content side.
   /// usually it acts like the HTTP status codes
-  inline void
+  SMF_ALWAYS_INLINE void
   set_status(const uint32_t &status) {
     letter.header.mutate_meta(status);
   }
 
-  inline size_t
+  SMF_ALWAYS_INLINE size_t
   size() const {
     return letter.size();
   }
