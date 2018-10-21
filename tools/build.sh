@@ -12,7 +12,7 @@ this_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="${this_dir}/../"
 buildcmd="ninja"
 buildtype="debug"
-builddir=$root/build/debug
+builddir=$root/target/debug
 case $ID in
     debian|ubuntu|linuxmint)
         echo "$ID supported"
@@ -30,7 +30,7 @@ esac
 
 function debug {
     echo "Debug"
-    builddir=$root/build/debug
+    builddir=$root/target/debug
     mkdir -p $builddir
     cd ${builddir}
     cmake -Wdev \
@@ -57,7 +57,7 @@ function tests {
 }
 function release {
     echo "Release"
-    builddir=$root/build/release
+    builddir=$root/target/release
     mkdir -p $builddir
     cd ${builddir}
     local travis=""
