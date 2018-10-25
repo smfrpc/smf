@@ -73,8 +73,9 @@ app_run_log_level(seastar::log_level l) {
 
 #define LOG_THROW(format, args...)                                             \
   do {                                                                         \
-    fmt::MemoryWriter __smflog_w;                                              \
-    __smflog_w.write("{}:{}] " format, __FILENAME__, __LINE__, ##args);        \
+    fmt::memory_buffer __smflog_w;                                             \
+    fmt::format_to(__smflog_w, "{}:{}] " format, __FILENAME__, __LINE__,       \
+                   ##args);                                                    \
     smf::internal_logger::get().error(__smflog_w.data());                      \
     throw std::runtime_error(__smflog_w.data());                               \
   } while (false)
@@ -120,8 +121,8 @@ app_run_log_level(seastar::log_level l) {
 #define LOG_THROW_IF(condition, format, args...)                               \
   do {                                                                         \
     if (SMF_UNLIKELY(condition)) {                                             \
-      fmt::MemoryWriter __smflog_w;                                            \
-      __smflog_w.write("{}:{}] (" #condition ") " format, __FILENAME__,        \
+      fmt::memory_buffer __smflog_w;                                           \
+      fmt::format_to(__smflog_w, "{}:{}] (" #condition ") " format, __FILENAME__, \
                        __LINE__, ##args);                                      \
       smf::internal_logger::get().error(__smflog_w.data());                    \
       throw std::runtime_error(__smflog_w.data());                             \
@@ -135,8 +136,9 @@ app_run_log_level(seastar::log_level l) {
                                  "D '" #val "' Must be non NULL", (val))
 #define DLOG_THROW(format, args...)                                            \
   do {                                                                         \
-    fmt::MemoryWriter __smflog_w;                                              \
-    __smflog_w.write("D {}:{}] " format, __FILENAME__, __LINE__, ##args);      \
+    fmt::memory_buffer __smflog_w;                                             \
+    fmt::format_to(__smflog_w, "D {}:{}] " format, __FILENAME__, __LINE__,     \
+                   ##args);                                                    \
     smf::internal_logger::get().error(__smflog_w.data());                      \
     throw std::runtime_error(__smflog_w.data());                               \
   } while (false)
@@ -201,9 +203,9 @@ app_run_log_level(seastar::log_level l) {
 #define DLOG_THROW_IF(condition, format, args...)                              \
   do {                                                                         \
     if (SMF_UNLIKELY(condition)) {                                             \
-      fmt::MemoryWriter __smflog_w;                                            \
-      __smflog_w.write("D {}:{}] (" #condition ") " format, __FILENAME__,      \
-                       __LINE__, ##args);                                      \
+      fmt::memory_buffer __smflog_w;                                           \
+      fmt::format_to(__smflog_w, "D {}:{}] (" #condition ") " format,          \
+                     __FILENAME__, __LINE__, ##args);                          \
       smf::internal_logger::get().error(__smflog_w.data());                    \
       throw std::runtime_error(__smflog_w.data());                             \
     }                                                                          \
