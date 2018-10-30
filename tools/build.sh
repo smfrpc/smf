@@ -112,8 +112,6 @@ Usage: $(basename "$0") [OPTION]...
 
   -p          package code
 
-  -b          build bazel
-
   -h          display help
 EOM
 
@@ -138,10 +136,6 @@ while getopts ":drtfpb" optKey; do
         p)
             package
             ;;
-        b)
-            ${this_dir}/bazel.sh -a
-            ;;
-
         *)
             usage
             ;;

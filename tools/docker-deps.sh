@@ -8,7 +8,7 @@
 
 set -e
 . /etc/os-release
-function redhat {
+function redhat() {
     dnf update -y
     dnf install \
         git \
@@ -21,7 +21,7 @@ function redhat {
         which -y
 
 }
-function debian {
+function debian() {
     apt-get update -y
     apt-get install \
             git-core \
@@ -47,7 +47,4 @@ case $ID in
         exit 1
         ;;
 esac
-BAZEL_VERSION=0.14.0
-curl -fSsL -O https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/bazel-$BAZEL_VERSION-installer-linux-x86_64.sh
-chmod +x bazel-*.sh
-./bazel-$BAZEL_VERSION-installer-linux-x86_64.sh
+
