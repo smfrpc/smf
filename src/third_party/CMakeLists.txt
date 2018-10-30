@@ -1,12 +1,9 @@
 # these are a bit hacky, and should eventually be replaced by proper cmake find
 # package modules and/or create proper targets. at this point the build system
 # is simple enough that its tractable to deal with these few special cases.
-set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL
-  "Disable building flatbuffers tests")
-set(FLATBUFFERS_INSTALL OFF CACHE BOOL
-  "Disable installing flatbuffers")
-set(FLATBUFFERS_BUILD_FLATHASH OFF CACHE BOOL
-  "Disable building flathash")
+SMF_SET_OPTION(FLATBUFFERS_BUILD_TESTS OFF)
+SMF_SET_OPTION(FLATBUFFERS_INSTALL OFF)
+SMF_SET_OPTION(FLATBUFFERS_BUILD_FLATHASH OFF)
 add_subdirectory(flatbuffers)
 
 set(SEASTAR_USER_CFLAGS
@@ -15,26 +12,19 @@ set(SEASTAR_USER_CFLAGS
   -Wno-stringop-truncation
   -Wno-format-overflow
   CACHE STRING "User cflags for seastar deps")
-set(SEASTAR_ENABLE_TESTS OFF CACHE BOOL "disable seastar tests")
+SMF_SET_OPTION(SEASTAR_ENABLE_TESTS OFF)
 add_subdirectory(seastar)
 
 
-set(HDR_HISTOGRAM_BUILD_SHARED OFF CACHE BOOL
-  "Disable building hdr_histogram shared library")
-set(HDR_HISTOGRAM_BUILD_PROGRAMS OFF CACHE BOOL
-  "Disable building hdr_histogram tests and examples")
+SMF_SET_OPTION(HDR_HISTOGRAM_BUILD_SHARED OFF)
+SMF_SET_OPTION(HDR_HISTOGRAM_BUILD_PROGRAMS OFF)
 add_subdirectory(HdrHistogram_c)
 
-set(ZSTD_MULTITHREAD_SUPPORT OFF CACHE BOOL
-  "No need for multi threads")
-set(ZSTD_LEGACY_SUPPORT OFF CACHE BOOL
-  "No need to support pre 1.0")
-set(ZSTD_BUILD_STATIC ON CACHE BOOL
-  "Enable building zstd static library")
-set(ZSTD_BUILD_SHARED OFF CACHE BOOL
-  "Disable building zstd shared library")
-set(ZSTD_BUILD_PROGRAMS OFF CACHE BOOL
-  "Disable building zstd programs")
+SMF_SET_OPTION(ZSTD_MULTITHREAD_SUPPORT OFF)
+SMF_SET_OPTION(ZSTD_LEGACY_SUPPORT OFF)
+SMF_SET_OPTION(ZSTD_BUILD_STATIC ON)
+SMF_SET_OPTION(ZSTD_BUILD_SHARED OFF)
+SMF_SET_OPTION(ZSTD_BUILD_PROGRAMS OFF)
 add_subdirectory(zstd/build/cmake)
 
 
@@ -44,7 +34,7 @@ endif()
 
 
 if(SMF_ENABLE_BENCHMARK_TESTS)
-  set(BENCHMARK_ENABLE_GTEST_TESTS OFF)
-  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable Google benchmark testing")
+  SMF_SET_OPTION(BENCHMARK_ENABLE_GTEST_TESTS OFF)
+  SMF_SET_OPTION(BENCHMARK_ENABLE_TESTING OFF)
   add_subdirectory(google_benchmark)
 endif()

@@ -54,6 +54,7 @@ option(SMF_BUILD_PROGRAMS "Build smf programs and demos" ON)
 option(SMF_BUILD_COMPILER "Control if smfc is built" ON)
 
 include(CMake/packaging.cmake)
+include(CMake/set_option.cmake)
 include(CMake/tests.cmake)
 
 include_directories(
