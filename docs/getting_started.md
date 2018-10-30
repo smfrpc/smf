@@ -11,7 +11,7 @@ title: getting started
 
 Currently we have tested the system to work on Fedora, Debian, Ubuntu. 
 
-We require gcc6 or greater.
+We require gcc7 or greater.
 
 It is a fully compliant CMake project. If you know CMake you can skip this part.
 
