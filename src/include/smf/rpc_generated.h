@@ -20,6 +20,11 @@ struct payload_headersT;
 struct null_type;
 struct null_typeT;
 
+bool operator==(const header &lhs, const header &rhs);
+bool operator==(const dynamic_headerT &lhs, const dynamic_headerT &rhs);
+bool operator==(const payload_headersT &lhs, const payload_headersT &rhs);
+bool operator==(const null_typeT &lhs, const null_typeT &rhs);
+
 inline const flatbuffers::TypeTable *headerTypeTable();
 
 inline const flatbuffers::TypeTable *dynamic_headerTypeTable();
@@ -69,6 +74,7 @@ inline const char * const *EnumNamescompression_flags() {
 }
 
 inline const char *EnumNamecompression_flags(compression_flags e) {
+  if (e < compression_flags_none || e > compression_flags_lz4) return "";
   const size_t index = static_cast<int>(e);
   return EnumNamescompression_flags()[index];
 }
@@ -95,6 +101,7 @@ inline const char * const *EnumNamesheader_bit_flags() {
 }
 
 inline const char *EnumNameheader_bit_flags(header_bit_flags e) {
+  if (e < header_bit_flags_has_payload_headers || e > header_bit_flags_has_payload_headers) return "";
   const size_t index = static_cast<int>(e) - static_cast<int>(header_bit_flags_has_payload_headers);
   return EnumNamesheader_bit_flags()[index];
 }
@@ -189,6 +196,16 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) header FLATBUFFERS_FINAL_CLASS {
 };
 FLATBUFFERS_STRUCT_END(header, 16);
 
+inline bool operator==(const header &lhs, const header &rhs) {
+  return
+      (lhs.compression() == rhs.compression()) &&
+      (lhs.bitflags() == rhs.bitflags()) &&
+      (lhs.session() == rhs.session()) &&
+      (lhs.size() == rhs.size()) &&
+      (lhs.checksum() == rhs.checksum()) &&
+      (lhs.meta() == rhs.meta());
+}
+
 struct dynamic_headerT : public flatbuffers::NativeTable {
   typedef dynamic_header TableType;
   static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
@@ -199,6 +216,12 @@ struct dynamic_headerT : public flatbuffers::NativeTable {
   dynamic_headerT() {
   }
 };
+
+inline bool operator==(const dynamic_headerT &lhs, const dynamic_headerT &rhs) {
+  return
+      (lhs.key == rhs.key) &&
+      (lhs.value == rhs.value);
+}
 
 /// \brief used for extra headers, ala HTTP
 /// The use case for the core is to support
@@ -211,7 +234,7 @@ struct dynamic_header FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
     return "smf.rpc.dynamic_header";
   }
-  enum {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_KEY = 4,
     VT_VALUE = 6
   };
@@ -308,6 +331,14 @@ struct payload_headersT : public flatbuffers::NativeTable {
   }
 };
 
+inline bool operator==(const payload_headersT &lhs, const payload_headersT &rhs) {
+  return
+      (lhs.dynamic_headers == rhs.dynamic_headers) &&
+      (lhs.size == rhs.size) &&
+      (lhs.checksum == rhs.checksum) &&
+      (lhs.compression == rhs.compression);
+}
+
 struct payload_headers FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef payload_headersT NativeTableType;
   static const flatbuffers::TypeTable *MiniReflectTypeTable() {
@@ -316,7 +347,7 @@ struct payload_headers FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
     return "smf.rpc.payload_headers";
   }
-  enum {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_DYNAMIC_HEADERS = 4,
     VT_SIZE = 6,
     VT_CHECKSUM = 8,
@@ -428,6 +459,10 @@ struct null_typeT : public flatbuffers::NativeTable {
   null_typeT() {
   }
 };
+
+inline bool operator==(const null_typeT &, const null_typeT &) {
+  return true;
+}
 
 /// \brief, useful when the type is empty
 /// i.e.: void foo();
@@ -589,7 +624,7 @@ inline const flatbuffers::TypeTable *header_bit_flagsTypeTable() {
   static const flatbuffers::TypeFunction type_refs[] = {
     header_bit_flagsTypeTable
   };
-  static const int32_t values[] = { 1 };
+  static const int64_t values[] = { 1 };
   static const char * const names[] = {
     "has_payload_headers"
   };
@@ -612,7 +647,7 @@ inline const flatbuffers::TypeTable *headerTypeTable() {
     compression_flagsTypeTable,
     header_bit_flagsTypeTable
   };
-  static const int32_t values[] = { 0, 1, 2, 4, 8, 12, 16 };
+  static const int64_t values[] = { 0, 1, 2, 4, 8, 12, 16 };
   static const char * const names[] = {
     "compression",
     "bitflags",

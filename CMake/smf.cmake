@@ -47,7 +47,7 @@ function(smfc_gen)
     add_custom_command(OUTPUT ${FLATC_OUTPUT}
       COMMAND flatc
       ARGS --gen-name-strings --gen-object-api ${flatc_language}
-      ARGS ${flatc_generated_includes} --force-empty
+      ARGS ${flatc_generated_includes} --force-empty --gen-compare
       ARGS --keep-prefix --json --reflect-names --defaults-json
       ARGS --gen-mutable --cpp-str-type 'seastar::sstring'
       ARGS -o "${SMFC_GEN_OUTPUT_DIRECTORY}/" "${FILE}"
