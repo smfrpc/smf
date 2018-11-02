@@ -6,6 +6,6 @@ RUN /smf/tools/docker-deps.sh
 RUN git submodule update --init --recursive
 RUN ./install-deps.sh
 RUN ./src/third_party/seastar/install-dependencies.sh
-RUN ./tools/build.sh -rbt
+RUN ./tools/build.sh -rt
 
 EXPOSE 7000
