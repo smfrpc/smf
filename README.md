@@ -1,5 +1,7 @@
 # [smf - the fastest RPC in the West](http://smfrpc.github.io/smf/) [![Travis-ci Build Status](https://travis-ci.org/smfrpc/smf.svg?branch=master)](https://travis-ci.org/smfrpc/smf)
 
+![](docs/public/logo.png)
+
 
 **smf** is pronounced **/smɝf/**
 
