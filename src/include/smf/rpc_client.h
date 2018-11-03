@@ -152,7 +152,6 @@ class rpc_client {
 
  public:
   // need to be public for parent_shared_from_this()
-  bool is_error_state{false};
   uint64_t read_counter{0};
   seastar::lw_shared_ptr<rpc_connection> conn;
   ska::bytell_hash_map<uint16_t, seastar::lw_shared_ptr<work_item>> rpc_slots;

@@ -30,9 +30,8 @@ rpc_client::rpc_client(rpc_client_opts opts) : server_addr(opts.server_addr) {
 
 rpc_client::rpc_client(rpc_client &&o) noexcept
   : server_addr(o.server_addr), limits(std::move(o.limits)),
-    is_error_state(o.is_error_state), read_counter(o.read_counter),
-    conn(std::move(o.conn)), rpc_slots(std::move(o.rpc_slots)),
-    in_filters_(std::move(o.in_filters_)),
+    read_counter(o.read_counter), conn(std::move(o.conn)),
+    rpc_slots(std::move(o.rpc_slots)), in_filters_(std::move(o.in_filters_)),
     out_filters_(std::move(o.out_filters_)),
     serialize_writes_(std::move(o.serialize_writes_)),
     hist_(std::move(o.hist_)), session_idx_(o.session_idx_) {}
@@ -68,7 +67,7 @@ rpc_client::enable_histogram_metrics() {
 
 seastar::future<stdx::optional<rpc_recv_context>>
 rpc_client::raw_send(rpc_envelope e) {
-  LOG_THROW_IF(is_error_state, "Cannot send request in error state");
+  LOG_THROW_IF(!conn->is_valid(), "Cannot send request in error state");
   using opt_recv_t = stdx::optional<rpc_recv_context>;
   // create the work item
   ++session_idx_;
@@ -142,7 +141,7 @@ rpc_client::dispatch_write(rpc_envelope e) {
           return rpc_envelope::send(&self->conn->ostream, std::move(e))
             .handle_exception([self](auto _) {
               LOG_ERROR("Error sending data: {}", _);
-              self->is_error_state = true;
+              self->conn->disable();
             });
         });
     });
@@ -196,7 +195,7 @@ rpc_client::do_reads() {
            })
     .finally([self = parent_shared_from_this()] {})
     .handle_exception([self = parent_shared_from_this()](auto ep) mutable {
-      self->is_error_state = true;
+      self->conn->disable();
       LOG_ERROR_IF(self->read_counter > 0,
                    "Failing all enqueued reads {} for client. Error: {}",
                    self->read_counter, ep);
