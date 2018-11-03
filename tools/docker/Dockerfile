@@ -1,6 +1,6 @@
 FROM fedora:27
 RUN dnf install git -y
-RUN git clone https://github.com/senior7515/smf.git
+RUN git clone https://github.com/smfrpc/smf.git
 WORKDIR smf/
 RUN /smf/tools/docker-deps.sh
 RUN git submodule update --init --recursive

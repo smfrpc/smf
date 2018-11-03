@@ -13,7 +13,7 @@
 namespace smf {
 /// \brief converts a flatbuffers::NativeTableType into a buffer.
 /// See full benchmarks/comparisons here:
-/// https://github.com/senior7515/smf/pull/259
+/// https://github.com/smfrpc/smf/pull/259
 ///
 /// Makes 2 copies in the worst case. See PR #259
 /// If the buffer that we encode is large, we generate a new fbs::builder

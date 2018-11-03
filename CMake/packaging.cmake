@@ -30,12 +30,12 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Fastest RPC west")
 #deb
 set(CPACK_DEB_COMPONENT_INSTALL TRUE)
 set(CPACK_DEBIAN_PACKAGE_SECTION "utilities")
-set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://senior7515.github.io/smf/")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://smfrpc.github.io/smf/")
 
 #rpm
 set(CPACK_RPM_PACKAGE_LICENSE "Apache 2.0")
 set(CPACK_RPM_PACKAGE_GROUP "utilities")
-set(CPACK_RPM_PACKAGE_URL "http://senior7515.github.io/smf/")
+set(CPACK_RPM_PACKAGE_URL "http://smfrpc.github.io/smf/")
 set(CPACK_RPM_PACKAGE_AUTOREQ YES)
 set(CPACK_RPM_PACKAGE_DEBUG YES)
 

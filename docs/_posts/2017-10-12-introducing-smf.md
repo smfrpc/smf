@@ -11,7 +11,7 @@ title: Introducing smf
 | Important Links
 | ---------------- 
 | [Mailing List](https://groups.google.com/forum/#!forum/smf-dev)
-| [Documentation](https://senior7515.github.io/smf/)
+| [Documentation](https://smfrpc.github.io/smf/)
 
 
 ## [**smf** RPC]({{site.baseurl}}rpc)
@@ -44,9 +44,9 @@ Highlights:
 
 ## We need your help!
 
-We have a lot of issues marked as [good first issue](https://github.com/senior7515/smf/labels/good%20first%20issue)
+We have a lot of issues marked as [good first issue](https://github.com/smfrpc/smf/labels/good%20first%20issue)
 
-Look at the [contributing](https://github.com/senior7515/smf/blob/master/CONTRIBUTING.md) 
+Look at the [contributing](https://github.com/smfrpc/smf/blob/master/CONTRIBUTING.md)
 guideline for more details. 
 
 Take a look at the issue list or send an email to the
@@ -56,7 +56,4 @@ to get started.
 ## Getting started
 
 Please see our quick
-[getting started!](https://senior7515.github.io/smf/getting_started/)
-
-
-
+[getting started!](https://smfrpc.github.io/smf/getting_started/)

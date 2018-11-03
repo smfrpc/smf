@@ -17,7 +17,7 @@ It is a fully compliant CMake project. If you know CMake you can skip this part.
 
 
 ```bash
-git clone https://github.com/senior7515/smf.git
+git clone https://github.com/smfrpc/smf.git
 cd smf
 git submodule update --init --recursive
 

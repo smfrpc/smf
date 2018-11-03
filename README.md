@@ -1,4 +1,4 @@
-# [smf - the fastest RPC in the West](http://senior7515.github.io/smf/) [![Travis-ci Build Status](https://travis-ci.org/senior7515/smf.svg?branch=master)](https://travis-ci.org/senior7515/smf)
+# [smf - the fastest RPC in the West](http://smfrpc.github.io/smf/) [![Travis-ci Build Status](https://travis-ci.org/smfrpc/smf.svg?branch=master)](https://travis-ci.org/smfrpc/smf)
 
 
 **smf** is pronounced **/smɝf/**
@@ -6,9 +6,9 @@
 Site         | Link
 ------------ | --------
 Mailing List  | https://groups.google.com/forum/#!forum/smf-dev
-Documentation | https://senior7515.github.io/smf/
+Documentation | https://smfrpc.github.io/smf/
 
-# [Official Documentation](https://senior7515.github.io/smf) 
+# [Official Documentation](https://smfrpc.github.io/smf)
 
 Please visit our official documentation, 
 it'll get you up and running in no time!
@@ -38,5 +38,4 @@ Current benchmarks in microseconds
 # Getting started
 
 Please see our quick
-[getting started on our official docs!](https://senior7515.github.io/smf//getting_started/)
-
+[getting started on our official docs!](https://smfrpc.github.io/smf//getting_started/)

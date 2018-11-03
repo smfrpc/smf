@@ -209,7 +209,7 @@ go_generator::generate_header_includes() {
   printer_.print("import (\n");
   printer_.indent();
   printer_.print("\"context\"\n"
-                 "\"github.com/senior7515/go-smf/smf\"\n");
+                 "\"github.com/smfrpc/smf-go/src/smf\"\n");
   printer_.outdent();
   printer_.print(")\n");
 }

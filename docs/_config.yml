@@ -11,7 +11,7 @@ permalink:        pretty
 title:            'smf'
 tagline:          'smf - **/smɝf/** - the fastest RPC in the West'
 description:      ''
-url:              'https://senior7515.github.io'
+url:              'https://smfrpc.github.io'
 baseurl:          /smf/
 
 author:
@@ -24,4 +24,4 @@ paginate:         5
 version:          2.1.0
 
 github:
-  repo:           'https://github.com/senior7515/smf'
+  repo:           'https://github.com/smfrpc/smf'

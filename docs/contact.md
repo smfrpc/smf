@@ -17,5 +17,5 @@ email
 come say hi on twitter [@emaxerrno](https://twitter.com/emaxerrno)
 
 if you are using the software and find a bug, 
-please file a [github issue](https://github.com/senior7515/smf/issues)
+please file a [github issue](https://github.com/smfrpc/smf/issues)
 in addition to contacting the mailing list
