@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2017 Alexander Gallego
 #
@@ -53,7 +53,7 @@ def generate_options():
 def test_environ():
     e = os.environ.copy()
     ld_path = ""
-    if e.has_key("LD_LIBRARY_PATH"):
+    if "LD_LIBRARY_PATH" in e:
         ld_path = e["LD_LIBRARY_PATH"]
     e["GLOG_logtostderr"] = '1'
     e["GLOG_v"] = '1'
@@ -100,14 +100,13 @@ def run_subprocess(cmd, cfg, environ):
 def set_up_test_environment(cfg):
     test_env = test_environ()
     dirpath = os.getcwd()
-    if cfg.has_key("tmp_home"):
+    if "tmp_home" in cfg:
         dirpath = tempfile.mkdtemp(
-            suffix=gen_alphanum(),
-            prefix=KTEST_DIR_PREFIX)
+            suffix=gen_alphanum(), prefix=KTEST_DIR_PREFIX)
         logger.debug("Executing test in tmp dir %s" % dirpath)
         os.chdir(dirpath)
         test_env["HOME"] = dirpath
-    if cfg.has_key("copy_files"):
+    if "copy_files" in cfg:
         files_to_copy = cfg["copy_files"]
         if isinstance(files_to_copy, list):
             for f in files_to_copy:
@@ -119,10 +118,10 @@ def set_up_test_environment(cfg):
 
 
 def clean_test_resources(cfg):
-    if cfg.has_key("execution_directory"):
+    if "execution_directory" in cfg:
         exec_dir = cfg["execution_directory"]
         if KTEST_DIR_PREFIX in exec_dir:
-            if cfg.has_key("remove_test_dir") and \
+            if "remove_test_dir" in cfg and \
                cfg["remove_test_dir"] is False:
                 logger.info("Skipping rm -r tmp dir: %s" % exec_dir)
             else:
@@ -145,14 +144,14 @@ def load_test_configuration(directory):
 
 def get_full_executable(binary, cfg):
     cmd = binary
-    if cfg.has_key("args"):
+    if "args" in cfg:
         cmd = ' '.join([cmd] + cfg["args"])
     return cmd
 
 
 def execute(cmd, test_env, cfg):
     run_subprocess(cmd, cfg, test_env)
-    if cfg.has_key("repeat_in_same_dir") and cfg.has_key("repeat_times"):
+    if all(k in cfg for k in ["repeat_in_same_dir", "repeat_times"]):
         # substract one from the already executed test
         repeat = int(cfg["repeat_times"]) - 1
         while repeat > 0:

@@ -58,7 +58,7 @@ function(smfc_gen)
     # smfc
     add_custom_command(OUTPUT ${SMF_GEN_OUTPUT}
       COMMAND smfc
-      ARGS --logtostderr --filename ${FILE}
+      ARGS --filename ${FILE}
       ARGS "${smfc_language}"
       ARGS "${smfc_generated_includes}"
       ARGS --output_path="${SMFC_GEN_OUTPUT_DIRECTORY}"
