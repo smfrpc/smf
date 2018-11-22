@@ -17,6 +17,7 @@ go_public_name(std::string s) {
   s[0] = std::toupper(s[0]);
   return s;
 }
+
 static void
 print_server_method(smf_printer &printer, const smf_method *method) {
   std::map<std::string, std::string> vars;
@@ -25,14 +26,15 @@ print_server_method(smf_printer &printer, const smf_method *method) {
   vars["MethodID"] = std::to_string(method->method_id());
   vars["RawMethodName"] = "Raw" + go_public_name(method->name());
   vars["MethodName"] = go_public_name(method->name());
+  vars["InType"] = method->input_type_name(language::go);
 
   printer.print(vars, "func (s *$ServiceName$) $RawMethodName$(ctx "
                       "context.Context, req []byte) ([]byte, error) {\n");
   printer.indent();
   printer.print(vars, "return s.$InterfaceName$.$MethodName$(ctx, "
-                      "demo.GetRootAsRequest(req, 0))\n");
+                      "GetRootAs$InType$(req, 0))\n");
   printer.outdent();
-  printer.print("}\n");
+  printer.print("}\n\n");
 }
 
 static void
@@ -62,7 +64,7 @@ print_server_jump_table(smf_printer &printer, const smf_service *service) {
   printer.print("}\n");
 
   printer.outdent();
-  printer.print("}\n");
+  printer.print("}\n\n");
 }
 static void
 print_server(smf_printer &printer, const smf_service *service) {
@@ -72,18 +74,20 @@ print_server(smf_printer &printer, const smf_service *service) {
   vars["InterfaceName"] = go_public_name(service->name());
   vars["ServiceName"] = vars["InterfaceName"] + "Service";
   vars["ServiceID"] = std::to_string(service->service_id());
-  printer.print("\n// Server\n");
+  printer.print(vars,
+                "\n// $InterfaceName$ - $InterfaceName$ Server interface\n");
 
   // gen the interface for service
   printer.print(vars, "type $InterfaceName$ interface {\n");
   printer.indent();
   for (auto &m : service->methods()) {
     vars["MethodName"] = go_public_name(m->name());
-    printer.print(
-      vars, "$MethodName$(context.Context, *smf.Request) ([]byte, error)\n");
+    vars["InType"] = m->input_type_name(language::go);
+    printer.print(vars,
+                  "$MethodName$(context.Context, *$InType$) ([]byte, error)\n");
   }
   printer.outdent();
-  printer.print("}\n");
+  printer.print("}\n\n");
 
   // gen the service
   printer.print(vars, "type $ServiceName$ struct {\n");
@@ -98,21 +102,21 @@ print_server(smf_printer &printer, const smf_service *service) {
   printer.indent();
   printer.print(vars, "return &$ServiceName${$InterfaceName$: s}\n");
   printer.outdent();
-  printer.print("}\n");
+  printer.print("}\n\n");
 
   // gen service name
   printer.print(vars, "func (s *$ServiceName$) ServiceName() string {\n");
   printer.indent();
   printer.print(vars, "return \"$InterfaceName$\"\n");
   printer.outdent();
-  printer.print("}\n");
+  printer.print("}\n\n");
 
   // gen service id
   printer.print(vars, "func (s *$ServiceName$) ServiceID() uint32 {\n");
   printer.indent();
   printer.print(vars, "return $ServiceID$\n");
   printer.outdent();
-  printer.print("}\n");
+  printer.print("}\n\n");
 
   // gen jump table
   print_server_jump_table(printer, service);
@@ -145,9 +149,9 @@ print_client_method(smf_printer &printer, const smf_method *method) {
   printer.print("return nil, err\n");
   printer.outdent();
   printer.print("}\n");
-  printer.print(vars, "return smf.GetRootAsResponse(res, 0), nil\n");
+  printer.print(vars, "return GetRootAs$OutputType$(res, 0), nil\n");
   printer.outdent();
-  printer.print("}\n");
+  printer.print("}\n\n");
 
   // raw
   printer.print(vars, "func (s *$ClientName$) $RawMethodName$(ctx "
@@ -168,7 +172,7 @@ print_client(smf_printer &printer, const smf_service *service) {
   vars["ClientName"] = vars["InterfaceName"] + "Client";
   vars["ServiceID"] = std::to_string(service->service_id());
 
-  printer.print("\n// Client\n");
+  printer.print("// Client\n");
   // gen the client
   printer.print(vars, "type $ClientName$ struct {\n");
   printer.indent();
@@ -181,7 +185,7 @@ print_client(smf_printer &printer, const smf_service *service) {
   printer.indent();
   printer.print(vars, "return &$ClientName${Client: c}\n");
   printer.outdent();
-  printer.print("}\n");
+  printer.print("}\n\n");
 
   // gen all methods
   for (auto &m : service->methods()) {
@@ -202,6 +206,7 @@ go_generator::generate_header_prologue() {
   printer_.print(vars, "// source: $filename$\n");
   printer_.print(vars, "package $package$\n\n");
 }
+
 void
 go_generator::generate_header_includes() {
   VLOG(1) << "get_header_includes";
@@ -213,6 +218,7 @@ go_generator::generate_header_includes() {
   printer_.outdent();
   printer_.print(")\n");
 }
+
 void
 go_generator::generate_header_services() {
   VLOG(1) << "Generating (" << services().size() << ") services";

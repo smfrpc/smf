@@ -45,19 +45,15 @@ class smf_method {
 
   std::string
   type(const flatbuffers::StructDef &sd, language lang) const {
-    std::deque<std::string> tmp(sd.defined_namespace->components.begin(),
-                                sd.defined_namespace->components.end());
-
-    tmp.push_back(sd.name);
     switch (lang) {
-    case language::cpp:
+    case language::cpp: {
+      std::deque<std::string> tmp(sd.defined_namespace->components.begin(),
+                                  sd.defined_namespace->components.end());
+      tmp.push_back(sd.name);
       return boost::algorithm::join(tmp, "::");
+    }
     case language::go:
-      // for go we only want the last package and the name of method
-      for (auto i = 0u; i < tmp.size() - 2; ++i) {
-        tmp.pop_front();
-      }
-      return boost::algorithm::join(tmp, ".");
+      return sd.name;
     default:
       throw std::runtime_error("Unknown language for the method.h");
     }
