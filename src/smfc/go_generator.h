@@ -41,10 +41,6 @@ class go_generator : public generator {
     generate_header_includes();
     generate_header_services();
 
-    // for Go make sure that the directories exist
-    boost::filesystem::create_directories(
-      boost::algorithm::join(package_parts(), "/"));
-
     return save_conents_to_file();
   }
 
