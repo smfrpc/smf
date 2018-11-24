@@ -26,15 +26,13 @@ class go_generator : public generator {
 
   virtual std::string
   output_filename() final {
-    // Note: per go dev's request. do not create pkg dirs
-    //
-    // std::stringstream str;
-    // str << output_dir << "/";
-    // for (auto i = 0u; i < package_parts().size(); ++i) {
-    //   str << package_parts()[i] << "/";
-    // }
-    // str << input_filename_without_ext() + ".smf.fb.go";
-    return input_filename_without_ext() + ".smf.fb.go";
+    std::stringstream str;
+    str << output_dir << "/";
+    for (auto i = 0u; i < package_parts().size(); ++i) {
+      str << package_parts()[i] << "/";
+    }
+    str << input_filename_without_ext() + ".smf.fb.go";
+    return str.str();
   }
 
   virtual std::experimental::optional<std::string>
@@ -42,7 +40,9 @@ class go_generator : public generator {
     generate_header_prologue();
     generate_header_includes();
     generate_header_services();
-
+    // for Go make sure that the directories exist
+    boost::filesystem::create_directories(
+      boost::algorithm::join(package_parts(), "/"));
     return save_conents_to_file();
   }
 
