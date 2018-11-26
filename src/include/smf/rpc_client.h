@@ -23,22 +23,14 @@ namespace smf {
 
 struct rpc_client_opts {
   seastar::ipv4_addr server_addr;
-
-  /// `req_mem = basic_request_size + sizeof(letter.body) * bloat_factor`
-  uint64_t basic_req_bloat_size = 0;
-  double bloat_mult = 1.0;
-  /// \ brief The default timeout PER connection body. After we parse the
-  /// header
-  /// of the connection we need to make sure that we at some point receive
-  /// some
+  /// \ brief The default timeout PER connection body. After we
+  /// parse the header of the connection we need to
+  /// make sure that we at some point receive some
   /// bytes or expire the connection. Effectively infinite
-  ///
   typename seastar::timer<>::duration recv_timeout = std::chrono::minutes(1);
-  /// \brief 2GB usually. After this limit, each connection to this
-  /// server-core
+  /// \brief 1GB. After this limit, each connection
   /// will block until there are enough bytes free in memory to continue
-  ///
-  uint64_t memory_avail_for_client = uint64_t(1) << 31 /*2GB per core*/;
+  uint64_t memory_avail_for_client = uint64_t(1) << 30 /*1GB*/;
 };
 
 /// \brief class intented for communicating with a remote host
@@ -162,7 +154,7 @@ class rpc_client {
  private:
   seastar::future<> do_reads();
   seastar::future<> dispatch_write(rpc_envelope e);
-
+  seastar::future<> process_one_request();
   /// brief use SEDA pipelines for filtering
   seastar::future<rpc_recv_context>
     stage_apply_incoming_filters(rpc_recv_context);

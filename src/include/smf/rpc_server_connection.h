@@ -68,10 +68,11 @@ class rpc_server_connection final {
     seastar::lw_shared_ptr<rpc_connection_limits> conn_limits,
     seastar::socket_address address,
     seastar::lw_shared_ptr<rpc_server_stats> _stats, uint64_t connection_id,
-    rpc_server_connection_options opts = rpc_server_connection_options(false,
-                                                                       false))
+    rpc_server_connection_options opts = rpc_server_connection_options(true,
+                                                                       true))
     : conn(std::move(sock), address, conn_limits), id(connection_id),
       stats(_stats), opts_(std::move(opts)) {
+    // TODO(agallego) - maybe set to true?
     conn.socket.set_nodelay(opts_.nodelay);
     if (opts_.enable_keepalive) {
       conn.socket.set_keepalive(true);

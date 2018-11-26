@@ -9,6 +9,7 @@
 // smf
 #include "smf/macros.h"
 #include "smf/rpc_connection.h"
+#include "smf/rpc_connection_limits.h"
 #include "smf/rpc_generated.h"
 #include "smf/stdx.h"
 
@@ -27,8 +28,10 @@ struct rpc_recv_context {
   static seastar::future<stdx::optional<rpc_recv_context>>
   parse_payload(rpc_connection *conn, rpc::header hdr);
 
-  rpc_recv_context(const seastar::socket_address remote_address,
-                   rpc::header hdr, seastar::temporary_buffer<char> body);
+  explicit rpc_recv_context(
+    seastar::lw_shared_ptr<rpc_connection_limits> server_instance_limits,
+    seastar::socket_address remote_address, rpc::header hdr,
+    seastar::temporary_buffer<char> body);
   rpc_recv_context(rpc_recv_context &&o) noexcept;
   ~rpc_recv_context();
 
@@ -50,6 +53,7 @@ struct rpc_recv_context {
     return header.session();
   }
 
+  seastar::lw_shared_ptr<rpc_connection_limits> rpc_server_limits;
   const seastar::socket_address remote_address;
   rpc::header header;
   seastar::temporary_buffer<char> payload;

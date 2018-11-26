@@ -17,15 +17,6 @@ struct rpc_server_args {
   ///
   uint32_t flags = 0;
 
-  /// \brief basic number of bytes for incoming RPC request.
-  /// used to block when out of memory
-  ///
-  uint64_t basic_req_size = 256;
-  /// \ brief  used to compute memory requirement formula.
-  /// `req_mem = basic_request_size + sizeof(serialized_request) *
-  /// bloat_factor`
-  ///
-  double bloat_mult = 1.57;
   /// \ brief The default timeout PER connection body. After we parse the
   /// header of the connection we need to make sure that we at some point
   /// receive some bytes or expire the connection.
