@@ -6,7 +6,7 @@ Contributing to smf (/smɝf/)
 #### Note on corporate contributions. 
 We do not have the bandwith to deal w/ the legalities from corporate contributions. Please 
 make all your contributions as an individual with DCO. 
-Copy right should be `Copyright (c) 2016 SMF Authors. All rights reserved.` going forward.
+Copy right should be `Copyright (c) <year> SMF Authors. All rights reserved.` going forward.
 
 ## tl;dr
 
