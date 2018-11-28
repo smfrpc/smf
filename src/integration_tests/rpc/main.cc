@@ -116,7 +116,10 @@ main(int args, char **argv, char **env) {
   cli_opts(app.add_options());
 
   return app.run(args, argv, [&]() -> seastar::future<int> {
+#ifndef NDEBUG
+    std::cout.setf(std::ios::unitbuf);
     smf::app_run_log_level(seastar::log_level::trace);
+#endif
     LOG_INFO("Setting up at_exit hooks");
     seastar::engine().at_exit([&] { return load.stop(); });
     seastar::engine().at_exit([&] { return rpc.stop(); });
@@ -127,8 +130,6 @@ main(int args, char **argv, char **env) {
     args.rpc_port = cfg["port"].as<uint16_t>();
     args.http_port = cfg["httpport"].as<uint16_t>();
     args.flags |= smf::rpc_server_flags::rpc_server_flags_disable_http_server;
-    args.basic_req_size = std::strlen(kPoem);
-    args.bloat_mult = 1;
     args.memory_avail_per_core =
       static_cast<uint64_t>(0.4 * seastar::memory::stats().total_memory());
 

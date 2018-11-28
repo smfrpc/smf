@@ -1,55 +1,47 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
-#include <smf/rpc_recv_context.h>
+#include "smf/rpc_recv_context.h"
 
-#include <flatbuffers/minireflect.h>
-#include <smf/log.h>
-#include <smf/rpc_generated.h>
+#include <chrono>
 
+#include <core/timer.hh>
+// seastar BUG: when compiling w/ -O3
+// some headers are not included on timer.hh
+// which causes missed impl symbols. We should revisit
+// after upgrade our build system to upstream cmake
+#include <core/reactor.hh>
+#include <util/noncopyable_function.hh>
+
+#include "smf/log.h"
+#include "smf/rpc_generated.h"
+#include "smf/rpc_header_ostream.h"
 #include "smf/rpc_header_utils.h"
-
-namespace std {
-ostream &
-operator<<(ostream &o, const smf::rpc::header &h) {
-  o << "rpc::header="
-    << flatbuffers::FlatBufferToString(reinterpret_cast<const uint8_t *>(&h),
-                                       smf::rpc::headerTypeTable());
-  return o;
-}
-}  // namespace std
 
 namespace smf {
 
-rpc_recv_context::rpc_recv_context(seastar::socket_address address,
-                                   rpc::header hdr,
-                                   seastar::temporary_buffer<char> body)
-  : remote_address(address), header(hdr), payload(std::move(body)) {
+rpc_recv_context::rpc_recv_context(
+  seastar::lw_shared_ptr<rpc_connection_limits> server_instance_limits,
+  seastar::socket_address address, rpc::header hdr,
+  seastar::temporary_buffer<char> body)
+  : rpc_server_limits(server_instance_limits), remote_address(address),
+    header(hdr), payload(std::move(body)) {
   assert(header.size() == payload.size());
 }
 
 rpc_recv_context::rpc_recv_context(rpc_recv_context &&o) noexcept
-  : remote_address(o.remote_address), header(o.header),
-    payload(std::move(o.payload)) {}
+  : rpc_server_limits(o.rpc_server_limits), remote_address(o.remote_address),
+    header(std::move(o.header)), payload(std::move(o.payload)) {}
 
 rpc_recv_context::~rpc_recv_context() {}
 
 seastar::future<seastar::temporary_buffer<char>>
 read_payload(rpc_connection *conn, size_t payload_size) {
   auto timeout = conn->limits->max_body_parsing_duration;
-  seastar::timer<> body_timeout;
-  body_timeout.set_callback([timeout, conn] {
-    LOG_ERROR(
-      "Parsing the body of the connnection exceeded max_timeout: {}ms",
-      std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
-    conn->set_error("Connection body parsing exceeded timeout");
-    conn->socket.shutdown_input();
-  });
-  body_timeout.arm(conn->limits->max_body_parsing_duration);
-  return conn->istream.read_exactly(payload_size)
-    .then([body_timeout = std::move(body_timeout)](auto payload) mutable {
-      body_timeout.cancel();
-      return seastar::make_ready_future<decltype(payload)>(std::move(payload));
-    });
+  auto timeout_ms =
+    std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count();
+  return seastar::with_timeout(seastar::timer<>::clock::now() +
+                                 std::chrono::milliseconds(timeout_ms),
+                               conn->istream.read_exactly(payload_size));
 }
 
 constexpr uint32_t
@@ -88,7 +80,8 @@ rpc_recv_context::parse_payload(rpc_connection *conn, rpc::header hdr) {
         return seastar::make_ready_future<ret_type>(stdx::nullopt);
       }
 
-      rpc_recv_context ctx(conn->remote_address, hdr, std::move(body));
+      rpc_recv_context ctx(conn->limits, conn->remote_address, hdr,
+                           std::move(body));
       return seastar::make_ready_future<ret_type>(
         stdx::optional<rpc_recv_context>(std::move(ctx)));
     });
@@ -112,10 +105,22 @@ rpc_recv_context::parse_header(rpc_connection *conn) {
                      header.size(), kRPCHeaderSize);
         return seastar::make_ready_future<ret_type>(stdx::nullopt);
       }
-      rpc::header hdr;
-      std::memcpy(&hdr, header.get(), header.size());
+      auto hdr = rpc::header();
+      std::memcpy(&hdr, header.get(), kRPCHeaderSize);
       if (hdr.size() == 0) {
         LOG_ERROR("Emty body to parse. skipping");
+        return seastar::make_ready_future<ret_type>(stdx::nullopt);
+      }
+      if (hdr.compression() > rpc::compression_flags_MAX) {
+        LOG_ERROR("Compression out of range", hdr);
+        return seastar::make_ready_future<ret_type>(stdx::nullopt);
+      }
+      if (hdr.checksum() <= 0) {
+        LOG_ERROR("checksum is empty");
+        return seastar::make_ready_future<ret_type>(stdx::nullopt);
+      }
+      if (hdr.meta() <= 0) {
+        LOG_ERROR("meta is empty");
         return seastar::make_ready_future<ret_type>(stdx::nullopt);
       }
       if (hdr.compression() ==

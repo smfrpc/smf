@@ -25,7 +25,10 @@ class rpc_connection final {
     seastar::connected_socket fd, seastar::socket_address address,
     seastar::lw_shared_ptr<rpc_connection_limits> conn_limits = nullptr)
     : socket(std::move(fd)), remote_address(address), istream(socket.input()),
-      ostream(socket.output()), limits(conn_limits) {}
+      ostream(socket.output()), limits(conn_limits) {
+    socket.set_nodelay(true);
+    socket.set_keepalive(true);
+  }
 
   seastar::connected_socket socket;
   const seastar::socket_address remote_address;
@@ -52,10 +55,16 @@ class rpc_connection final {
   }
   SMF_ALWAYS_INLINE void
   set_error(seastar::sstring e) {
-    error_ = e;
+    if (!error_) {
+      error_ = e;
+      return;
+    }
+    // keep history of errors
+    error_ = error_.value() + " :: " + e;
   }
   inline seastar::sstring
   get_error() const {
+    if (!error_) return "";
     return error_.value();
   }
 

@@ -16,45 +16,50 @@
 using namespace std::chrono_literals;
 
 namespace smf {
+class invalid_connection_state final : public std::exception {
+ public:
+  virtual const char *
+  what() const noexcept {
+    return "tcp connection is invalid. please reconnect()";
+  }
+};
+class remote_connection_error final : public std::exception {
+ public:
+  virtual const char *
+  what() const noexcept {
+    return "error with remote connection to server";
+  }
+};
+
 rpc_client::rpc_client(seastar::ipv4_addr addr) : server_addr(addr) {
   rpc_client_opts opts;
-  limits = seastar::make_lw_shared<rpc_connection_limits>(
-    opts.basic_req_bloat_size, opts.bloat_mult, opts.memory_avail_for_client,
-    opts.recv_timeout);
+  limits_ = seastar::make_lw_shared<rpc_connection_limits>(
+    opts.memory_avail_for_client, opts.recv_timeout);
+  serialize_writes_.ensure_space_for_waiters(1);
 }
 rpc_client::rpc_client(rpc_client_opts opts) : server_addr(opts.server_addr) {
-  limits = seastar::make_lw_shared<rpc_connection_limits>(
-    opts.basic_req_bloat_size, opts.bloat_mult, opts.memory_avail_for_client,
-    opts.recv_timeout);
+  limits_ = seastar::make_lw_shared<rpc_connection_limits>(
+    opts.memory_avail_for_client, opts.recv_timeout);
+  serialize_writes_.ensure_space_for_waiters(1);
 }
 
 rpc_client::rpc_client(rpc_client &&o) noexcept
-  : server_addr(o.server_addr), limits(std::move(o.limits)),
-    read_counter(o.read_counter), conn(std::move(o.conn)),
-    rpc_slots(std::move(o.rpc_slots)), in_filters_(std::move(o.in_filters_)),
+  : server_addr(o.server_addr), limits_(std::move(o.limits_)),
+    read_counter_(o.read_counter_), conn_(std::move(o.conn_)),
+    rpc_slots_(std::move(o.rpc_slots_)), in_filters_(std::move(o.in_filters_)),
     out_filters_(std::move(o.out_filters_)),
+    dispatch_gate_(std::move(o.dispatch_gate_)),
     serialize_writes_(std::move(o.serialize_writes_)),
     hist_(std::move(o.hist_)), session_idx_(o.session_idx_) {}
 
 seastar::future<>
 rpc_client::stop() {
-  if (conn) {
-    if (!rpc_slots.empty()) {
-      LOG_INFO("Shutting down client with possible sessions open: ",
-               rpc_slots.size());
-      rpc_slots.clear();
-    }
-    // proper way of closing connection that is safe
-    // of concurrency bugs
-    try {
-      conn->disable();
-      conn->socket.shutdown_input();
-      conn->socket.shutdown_output();
-    } catch (...) {}
-  }
-  return seastar::make_ready_future<>();
+  fail_outstanding_futures();
+  // now wait for all the fibers to finish
+  return dispatch_gate_.close();
 }
-rpc_client::~rpc_client() = default;
+
+rpc_client::~rpc_client(){};
 
 void
 rpc_client::disable_histogram_metrics() {
@@ -67,23 +72,26 @@ rpc_client::enable_histogram_metrics() {
 
 seastar::future<stdx::optional<rpc_recv_context>>
 rpc_client::raw_send(rpc_envelope e) {
-  LOG_THROW_IF(!conn->is_valid(), "Cannot send request in error state");
   using opt_recv_t = stdx::optional<rpc_recv_context>;
+  if (SMF_UNLIKELY(!is_conn_valid())) {
+    return seastar::make_exception_future<opt_recv_t>(
+      invalid_connection_state());
+  }
   // create the work item
   ++session_idx_;
-  ++read_counter;
+  ++read_counter_;
 
-  DLOG_THROW_IF(rpc_slots.find(session_idx_) != rpc_slots.end(),
+  DLOG_THROW_IF(rpc_slots_.find(session_idx_) != rpc_slots_.end(),
                 "RPC slot already allocated");
   auto work = seastar::make_lw_shared<work_item>(session_idx_);
   auto measure = is_histogram_enabled() ? hist_->auto_measure() : nullptr;
 
-  rpc_slots.insert({session_idx_, work});
+  rpc_slots_.insert({session_idx_, work});
   // critical - without this nothing works
   e.letter.header.mutate_session(session_idx_);
 
   // apply the first set of outgoing filters, then return promise
-  return stage_apply_outgoing_filters(std::move(e))
+  return stage_outgoing_filters(std::move(e))
     .then([this, work](rpc_envelope e) {
       // dispatch the write concurrently!
       dispatch_write(std::move(e));
@@ -95,7 +103,7 @@ rpc_client::raw_send(rpc_envelope e) {
         return seastar::make_ready_future<opt_recv_t>(std::move(r));
       }
       // something to do
-      return stage_apply_incoming_filters(std::move(r.value()))
+      return stage_incoming_filters(std::move(r.value()))
         .then([m = std::move(m)](rpc_recv_context ctx) {
           LOG_THROW_IF(ctx.header.compression() !=
                          rpc::compression_flags::compression_flags_none,
@@ -107,10 +115,17 @@ rpc_client::raw_send(rpc_envelope e) {
         });
     });
 }
-
+seastar::future<>
+rpc_client::reconnect() {
+  fail_outstanding_futures();
+  return stop().then([this] {
+    conn_ = nullptr;
+    return connect();
+  });
+}
 seastar::future<>
 rpc_client::connect() {
-  LOG_THROW_IF(!!conn,
+  LOG_THROW_IF(is_conn_valid(),
                "Client already connected to server: `{}'. connect "
                "called more than once.",
                server_addr);
@@ -121,84 +136,107 @@ rpc_client::connect() {
     .connect(seastar::make_ipv4_address(server_addr), local,
              seastar::transport::TCP)
     .then([this, local](seastar::connected_socket fd) mutable {
-      conn =
-        seastar::make_lw_shared<rpc_connection>(std::move(fd), local, limits);
-      do_reads();
+      conn_ =
+        seastar::make_lw_shared<rpc_connection>(std::move(fd), local, limits_);
+      // dispatch in background
+      seastar::with_gate(dispatch_gate_,
+                         [this]() mutable { return do_reads(); });
       return seastar::make_ready_future<>();
     });
 }
 seastar::future<>
 rpc_client::dispatch_write(rpc_envelope e) {
-  // must protect the conn->ostream
-  return seastar::with_semaphore(
-    serialize_writes_, 1,
-    [ee = std::move(e), self = parent_shared_from_this()]() mutable {
-      auto payload_size = ee.size();
-      return seastar::with_semaphore(
-        self->conn->limits->resources_available,
-        self->conn->limits->estimate_request_size(payload_size),
-        [self, e = std::move(ee)]() mutable {
-          return rpc_envelope::send(&self->conn->ostream, std::move(e))
-            .handle_exception([self](auto _) {
-              LOG_ERROR("Error sending data: {}", _);
-              self->conn->disable();
-            });
-        });
-    });
+  // NOTE: The reason for the double gate, is that this future
+  // is dispatched in the background
+  return seastar::with_gate(dispatch_gate_, [this, e = std::move(e)]() mutable {
+    auto payload_size = e.size();
+    return seastar::with_semaphore(
+      conn_->limits->resources_available, payload_size,
+      [this, e = std::move(e)]() mutable {
+        if (!is_conn_valid()) { return seastar::make_ready_future<>(); }
+        return seastar::with_semaphore(
+          serialize_writes_, 1, [this, e = std::move(e)]() mutable {
+            if (!is_conn_valid()) { return seastar::make_ready_future<>(); }
+            return rpc_envelope::send(&conn_->ostream, std::move(e))
+              .handle_exception([this](auto _) {
+                LOG_INFO("Handling exception(2): {}", _);
+                fail_outstanding_futures();
+              });
+          });
+      });
+  });
 }
-static seastar::future<>
-process_body_for_self(stdx::optional<rpc_recv_context> opt, auto self) {
-  if (!opt) {
-    LOG_ERROR("Could not parse response from server. Bad payload");
-    self->conn->set_error("Invalid payload");
-  } else if (self->read_counter > 0 && opt) {
-    --self->read_counter;
-    auto &&v = std::move(opt.value());
-    auto sess = v.session();
-    auto it = self->rpc_slots.find(sess);
-    if (it != self->rpc_slots.end()) {
-      auto slot = it->second;
-      self->rpc_slots.erase(sess);
-      DLOG_THROW_IF(slot->session != v.session(), "Invalid client sessions");
-      using typed_ret = decltype(opt);
-      slot->pr.set_value(typed_ret(std::move(v)));
-    }
-  }
 
-  return seastar::make_ready_future<>();
+void
+rpc_client::fail_outstanding_futures() {
+  if (is_conn_valid()) {
+    DLOG_INFO("Disabling connection to: {}", server_addr);
+    try {
+      // NOTE: This is critical. If we don't shutdown the input
+      // the server *might* return data which we will leak since the
+      // listening socket is still active. We must unregister from
+      // seastar pollers via shutdown_* methods
+      conn_->disable();
+      conn_->socket.shutdown_input();
+      conn_->socket.shutdown_output();
+    } catch (...) {}
+  }
+  while (!rpc_slots_.empty()) {
+    auto [session, promise_ptr] = *rpc_slots_.begin();
+    LOG_INFO("Setting exceptional state for session: {}", session);
+    promise_ptr->pr.set_exception(remote_connection_error());
+    rpc_slots_.erase(rpc_slots_.begin());
+  }
+}
+
+seastar::future<>
+rpc_client::process_one_request() {
+  return rpc_recv_context::parse_header(conn_.get()).then([this](auto hdr) {
+    if (SMF_UNLIKELY(!hdr)) {
+      conn_->set_error("Could not parse header from server");
+      fail_outstanding_futures();
+      return seastar::make_ready_future<>();
+    }
+    return rpc_recv_context::parse_payload(conn_.get(), std::move(hdr.value()))
+      .then([this](stdx::optional<rpc_recv_context> opt) mutable {
+        DLOG_THROW_IF(read_counter_ <= 0, "Internal error. Invalid counter: {}",
+                      read_counter_);
+        if (SMF_UNLIKELY(!opt)) {
+          conn_->set_error("Could not parse response from server. Bad payload");
+          fail_outstanding_futures();
+          return seastar::make_ready_future<>();
+        }
+        uint16_t sess = opt->session();
+        auto it = rpc_slots_.find(sess);
+        if (SMF_UNLIKELY(it == rpc_slots_.end())) {
+          LOG_ERROR("Cannot find session: {}", sess);
+          conn_->set_error("Invalid session");
+          fail_outstanding_futures();
+          return seastar::make_ready_future<>();
+        }
+        --read_counter_;
+        it->second->pr.set_value(std::move(opt));
+        rpc_slots_.erase(it);
+        return seastar::make_ready_future<>();
+      });
+  });
 }
 seastar::future<>
 rpc_client::do_reads() {
+  auto timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                      conn_->limits->max_body_parsing_duration)
+                      .count();
+
   return seastar::do_until(
-           [c = conn] { return !c->is_valid(); },
-           [self = parent_shared_from_this()]() mutable {
-             return rpc_recv_context::parse_header(self->conn.get())
-               .then([self](auto hdr) {
-                 if (SMF_UNLIKELY(!hdr)) {
-                   if (!self->rpc_slots.empty()) {
-                     LOG_ERROR(
-                       "Could not parse response from server. Bad Header");
-                     self->conn->set_error(
-                       "Could not parse header from server");
-                   } else {
-                     // expected. no outstanding reqs
-                     self->conn->disable();
-                   }
-                   return seastar::make_ready_future<>();
-                 }
-                 return rpc_recv_context::parse_payload(self->conn.get(),
-                                                        std::move(hdr.value()))
-                   .then([self](stdx::optional<rpc_recv_context> opt) mutable {
-                     return process_body_for_self(std::move(opt), self);
-                   });
-               });
+           [this] { return !is_conn_valid(); },
+           [this, timeout_ms]() {
+             auto timeout = seastar::timer<>::clock::now() +
+                            std::chrono::milliseconds(timeout_ms);
+             return seastar::with_timeout(timeout, process_one_request());
            })
-    .finally([self = parent_shared_from_this()] {})
-    .handle_exception([self = parent_shared_from_this()](auto ep) mutable {
-      self->conn->disable();
-      LOG_ERROR_IF(self->read_counter > 0,
-                   "Failing all enqueued reads {} for client. Error: {}",
-                   self->read_counter, ep);
+    .handle_exception([this](auto ep) {
+      LOG_INFO("Handling exception: {}", ep);
+      fail_outstanding_futures();
     });
 }
 
@@ -218,11 +256,11 @@ rpc_client::apply_outgoing_filters(rpc_envelope e) {
 }
 
 seastar::future<rpc_recv_context>
-rpc_client::stage_apply_incoming_filters(rpc_recv_context ctx) {
+rpc_client::stage_incoming_filters(rpc_recv_context ctx) {
   return incoming_stage(this, std::move(ctx));
 }
 seastar::future<rpc_envelope>
-rpc_client::stage_apply_outgoing_filters(rpc_envelope e) {
+rpc_client::stage_outgoing_filters(rpc_envelope e) {
   return outgoing_stage(this, std::move(e));
 }
 

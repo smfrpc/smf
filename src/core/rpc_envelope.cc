@@ -9,6 +9,7 @@
 #include <smf/log.h>
 #include <smf/rpc_generated.h>
 
+#include "smf/rpc_header_ostream.h"
 #include "smf/rpc_header_utils.h"
 
 namespace smf {
@@ -17,17 +18,15 @@ seastar::future<>
 rpc_envelope::send(seastar::output_stream<char> *out, rpc_envelope e) {
   seastar::temporary_buffer<char> header_buf(kHeaderSize);
   DLOG_THROW_IF(e.letter.header.size() == 0, "Invalid header size");
+  DLOG_THROW_IF(e.letter.header.checksum() == 0, "Invalid header checksum");
   DLOG_ERROR_IF(e.letter.body.size() == 0, "Invalid payload. 0-size");
   // use 0 copy iface in seastar
   // prepare the header locally
-  //
   std::memcpy(header_buf.get_write(),
-              reinterpret_cast<char *>(&e.letter.header), header_buf.size());
-
+              reinterpret_cast<char *>(&e.letter.header), kHeaderSize);
   // needs to be moved so we can do zero copy output buffer
   return out->write(std::move(header_buf))
     .then([out, e = std::move(e)]() mutable {
-      // TODO(agalleg) - need to see if we need to write headers
       return out->write(std::move(e.letter.body));
     })
     .then([out] { return out->flush(); });

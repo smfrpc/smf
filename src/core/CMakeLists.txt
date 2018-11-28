@@ -36,7 +36,6 @@ add_library(smf STATIC
   histogram_seastar_utils.cc
   random.cc
   rpc_client.cc
-  rpc_connection_limits.cc
   rpc_envelope.cc
   rpc_handle_router.cc
   rpc_letter.cc

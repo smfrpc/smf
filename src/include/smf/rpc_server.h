@@ -7,6 +7,7 @@
 
 #include <bytell_hash_map.hpp>
 #include <core/distributed.hh>
+#include <core/gate.hh>
 #include <core/metrics_registration.hh>
 #include <core/timer.hh>
 #include <http/httpd.hh>
@@ -24,6 +25,15 @@
 namespace smf {
 
 class rpc_server {
+
+  /// \brief filter type to process data *before* it hits main handle
+  using in_filter_t =
+    std::function<seastar::future<rpc_recv_context>(rpc_recv_context)>;
+
+  /// \brief filter type for sending data back out to clients
+  using out_filter_t =
+    std::function<seastar::future<rpc_envelope>(rpc_envelope)>;
+
  public:
   explicit rpc_server(rpc_server_args args);
   ~rpc_server();
@@ -66,41 +76,47 @@ class rpc_server {
   handle_client_connection(seastar::lw_shared_ptr<rpc_server_connection> conn);
 
   seastar::future<>
+  handle_one_client_session(seastar::lw_shared_ptr<rpc_server_connection> conn);
+
+  seastar::future<>
   dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
                rpc_recv_context &&ctx);
+
+  seastar::future<>
+  cleanup_dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn);
 
   // SEDA piplines
   seastar::future<rpc_recv_context>
     stage_apply_incoming_filters(rpc_recv_context);
+
   seastar::future<rpc_envelope> stage_apply_outgoing_filters(rpc_envelope);
 
  private:
   const rpc_server_args args_;
-
-  seastar::lw_shared_ptr<seastar::server_socket> listener_;
+  seastar::lw_shared_ptr<rpc_connection_limits> limits_;
+  // -- the actual requests go through these
   rpc_handle_router routes_;
-
-  using in_filter_t =
-    std::function<seastar::future<rpc_recv_context>(rpc_recv_context)>;
   std::vector<in_filter_t> in_filters_;
-  using out_filter_t =
-    std::function<seastar::future<rpc_envelope>(rpc_envelope)>;
   std::vector<out_filter_t> out_filters_;
-
-  seastar::lw_shared_ptr<histogram> hist_ = histogram::make_lw_shared();
-  seastar::lw_shared_ptr<rpc_connection_limits> limits_ = nullptr;
+  // -- http & rpc sockets
+  seastar::lw_shared_ptr<seastar::server_socket> listener_;
   seastar::lw_shared_ptr<seastar::http_server> admin_ = nullptr;
-
-  seastar::metrics::metric_groups metrics_{};
   // connection counting happens in different future
   // must survive this instance
   seastar::lw_shared_ptr<rpc_server_stats> stats_ =
     seastar::make_lw_shared<rpc_server_stats>();
 
+  /// \brief keeps latency measurements per request flow
+  seastar::lw_shared_ptr<histogram> hist_ = histogram::make_lw_shared();
+
   // this is needed for shutdown procedures
   uint64_t connection_idx_{0};
   ska::bytell_hash_map<uint64_t, seastar::lw_shared_ptr<rpc_server_connection>>
     open_connections_;
+
+  seastar::gate reply_gate_;
+  /// \brief prometheus metrics exposed
+  seastar::metrics::metric_groups metrics_{};
 
  private:
   friend std::ostream &operator<<(std::ostream &, const smf::rpc_server &);

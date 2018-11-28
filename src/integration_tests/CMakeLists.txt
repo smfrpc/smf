@@ -34,5 +34,19 @@ smf_test(
   SOURCE_DIRECTORY ${IT_ROOT}/rpc_multiple_remote_addrs
   LIBRARIES smf
   )
+smf_test(
+  INTEGRATION_TEST
+  BINARY_NAME rpc_backpressure
+  SOURCES ${IT_ROOT}/rpc_backpressure/main.cc ${demo_test_fbs}
+  SOURCE_DIRECTORY ${IT_ROOT}/rpc_backpressure
+  LIBRARIES smf
+  )
+smf_test(
+  INTEGRATION_TEST
+  BINARY_NAME rpc_send_client_timeout
+  SOURCES ${IT_ROOT}/rpc_send_timeout/main.cc ${demo_test_fbs}
+  SOURCE_DIRECTORY ${IT_ROOT}/rpc_send_timeout
+  LIBRARIES smf
+  )
 
 add_subdirectory(rpc_bad_msg_t)

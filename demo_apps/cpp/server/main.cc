@@ -65,11 +65,6 @@ main(int args, char **argv, char **env) {
     args.ip = cfg["ip"].as<std::string>().c_str();
     args.rpc_port = cfg["port"].as<uint16_t>();
     args.http_port = cfg["httpport"].as<uint16_t>();
-
-    // Normal services would either use the defaults or something smarter
-    // This triggers the memory pressure
-    args.basic_req_size = 60 /*payload size*/;
-    args.bloat_mult = 1;  // no bloat
     args.memory_avail_per_core =
       static_cast<uint64_t>(0.9 * seastar::memory::stats().total_memory());
 

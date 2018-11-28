@@ -3,22 +3,13 @@
 #pragma once
 #include <chrono>
 #include <ostream>
-// seastar
-#include <core/distributed.hh>
-#include <core/gate.hh>
+
+#include <core/semaphore.hh>
+#include <core/timer.hh>
+
 #include <smf/human_bytes.h>
 
 namespace smf {
-/// \brief Resource limits for an RPC server
-///
-/// A request's memory use will be estimated as
-///
-///     req_mem = basic_request_size + sizeof(serialized_request) * bloat_factor
-///
-/// Concurrent requests will be limited so that
-///
-///     sum(req_mem) <= max_memory
-///
 /// Currently, it contains the limit to prase the body of the connection to be
 /// 1minute after successfully parsing the header. If the RPC doesn't finish
 /// parsing the  body, it will throw an exception causing a connection close on
@@ -26,37 +17,28 @@ namespace smf {
 ///
 struct rpc_connection_limits {
   using timer_duration_t = seastar::timer<>::duration;
-  rpc_connection_limits(
-    uint64_t basic_req_size = 256,
-    double bloat_mult = 1.57,              // same as folly::vector
-    uint64_t max_mem = uint64_t(1) << 31,  // 2GB per core
-    timer_duration_t body_timeout_duration = std::chrono::minutes(1));
+  explicit rpc_connection_limits(uint64_t max_mem_per_core,
+                                 timer_duration_t body_timeout_duration)
+    : max_memory(max_mem_per_core),
+      max_body_parsing_duration(body_timeout_duration),
+      resources_available(max_mem_per_core) {}
+
   ~rpc_connection_limits() = default;
 
-  /// Minimum request footprint in memory
-  const uint64_t basic_request_size;
-  /// Serialized size multiplied by this to estimate
-  /// memory used by request
-  const uint64_t bloat_factor;
   const uint64_t max_memory;
   const timer_duration_t max_body_parsing_duration;
 
   seastar::semaphore resources_available;
-  seastar::gate reply_gate;
-
-  /// \brief releases the resources allocated by `wait_for_payload_resources`
-  void release_payload_resources(uint64_t payload_size);
-  /// \brief uses a simple formula of (base + serialized_size)
-  uint64_t estimate_request_size(uint64_t serialized_size);
 };
 inline std::ostream &
 operator<<(std::ostream &o, const ::smf::rpc_connection_limits &l) {
-  o << "rpc_connection_limits{'basic_req_size':"
-    << ::smf::human_bytes(l.basic_request_size)
-    << ", 'bloat_factor': " << l.bloat_factor
-    << ", 'max_mem':" << ::smf::human_bytes(l.max_memory)
-    << ", 'res_avail':" << ::smf::human_bytes(l.resources_available.current())
-    << "( " << l.resources_available.current() << " )}";
+  o << "rpc_connection_limits{max_mem:" << ::smf::human_bytes(l.max_memory)
+    << ", max_body_parsing_duration: "
+    << std::chrono::duration_cast<std::chrono::milliseconds>(
+         l.max_body_parsing_duration)
+         .count()
+    << "ms, res_avail:" << ::smf::human_bytes(l.resources_available.current())
+    << " (" << l.resources_available.current() << ")}";
   return o;
 }
 

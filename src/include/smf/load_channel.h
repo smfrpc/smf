@@ -27,7 +27,7 @@ struct load_channel {
     smf::rpc_client_opts opts{};
     opts.server_addr = seastar::ipv4_addr{ip, port};
     opts.memory_avail_for_client = mem;
-    client = ClientService::make_shared(std::move(opts));
+    client = seastar::make_shared<ClientService>(std::move(opts));
     client->enable_histogram_metrics();
     if (compression == smf::rpc::compression_flags::compression_flags_zstd) {
       client->incoming_filters().push_back(smf::zstd_decompression_filter());

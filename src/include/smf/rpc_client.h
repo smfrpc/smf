@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-#include <bytell_hash_map.hpp>
+#include <core/gate.hh>
 #include <core/shared_ptr.hh>
 #include <net/api.hh>
 
@@ -23,22 +23,14 @@ namespace smf {
 
 struct rpc_client_opts {
   seastar::ipv4_addr server_addr;
-
-  /// `req_mem = basic_request_size + sizeof(letter.body) * bloat_factor`
-  uint64_t basic_req_bloat_size = 0;
-  double bloat_mult = 1.0;
-  /// \ brief The default timeout PER connection body. After we parse the
-  /// header
-  /// of the connection we need to make sure that we at some point receive
-  /// some
+  /// \ brief The default timeout PER connection body. After we
+  /// parse the header of the connection we need to
+  /// make sure that we at some point receive some
   /// bytes or expire the connection. Effectively infinite
-  ///
   typename seastar::timer<>::duration recv_timeout = std::chrono::minutes(1);
-  /// \brief 2GB usually. After this limit, each connection to this
-  /// server-core
+  /// \brief 1GB. After this limit, each connection
   /// will block until there are enough bytes free in memory to continue
-  ///
-  uint64_t memory_avail_for_client = uint64_t(1) << 31 /*2GB per core*/;
+  uint64_t memory_avail_for_client = uint64_t(1) << 30 /*1GB*/;
 };
 
 /// \brief class intented for communicating with a remote host
@@ -92,8 +84,6 @@ class rpc_client {
 
   virtual const char *name() const = 0;
 
-  virtual seastar::shared_ptr<rpc_client> parent_shared_from_this() = 0;
-
   /// \brief actually does the send to the remote location
   /// \param req - the bytes to send
   ///
@@ -101,16 +91,22 @@ class rpc_client {
   seastar::future<rpc_recv_typed_context<T>>
   send(rpc_envelope e) {
     using ret_type = rpc_recv_typed_context<T>;
-    return raw_send(std::move(e)).then([](auto opt_ctx) {
-      return seastar::make_ready_future<ret_type>(std::move(opt_ctx));
-    });
+    return seastar::with_gate(
+      dispatch_gate_, [this, e = std::move(e)]() mutable {
+        return raw_send(std::move(e)).then([](auto opt_ctx) {
+          return seastar::make_ready_future<ret_type>(std::move(opt_ctx));
+        });
+      });
   }
 
-  virtual seastar::future<stdx::optional<rpc_recv_context>>
-  raw_send(rpc_envelope e) final;
   virtual seastar::future<> connect() final;
-
-  virtual seastar::future<> stop();
+  /// \brief if connection is open, it will
+  /// 1. conn->disable()
+  /// 2. fulfill all futures with exceptions
+  /// 3. stop() the connection
+  /// 4. connect()
+  virtual seastar::future<> reconnect() final;
+  virtual seastar::future<> stop() final;
 
   virtual ~rpc_client();
 
@@ -143,34 +139,41 @@ class rpc_client {
   outgoing_filters() final {
     return out_filters_;
   }
+  SMF_ALWAYS_INLINE virtual bool
+  is_conn_valid() const final {
+    return conn_ && conn_->is_valid();
+  }
 
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_client);
 
  public:
   const seastar::ipv4_addr server_addr;
-  seastar::lw_shared_ptr<rpc_connection_limits> limits;
 
- public:
-  // need to be public for parent_shared_from_this()
-  uint64_t read_counter{0};
-  seastar::lw_shared_ptr<rpc_connection> conn;
-  ska::bytell_hash_map<uint16_t, seastar::lw_shared_ptr<work_item>> rpc_slots;
-  // needed public by execution stage
+  // public for the stage pipelines
   seastar::future<rpc_recv_context> apply_incoming_filters(rpc_recv_context);
   seastar::future<rpc_envelope> apply_outgoing_filters(rpc_envelope);
 
  private:
+  seastar::future<stdx::optional<rpc_recv_context>> raw_send(rpc_envelope e);
   seastar::future<> do_reads();
   seastar::future<> dispatch_write(rpc_envelope e);
+  seastar::future<> process_one_request();
+  void fail_outstanding_futures();
+  // stage pipeline applications
+  seastar::future<rpc_recv_context> stage_incoming_filters(rpc_recv_context);
+  seastar::future<rpc_envelope> stage_outgoing_filters(rpc_envelope);
 
-  /// brief use SEDA pipelines for filtering
-  seastar::future<rpc_recv_context>
-    stage_apply_incoming_filters(rpc_recv_context);
-  seastar::future<rpc_envelope> stage_apply_outgoing_filters(rpc_envelope);
+ private:
+  seastar::lw_shared_ptr<rpc_connection_limits> limits_;
+  // need to be public for parent_shared_from_this()
+  uint64_t read_counter_{0};
+  seastar::lw_shared_ptr<rpc_connection> conn_;
+  std::unordered_map<uint16_t, seastar::lw_shared_ptr<work_item>> rpc_slots_;
 
   std::vector<in_filter_t> in_filters_;
   std::vector<out_filter_t> out_filters_;
 
+  seastar::gate dispatch_gate_;
   seastar::semaphore serialize_writes_{1};
   seastar::lw_shared_ptr<histogram> hist_ = nullptr;
   uint16_t session_idx_{0};
