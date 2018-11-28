@@ -28,7 +28,7 @@ constexpr const auto kMinRequestDurationOnServer = 100ms;
 class storage_service final : public smf_gen::demo::SmfStorage {
   virtual seastar::future<smf::rpc_typed_envelope<smf_gen::demo::Response>>
   Get(smf::rpc_recv_typed_context<smf_gen::demo::Request> &&rec) final {
-    return seastar::sleep(100ms).then([] {
+    return seastar::sleep(1s).then([] {
       smf::rpc_typed_envelope<smf_gen::demo::Response> data;
       data.data->name = seastar::to_sstring(smf::lowres_time_now_millis());
       data.envelope.set_status(200);
@@ -38,42 +38,22 @@ class storage_service final : public smf_gen::demo::SmfStorage {
   }
 };
 
-struct debug_print_incoming_filter : smf::rpc_filter<smf::rpc_envelope> {
-  seastar::future<smf::rpc_recv_context>
-  operator()(smf::rpc_recv_context &&ctx) {
-    LOG_INFO("Limits: {}", *ctx.rpc_server_limits);
-    return seastar::make_ready_future<smf::rpc_recv_context>(std::move(ctx));
-  }
-};
-
 static seastar::future<>
 backpressure_request(uint16_t port) {
-  // The first request should succeed. and the second should fail w/ a timeout
   smf::rpc_client_opts opts{};
   opts.server_addr = seastar::ipv4_addr{"127.0.0.1", port};
+  opts.recv_timeout = 20ms;
   auto client =
     seastar::make_shared<smf_gen::demo::SmfStorageClient>(std::move(opts));
   return client->connect()
     .then([=] {
-      return seastar::do_for_each(
-        boost::counting_iterator<uint32_t>(0),
-        boost::counting_iterator<uint32_t>(2), [client](uint32_t i) {
-          smf::random r;
-          smf::rpc_typed_envelope<smf_gen::demo::Request> req;
-          req.data->name = r.next_alphanum(kCoreMemory);
-          LOG_INFO("Sending request: {}, with: {}", i,
-                   smf::human_bytes(req.data->name.size()));
-          auto begin = std::chrono::high_resolution_clock::now();
-          return client->Get(std::move(req)).then_wrapped([begin](auto f) {
-            auto end = std::chrono::high_resolution_clock::now();
-            auto diff =
-              std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
-                .count();
-            LOG_INFO("Request lasted: {}ms", diff);
-            LOG_THROW_IF((end - begin) <= kMinRequestDurationOnServer,
-                         "Request lasted less than expected. {}us", diff);
-          });
-        });
+      smf::random r;
+      smf::rpc_typed_envelope<smf_gen::demo::Request> req;
+      req.data->name = r.next_alphanum(kCoreMemory);
+      return client->Get(std::move(req))
+        .then([](auto _) { LOG_THROW("SHOULD HAVE TIMED OUT"); })
+        .handle_exception(
+          [](auto err) { LOG_INFO("EXPECTED!!! Exception: {}", err); });
     })
     .then([client] { return client->stop().finally([client] {}); });
 }
@@ -102,10 +82,6 @@ main(int args, char **argv, char **env) {
       .then([&rpc] {
         return rpc.invoke_on_all(
           &smf::rpc_server::register_service<storage_service>);
-      })
-      .then([&rpc] {
-        return rpc.invoke_on_all(&smf::rpc_server::register_incoming_filter<
-                                 debug_print_incoming_filter>);
       })
       .then([&rpc] { return rpc.invoke_on_all(&smf::rpc_server::start); })
       .then([&] { return backpressure_request(random_port); })

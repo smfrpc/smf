@@ -277,15 +277,10 @@ print_header_client(smf_printer &printer, const smf_service *service) {
   vars["ClientName"] = proper_postfix_token(service->name(), "client");
   vars["ServiceID"] = std::to_string(service->service_id());
 
-  printer.print(vars, "class $ClientName$:\n");
+  printer.print(vars, "class $ClientName$: ");
+  printer.print("public smf::rpc_client {\n");
   printer.indent();
-  printer.print("public smf::rpc_client,\n");
-  printer.print(vars,
-                "public seastar::enable_shared_from_this<$ClientName$> {\n");
-  printer.outdent();
-  printer.print("\n");
-  printer.indent();
-  printer.print("private:\n");
+  printer.print("public:\n");
   printer.indent();
   // print ctor
   printer.print(vars, "$ClientName$(seastar::ipv4_addr "
@@ -294,34 +289,6 @@ print_header_client(smf_printer &printer, const smf_service *service) {
   // print ctor2
   printer.print(vars, "$ClientName$(smf::rpc_client_opts o)"
                       "\n:smf::rpc_client(std::move(o)) {}\n");
-  printer.outdent();
-  printer.outdent();
-  printer.print("\n");
-
-  printer.indent();
-  printer.print("public:\n");
-  printer.indent();
-
-  // print make1
-  printer.print(vars, "static seastar::shared_ptr<$ClientName$>\n");
-  printer.print("make_shared(seastar::ipv4_addr addr) {\n");
-  printer.indent();
-  printer.print(vars, "$ClientName$ c(std::move(addr));\n");
-  printer.print(vars,
-                "return seastar::make_shared<$ClientName$>(std::move(c));\n");
-  printer.outdent();
-  printer.print("}\n");
-
-  // print make2
-  printer.print(vars, "static seastar::shared_ptr<$ClientName$>\n");
-  printer.print("make_shared(smf::rpc_client_opts o) {\n");
-  printer.indent();
-  printer.print(vars, "$ClientName$ c(std::move(o));\n");
-  printer.print(vars,
-                "return seastar::make_shared<$ClientName$>(std::move(c));\n");
-  printer.outdent();
-  printer.print("}\n");
-
   // move ctor
   printer.print(vars, "$ClientName$($ClientName$ &&o) = default;\n");
 
@@ -332,14 +299,6 @@ print_header_client(smf_printer &printer, const smf_service *service) {
   printer.print("virtual const char *name() const final {\n");
   printer.indent();
   printer.print(vars, "return \"$ClientName$\";\n");
-  printer.outdent();
-  printer.print("}\n");
-
-  // shared_form_from this method
-  printer.print("virtual seastar::shared_ptr<rpc_client> "
-                "parent_shared_from_this() final {\n");
-  printer.indent();
-  printer.print(vars, "return shared_from_this();\n");
   printer.outdent();
   printer.print("}\n");
 

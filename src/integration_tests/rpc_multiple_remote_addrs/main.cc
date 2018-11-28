@@ -39,7 +39,8 @@ ipv4_addr_to_ip_str(seastar::ipv4_addr addr) {
 
 struct client_info {
   explicit client_info(seastar::ipv4_addr ip)
-    : client(smf_gen::demo::SmfStorageClient::make_shared(ip)), ip(ip.ip){};
+    : client(seastar::make_shared<smf_gen::demo::SmfStorageClient>(ip)),
+      ip(ip.ip){};
   client_info(client_info &&o) noexcept : client(o.client), ip(o.ip){};
   ~client_info() = default;
   seastar::shared_ptr<smf_gen::demo::SmfStorageClient> client = nullptr;

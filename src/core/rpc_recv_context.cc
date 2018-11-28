@@ -37,20 +37,11 @@ rpc_recv_context::~rpc_recv_context() {}
 seastar::future<seastar::temporary_buffer<char>>
 read_payload(rpc_connection *conn, size_t payload_size) {
   auto timeout = conn->limits->max_body_parsing_duration;
-  seastar::timer<> body_timeout;
-  body_timeout.set_callback([timeout, conn] {
-    LOG_ERROR(
-      "Parsing the body of the connnection exceeded max_timeout: {}ms",
-      std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
-    conn->set_error("Connection body parsing exceeded timeout");
-    conn->socket.shutdown_input();
-  });
-  body_timeout.arm(conn->limits->max_body_parsing_duration);
-  return conn->istream.read_exactly(payload_size)
-    .then([body_timeout = std::move(body_timeout)](auto payload) mutable {
-      body_timeout.cancel();
-      return seastar::make_ready_future<decltype(payload)>(std::move(payload));
-    });
+  auto timeout_ms =
+    std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count();
+  return seastar::with_timeout(seastar::timer<>::clock::now() +
+                                 std::chrono::milliseconds(timeout_ms),
+                               conn->istream.read_exactly(payload_size));
 }
 
 constexpr uint32_t

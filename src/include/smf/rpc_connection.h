@@ -64,6 +64,7 @@ class rpc_connection final {
   }
   inline seastar::sstring
   get_error() const {
+    if (!error_) return "";
     return error_.value();
   }
 
