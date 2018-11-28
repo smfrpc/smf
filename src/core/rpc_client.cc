@@ -193,7 +193,6 @@ seastar::future<>
 rpc_client::process_one_request() {
   return rpc_recv_context::parse_header(conn_.get()).then([this](auto hdr) {
     if (SMF_UNLIKELY(!hdr)) {
-      LOG_ERROR("Could not parse response from server. Bad Header");
       conn_->set_error("Could not parse header from server");
       fail_outstanding_futures();
       return seastar::make_ready_future<>();
@@ -203,8 +202,7 @@ rpc_client::process_one_request() {
         DLOG_THROW_IF(read_counter_ <= 0, "Internal error. Invalid counter: {}",
                       read_counter_);
         if (SMF_UNLIKELY(!opt)) {
-          LOG_ERROR("Could not parse response from server. Bad payload");
-          conn_->set_error("Invalid payload");
+          conn_->set_error("Could not parse response from server. Bad payload");
           fail_outstanding_futures();
           return seastar::make_ready_future<>();
         }
