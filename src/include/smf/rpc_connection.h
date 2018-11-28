@@ -55,7 +55,12 @@ class rpc_connection final {
   }
   SMF_ALWAYS_INLINE void
   set_error(seastar::sstring e) {
-    error_ = e;
+    if (!error_) {
+      error_ = e;
+      return;
+    }
+    // keep history of errors
+    error_ = error_.value() + " :: " + e;
   }
   inline seastar::sstring
   get_error() const {

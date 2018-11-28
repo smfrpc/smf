@@ -101,7 +101,12 @@ class rpc_client {
   virtual seastar::future<stdx::optional<rpc_recv_context>>
   raw_send(rpc_envelope e) final;
   virtual seastar::future<> connect() final;
-
+  /// \brief if connection is open, it will
+  /// 1. conn->disable()
+  /// 2. fulfill all futures with exceptions
+  /// 3. stop() the connection
+  /// 4. connect()
+  virtual seastar::future<> reconnect() final;
   virtual seastar::future<> stop();
 
   virtual ~rpc_client();
@@ -146,7 +151,7 @@ class rpc_client {
   // need to be public for parent_shared_from_this()
   uint64_t read_counter{0};
   seastar::lw_shared_ptr<rpc_connection> conn;
-  ska::bytell_hash_map<uint16_t, seastar::lw_shared_ptr<work_item>> rpc_slots;
+  std::unordered_map<uint16_t, seastar::lw_shared_ptr<work_item>> rpc_slots;
   // needed public by execution stage
   seastar::future<rpc_recv_context> apply_incoming_filters(rpc_recv_context);
   seastar::future<rpc_envelope> apply_outgoing_filters(rpc_envelope);
@@ -155,6 +160,7 @@ class rpc_client {
   seastar::future<> do_reads();
   seastar::future<> dispatch_write(rpc_envelope e);
   seastar::future<> process_one_request();
+  void fail_outstanding_futures();
   /// brief use SEDA pipelines for filtering
   seastar::future<rpc_recv_context>
     stage_apply_incoming_filters(rpc_recv_context);

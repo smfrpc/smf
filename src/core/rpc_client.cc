@@ -16,11 +16,18 @@
 using namespace std::chrono_literals;
 
 namespace smf {
-class invalid_connection_state : public std::exception {
+class invalid_connection_state final : public std::exception {
  public:
   virtual const char *
   what() const noexcept {
-    return "connection is invalid. recreate new tcp conn.";
+    return "tcp connection is invalid. please reconnect()";
+  }
+};
+class remote_connection_error final : public std::exception {
+ public:
+  virtual const char *
+  what() const noexcept {
+    return "error with remote connection to server";
   }
 };
 
@@ -116,7 +123,14 @@ rpc_client::raw_send(rpc_envelope e) {
         });
     });
 }
-
+seastar::future<>
+rpc_client::reconnect() {
+  fail_outstanding_futures();
+  return stop().then([this] {
+    conn = nullptr;
+    return connect();
+  });
+}
 seastar::future<>
 rpc_client::connect() {
   LOG_THROW_IF(!!conn,
@@ -140,74 +154,62 @@ seastar::future<>
 rpc_client::dispatch_write(rpc_envelope e) {
   // must protect the conn->ostream
   return seastar::with_semaphore(
-    serialize_writes_, 1,
-    [ee = std::move(e), self = parent_shared_from_this()]() mutable {
+    serialize_writes_, 1, [this, ee = std::move(e)]() mutable {
       auto payload_size = ee.size();
       return seastar::with_semaphore(
-        self->conn->limits->resources_available, payload_size,
-        [self, e = std::move(ee)]() mutable {
-          return rpc_envelope::send(&self->conn->ostream, std::move(e))
-            .handle_exception([self](auto _) {
-              LOG_ERROR("Error sending data: {}", _);
-              self->conn->disable();
+        conn->limits->resources_available, payload_size,
+        [this, e = std::move(ee)]() mutable {
+          return rpc_envelope::send(&conn->ostream, std::move(e))
+            .handle_exception([this](auto _) {
+              LOG_INFO("Handling exception(2): {}", _);
+              fail_outstanding_futures();
             });
         });
     });
 }
-static seastar::future<>
-process_body_for_self(stdx::optional<rpc_recv_context> opt, auto self) {
-  if (!opt) {
-    LOG_ERROR("Could not parse response from server. Bad payload");
-    self->conn->set_error("Invalid payload");
-  } else if (self->read_counter > 0 && opt) {
-    --self->read_counter;
-    auto &&v = std::move(opt.value());
-    auto sess = v.session();
-    auto it = self->rpc_slots.find(sess);
-    if (it != self->rpc_slots.end()) {
-      auto slot = it->second;
-      self->rpc_slots.erase(sess);
-      DLOG_THROW_IF(slot->session != v.session(), "Invalid client sessions");
-      using typed_ret = decltype(opt);
-      slot->pr.set_value(typed_ret(std::move(v)));
-    }
-  }
 
-  return seastar::make_ready_future<>();
+void
+rpc_client::fail_outstanding_futures() {
+  if (conn && conn->is_valid()) {
+    LOG_INFO("Disabling connection to: {}", server_addr);
+    conn->disable();
+  }
+  for (auto &&p : rpc_slots) {
+    LOG_INFO("Setting exceptional state for session: {}", p.first);
+    p.second->pr.set_exception(remote_connection_error());
+  }
 }
 
 seastar::future<>
 rpc_client::process_one_request() {
   return rpc_recv_context::parse_header(conn.get()).then([this](auto hdr) {
     if (SMF_UNLIKELY(!hdr)) {
-      if (!rpc_slots.empty()) {
-        LOG_ERROR("Could not parse response from server. Bad Header");
-        conn->set_error("Could not parse header from server");
-      } else {
-        // expected. no outstanding reqs
-        conn->disable();
-      }
+      LOG_ERROR("Could not parse response from server. Bad Header");
+      conn->set_error("Could not parse header from server");
+      fail_outstanding_futures();
       return seastar::make_ready_future<>();
     }
     return rpc_recv_context::parse_payload(conn.get(), std::move(hdr.value()))
       .then([this](stdx::optional<rpc_recv_context> opt) mutable {
-        if (!opt) {
+        DLOG_THROW_IF(read_counter <= 0, "Internal error. Invalid counter: {}",
+                      read_counter);
+        if (SMF_UNLIKELY(!opt)) {
           LOG_ERROR("Could not parse response from server. Bad payload");
           conn->set_error("Invalid payload");
-        } else if (read_counter > 0 && opt) {
-          --read_counter;
-          auto v = std::move(opt.value());
-          auto sess = v.session();
-          auto it = rpc_slots.find(sess);
-          if (it != rpc_slots.end()) {
-            auto slot = it->second;
-            rpc_slots.erase(sess);
-            DLOG_THROW_IF(slot->session != v.session(),
-                          "Invalid client sessions");
-            using typed_ret = decltype(opt);
-            slot->pr.set_value(typed_ret(std::move(v)));
-          }
+          fail_outstanding_futures();
+          return seastar::make_ready_future<>();
         }
+        uint16_t sess = opt->session();
+        auto it = rpc_slots.find(sess);
+        if (SMF_UNLIKELY(it == rpc_slots.end())) {
+          LOG_ERROR("Cannot find session: {}", sess);
+          conn->set_error("Invalid session");
+          fail_outstanding_futures();
+          return seastar::make_ready_future<>();
+        }
+        --read_counter;
+        it->second->pr.set_value(std::move(opt));
+        rpc_slots.erase(it);
         return seastar::make_ready_future<>();
       });
   });
@@ -221,12 +223,12 @@ rpc_client::do_reads() {
              auto timeout = conn->limits->max_body_parsing_duration;
              seastar::timer<> body_timeout;
              body_timeout.set_callback([timeout, this] {
-               LOG_ERROR(
-                 "rpc_client exceeded timeout: {}ms",
+               auto oms =
                  std::chrono::duration_cast<std::chrono::milliseconds>(timeout)
-                   .count());
+                   .count();
+               LOG_ERROR("rpc_client exceeded timeout: {}ms", oms);
                conn->set_error("Connection body parsing exceeded timeout");
-               conn->socket.shutdown_input();
+               fail_outstanding_futures();
              });
              body_timeout.arm(conn->limits->max_body_parsing_duration);
              return process_one_request().finally(
@@ -235,11 +237,9 @@ rpc_client::do_reads() {
                });
            })
     .finally([self] {})
-    .handle_exception([self](auto ep) mutable {
-      self->conn->disable();
-      LOG_ERROR_IF(self->read_counter > 0,
-                   "Failing all enqueued reads {} for client. Error: {}",
-                   self->read_counter, ep);
+    .handle_exception([this](auto ep) {
+      LOG_INFO("Handling exception: {}", ep);
+      fail_outstanding_futures();
     });
 }
 
