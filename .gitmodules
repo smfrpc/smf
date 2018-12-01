@@ -30,3 +30,6 @@
 	path = src/third_party/seastar
 	url = https://github.com/scylladb/seastar.git
 	ignore = dirty
+[submodule "src/third_party/fmt"]
+	path = src/third_party/fmt
+	url = https://github.com/fmtlib/fmt.git
