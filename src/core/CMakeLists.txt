@@ -57,7 +57,7 @@ target_include_directories(smf
   SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/flat_hash_map
   SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/zstd/lib
   SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/xxHash
-  SYSTEM PUBLIC "${seastar_INCLUDE_DIRS}"
+  SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/seastar/include/seastar
   )
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   target_compile_definitions(smf PUBLIC -DSMF_DEBUG)

@@ -6,6 +6,18 @@ SMF_SET_OPTION(FLATBUFFERS_INSTALL OFF)
 SMF_SET_OPTION(FLATBUFFERS_BUILD_FLATHASH OFF)
 add_subdirectory(flatbuffers)
 
+find_package(fmt 5.2.1 QUIET)
+if(NOT fmt_FOUND)
+  message(STATUS "Could not find fmt, will build it")
+  add_subdirectory(fmt)
+elseif(fmt_VERSION VERSION_GREATER_EQUAL 5.2.1)
+  message(WARNING "Could NOT find fmt: "
+    "Found unsuitable version \"${fmt_VERSION}\", "
+    "but required is at most \"5.2.1\" (found ${fmt_INCLUDE_DIR}). "
+    "Will build it")
+  add_subdirectory(fmt)
+endif()
+
 set(SEASTAR_USER_CFLAGS
   -Wno-stringop-overflow
   -Wno-array-bounds
@@ -13,6 +25,14 @@ set(SEASTAR_USER_CFLAGS
   -Wno-format-overflow
   CACHE STRING "User cflags for seastar deps")
 SMF_SET_OPTION(SEASTAR_ENABLE_TESTS OFF)
+
+# wtf does this do and why does it work
+macro(find_package name)
+  if(NOT TARGET ${name})
+    _find_package(${ARGV})
+  endif()
+endmacro ()
+
 add_subdirectory(seastar)
 
 
