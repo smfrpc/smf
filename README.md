@@ -17,8 +17,6 @@ it'll get you up and running in no time!
 
 If you are using **smf**, drop us a line on the mailing list introducing your project. 
 
-Please note that only CMake is the officially supported build system. Bazel is a WIP
-until Java and Go ports are finished, it will not be officially supported.
 
 # What is smf?
 
