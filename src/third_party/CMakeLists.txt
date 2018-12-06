@@ -26,7 +26,10 @@ set(SEASTAR_USER_CFLAGS
   CACHE STRING "User cflags for seastar deps")
 SMF_SET_OPTION(SEASTAR_ENABLE_TESTS OFF)
 
-# wtf does this do and why does it work
+# without this macro, seastar cmake won't detect the correct version of fmt (see
+# above). this technique is taken from Ceph (see: <ceph>/src/CMakeLists.txt),
+# but it isn't clear how this works. after adopting the 'cmake-cooking.sh'
+# method, this will probably vanish ;)
 macro(find_package name)
   if(NOT TARGET ${name})
     _find_package(${ARGV})
