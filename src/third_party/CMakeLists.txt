@@ -25,6 +25,10 @@ set(SEASTAR_USER_CFLAGS
   -Wno-format-overflow
   CACHE STRING "User cflags for seastar deps")
 
+if(SEASTAR_ENABLE_DPDK)
+  SMF_SET_OPTION(Seastar_DPDK ON)
+endif()
+
 # without this macro, seastar cmake won't detect the correct version of fmt (see
 # above). this technique is taken from Ceph (see: <ceph>/src/CMakeLists.txt),
 # but it isn't clear how this works. after adopting the 'cmake-cooking.sh'
