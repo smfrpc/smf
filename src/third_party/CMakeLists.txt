@@ -24,7 +24,6 @@ set(SEASTAR_USER_CFLAGS
   -Wno-stringop-truncation
   -Wno-format-overflow
   CACHE STRING "User cflags for seastar deps")
-SMF_SET_OPTION(SEASTAR_ENABLE_TESTS OFF)
 
 # without this macro, seastar cmake won't detect the correct version of fmt (see
 # above). this technique is taken from Ceph (see: <ceph>/src/CMakeLists.txt),
