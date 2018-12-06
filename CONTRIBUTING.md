@@ -45,6 +45,14 @@ Run `$ROOT/tools/build.sh -rt` and ensure tests are passing (at least) as well a
 patch.
 
 
+## Handling dependencies
+
+Prefer using system packages to meet dependencies (e.g. `apt-get`, `dnf`,
+etc...) whenever possible. However, there are times that in order to support
+older distribution versions, or to access bleeding-edge features required by
+this project, or transitively through other projects (e.g. the `seastar`
+dependency) we'll ship and build those dependencies directly. In this case,
+prefer using the `add_subdirectory` method with projects that use CMake.
 
 ## References:
 
