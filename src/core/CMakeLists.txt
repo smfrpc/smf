@@ -83,7 +83,7 @@ target_compile_definitions(smf
   PUBLIC -DXXH_PRIVATE_API)
 
 target_link_libraries(smf
-  seastar
+  Seastar::seastar
   libzstd_static
   hdr_histogram_static
   fmt

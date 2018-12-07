@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.3)
+list (APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
+include (Cooking OPTIONAL)
 project(SMF VERSION "0.0.1" LANGUAGES CXX C)
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake/")
 # https://cmake.org/cmake/help/v3.4/policy/CMP0065.html
 cmake_policy(SET CMP0065 OLD)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
@@ -14,6 +15,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 find_package(Doxygen)
+find_package(Seastar REQUIRED)
 
 # https://github.com/ceph/ceph/blob/master/CMakeLists.txt
 # Use CCACHE_DIR environment variable

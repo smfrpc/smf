@@ -57,6 +57,8 @@ CPackSourceConfig.cmake
 CTestTestfile.cmake
 CMakeDoxyfile.in
 CMakeDoxygenDefaults.cmake
+CMake/Cooking.cmake
+.cooking_memory
 
 src/demo_apps/demo_client
 src/demo_apps/demo_server

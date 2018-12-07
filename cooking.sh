@@ -196,7 +196,7 @@ done
 shift $((OPTIND - 1))
 
 cooking_dir="${build_dir}/_cooking"
-cmake_dir="${source_dir}/cmake"
+cmake_dir="${source_dir}/CMake"
 cache_file="${build_dir}/CMakeCache.txt"
 ingredients_ready_file="${cooking_dir}/ready.txt"
 
