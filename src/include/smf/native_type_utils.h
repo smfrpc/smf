@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include <core/print.hh>
-#include <core/temporary_buffer.hh>
+#include <seastar/core/print.hh>
+#include <seastar/core/temporary_buffer.hh>
 #include <flatbuffers/flatbuffers.h>
 
 #include "smf/flatbuffers_concepts.h"

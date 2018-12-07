@@ -6,11 +6,11 @@
 #include <type_traits>
 
 #include <bytell_hash_map.hpp>
-#include <core/distributed.hh>
-#include <core/gate.hh>
-#include <core/metrics_registration.hh>
-#include <core/timer.hh>
-#include <http/httpd.hh>
+#include <seastar/core/distributed.hh>
+#include <seastar/core/gate.hh>
+#include <seastar/core/metrics_registration.hh>
+#include <seastar/core/timer.hh>
+#include <seastar/http/httpd.hh>
 
 #include "smf/histogram.h"
 #include "smf/macros.h"

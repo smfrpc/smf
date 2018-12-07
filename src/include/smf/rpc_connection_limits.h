@@ -4,8 +4,8 @@
 #include <chrono>
 #include <ostream>
 
-#include <core/semaphore.hh>
-#include <core/timer.hh>
+#include <seastar/core/semaphore.hh>
+#include <seastar/core/timer.hh>
 
 #include <smf/human_bytes.h>
 

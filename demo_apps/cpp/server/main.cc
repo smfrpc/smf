@@ -4,9 +4,9 @@
 #include <chrono>
 #include <iostream>
 
-#include <core/app-template.hh>
-#include <core/distributed.hh>
-#include <net/api.hh>
+#include <seastar/core/app-template.hh>
+#include <seastar/core/distributed.hh>
+#include <seastar/net/api.hh>
 
 #include "smf/histogram_seastar_utils.h"
 #include "smf/log.h"

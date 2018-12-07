@@ -2,8 +2,8 @@
 
 #include <cstdint>
 
-#include <core/sstring.hh>
-#include <core/timer.hh>
+#include <seastar/core/sstring.hh>
+#include <seastar/core/timer.hh>
 
 namespace smf {
 enum rpc_server_flags : uint32_t { rpc_server_flags_disable_http_server = 1 };

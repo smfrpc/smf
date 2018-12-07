@@ -3,8 +3,8 @@
 #pragma once
 #include <chrono>
 
-#include <core/lowres_clock.hh>
-#include <core/sstring.hh>
+#include <seastar/core/lowres_clock.hh>
+#include <seastar/core/sstring.hh>
 
 namespace smf {
 inline uint64_t

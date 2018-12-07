@@ -3,9 +3,9 @@
 #include "smf/rpc_server.h"
 
 // seastar
-#include <core/execution_stage.hh>
-#include <core/metrics.hh>
-#include <core/prometheus.hh>
+#include <seastar/core/execution_stage.hh>
+#include <seastar/core/metrics.hh>
+#include <seastar/core/prometheus.hh>
 
 #include "smf/histogram_seastar_utils.h"
 #include "smf/log.h"

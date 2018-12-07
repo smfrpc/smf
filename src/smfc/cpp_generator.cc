@@ -348,7 +348,7 @@ cpp_generator::generate_header_includes() {
   std::map<std::string, std::string> vars;
   static const std::vector<std::string> headers = {
     "experimental/optional",
-    "core/sstring.hh",
+    "seastar/core/sstring.hh",
     "smf/rpc_service.h",
     "smf/rpc_client.h",
     "smf/rpc_recv_typed_context.h",

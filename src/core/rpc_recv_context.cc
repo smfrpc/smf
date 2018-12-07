@@ -4,13 +4,13 @@
 
 #include <chrono>
 
-#include <core/timer.hh>
+#include <seastar/core/timer.hh>
 // seastar BUG: when compiling w/ -O3
 // some headers are not included on timer.hh
 // which causes missed impl symbols. We should revisit
 // after upgrade our build system to upstream cmake
-#include <core/reactor.hh>
-#include <util/noncopyable_function.hh>
+#include <seastar/core/reactor.hh>
+#include <seastar/util/noncopyable_function.hh>
 
 #include "smf/log.h"
 #include "smf/rpc_generated.h"

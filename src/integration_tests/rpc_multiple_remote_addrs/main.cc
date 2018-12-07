@@ -8,11 +8,11 @@
 #include <ifaddrs.h>
 #include <net/if.h>
 // seastar
-#include <core/app-template.hh>
-#include <core/distributed.hh>
-#include <core/sleep.hh>
-#include <core/sstring.hh>
-#include <net/api.hh>
+#include <seastar/core/app-template.hh>
+#include <seastar/core/distributed.hh>
+#include <seastar/core/sleep.hh>
+#include <seastar/core/sstring.hh>
+#include <seastar/net/api.hh>
 // smf
 #include "integration_tests/non_root_port.h"
 #include "smf/log.h"

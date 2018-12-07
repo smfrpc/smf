@@ -2,7 +2,7 @@
 //
 #pragma once
 
-#include <core/shared_ptr.hh>
+#include <seastar/core/shared_ptr.hh>
 
 #include "smf/load_generator_duration.h"
 #include "smf/log.h"
