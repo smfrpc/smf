@@ -60,7 +60,7 @@ function(do_build_dpdk dpdk_dir)
 
   execute_process(
     COMMAND ${CMAKE_MAKE_PROGRAM} showconfigs
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/spdk/dpdk
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/third_party/seastar/dpdk
     OUTPUT_VARIABLE supported_targets
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   string(REPLACE "\n" ";" supported_targets "${supported_targets}")
@@ -73,9 +73,9 @@ function(do_build_dpdk dpdk_dir)
 
   include(ExternalProject)
   ExternalProject_Add(dpdk-ext
-    SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/spdk/dpdk
+    SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/third_party/seastar/dpdk
     CONFIGURE_COMMAND $(MAKE) config O=${dpdk_dir} T=${target}
-    BUILD_COMMAND env CC=${CMAKE_C_COMPILER} $(MAKE) O=${dpdk_dir} EXTRA_CFLAGS=-fPIC
+    BUILD_COMMAND env CC=${CMAKE_C_COMPILER} $(MAKE) O=${dpdk_dir} EXTRA_CFLAGS=-Wno-error
     BUILD_IN_SOURCE 1
     INSTALL_COMMAND "true")
   ExternalProject_Add_Step(dpdk-ext patch-config

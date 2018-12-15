@@ -18,38 +18,29 @@ shift
 arch=$1
 shift
 
-setconf CONFIG_RTE_MACHINE "${machine}"
-setconf CONFIG_RTE_ARCH "${arch}"
+#setconf CONFIG_RTE_MACHINE "${machine}"
+#setconf CONFIG_RTE_ARCH "${arch}"
 
-# Disable experimental features
-setconf CONFIG_RTE_NEXT_ABI n
-setconf CONFIG_RTE_LIBRTE_MBUF_OFFLOAD n
-# Disable unmaintained features
-setconf CONFIG_RTE_LIBRTE_POWER n
-
+setconf CONFIG_RTE_LIBRTE_PMD_BOND n
+setconf CONFIG_RTE_MBUF_SCATTER_GATHER n
+setconf CONFIG_RTE_LIBRTE_IP_FRAG n
+setconf CONFIG_RTE_APP_TEST n
+setconf CONFIG_RTE_TEST_PMD n
+setconf CONFIG_RTE_MBUF_REFCNT_ATOMIC n
+setconf CONFIG_RTE_MAX_MEMSEG 8192
 setconf CONFIG_RTE_EAL_IGB_UIO n
 setconf CONFIG_RTE_LIBRTE_KNI n
 setconf CONFIG_RTE_KNI_KMOD n
-setconf CONFIG_RTE_KNI_PREEMPT_DEFAULT n
-
-# no pdump
-setconf CONFIG_RTE_LIBRTE_PDUMP n
-
-# no vm support
-setconf CONFIG_RTE_LIBRTE_EAL_VMWARE_TSC_MAP_SUPPORT n
-setconf CONFIG_RTE_LIBRTE_VHOST n
-setconf CONFIG_RTE_LIBRTE_VHOST_NUMA n
-setconf CONFIG_RTE_LIBRTE_VMXNET3_PMD n
-setconf CONFIG_RTE_LIBRTE_PMD_VHOST n
-setconf CONFIG_RTE_APP_EVENTDEV n
-setconf CONFIG_RTE_MAX_VFIO_GROUPS 64
-
-# no test
-setconf CONFIG_RTE_APP_TEST n
-setconf CONFIG_RTE_TEST_PMD n
-
-# async/dpdk does not like it
-setconf CONFIG_RTE_MBUF_REFCNT_ATOMIC n
-
-# balanced allocation of hugepages
-setconf CONFIG_RTE_EAL_NUMA_AWARE_HUGEPAGES n
+setconf CONFIG_RTE_LIBRTE_JOBSTATS n
+setconf CONFIG_RTE_LIBRTE_LPM n
+setconf CONFIG_RTE_LIBRTE_ACL n
+setconf CONFIG_RTE_LIBRTE_POWER n
+setconf CONFIG_RTE_LIBRTE_IP_FRAG n
+setconf CONFIG_RTE_LIBRTE_METER n
+setconf CONFIG_RTE_LIBRTE_SCHED n
+setconf CONFIG_RTE_LIBRTE_DISTRIBUTOR n
+setconf CONFIG_RTE_LIBRTE_PMD_CRYPTO_SCHEDULER n
+setconf CONFIG_RTE_LIBRTE_REORDER n
+setconf CONFIG_RTE_LIBRTE_PORT n
+setconf CONFIG_RTE_LIBRTE_TABLE n
+setconf CONFIG_RTE_LIBRTE_PIPELINE n

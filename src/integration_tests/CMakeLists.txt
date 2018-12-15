@@ -39,7 +39,7 @@ smf_test(
   BINARY_NAME rpc_backpressure
   SOURCES ${IT_ROOT}/rpc_backpressure/main.cc ${demo_test_fbs}
   SOURCE_DIRECTORY ${IT_ROOT}/rpc_backpressure
-  LIBRARIES smf
+  LIBRARIES smf dpdk::dpdk
   )
 smf_test(
   INTEGRATION_TEST
