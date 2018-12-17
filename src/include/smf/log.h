@@ -24,17 +24,18 @@ template <typename T>
 T *
 throw_if_null(const char *file, int line, const char *names, T *t) {
   if (SMF_UNLIKELY(t == NULL)) {
-    // TODO(agallego) - remove fmt from public headers
-    //
     auto s = fmt::sprintf("{}:{}] check_not_null({})", file, line, names);
     smf::internal_logger::get().error(s.c_str());
     throw std::runtime_error(s.c_str());
   }
   return t;
 }
-inline void
-noop(...) {}
 
+template <typename... Args>
+inline void
+noop(Args &&... args) {
+  ((void)0);
+}
 }  // namespace log_detail
 
 /// brief Reliably takes effect inside a seastar app_
@@ -122,8 +123,8 @@ app_run_log_level(seastar::log_level l) {
   do {                                                                         \
     if (SMF_UNLIKELY(condition)) {                                             \
       fmt::memory_buffer __smflog_w;                                           \
-      fmt::format_to(__smflog_w, "{}:{}] (" #condition ") " format, __FILENAME__, \
-                       __LINE__, ##args);                                      \
+      fmt::format_to(__smflog_w, "{}:{}] (" #condition ") " format,            \
+                     __FILENAME__, __LINE__, ##args);                          \
       smf::internal_logger::get().error(__smflog_w.data());                    \
       throw std::runtime_error(__smflog_w.data());                             \
     }                                                                          \
