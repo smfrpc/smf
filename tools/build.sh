@@ -68,7 +68,7 @@ function release {
                 -DSMF_ENABLE_BENCHMARK_TESTS=OFF)
     else
         travis=(-DSMF_ENABLE_BENCHMARK_TESTS=ON
-                -DSEASTAR_ENABLE_DPDK=ON)
+                -DSeastar_DPDK=ON)
     fi
     cmake     -Wno-dev \
               -DCMAKE_VERBOSE_MAKEFILE=ON \

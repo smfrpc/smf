@@ -6,13 +6,11 @@ SMF_SET_OPTION(FLATBUFFERS_INSTALL OFF)
 SMF_SET_OPTION(FLATBUFFERS_BUILD_FLATHASH OFF)
 add_subdirectory(flatbuffers)
 
-set(SEASTAR_USER_CFLAGS
-  -Wno-stringop-overflow
-  -Wno-array-bounds
-  -Wno-stringop-truncation
-  -Wno-format-overflow
-  CACHE STRING "User cflags for seastar deps")
-SMF_SET_OPTION(SEASTAR_ENABLE_TESTS OFF)
+SMF_SET_OPTION(Seastar_DEMOS OFF)
+SMF_SET_OPTION(Seastar_DOCS OFF)
+SMF_SET_OPTION(Seastar_APPS OFF)
+SMF_SET_OPTION(Seastar_INSTALL OFF)
+SMF_SET_OPTION(Seastar_TESTING OFF)
 add_subdirectory(seastar)
 
 
