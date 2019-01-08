@@ -1,4 +1,4 @@
-include(${PROJECT_SOURCE_DIR}/CMake/smf.cmake)
+include(smf)
 # should be first so we can clear the world after it
 add_subdirectory(third_party)
 
