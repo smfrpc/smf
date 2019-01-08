@@ -108,7 +108,6 @@ cooking_ingredient(Hdrhistogram
   REQUIRES zlib
   CMAKE_ARGS
     -DHDR_HISTOGRAM_BUILD_SHARED=OFF
-    -DHDR_HISTOGRAM_BUILD_SHARED=OFF
   EXTERNAL_PROJECT_ARGS
     URL https://github.com/HdrHistogram/HdrHistogram_c/archive/59cbede.tar.gz
     URL_MD5 6794ddea304a7e0e939ad807a70fea5b)
