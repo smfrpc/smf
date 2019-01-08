@@ -1,9 +1,6 @@
-find_package(LZ4)
-find_package(Boost COMPONENTS
-  system
-  program_options
-  REQUIRED)
-find_package(PkgConfig REQUIRED)
+# lz4 & boost are part of seastar requirements
+# https://github.com/scylladb/seastar/blob/master/CMakeLists.txt#L566-L585
+find_package (Seastar 1.0 REQUIRED)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.1)
@@ -79,15 +76,21 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
     -Wno-ignored-qualifiers)
 endif()
 
-target_compile_definitions(smf
-  PUBLIC -DXXH_PRIVATE_API)
-
+target_compile_definitions(smf PUBLIC -DXXH_PRIVATE_API)
 target_link_libraries(smf
-  seastar
+  PUBLIC
+
+  Seastar::seastar
+  flatbuffers
   libzstd_static
-  hdr_histogram_static
-  fmt
-  lz4)
+  hdr_histogram_static)
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  target_compile_options(smf PUBLIC -fconcepts)
+  target_compile_definitions(smf PUBLIC -DSMF_GCC_CONCEPTS=1)
+endif()
+
+
 
 install(TARGETS smf DESTINATION lib)
 install(
