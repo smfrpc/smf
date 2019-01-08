@@ -103,7 +103,7 @@ cooking_ingredient (Boost
       --build-dir=<BINARY_DIR>
       install
       variant=debug
-      link=shared
+      link=static # different from seastar
       threading=multi
       hardcode-dll-paths=true
       dll-path=<INSTALL_DIR>/lib)
@@ -212,9 +212,11 @@ set (dpdk_args
   DESTDIR=<INSTALL_DIR>
   T=${dpdk_quadruple})
 
+# TODO(agallego) - change for upstream DPDK
 cooking_ingredient (dpdk
   EXTERNAL_PROJECT_ARGS
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dpdk
+    URL https://github.com/scylladb/dpdk/archive/cc7e6ed.tar.gz
+    URL_MD5 7aa07a7138e8d1b774cc5db2bd930d0d
     CONFIGURE_COMMAND
       COMMAND
         ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
@@ -231,7 +233,6 @@ cooking_ingredient (dpdk
       ${make_command} ${dpdk_args} install)
 
 cooking_ingredient (fmt
-  LOCAL_REBUILD
   CMAKE_ARGS
     -DBUILD_SHARED_LIBS=OFF #different from seastar
     -DFMT_DOC=OFF
@@ -258,19 +259,24 @@ cooking_ingredient(Seastar
     lz4
     cryptopp
     c-ares
+    dpdk
   # This means in seastar/recipe/dev.cmake
-  COOKING_RECIPE dev
+  # COOKING_RECIPE dev
   COOKING_CMAKE_ARGS
     # Not `lib64`.
     -DCMAKE_INSTALL_LIBDIR=lib
     -DSeastar_APPS=OFF
     -DSeastar_DOCS=OFF
     -DSeastar_DEMOS=OFF
-    -DSeastar_DPDK=OFF
+    -DSeastar_DPDK=ON
     -DSeastar_TESTING=OFF
   EXTERNAL_PROJECT_ARGS
     URL https://github.com/scylladb/seastar/archive/5e39990.tar.gz
     URL_MD5 9e57a4ca35493e375bef68288c6424ce)
+
+
+# ------------- additional dependencies after seastar
+
 
 cooking_ingredient(Hdrhistogram
   REQUIRES zlib
