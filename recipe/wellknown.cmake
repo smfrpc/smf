@@ -239,8 +239,8 @@ cooking_ingredient (fmt
     -DFMT_LIB_DIR=lib
     -DFMT_TEST=OFF
   EXTERNAL_PROJECT_ARGS
-    URL https://github.com/fmtlib/fmt/archive/f5cc77c.tar.gz
-    URL_MD5 f5e31b96aefdd6f978721a477e1b0254)
+    URL https://github.com/fmtlib/fmt/archive/5.3.0.tar.gz
+    URL_MD5 1015bf3ff2a140dfe03de50ee2469401)
 
 cooking_ingredient (lz4
   EXTERNAL_PROJECT_ARGS
