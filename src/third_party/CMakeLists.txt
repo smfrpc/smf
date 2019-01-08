@@ -1,33 +1,3 @@
-# these are a bit hacky, and should eventually be replaced by proper cmake find
-# package modules and/or create proper targets. at this point the build system
-# is simple enough that its tractable to deal with these few special cases.
-SMF_SET_OPTION(FLATBUFFERS_BUILD_TESTS OFF)
-SMF_SET_OPTION(FLATBUFFERS_INSTALL OFF)
-SMF_SET_OPTION(FLATBUFFERS_BUILD_FLATHASH OFF)
-add_subdirectory(flatbuffers)
-
-set(SEASTAR_USER_CFLAGS
-  -Wno-stringop-overflow
-  -Wno-array-bounds
-  -Wno-stringop-truncation
-  -Wno-format-overflow
-  CACHE STRING "User cflags for seastar deps")
-SMF_SET_OPTION(SEASTAR_ENABLE_TESTS OFF)
-add_subdirectory(seastar)
-
-
-SMF_SET_OPTION(HDR_HISTOGRAM_BUILD_SHARED OFF)
-SMF_SET_OPTION(HDR_HISTOGRAM_BUILD_PROGRAMS OFF)
-add_subdirectory(HdrHistogram_c)
-
-SMF_SET_OPTION(ZSTD_MULTITHREAD_SUPPORT OFF)
-SMF_SET_OPTION(ZSTD_LEGACY_SUPPORT OFF)
-SMF_SET_OPTION(ZSTD_BUILD_STATIC ON)
-SMF_SET_OPTION(ZSTD_BUILD_SHARED OFF)
-SMF_SET_OPTION(ZSTD_BUILD_PROGRAMS OFF)
-add_subdirectory(zstd/build/cmake)
-
-
 if(SMF_ENABLE_UNIT_TESTS)
   add_subdirectory(googletest/googletest)
 endif()

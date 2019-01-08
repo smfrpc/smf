@@ -79,11 +79,10 @@ endif()
 target_compile_definitions(smf PUBLIC -DXXH_PRIVATE_API)
 target_link_libraries(smf
   PUBLIC
-
   Seastar::seastar
-  flatbuffers
-  libzstd_static
-  hdr_histogram_static)
+  Flatbuffers::flatbuffers
+  Zstd::zstd
+  Hdrhistogram::hdr_histogram_static)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   target_compile_options(smf PUBLIC -fconcepts)

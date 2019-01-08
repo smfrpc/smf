@@ -1,4 +1,5 @@
 #  1. over time this should become a proper cmake module
+set(FLATBUFFERS_COMPILER flatc)
 
 function(smfc_gen)
   set(options CPP GOLANG VERBOSE)
@@ -45,14 +46,14 @@ function(smfc_gen)
     list(APPEND SMF_GEN_OUTPUTS ${FLATC_OUTPUT} ${SMF_GEN_OUTPUT})
     # flatc
     add_custom_command(OUTPUT ${FLATC_OUTPUT}
-      COMMAND flatc
+      COMMAND ${FLATBUFFERS_COMPILER}
       ARGS --gen-name-strings --gen-object-api ${flatc_language}
       ARGS ${flatc_generated_includes} --force-empty --gen-compare
       ARGS --keep-prefix --json --reflect-names --defaults-json
       ARGS --gen-mutable --cpp-str-type 'seastar::sstring'
       ARGS -o "${SMFC_GEN_OUTPUT_DIRECTORY}/" "${FILE}"
       COMMENT "Building C++ header for ${FILE}"
-      DEPENDS flatc
+      DEPENDS ${FLATBUFFERS_COMPILER}
       DEPENDS ${FILE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     # smfc
