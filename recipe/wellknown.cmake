@@ -14,64 +14,6 @@ cmake_host_system_information (
   QUERY NUMBER_OF_LOGICAL_CORES)
 set (make_command make -j ${build_concurrency_factor})
 
-##
-## Dependencies of dependencies of dependencies.
-##
-
-cooking_ingredient (gmp
-  EXTERNAL_PROJECT_ARGS
-    URL https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2
-    URL_MD5 8ddbb26dc3bd4e2302984debba1406a5
-    CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --srcdir=<SOURCE_DIR> ${info_dir}/gmp
-    BUILD_COMMAND <DISABLE>
-    INSTALL_COMMAND ${make_command} install)
-
-##
-## Dependencies of dependencies.
-##
-
-cooking_ingredient (colm
-  EXTERNAL_PROJECT_ARGS
-    URL http://www.colm.net/files/colm/colm-0.13.0.6.tar.gz
-    URL_MD5 16aaf566cbcfe9a06154e094638ac709
-    # This is upsetting.
-    BUILD_IN_SOURCE YES
-    CONFIGURE_COMMAND ./configure --prefix=<INSTALL_DIR>
-    BUILD_COMMAND <DISABLE>
-    INSTALL_COMMAND ${make_command} install)
-
-cooking_ingredient (libpciaccess
-  EXTERNAL_PROJECT_ARGS
-    URL https://www.x.org/releases/individual/lib/libpciaccess-0.13.4.tar.gz
-    URL_MD5 cc1fad87da60682af1d5fa43a5da45a4
-    CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --srcdir=<SOURCE_DIR>
-    BUILD_COMMAND <DISABLE>
-    INSTALL_COMMAND ${make_command} install)
-
-cooking_ingredient (nettle
-  REQUIRES gmp
-  EXTERNAL_PROJECT_ARGS
-    URL https://ftp.gnu.org/gnu/nettle/nettle-3.4.tar.gz
-    URL_MD5 dc0f13028264992f58e67b4e8915f53d
-    CONFIGURE_COMMAND
-      <SOURCE_DIR>/configure
-      --prefix=<INSTALL_DIR>
-      --srcdir=<SOURCE_DIR>
-      --libdir=<INSTALL_DIR>/lib
-      ${info_dir}/nettle
-      ${autotools_ingredients_flags}
-    BUILD_COMMAND <DISABLE>
-    INSTALL_COMMAND ${make_command} install)
-
-# Also a direct dependency of Seastar.
-cooking_ingredient (numactl
-  EXTERNAL_PROJECT_ARGS
-    URL https://github.com/numactl/numactl/releases/download/v2.0.12/numactl-2.0.12.tar.gz
-    URL_MD5 2ba9777d78bfd7d408a387e53bc33ebc
-    CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --srcdir=<SOURCE_DIR>
-    BUILD_COMMAND <DISABLE>
-    INSTALL_COMMAND ${make_command} install)
-
 cooking_ingredient (zlib
   EXTERNAL_PROJECT_ARGS
     URL https://zlib.net/zlib-1.2.11.tar.gz
@@ -108,73 +50,6 @@ cooking_ingredient (Boost
       hardcode-dll-paths=true
       dll-path=<INSTALL_DIR>/lib)
 
-cooking_ingredient (GnuTLS
-  REQUIRES
-    gmp
-    nettle
-  EXTERNAL_PROJECT_ARGS
-    URL https://www.gnupg.org/ftp/gcrypt/gnutls/v3.5/gnutls-3.5.18.tar.xz
-    URL_MD5 c2d93d305ecbc55939bc2a8ed4a76a3d
-    CONFIGURE_COMMAND
-     ${CMAKE_COMMAND} -E env ${PKG_CONFIG_PATH}
-      <SOURCE_DIR>/configure
-      --prefix=<INSTALL_DIR>
-      --srcdir=<SOURCE_DIR>
-      --with-included-unistring
-      --with-included-libtasn1
-      --without-p11-kit
-      # https://lists.gnupg.org/pipermail/gnutls-help/2016-February/004085.html
-      --disable-non-suiteb-curves
-      --disable-doc
-      ${autotools_ingredients_flags}
-    BUILD_COMMAND <DISABLE>
-    INSTALL_COMMAND ${make_command} install)
-
-cooking_ingredient (Protobuf
-  REQUIRES zlib
-  EXTERNAL_PROJECT_ARGS
-    URL https://github.com/protocolbuffers/protobuf/releases/download/v3.3.0/protobuf-cpp-3.3.0.tar.gz
-    URL_MD5 73c28d3044e89782bdc8d9fdcfbb5792
-    CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --srcdir=<SOURCE_DIR>
-    BUILD_COMMAND <DISABLE>
-    INSTALL_COMMAND ${make_command} install)
-
-cooking_ingredient (hwloc
-  REQUIRES
-    numactl
-    libpciaccess
-  EXTERNAL_PROJECT_ARGS
-    URL https://download.open-mpi.org/release/hwloc/v1.11/hwloc-1.11.5.tar.gz
-    URL_MD5 8f5fe6a9be2eb478409ad5e640b2d3ba
-    CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --srcdir=<SOURCE_DIR>
-    BUILD_COMMAND <DISABLE>
-    INSTALL_COMMAND ${make_command} install)
-
-cooking_ingredient (ragel
-  REQUIRES colm
-  EXTERNAL_PROJECT_ARGS
-    URL http://www.colm.net/files/ragel/ragel-6.10.tar.gz
-    URL_MD5 748cae8b50cffe9efcaa5acebc6abf0d
-    # This is upsetting.
-    BUILD_IN_SOURCE YES
-    CONFIGURE_COMMAND
-      ${CMAKE_COMMAND} -E env ${amended_PATH}
-      ./configure
-      --prefix=<INSTALL_DIR>
-      # This is even more upsetting.
-      ${autotools_ingredients_flags}
-    BUILD_COMMAND <DISABLE>
-    INSTALL_COMMAND ${make_command} install)
-
-cooking_ingredient (lksctp-tools
-  EXTERNAL_PROJECT_ARGS
-    URL https://sourceforge.net/projects/lksctp/files/lksctp-tools/lksctp-tools-1.0.16.tar.gz
-    URL_MD5 708bb0b5a6806ad6e8d13c55b067518e
-    PATCH_COMMAND ./bootstrap
-    CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --srcdir=<SOURCE_DIR>
-    BUILD_COMMAND <DISABLE>
-    INSTALL_COMMAND ${make_command} install)
-
 cooking_ingredient (yaml-cpp
   REQUIRES Boost
   CMAKE_ARGS
@@ -183,54 +58,6 @@ cooking_ingredient (yaml-cpp
   EXTERNAL_PROJECT_ARGS
     URL https://github.com/jbeder/yaml-cpp/archive/yaml-cpp-0.5.3.tar.gz
     URL_MD5 2bba14e6a7f12c7272f87d044e4a7211)
-
-##
-## Public dependencies.
-##
-
-cooking_ingredient (c-ares
-  EXTERNAL_PROJECT_ARGS
-    URL https://c-ares.haxx.se/download/c-ares-1.13.0.tar.gz
-    URL_MD5 d2e010b43537794d8bedfb562ae6bba2
-    CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --srcdir=<SOURCE_DIR>
-    BUILD_COMMAND <DISABLE>
-    INSTALL_COMMAND ${make_command} install)
-
-cooking_ingredient (cryptopp
-  CMAKE_ARGS
-    -DCMAKE_INSTALL_LIBDIR=<INSTALL_DIR>/lib
-    -DBUILD_TESTING=OFF
-  EXTERNAL_PROJECT_ARGS
-    URL https://github.com/weidai11/cryptopp/archive/CRYPTOPP_5_6_5.tar.gz
-    URL_MD5 88224d9c0322f63aa1fb5b8ae78170f0)
-
-set (dpdk_quadruple ${CMAKE_SYSTEM_PROCESSOR}-native-linuxapp-gcc)
-
-set (dpdk_args
-  EXTRA_CFLAGS=-Wno-error
-  O=<BINARY_DIR>
-  DESTDIR=<INSTALL_DIR>
-  T=${dpdk_quadruple})
-
-# TODO(agallego) - change for upstream DPDK
-cooking_ingredient (dpdk
-  EXTERNAL_PROJECT_ARGS
-    URL https://github.com/scylladb/dpdk/archive/cc7e6ed.tar.gz
-    URL_MD5 7aa07a7138e8d1b774cc5db2bd930d0d
-    CONFIGURE_COMMAND
-      COMMAND
-        ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
-        make ${dpdk_args} config
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSeastar_DPDK_CONFIG_FILE_IN=<BINARY_DIR>/.config
-        -DSeastar_DPDK_CONFIG_FILE_CHANGES=${CMAKE_CURRENT_LIST_DIR}/dpdk_config
-        -DSeastar_DPDK_CONFIG_FILE_OUT=<BINARY_DIR>/${dpdk_quadruple}/.config
-        -P ${CMAKE_CURRENT_LIST_DIR}/dpdk_configure.cmake
-    BUILD_COMMAND <DISABLE>
-    INSTALL_COMMAND
-      ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
-      ${make_command} ${dpdk_args} install)
 
 cooking_ingredient (fmt
   CMAKE_ARGS
@@ -254,14 +81,13 @@ cooking_ingredient (lz4
 
 cooking_ingredient(Seastar
   REQUIRES
+    zlib
     Boost
+    yaml-cpp
     fmt
     lz4
-    cryptopp
-    c-ares
-    dpdk
   # This means in seastar/recipe/dev.cmake
-  # COOKING_RECIPE dev
+  COOKING_RECIPE dev
   COOKING_CMAKE_ARGS
     # Not `lib64`.
     -DCMAKE_INSTALL_LIBDIR=lib
