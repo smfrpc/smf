@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <memory>
 
-#include <core/shared_ptr.hh>
+#include <seastar/core/shared_ptr.hh>
 
 #include "smf/load_generator_args.h"
 #include "smf/load_generator_duration.h"

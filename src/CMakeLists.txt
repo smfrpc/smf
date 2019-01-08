@@ -1,11 +1,6 @@
-include(${PROJECT_SOURCE_DIR}/CMake/smf.cmake)
-# should be first so we can clear the world after it
-add_subdirectory(third_party)
+include(smf)
 
-if(SMF_BUILD_COMPILER)
-  add_subdirectory(smfc)
-endif()
-
+add_subdirectory(smfc)
 add_subdirectory(core)
 
 if(SMF_ENABLE_BENCHMARK_TESTS)

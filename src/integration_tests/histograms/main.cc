@@ -1,8 +1,8 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 // seastar
-#include <core/app-template.hh>
-#include <core/distributed.hh>
+#include <seastar/core/app-template.hh>
+#include <seastar/core/distributed.hh>
 // smf
 #include "smf/histogram_seastar_utils.h"
 #include "smf/log.h"

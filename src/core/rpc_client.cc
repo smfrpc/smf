@@ -5,10 +5,10 @@
 #include <memory>
 #include <utility>
 // seastar
-#include <core/execution_stage.hh>
-#include <core/reactor.hh>
-#include <core/sleep.hh>
-#include <net/api.hh>
+#include <seastar/core/execution_stage.hh>
+#include <seastar/core/reactor.hh>
+#include <seastar/core/sleep.hh>
+#include <seastar/net/api.hh>
 // smf
 #include "smf/log.h"
 #include "smf/rpc_recv_context.h"

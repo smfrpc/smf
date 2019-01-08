@@ -5,7 +5,7 @@
 #include <chrono>
 #include <experimental/optional>
 // seastar
-#include <net/api.hh>
+#include <seastar/net/api.hh>
 // smf
 #include "smf/log.h"
 #include "smf/rpc_connection.h"

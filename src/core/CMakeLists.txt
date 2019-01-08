@@ -1,19 +1,8 @@
-find_package(LZ4)
-find_package(Boost COMPONENTS
-  system
-  program_options
-  REQUIRED)
-find_package(PkgConfig REQUIRED)
-
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.1)
-    add_definitions(-DSMF_GCC_CONCEPTS=1)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
-    if(CMAKE_BUILD_TYPE MATCHES Debug)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lasan -lubsan")
-    endif()
-  endif()
-endif()
+find_package(Flatbuffers REQUIRED)
+find_package(Zstd REQUIRED)
+find_package(Hdrhistogram REQUIRED)
+find_package(xxHash REQUIRED)
+find_package(Seastar 1.0 REQUIRED)
 
 if(SMF_BUILD_REGENERATE_RPC_FBS)
   # This is an exception to what we suggest people to use
@@ -51,16 +40,7 @@ target_include_directories(smf
   PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
   PUBLIC ${PROJECT_SOURCE_DIR}/src/include
   )
-target_include_directories(smf
-  SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/HdrHistogram_c/src
-  SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/flatbuffers/include
-  SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/flat_hash_map
-  SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/zstd/lib
-  SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/xxHash
-  SYSTEM PUBLIC "${seastar_INCLUDE_DIRS}"
-  )
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-  target_compile_definitions(smf PUBLIC -DSMF_DEBUG)
   target_compile_options(smf PRIVATE
     -fdiagnostics-color=auto
     -Wall
@@ -79,15 +59,14 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
     -Wno-ignored-qualifiers)
 endif()
 
-target_compile_definitions(smf
-  PUBLIC -DXXH_PRIVATE_API)
-
+target_compile_definitions(smf PUBLIC -DXXH_PRIVATE_API)
 target_link_libraries(smf
-  seastar
-  libzstd_static
-  hdr_histogram_static
-  fmt
-  lz4)
+  PUBLIC
+  Seastar::seastar
+  flatbuffers::flatbuffers
+  xxHash::xxhash
+  Zstd::zstd
+  Hdrhistogram::hdr_histogram)
 
 install(TARGETS smf DESTINATION lib)
 install(

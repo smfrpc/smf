@@ -17,7 +17,7 @@
 #define LZ4_MAX_INPUT_SIZE 0x7E000000
 #endif
 
-#include <core/byteorder.hh>
+#include <seastar/core/byteorder.hh>
 
 #include "smf/log.h"
 #include "smf/macros.h"

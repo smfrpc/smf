@@ -9,7 +9,6 @@
 
 namespace smf {
 template <typename RootType>
-SMF_CONCEPT(requires FlatBuffersNativeTable<RootType>)
 struct rpc_typed_envelope {
   using type = RootType;
   using native_type = typename RootType::NativeTableType;

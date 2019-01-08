@@ -5,8 +5,8 @@
 
 #include <memory>
 
-#include <core/shared_ptr.hh>
-#include <core/temporary_buffer.hh>
+#include <seastar/core/shared_ptr.hh>
+#include <seastar/core/temporary_buffer.hh>
 
 // modeled after the folly::io::compression.h
 

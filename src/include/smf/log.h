@@ -5,7 +5,7 @@
 #define SMF_PLATFORM_LOG_H
 
 #include <fmt/printf.h>
-#include <util/log.hh>
+#include <seastar/util/log.hh>
 
 #include "smf/macros.h"
 
@@ -130,7 +130,7 @@ app_run_log_level(seastar::log_level l) {
     }                                                                          \
   } while (false)
 
-#ifdef SMF_DEBUG
+#ifndef NDEBUG
 
 #define DTHROW_IFNULL(val)                                                     \
   smf::log_detail::throw_if_null(__FILE__, __LINE__,                           \

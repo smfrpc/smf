@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <random>
 
-#include <core/sstring.hh>
+#include <seastar/core/sstring.hh>
 
 namespace smf {
 class random {

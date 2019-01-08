@@ -2,8 +2,8 @@
 //
 #pragma once
 
-#include <core/sstring.hh>
-#include <core/temporary_buffer.hh>
+#include <seastar/core/sstring.hh>
+#include <seastar/core/temporary_buffer.hh>
 
 #include "smf/macros.h"
 #include "smf/rpc_generated.h"

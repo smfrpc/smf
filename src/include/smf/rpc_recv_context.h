@@ -4,8 +4,8 @@
 // std
 #include <experimental/optional>
 // seastar
-#include <core/iostream.hh>
-#include <net/api.hh>
+#include <seastar/core/iostream.hh>
+#include <seastar/net/api.hh>
 // smf
 #include "smf/macros.h"
 #include "smf/rpc_connection.h"

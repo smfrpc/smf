@@ -4,7 +4,7 @@
 
 #include <cstdio>
 
-#include <core/fstream.hh>
+#include <seastar/core/fstream.hh>
 
 #include "smf/histogram.h"
 

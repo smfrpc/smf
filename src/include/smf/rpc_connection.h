@@ -3,9 +3,9 @@
 #pragma once
 #include <utility>
 // seastar
-#include <core/iostream.hh>
-#include <core/shared_ptr.hh>
-#include <net/api.hh>
+#include <seastar/core/iostream.hh>
+#include <seastar/core/shared_ptr.hh>
+#include <seastar/net/api.hh>
 
 #include "smf/macros.h"
 #include "smf/rpc_connection_limits.h"

@@ -79,16 +79,9 @@ def run_subprocess(cmd):
         raise subprocess.CalledProcessError(return_code, cmd)
 
 
-def get_cpplint():
-    cmd = "%s/%s" % (get_git_root(),
-                     "src/third_party/google-styleguide/cpplint/cpplint.py")
-    assert os.path.exists(cmd)
-    return cmd
-
-
 def get_clang_prog(prog):
     """ALL tools for clang should be pinned to one version"""
-    CLANG_SOURCE_VERSION = "6.0.0"
+    CLANG_SOURCE_VERSION = "7.0.0"
     ret = subprocess.check_output("which %s" % prog, shell=True)
     if ret != None:
         original = "".join(str(ret).split())
@@ -200,15 +193,6 @@ def insert_legal(filename):
     hash_legal(filename)
 
 
-def cpplint_process(cmd, filename):
-    """Has to have a special process since it just
-    prints sutff to stdout willy nilly"""
-    lint = subprocess.check_output("%s %s" % (cmd, filename), shell=True)
-    if "Total errors found: 0" not in lint:
-        logger.info("Error: %s" % lint)
-        sys.exit(1)
-
-
 def main():
     parser = generate_options()
     options, program_options = parser.parse_known_args()
@@ -220,14 +204,12 @@ def main():
     files = get_git_files(options)
     clang_fmt = get_clang_format(options)
     clang_tidy = get_clang_tidy(options)
-    cpplint = get_cpplint()
     root = get_git_root()
 
     logger.info("Git root: %s" % root)
     logger.info("Formatting %s files" % len(files))
     logger.info("Clang format: %s" % clang_fmt)
     logger.info("Clang tidy: %s" % clang_tidy)
-    logger.info("cpplint.py: %s" % cpplint)
 
     for f in files:
         f = "%s/%s" % (root, f)
@@ -243,10 +225,7 @@ def main():
                 # fixing formatting
                 if clang_fmt != None:
                     run_subprocess("%s -i %s" % (clang_fmt, f))
-                # always run
-                if ".java" not in f:
-                    cpplint_process(
-                        "%s --verbose=5 --counting=detailed" % cpplint, f)
+
         except Exception as e:
             logger.exception("Error %s, file: %s" % (e, f))
             sys.exit(1)

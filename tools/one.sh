@@ -14,4 +14,4 @@ cd $ROOT
 name="smf/ci_base_${IMAGE/:/_}"
 docker build -t ${name} --build-arg BASE=${IMAGE} -f ${THIS_DIR}/base/Dockerfile .
 # -r (debug) | -t (tests)
-docker run -w /smf --rm ${name}  ./tools/build.sh -rt
+docker run --privileged -w /smf --rm ${name}  ./tools/build.sh -rt

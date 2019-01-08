@@ -12,33 +12,19 @@ function debs() {
   apt-get update
   apt-get install -y \
     pkg-config \
-    libboost-dev \
-    libboost-system-dev \
-    libboost-program-options-dev \
-    libboost-thread-dev \
-    libboost-filesystem-dev \
-    libboost-test-dev \
     build-essential \
     cmake \
-    libgflags-dev \
-    libgoogle-glog-dev \
-    liblz4-dev \
     libaio-dev \
     libcrypto++-dev \
-    libyaml-cpp-dev \
-    protobuf-compiler \
-    libprotobuf-dev \
-    ragel \
     xfslibs-dev \
     libunwind-dev \
     systemtap-sdt-dev \
     libsctp-dev \
-    libhwloc-dev \
     libxml2-dev \
     libpciaccess-dev \
-    libgnutls28-dev \
     ninja-build \
     doxygen \
+    stow \
     python ${extra}
 }
 
@@ -66,27 +52,16 @@ function rpms() {
     cmake \
     gcc-c++ \
     make \
-    boost-devel \
-    gnutls-devel \
-    protobuf-devel \
-    protobuf-compiler \
-    cryptopp-devel \
     libpciaccess-devel \
-    gflags-devel \
-    glog-devel \
     libaio-devel \
-    lz4-devel \
-    hwloc-devel \
-    yaml-cpp-devel \
-    ragel \
     libunwind-devel \
     libxml2-devel \
     xfsprogs-devel \
-    numactl-devel \
     systemtap-sdt-devel \
     lksctp-tools-devel \
     ninja-build \
     doxygen \
+    stow \
     python ${extra}
 }
 

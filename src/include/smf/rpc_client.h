@@ -7,9 +7,9 @@
 #include <utility>
 #include <vector>
 
-#include <core/gate.hh>
-#include <core/shared_ptr.hh>
-#include <net/api.hh>
+#include <seastar/core/gate.hh>
+#include <seastar/core/shared_ptr.hh>
+#include <seastar/net/api.hh>
 
 #include "smf/histogram.h"
 #include "smf/macros.h"

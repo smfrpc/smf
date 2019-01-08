@@ -1,3 +1,4 @@
+find_package(benchmark REQUIRED)
 smfc_gen(
   CPP
   TARGET_NAME kv_fbs
@@ -12,5 +13,5 @@ smf_test(
   SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   TIMEOUT 420 # on my laptop test takes 320 secs
   INCLUDES ${CMAKE_CURRENT_BINARY_DIR}
-  LIBRARIES benchmark smf
+  LIBRARIES benchmark::benchmark smf
   )

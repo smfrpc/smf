@@ -4,8 +4,8 @@
 #include <chrono>
 #include <iostream>
 // seastar
-#include <core/app-template.hh>
-#include <core/distributed.hh>
+#include <seastar/core/app-template.hh>
+#include <seastar/core/distributed.hh>
 // smf
 #include "integration_tests/demo_service.smf.fb.h"
 #include "integration_tests/non_root_port.h"

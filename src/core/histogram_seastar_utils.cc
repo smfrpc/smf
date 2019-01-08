@@ -4,8 +4,8 @@
 
 #include <utility>
 
-#include <core/file.hh>
-#include <core/reactor.hh>
+#include <seastar/core/file.hh>
+#include <seastar/core/reactor.hh>
 // smf
 #include "smf/histogram.h"
 #include "smf/log.h"

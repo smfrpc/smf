@@ -5,7 +5,7 @@
 
 #include <memory>
 
-#include <core/future.hh>
+#include <seastar/core/future.hh>
 
 #include <smf/histogram.h>
 

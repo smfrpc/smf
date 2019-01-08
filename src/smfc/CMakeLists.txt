@@ -1,9 +1,11 @@
-find_package(GFlags)
-find_package(Glog)
+find_package (Flatbuffers REQUIRED)
+find_package(gflags REQUIRED)
+find_package(glog REQUIRED)
 find_package(Boost COMPONENTS
   system
   filesystem
   REQUIRED)
+find_package (Threads)
 
 set(SMFC_SOURCES
   codegen.cc
@@ -12,17 +14,14 @@ set(SMFC_SOURCES
   main.cc)
 
 set(SMFC_LIBS
-  flatbuffers
-  boost_system
-  boost_filesystem
+  flatbuffers::flatbuffers
+  Boost::system
+  Boost::filesystem
   gflags
-  glog
-  pthread
+  glog::glog
+  ${CMAKE_THREAD_LIBS_INIT}
   )
 
 add_executable (smfc ${SMFC_SOURCES})
-target_link_libraries (smfc ${SMFC_LIBS})
-target_include_directories(smfc
-  PUBLIC ${PROJECT_SOURCE_DIR}/src/third_party/flatbuffers/include)
+target_link_libraries (smfc PRIVATE ${SMFC_LIBS})
 install(TARGETS smfc RUNTIME DESTINATION bin)
-target_compile_definitions(smfc PRIVATE -DXXH_PRIVATE_API)

@@ -1,7 +1,7 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #pragma once
-#include <core/future.hh>
+#include <seastar/core/future.hh>
 namespace smf {
 
 /// brief - generic filter interface (c++ conept'ish) that gets

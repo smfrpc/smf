@@ -8,9 +8,9 @@ services:
 matrix:
   include:
     - os: linux
-      env: IMAGE=fedora:27
+      env: IMAGE=fedora:29
     - os: linux
-      env: IMAGE=fedora:26
+      env: IMAGE=fedora:28
     - os: linux
       env: IMAGE=debian:buster
     - os: linux

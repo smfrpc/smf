@@ -11,9 +11,9 @@
 #include <thread>
 
 #include <benchmark/benchmark.h>
-#include <core/print.hh>
-#include <core/sstring.hh>
-#include <core/temporary_buffer.hh>
+#include <seastar/core/print.hh>
+#include <seastar/core/sstring.hh>
+#include <seastar/core/temporary_buffer.hh>
 
 #include "kv_generated.h"
 #include "smf/native_type_utils.h"

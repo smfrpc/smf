@@ -2,8 +2,8 @@
 //
 #pragma once
 // seastar
-#include <core/future.hh>
-#include <core/iostream.hh>
+#include <seastar/core/future.hh>
+#include <seastar/core/iostream.hh>
 // smf
 #include "smf/macros.h"
 #include "smf/rpc_letter.h"

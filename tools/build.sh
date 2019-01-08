@@ -6,21 +6,25 @@
 
 set -e
 
+
+if [[ ! -z ${CI} ]]; then
+    echo "In continous integration system..."
+    set -x
+fi
+
 . /etc/os-release
 
 this_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="${this_dir}/../"
-buildcmd="ninja"
+declare -r buildcmd="ninja -C ${root}/build"
 buildtype="debug"
-builddir=$root/build/debug
+builddir=$root/build
 case $ID in
     debian|ubuntu|linuxmint)
         echo "$ID supported"
-        buildcmd="ninja"
         ;;
     centos|fedora)
         echo "$ID supported"
-        buildcmd="ninja-build"
         ;;
     *)
         echo "$ID not supported"
@@ -30,16 +34,8 @@ esac
 
 function debug {
     echo "Debug"
-    builddir=$root/build/debug
-    mkdir -p $builddir
-    cd ${builddir}
-    cmake -Wdev \
-          --debug-output \
-          -DCMAKE_VERBOSE_MAKEFILE=ON -G Ninja \
-          -DCMAKE_INSTALL_PREFIX=${builddir} \
-          -DSMF_ENABLE_CMAKE_PROJECT_FLAGS=ON \
-          -DCMAKE_BUILD_TYPE=Debug ${root}
-
+    cd $root
+    $root/cooking.sh -r wellknown
     # for fmt.py
     ln -sfn "${builddir}/compile_commands.json" "${root}/compile_commands.json"
     ${buildcmd}
@@ -47,37 +43,24 @@ function debug {
 
 function tests {
     echo "Testing"
-    mkdir -p $builddir
     cd ${builddir}
-    ctest --output-on-failure \
-          -V -R smf \
-          --force-new-ctest-process \
-          --schedule-random \
-          -j$(nproc) "$@"
+    ctest --output-on-failure -V -R smf
 }
 function release {
     echo "Release"
-    builddir=$root/build/release
-    mkdir -p $builddir
-    cd ${builddir}
+    cd $root
     local travis=""
-    if [[ "${TRAVIS}" == "1" ]]; then
+    if [[ ! -z ${TRAVIS} ]]; then
         set -x
-        echo "Travis build: reducing compilation to only -O1 for speed"
-        travis=(-DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG"
-                -DSMF_ENABLE_BENCHMARK_TESTS=OFF)
+        echo "Travis build. See raw_logs for output"
+        # skip dpdk
+        # use -O1 for speed
+        $this_dir/travis_stdout.sh \
+            "$root/cooking.sh -r wellknown -t Release -- -DCMAKE_CXX_FLAGS_RELEASE='-O1 -DNDEBUG' > $root/travis_cmake.log"
+        tail --lines=1000 $root/travis_cmake.log
     else
-        travis=(-DSMF_ENABLE_BENCHMARK_TESTS=ON
-                -DSEASTAR_ENABLE_DPDK=ON)
+        $root/cooking.sh -r wellknown -t Release -- -DSMF_ENABLE_BENCHMARK_TESTS=ON
     fi
-    cmake     -Wno-dev \
-              -DCMAKE_VERBOSE_MAKEFILE=ON \
-              -GNinja \
-              -DCMAKE_INSTALL_PREFIX=${builddir} \
-              -DSMF_ENABLE_CMAKE_PROJECT_FLAGS=ON \
-              -DCMAKE_BUILD_TYPE=Release \
-              "${travis}" ${root}
-
     # for fmt.py
     ln -sfn "${builddir}/compile_commands.json" "${root}/compile_commands.json"
     ${buildcmd}
@@ -85,12 +68,12 @@ function release {
 
 function format {
     echo "Format"
+    cd $root
     ${root}/tools/fmt.py
 }
 
 function package {
     echo "Package"
-    mkdir -p $builddir
     cd ${builddir}
     cpack -D CPACK_RPM_PACKAGE_DEBUG=1 \
           -D CPACK_RPM_SPEC_INSTALL_POST="/bin/true" -G RPM;
