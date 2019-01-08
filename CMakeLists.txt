@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.5) # 3.5 required by seastar
-project(SMF VERSION "0.1.0" LANGUAGES CXX C)
 list (APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include (Cooking OPTIONAL)
 # https://cmake.org/cmake/help/v3.4/policy/CMP0065.html
