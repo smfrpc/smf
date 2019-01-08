@@ -57,3 +57,17 @@ set(
   STRING
   "flatc binary for generating code"
   FORCE)
+
+
+cooking_ingredient(Googletest
+  EXTERNAL_PROJECT_ARGS
+    URL https://github.com/google/googletest/archive/644319b.tar.gz
+    URL_MD5 e4cfcbe80bf32cb8caa8a7666ebc206c)
+
+cooking_ingredient(Googlebenchmark
+  CMAKE_ARGS
+    -DBENCHMARK_ENABLE_GTEST_TESTS=OFF
+    -DBENCHMARK_ENABLE_TESTING=OFF
+  EXTERNAL_PROJECT_ARGS
+    URL https://github.com/google/benchmark/archive/eec9a8e.tar.gz
+    URL_MD5 81f6af37a81753cb9d799012b62ae04d)
