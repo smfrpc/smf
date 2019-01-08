@@ -52,7 +52,7 @@ cooking_ingredient(Flatbuffers
 
 set(
   FLATBUFFERS_COMPILER
-  ${flatbuffers_BINARY_DIR}/flatc
+  ${Flatbuffers_BINARY_DIR}/flatc
   CACHE
   STRING
   "flatc binary for generating code"
