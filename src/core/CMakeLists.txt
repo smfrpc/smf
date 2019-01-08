@@ -2,16 +2,6 @@
 # https://github.com/scylladb/seastar/blob/master/CMakeLists.txt#L566-L585
 find_package (Seastar 1.0 REQUIRED)
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.1)
-    add_definitions(-DSMF_GCC_CONCEPTS=1)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
-    if(CMAKE_BUILD_TYPE MATCHES Debug)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lasan -lubsan")
-    endif()
-  endif()
-endif()
-
 if(SMF_BUILD_REGENERATE_RPC_FBS)
   # This is an exception to what we suggest people to use
   # when using this cmake function
@@ -83,11 +73,6 @@ target_link_libraries(smf
   Flatbuffers::flatbuffers
   Zstd::zstd
   Hdrhistogram::hdr_histogram_static)
-
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  target_compile_options(smf PUBLIC -fconcepts)
-  target_compile_definitions(smf PUBLIC -DSMF_GCC_CONCEPTS=1)
-endif()
 
 
 

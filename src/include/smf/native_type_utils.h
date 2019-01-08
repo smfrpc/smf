@@ -7,7 +7,6 @@
 #include <core/temporary_buffer.hh>
 #include <flatbuffers/flatbuffers.h>
 
-#include "smf/flatbuffers_concepts.h"
 #include "smf/log.h"
 
 namespace smf {
@@ -21,7 +20,6 @@ namespace smf {
 ///
 ///
 template <typename RootType>
-SMF_CONCEPT(requires FlatBuffersNativeTable<RootType>)
 seastar::temporary_buffer<char> native_table_as_buffer(
   const typename RootType::NativeTableType &t) {
   flatbuffers::FlatBufferBuilder bdr;

@@ -33,12 +33,6 @@ char (&smf_array_size_helper(T (&array)[N]))[N];
 #define SMF_UNLIKELY(x) (x)
 #endif
 
-#ifndef SMF_GCC_CONCEPTS
-#define SMF_CONCEPT(x...)
-#else
-#define SMF_CONCEPT(x...) x
-#endif
-
 // we only compile on linux. both clang & gcc support this
 #if defined(__clang__) || defined(__GNUC__)
 #define SMF_ALWAYS_INLINE inline __attribute__((__always_inline__))
