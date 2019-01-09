@@ -9,7 +9,7 @@ set -x
 THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT=$(git rev-parse --show-toplevel)
 IMAGES="
-fedora:29
+ubuntu:bionic
 "
 # Always has to be launched from root
 # Docker depends on it

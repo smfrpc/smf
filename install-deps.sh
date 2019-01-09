@@ -21,8 +21,8 @@ function debs() {
     apt-get install -y \
             pkg-config \
             build-essential \
-            g++ \
-            gcc \
+            g++-8 \
+            gcc-8 \
             make \
             cmake \
             libaio-dev \
@@ -38,6 +38,11 @@ function debs() {
             doxygen \
             stow \
             python ${extra}
+    if [[ ! -z ${CI} ]]; then
+        update-alternatives --remove-all gcc || true
+        update-alternatives --install /usr/bin/g++ g++-8 /usr/bin/g++-8  100
+        update-alternatives --install /usr/bin/gcc gcc-8 /usr/bin/gcc-8  100
+    fi
 }
 
 function rpms() {
