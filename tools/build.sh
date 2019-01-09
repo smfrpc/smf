@@ -15,7 +15,7 @@ fi
 . /etc/os-release
 
 this_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-root="${this_dir}/../"
+root="$(cd ${this_dir}/.. && pwd)"
 declare -r buildcmd="ninja -C ${root}/build"
 buildtype="debug"
 builddir=$root/build
