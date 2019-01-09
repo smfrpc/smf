@@ -3,5 +3,5 @@ sudo: required
 language: cpp
 
 script:
-  - ./install-deps.sh
+  - sudo ./install-deps.sh
   - ./tools/build.sh -rt
