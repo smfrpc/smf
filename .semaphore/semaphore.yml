@@ -13,4 +13,7 @@ blocks:
         commands:
           - checkout
           - sudo ./install-deps.sh
+          - sudo update-alternatives --remove-all gcc || true
+          - sudo update-alternatives --install /usr/bin/g++ g++-8 /usr/bin/g++-8  100
+          - sudo update-alternatives --install /usr/bin/gcc gcc-8 /usr/bin/gcc-8  100
           - ./tools/build.sh -rt
