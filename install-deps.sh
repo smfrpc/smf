@@ -34,6 +34,7 @@ function debs() {
             libxml2-dev \
             libpciaccess-dev \
             ninja-build \
+            m4 \
             libtool \
             doxygen \
             stow \
@@ -68,6 +69,7 @@ function rpms() {
     ${yumdnf} install -y \
               cmake \
               gcc-c++ \
+              m4 \
               make \
               libpciaccess-devel \
               libaio-devel \
