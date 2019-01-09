@@ -71,6 +71,7 @@ function rpms() {
               xfsprogs-devel \
               systemtap-sdt-devel \
               lksctp-tools-devel \
+              libtool \
               ninja-build \
               doxygen \
               stow \
