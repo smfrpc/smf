@@ -9,10 +9,17 @@ function debs() {
   if [ -n "${USE_CLANG}" ]; then
     extra=clang
   fi
-  apt-get update
+  if [ ! -f /usr/bin/add-apt-repository ]; then
+      apt-get -y install software-properties-common
+  fi
+  add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  apt-get update -y
   apt-get install -y \
     pkg-config \
     build-essential \
+    g++ \
+    gcc \
+    make \
     cmake \
     libaio-dev \
     libcrypto++-dev \
@@ -23,6 +30,7 @@ function debs() {
     libxml2-dev \
     libpciaccess-dev \
     ninja-build \
+    libtool \
     doxygen \
     stow \
     python ${extra}
