@@ -181,8 +181,7 @@ cooking_ingredient (xxHash
       -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
       -DBUILD_XXHSUM=OFF
       -DBUILD_SHARED_LIBS=OFF
+      -DBUILD_ENABLE_INLINE_API=ON
       <SOURCE_DIR>/cmake_unofficial
-    INSTALL_COMMAND
-      ${make_command} install && ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/xxhash.c <INSTALL_DIR>/include/xxhash.c
-    URL https://github.com/Cyan4973/xxHash/archive/v0.6.5.tar.gz
-    URL_MD5 6af3a964f3c2accebce66e54b44b6446)
+    URL https://github.com/Cyan4973/xxHash/archive/c9970b8.tar.gz
+    URL_MD5 c1c87865e98f79144814a1d57db47751)
