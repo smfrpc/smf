@@ -44,7 +44,7 @@ cooking_ingredient (Boost
       --layout=system
       --build-dir=<BINARY_DIR>
       install
-      variant=debug
+      variant=release
       link=static # different from seastar
       threading=multi
       hardcode-dll-paths=true
