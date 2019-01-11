@@ -14,6 +14,7 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE Release)
 endif()
 
+option(SMF_INSTALL "Enable installation of smf" ON)
 option(SMF_ENABLE_TESTS "Useful for disabling all tests" ON)
 option(SMF_ENABLE_INTEGRATION_TESTS "control if integrations are bulit and ran" ON)
 option(SMF_ENABLE_UNIT_TESTS "control if unit tests are bulit and ran" ON)
@@ -46,3 +47,25 @@ if(SMF_BUILD_PROGRAMS)
   add_subdirectory(demo_apps)
 endif()
 
+# configuration file
+if(SMF_INSTALL)
+  include (GNUInstallDirs)
+  include (CMakePackageConfigHelpers)
+  set(install_cmakedir ${CMAKE_INSTALL_LIBDIR}/cmake/smf)
+  install (
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  configure_package_config_file (
+    ${CMAKE_CURRENT_LIST_DIR}/cmake/smf-config.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/smf-config.cmake
+    INSTALL_DESTINATION ${install_cmakedir})
+  install (
+    FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/smf-config.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindBoost.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/smf.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindZstd.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindxxHash.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindHdrhistogram.cmake
+    DESTINATION ${install_cmakedir})
+endif()
