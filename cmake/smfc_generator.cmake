@@ -1,8 +1,6 @@
-#  1. over time this should become a proper cmake module
-#set(FLATBUFFERS_COMPILER flatc)
-
-find_program (FLATBUFFERS_COMPILER
-  flatc)
+# This module is exported. So use find_program by cmake
+find_program (FLATBUFFERS_COMPILER flatc)
+find_program (SMF_COMPILER smfc)
 
 function(smfc_gen)
   set(options CPP GOLANG VERBOSE)
@@ -60,13 +58,13 @@ function(smfc_gen)
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     # smfc
     add_custom_command(OUTPUT ${SMF_GEN_OUTPUT}
-      COMMAND smfc
+      COMMAND ${SMF_COMPILER}
       ARGS --filename ${FILE}
       ARGS "${smfc_language}"
       ARGS "${smfc_generated_includes}"
       ARGS --output_path="${SMFC_GEN_OUTPUT_DIRECTORY}"
       COMMENT "Generating smf rpc stubs for ${FILE}"
-      DEPENDS smfc
+      DEPENDS ${SMF_COMPILER}
       DEPENDS ${FILE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endforeach()
