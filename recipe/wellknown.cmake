@@ -142,9 +142,8 @@ cooking_ingredient(Flatbuffers
 
 cooking_ingredient(GFlags
   CMAKE_ARGS
-    -DCMAKE_BUILD_TYPE=Release
     -DGFLAGS_NAMESPACE=google
-    -DBUILD_SHARED_LIBS=ON
+    -DBUILD_SHARED_LIBS=OFF
     -DBUILD_STATIC_LIBS=ON
     -DBUILD_gflags_LIB=ON
   EXTERNAL_PROJECT_ARGS
@@ -168,8 +167,7 @@ cooking_ingredient(Googlebenchmark
 cooking_ingredient(Glog
   REQUIRES GFlags
   CMAKE_ARGS
-    -DCMAKE_BUILD_TYPE=Release
-    -DBUILD_SHARED_LIBS=ON
+    -DBUILD_SHARED_LIBS=OFF
     -DWITH_GFLAGS=ON
   EXTERNAL_PROJECT_ARGS
     URL https://github.com/google/glog/archive/5d46e1b.tar.gz)
