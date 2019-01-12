@@ -9,7 +9,7 @@
 #include <smf/rpc_generated.h>
 
 // smfc generated headers
-#include "integration_tests/rpc_bad_msg_t/bad_svc.smf.fb.h"
+#include "bad_svc.smf.fb.h"
 
 using test_msg_t = smf::rpc_typed_envelope<bad::msg::test>;
 

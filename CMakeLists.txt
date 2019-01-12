@@ -27,27 +27,128 @@ if(NOT SMF_ENABLE_TESTS)
 endif()
 
 
-option(SMF_BUILD_REGENERATE_RPC_FBS "regenerate the rpc.fbs file" OFF)
+option(SMF_BUILD_REGENERATE_RPC_FBS "regenerate the rpc.fbs file" ON)
 option(SMF_BUILD_PROGRAMS "Build smf programs and demos" ON)
 
 include(ccache)
 include(doxygen_gen)
-include(doxygen_gen)
 include(packaging)
 include(set_option)
 include(tests)
+include(smfc_generator)
 
-include_directories(
-  ${PROJECT_SOURCE_DIR}/src
-  ${PROJECT_BINARY_DIR}/src)
+# must come before installation
+# Because of a cmake bugs. One can only include
+# targets defined in the same file. wut!...
+# So here life becomes a french farce and we have to inline a bunch of code
+# https://cmake.org/Bug/view.php?id=14444
+find_package (Flatbuffers REQUIRED)
+find_package(gflags REQUIRED)
+find_package(glog REQUIRED)
+find_package(Boost COMPONENTS
+  system
+  filesystem
+  REQUIRED)
+find_package (Threads)
 
-add_subdirectory(src)
+set(SMFC_SOURCES
+  src/smfc/codegen.cc
+  src/smfc/cpp_generator.cc
+  src/smfc/go_generator.cc
+  src/smfc/main.cc)
 
+set(SMFC_LIBS
+  flatbuffers::flatbuffers
+  Boost::system
+  Boost::filesystem
+  gflags
+  glog::glog
+  ${CMAKE_THREAD_LIBS_INIT}
+  )
+
+add_executable(smfc ${SMFC_SOURCES})
+target_link_libraries(smfc PRIVATE ${SMFC_LIBS})
+target_include_directories(smfc PRIVATE src/smfc)
+
+
+#find_package(Flatbuffers REQUIRED)
+find_package(Zstd REQUIRED)
+find_package(Hdrhistogram REQUIRED)
+find_package(xxHash REQUIRED)
+find_package(Seastar 1.0 REQUIRED)
+
+if(SMF_BUILD_REGENERATE_RPC_FBS)
+  # This is an exception to what we suggest people to use
+  # when using this cmake function
+  # We want to generate the rpc.fbs *inside* include/smf
+  # so that when other projects link against it, they will
+  # be able to build regardless if they are or aren't cmake projects
+  #
+  smfc_gen(
+    CPP
+    TARGET_NAME raw_rpc_gen
+    OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/src/include/smf
+    SOURCES ${PROJECT_SOURCE_DIR}/src/core/rpc.fbs)
+endif()
+
+
+file(GLOB smf_includes "${CMAKE_CURRENT_SOURCE_DIR}/src/include/*.h")
+file(GLOB smf_srcs "${CMAKE_CURRENT_SOURCE_DIR}/src/core/*.cc")
+add_library(smf STATIC
+  ${smf_srcs}
+  ${smf_includes}
+  )
+set_target_properties(smf PROPERTIES VERSION ${PROJECT_VERSION})
+target_include_directories(smf PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>
+    $<INSTALL_INTERFACE:include>  # <prefix>/include
+)
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+  target_compile_options(smf PRIVATE
+    -fdiagnostics-color=auto
+    -Wall
+    -Werror
+    -Wextra
+    -Wformat
+    -Wmissing-braces
+    -Wparentheses
+    -Wpointer-arith
+    -Wformat-security
+    -Wunused
+    -Wno-unused-parameter
+    -Wcast-align
+    -Wno-missing-field-initializers
+    -Wdelete-non-virtual-dtor
+    -Wno-ignored-qualifiers)
+endif()
+
+target_compile_definitions(smf PUBLIC -DXXH_PRIVATE_API)
+target_link_libraries(smf
+  PUBLIC
+  Seastar::seastar
+  flatbuffers::flatbuffers
+  xxHash::xxhash
+  Zstd::zstd
+  Hdrhistogram::hdr_histogram)
+
+# we need the compiler to generate the rpc header
+add_dependencies(smf smfc)
+
+
+if(SMF_ENABLE_BENCHMARK_TESTS)
+  add_subdirectory(src/benchmarks)
+endif()
+if(SMF_ENABLE_INTEGRATION_TESTS)
+  add_subdirectory(src/integration_tests)
+endif()
+if(SMF_ENABLE_UNIT_TESTS)
+  add_subdirectory(src/tests)
+endif()
 if(SMF_BUILD_PROGRAMS)
   add_subdirectory(demo_apps)
 endif()
 
-# configuration file
+# configuration for downstream projects
 if(SMF_INSTALL)
   include (GNUInstallDirs)
   include (CMakePackageConfigHelpers)
@@ -55,6 +156,22 @@ if(SMF_INSTALL)
   install (
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/include/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  install (
+    TARGETS
+      smfc
+    EXPORT smf-export
+    DESTINATION ${CMAKE_INSTALL_BINDIR})
+  install (
+    TARGETS
+      smf
+    EXPORT smf-export
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  install (
+    EXPORT smf-export
+    FILE smfTargets.cmake
+    NAMESPACE smf::
+    DESTINATION ${install_cmakedir})
   configure_package_config_file (
     ${CMAKE_CURRENT_LIST_DIR}/cmake/smf-config.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/smf-config.cmake
@@ -68,4 +185,9 @@ if(SMF_INSTALL)
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindxxHash.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindHdrhistogram.cmake
     DESTINATION ${install_cmakedir})
+  export (
+    EXPORT smf-export
+    FILE ${CMAKE_CURRENT_BINARY_DIR}/smfTargets.cmake
+    NAMESPACE smf::)
+  export (PACKAGE smf)
 endif()
