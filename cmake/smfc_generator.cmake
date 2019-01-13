@@ -1,12 +1,13 @@
-# This module is exported. So use find_program by cmake
-find_program (FLATBUFFERS_COMPILER flatc)
-find_program (SMF_COMPILER smfc)
-
 function(smfc_gen)
   set(options CPP GOLANG VERBOSE)
   set(oneValueArgs TARGET_NAME OUTPUT_DIRECTORY)
   set(multiValueArgs SOURCES INCLUDE_DIRS)
   cmake_parse_arguments(SMFC_GEN "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+  # Do not put outside of function. We need them discovered later
+  # per invocation
+  find_program (FLATBUFFERS_COMPILER flatc)
+  find_program (SMF_COMPILER smfc)
 
   # We need one per generator so we can pass it to the flatc compiler
   #
