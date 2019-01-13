@@ -7,11 +7,13 @@ function(smfc_gen)
   # Do not put outside of function. We need them discovered later
   # per invocation
   find_program (FLATBUFFERS_COMPILER flatc)
-  set(SMF_COMPILER $<TARGET_FILE:smfc>)
-  # find_program (SMF_COMPILER smfc)
-  # if(SMF_COMPILER-NOTFOUND)
-  #   set(SMF_COMPILER $<TARGET_FILE:smfc>)
-  # endif()
+  # for smfc do it in 2 stages.
+  # first stage is for downstream consumers.
+  # Second stage is for internal targets
+  find_program (SMF_COMPILER smfc)
+  if(NOT SMF_COMPILER)
+    set(SMF_COMPILER $<TARGET_FILE:smfc>)
+  endif()
 
   # We need one per generator so we can pass it to the flatc compiler
   #
