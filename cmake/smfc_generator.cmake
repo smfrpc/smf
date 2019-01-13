@@ -7,7 +7,11 @@ function(smfc_gen)
   # Do not put outside of function. We need them discovered later
   # per invocation
   find_program (FLATBUFFERS_COMPILER flatc)
-  find_program (SMF_COMPILER smfc)
+  set(SMF_COMPILER $<TARGET_FILE:smfc>)
+  # find_program (SMF_COMPILER smfc)
+  # if(SMF_COMPILER-NOTFOUND)
+  #   set(SMF_COMPILER $<TARGET_FILE:smfc>)
+  # endif()
 
   # We need one per generator so we can pass it to the flatc compiler
   #
