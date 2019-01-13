@@ -69,7 +69,6 @@ function (smf_test)
   foreach(i ${SMF_TEST_INCLUDES})
     target_include_directories(${SMF_TEST_BINARY_NAME} PUBLIC ${i})
   endforeach()
-
 endfunction ()
 if(SMF_ENABLE_TESTS)
   add_custom_target(check

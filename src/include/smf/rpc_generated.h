@@ -307,10 +307,12 @@ inline flatbuffers::Offset<dynamic_header> Createdynamic_headerDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const char *key = nullptr,
     const char *value = nullptr) {
+  auto key__ = key ? _fbb.CreateString(key) : 0;
+  auto value__ = value ? _fbb.CreateString(value) : 0;
   return smf::rpc::Createdynamic_header(
       _fbb,
-      key ? _fbb.CreateString(key) : 0,
-      value ? _fbb.CreateString(value) : 0);
+      key__,
+      value__);
 }
 
 flatbuffers::Offset<dynamic_header> Createdynamic_header(flatbuffers::FlatBufferBuilder &_fbb, const dynamic_headerT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
@@ -441,9 +443,10 @@ inline flatbuffers::Offset<payload_headers> Createpayload_headersDirect(
     uint32_t size = 0,
     uint32_t checksum = 0,
     compression_flags compression = compression_flags_none) {
+  auto dynamic_headers__ = dynamic_headers ? _fbb.CreateVector<flatbuffers::Offset<dynamic_header>>(*dynamic_headers) : 0;
   return smf::rpc::Createpayload_headers(
       _fbb,
-      dynamic_headers ? _fbb.CreateVector<flatbuffers::Offset<dynamic_header>>(*dynamic_headers) : 0,
+      dynamic_headers__,
       size,
       checksum,
       compression);

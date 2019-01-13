@@ -1,4 +1,5 @@
 find_package(benchmark REQUIRED)
+include(smfc_generator)
 smfc_gen(
   CPP
   TARGET_NAME kv_fbs

@@ -20,15 +20,13 @@ option(SMF_ENABLE_INTEGRATION_TESTS "control if integrations are bulit and ran" 
 option(SMF_ENABLE_UNIT_TESTS "control if unit tests are bulit and ran" ON)
 option(SMF_ENABLE_BENCHMARK_TESTS "control if benchmarks are bulit and ran" OFF)
 option(SMF_ENABLE_CMAKE_PROJECT_FLAGS "control cmake_cxx_flags_*" OFF)
+option(SMF_BUILD_PROGRAMS "Build smf programs and demos" ON)
+
 if(NOT SMF_ENABLE_TESTS)
   set(SMF_ENABLE_INTEGRATION_TESTS  OFF)
   set(SMF_ENABLE_UNIT_TESTS  OFF)
   set(SMF_ENABLE_BENCHMARK_TESTS  OFF)
 endif()
-
-
-option(SMF_BUILD_REGENERATE_RPC_FBS "regenerate the rpc.fbs file" ON)
-option(SMF_BUILD_PROGRAMS "Build smf programs and demos" ON)
 
 include(ccache)
 include(doxygen_gen)
@@ -77,24 +75,17 @@ find_package(Hdrhistogram REQUIRED)
 find_package(xxHash REQUIRED)
 find_package(Seastar 1.0 REQUIRED)
 
-if(SMF_BUILD_REGENERATE_RPC_FBS)
-  # This is an exception to what we suggest people to use
-  # when using this cmake function
-  # We want to generate the rpc.fbs *inside* include/smf
-  # so that when other projects link against it, they will
-  # be able to build regardless if they are or aren't cmake projects
-  #
-  smfc_gen(
-    CPP
-    TARGET_NAME raw_rpc_gen
-    OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/src/include/smf
-    SOURCES ${PROJECT_SOURCE_DIR}/src/core/rpc.fbs)
-endif()
+smfc_gen(
+  CPP
+  TARGET_NAME raw_rpc_gen
+  OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/src/include/smf
+  SOURCES ${PROJECT_SOURCE_DIR}/src/core/rpc.fbs)
 
 
 file(GLOB smf_includes "${CMAKE_CURRENT_SOURCE_DIR}/src/include/*.h")
 file(GLOB smf_srcs "${CMAKE_CURRENT_SOURCE_DIR}/src/core/*.cc")
 add_library(smf STATIC
+  ${raw_rpc_gen}
   ${smf_srcs}
   ${smf_includes}
   )
@@ -176,6 +167,10 @@ if(SMF_INSTALL)
     ${CMAKE_CURRENT_LIST_DIR}/cmake/smf-config.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/smf-config.cmake
     INSTALL_DESTINATION ${install_cmakedir})
+  write_basic_package_version_file (
+    ${CMAKE_CURRENT_BINARY_DIR}/smf-config-version.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY ExactVersion)
   install (
     FILES
     ${CMAKE_CURRENT_BINARY_DIR}/smf-config.cmake
