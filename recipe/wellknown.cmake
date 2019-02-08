@@ -99,7 +99,7 @@ cooking_ingredient(Seastar
     -DSeastar_TESTING=OFF
   EXTERNAL_PROJECT_ARGS
     GIT_REPOSITORY https://github.com/scylladb/seastar
-    GIT_TAG 428f4ac
+    GIT_TAG 26dff41
     )
 
 
