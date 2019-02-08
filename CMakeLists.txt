@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5) # 3.5 required by seastar
-list (APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-include (Cooking OPTIONAL)
+list(APPEND CMAKE_MODULE_PATH
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake
+  ${CMAKE_CURRENT_BINARY_DIR})
+include(Cooking OPTIONAL)
 project(SMF VERSION "0.1.0" LANGUAGES CXX C)
 # https://cmake.org/cmake/help/v3.4/policy/CMP0065.html
 cmake_policy(SET CMP0065 OLD)
@@ -40,7 +42,7 @@ include(smfc_generator)
 # targets defined in the same file. wut!...
 # So here life becomes a french farce and we have to inline a bunch of code
 # https://cmake.org/Bug/view.php?id=14444
-find_package (Flatbuffers REQUIRED)
+find_package(Flatbuffers REQUIRED)
 find_package(gflags REQUIRED)
 find_package(glog REQUIRED)
 find_package(Boost COMPONENTS
@@ -56,7 +58,7 @@ set(SMFC_SOURCES
   src/smfc/main.cc)
 
 set(SMFC_LIBS
-  flatbuffers::flatbuffers
+  Flatbuffers::flatbuffers
   Boost::system
   Boost::filesystem
   gflags
@@ -69,7 +71,6 @@ target_link_libraries(smfc PRIVATE ${SMFC_LIBS})
 target_include_directories(smfc PRIVATE src/smfc)
 
 
-#find_package(Flatbuffers REQUIRED)
 find_package(Zstd REQUIRED)
 find_package(Hdrhistogram REQUIRED)
 find_package(xxHash REQUIRED)
@@ -117,7 +118,7 @@ target_compile_definitions(smf PUBLIC -DXXH_PRIVATE_API)
 target_link_libraries(smf
   PUBLIC
   Seastar::seastar
-  flatbuffers::flatbuffers
+  Flatbuffers::flatbuffers
   xxHash::xxhash
   Zstd::zstd
   Hdrhistogram::hdr_histogram)
@@ -141,37 +142,37 @@ endif()
 
 # configuration for downstream projects
 if(SMF_INSTALL)
-  include (GNUInstallDirs)
-  include (CMakePackageConfigHelpers)
+  include(GNUInstallDirs)
+  include(CMakePackageConfigHelpers)
   set(install_cmakedir ${CMAKE_INSTALL_LIBDIR}/cmake/smf)
-  install (
+  install(
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/include/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-  install (
+  install(
     TARGETS
       smfc
     EXPORT smf-export
     DESTINATION ${CMAKE_INSTALL_BINDIR})
-  install (
+  install(
     TARGETS
       smf
     EXPORT smf-export
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-  install (
+  install(
     EXPORT smf-export
     FILE smfTargets.cmake
     NAMESPACE smf::
     DESTINATION ${install_cmakedir})
-  configure_package_config_file (
+  configure_package_config_file(
     ${CMAKE_CURRENT_LIST_DIR}/cmake/smf-config.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/smf-config.cmake
     INSTALL_DESTINATION ${install_cmakedir})
-  write_basic_package_version_file (
+  write_basic_package_version_file(
     ${CMAKE_CURRENT_BINARY_DIR}/smf-config-version.cmake
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY ExactVersion)
-  install (
+  install(
     FILES
     ${CMAKE_CURRENT_BINARY_DIR}/smf-config.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindBoost.cmake
@@ -180,9 +181,9 @@ if(SMF_INSTALL)
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindxxHash.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindHdrhistogram.cmake
     DESTINATION ${install_cmakedir})
-  export (
+  export(
     EXPORT smf-export
     FILE ${CMAKE_CURRENT_BINARY_DIR}/smfTargets.cmake
     NAMESPACE smf::)
-  export (PACKAGE smf)
+  export(PACKAGE smf)
 endif()

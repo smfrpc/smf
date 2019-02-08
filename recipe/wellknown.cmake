@@ -87,8 +87,8 @@ cooking_ingredient(Seastar
     yaml-cpp
     fmt
     lz4
-  # This means in seastar/recipe/dev.cmake
-  COOKING_RECIPE dev
+  # This means Seastar/cooking_recipe.cmake
+  COOKING_RECIPE <DEFAULT>
   COOKING_CMAKE_ARGS
     # Not `lib64`.
     -DCMAKE_INSTALL_LIBDIR=lib
@@ -99,7 +99,7 @@ cooking_ingredient(Seastar
     -DSeastar_TESTING=OFF
   EXTERNAL_PROJECT_ARGS
     GIT_REPOSITORY https://github.com/scylladb/seastar
-    GIT_TAG 7598d86
+    GIT_TAG 428f4ac
     )
 
 
