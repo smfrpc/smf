@@ -180,6 +180,7 @@ if(SMF_INSTALL)
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindZstd.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindxxHash.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindHdrhistogram.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindFlatbuffers.cmake
     DESTINATION ${install_cmakedir})
   export(
     EXPORT smf-export
