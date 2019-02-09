@@ -18,7 +18,7 @@ cooking_ingredient (zlib
   EXTERNAL_PROJECT_ARGS
     URL https://zlib.net/zlib-1.2.11.tar.gz
     URL_MD5 1c9f62f0778697a09d36121ead88e08e
-    CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --64
+    CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>
     BUILD_COMMAND <DISABLE>
     INSTALL_COMMAND ${make_command} install)
 
@@ -80,9 +80,31 @@ cooking_ingredient (lz4
     BUILD_COMMAND <DISABLE>
     INSTALL_COMMAND ${make_command} PREFIX=<INSTALL_DIR> install)
 
+
+cooking_ingredient(xy
+  EXTERNAL_PROJECT_ARGS
+    URL https://tukaani.org/xz/xz-5.2.4.tar.gz
+    URL_MD5 5ace3264bdd00c65eeec2891346f65e6
+    CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>
+    BUILD_COMMAND <DISABLE>
+    INSTALL_COMMAND ${make_command} install)
+
+cooking_ingredient(xml2
+  REQUIRES
+    zlib
+    xy
+  EXTERNAL_PROJECT_ARGS
+    URL ftp://xmlsoft.org/libxml2/libxml2-sources-2.9.9.tar.gz
+    URL_MD5 71650ebeffe776c6aefdbaaa9e437bfc
+    CONFIGURE_COMMAND <SOURCE_DIR>/configure --without-python --prefix=<INSTALL_DIR>
+    BUILD_COMMAND <DISABLE>
+    INSTALL_COMMAND ${make_command} install)
+
 cooking_ingredient(Seastar
   REQUIRES
     zlib
+    xy
+    xml2
     Boost
     yaml-cpp
     fmt

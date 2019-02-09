@@ -16,9 +16,11 @@ fi
 
 this_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="$(cd ${this_dir}/.. && pwd)"
-declare -r buildcmd="ninja -C ${root}/build"
 buildtype="debug"
 builddir=$root/build
+function buildcmd() {
+    ninja -C $builddir
+}
 case $ID in
     debian|ubuntu|linuxmint)
         echo "$ID supported"
@@ -35,20 +37,25 @@ esac
 function debug {
     echo "Debug"
     cd $root
-    $root/cooking.sh -r wellknown
+    builddir="$builddir/debug"
+    mkdir -p $builddir
+    $root/cooking.sh -r wellknown -d $builddir
     # for fmt.py
     ln -sfn "${builddir}/compile_commands.json" "${root}/compile_commands.json"
-    ${buildcmd}
+    buildcmd
 }
 
 function tests {
     echo "Testing"
+    mkdir -p $builddir
     cd ${builddir}
     ctest --output-on-failure -V -R smf
 }
 function release {
     echo "Release"
     cd $root
+    builddir="$builddir/release"
+    mkdir -p $builddir
     local travis=""
     if [[ ! -z ${TRAVIS} ]]; then
         set -x
@@ -56,14 +63,14 @@ function release {
         # skip dpdk
         # use -O1 for speed
         $this_dir/travis_stdout.sh \
-            "$root/cooking.sh -r wellknown -t Release -- -DCMAKE_CXX_FLAGS_RELEASE='-O1 -DNDEBUG' > $root/travis_cmake.log"
+            "$root/cooking.sh -r wellknown -t Release -d $builddir -- -DCMAKE_CXX_FLAGS_RELEASE='-O1 -DNDEBUG' > $root/travis_cmake.log"
         tail --lines=1000 $root/travis_cmake.log
     else
-        $root/cooking.sh -r wellknown -t Release -- -DSMF_ENABLE_BENCHMARK_TESTS=ON
+        $root/cooking.sh -r wellknown -t Release -d $builddir -- -DSMF_ENABLE_BENCHMARK_TESTS=ON
     fi
     # for fmt.py
     ln -sfn "${builddir}/compile_commands.json" "${root}/compile_commands.json"
-    ${buildcmd}
+    buildcmd
 }
 
 function format {
@@ -74,6 +81,7 @@ function format {
 
 function package {
     echo "Package"
+    mkdir -p $builddir
     cd ${builddir}
     cpack -D CPACK_RPM_PACKAGE_DEBUG=1 \
           -D CPACK_RPM_SPEC_INSTALL_POST="/bin/true" -G RPM;
