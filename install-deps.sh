@@ -25,9 +25,7 @@ function debs() {
             gcc-8 \
             make \
             cmake \
-            libcrypto++-dev \
             xfslibs-dev \
-            libunwind-dev \
             systemtap-sdt-dev \
             libsctp-dev \
             libpciaccess-dev \
@@ -70,7 +68,6 @@ function rpms() {
               m4 \
               make \
               libpciaccess-devel \
-              libunwind-devel \
               xfsprogs-devel \
               systemtap-sdt-devel \
               lksctp-tools-devel \
