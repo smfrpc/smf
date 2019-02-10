@@ -25,13 +25,11 @@ function debs() {
             gcc-8 \
             make \
             cmake \
-            libaio-dev \
             libcrypto++-dev \
             xfslibs-dev \
             libunwind-dev \
             systemtap-sdt-dev \
             libsctp-dev \
-            libxml2-dev \
             libpciaccess-dev \
             ninja-build \
             m4 \
@@ -72,9 +70,7 @@ function rpms() {
               m4 \
               make \
               libpciaccess-devel \
-              libaio-devel \
               libunwind-devel \
-              libxml2-devel \
               xfsprogs-devel \
               systemtap-sdt-devel \
               lksctp-tools-devel \
