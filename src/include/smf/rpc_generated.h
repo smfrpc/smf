@@ -74,7 +74,6 @@ inline const char * const *EnumNamescompression_flags() {
 }
 
 inline const char *EnumNamecompression_flags(compression_flags e) {
-  if (e < compression_flags_none || e > compression_flags_lz4) return "";
   const size_t index = static_cast<int>(e);
   return EnumNamescompression_flags()[index];
 }
@@ -101,7 +100,6 @@ inline const char * const *EnumNamesheader_bit_flags() {
 }
 
 inline const char *EnumNameheader_bit_flags(header_bit_flags e) {
-  if (e < header_bit_flags_has_payload_headers || e > header_bit_flags_has_payload_headers) return "";
   const size_t index = static_cast<int>(e) - static_cast<int>(header_bit_flags_has_payload_headers);
   return EnumNamesheader_bit_flags()[index];
 }
@@ -234,7 +232,7 @@ struct dynamic_header FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
     return "smf.rpc.dynamic_header";
   }
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+  enum {
     VT_KEY = 4,
     VT_VALUE = 6
   };
@@ -307,12 +305,10 @@ inline flatbuffers::Offset<dynamic_header> Createdynamic_headerDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const char *key = nullptr,
     const char *value = nullptr) {
-  auto key__ = key ? _fbb.CreateString(key) : 0;
-  auto value__ = value ? _fbb.CreateString(value) : 0;
   return smf::rpc::Createdynamic_header(
       _fbb,
-      key__,
-      value__);
+      key ? _fbb.CreateString(key) : 0,
+      value ? _fbb.CreateString(value) : 0);
 }
 
 flatbuffers::Offset<dynamic_header> Createdynamic_header(flatbuffers::FlatBufferBuilder &_fbb, const dynamic_headerT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
@@ -349,7 +345,7 @@ struct payload_headers FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
     return "smf.rpc.payload_headers";
   }
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+  enum {
     VT_DYNAMIC_HEADERS = 4,
     VT_SIZE = 6,
     VT_CHECKSUM = 8,
@@ -443,10 +439,9 @@ inline flatbuffers::Offset<payload_headers> Createpayload_headersDirect(
     uint32_t size = 0,
     uint32_t checksum = 0,
     compression_flags compression = compression_flags_none) {
-  auto dynamic_headers__ = dynamic_headers ? _fbb.CreateVector<flatbuffers::Offset<dynamic_header>>(*dynamic_headers) : 0;
   return smf::rpc::Createpayload_headers(
       _fbb,
-      dynamic_headers__,
+      dynamic_headers ? _fbb.CreateVector<flatbuffers::Offset<dynamic_header>>(*dynamic_headers) : 0,
       size,
       checksum,
       compression);
@@ -627,7 +622,7 @@ inline const flatbuffers::TypeTable *header_bit_flagsTypeTable() {
   static const flatbuffers::TypeFunction type_refs[] = {
     header_bit_flagsTypeTable
   };
-  static const int64_t values[] = { 1 };
+  static const int32_t values[] = { 1 };
   static const char * const names[] = {
     "has_payload_headers"
   };
@@ -650,7 +645,7 @@ inline const flatbuffers::TypeTable *headerTypeTable() {
     compression_flagsTypeTable,
     header_bit_flagsTypeTable
   };
-  static const int64_t values[] = { 0, 1, 2, 4, 8, 12, 16 };
+  static const int32_t values[] = { 0, 1, 2, 4, 8, 12, 16 };
   static const char * const names[] = {
     "compression",
     "bitflags",
