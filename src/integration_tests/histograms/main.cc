@@ -1,5 +1,6 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
+#include <iostream>
 // seastar
 #include <seastar/core/app-template.hh>
 #include <seastar/core/distributed.hh>

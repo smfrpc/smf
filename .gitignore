@@ -57,9 +57,11 @@ CPackSourceConfig.cmake
 CTestTestfile.cmake
 CMakeDoxyfile.in
 CMakeDoxygenDefaults.cmake
+deps-build/
 
 src/demo_apps/demo_client
 src/demo_apps/demo_server
+bin/
 
 # tests
 src/integration_tests/*_test

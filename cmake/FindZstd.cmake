@@ -2,19 +2,17 @@ find_package (PkgConfig REQUIRED)
 
 pkg_search_module (Zstd_PC
   QUIET
-  zstd)
+  libzstd)
 
 find_library (Zstd_LIBRARY
   NAMES zstd
   HINTS
-    ${Zstd_PC_LIBDIR}
     ${Zstd_PC_LIBRARY_DIRS})
 
 find_path (Zstd_INCLUDE_DIR
   NAMES zstd.h
   HINTS
-    ${Zstd_PC_INCLUDEDIR}
-    ${Zstd_PC_INCLUDEDIRS})
+    ${Zstd_PC_INCLUDE_DIRS})
 
 mark_as_advanced (
   Zstd_LIBRARY

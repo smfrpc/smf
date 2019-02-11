@@ -1,11 +1,8 @@
-cmake_minimum_required(VERSION 3.5) # 3.5 required by seastar
-list(APPEND CMAKE_MODULE_PATH
-  ${CMAKE_CURRENT_SOURCE_DIR}/cmake
-  ${CMAKE_CURRENT_BINARY_DIR})
-include(Cooking OPTIONAL)
+cmake_minimum_required(VERSION 3.9)
 project(SMF VERSION "0.1.0" LANGUAGES CXX C)
-# https://cmake.org/cmake/help/v3.4/policy/CMP0065.html
-cmake_policy(SET CMP0065 OLD)
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -v")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
@@ -16,32 +13,58 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE Release)
 endif()
 
-option(SMF_INSTALL "Enable installation of smf" ON)
-option(SMF_ENABLE_TESTS "Useful for disabling all tests" ON)
+option(SMF_BUILD_PROGRAMS "Build smf programs and demos" ON)
 option(SMF_ENABLE_INTEGRATION_TESTS "control if integrations are bulit and ran" ON)
 option(SMF_ENABLE_UNIT_TESTS "control if unit tests are bulit and ran" ON)
 option(SMF_ENABLE_BENCHMARK_TESTS "control if benchmarks are bulit and ran" OFF)
-option(SMF_ENABLE_CMAKE_PROJECT_FLAGS "control cmake_cxx_flags_*" OFF)
-option(SMF_BUILD_PROGRAMS "Build smf programs and demos" ON)
+option(SMF_INSTALL "Enable installation of smf" ON)
+option(SMF_ENABLE_TESTS "Useful for disabling all tests" ON)
 
-if(NOT SMF_ENABLE_TESTS)
-  set(SMF_ENABLE_INTEGRATION_TESTS  OFF)
-  set(SMF_ENABLE_UNIT_TESTS  OFF)
-  set(SMF_ENABLE_BENCHMARK_TESTS  OFF)
+# fetch and build dependencies. each dependency is built in isolation allowing
+# tight control over the build configuration, and avoiding any inadvertant cmake
+# cache pollution. the dependencies are built at configure-time and then
+# imported as normal cmake dependencies, which will easily enable future
+# iterations to selectively satisfy dependencies from system packages.
+configure_file(CMakeLists.txt.in deps-build/CMakeLists.txt @ONLY)
+execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+  RESULT_VARIABLE result
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/deps-build)
+if(result)
+  message(FATAL_ERROR "CMake step for deps-build failed: ${result}")
+endif()
+execute_process(COMMAND ${CMAKE_COMMAND} --build .
+  RESULT_VARIABLE result
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/deps-build)
+if(result)
+  message(FATAL_ERROR "Build step for deps-build failed: ${result}")
 endif()
 
-include(ccache)
-include(doxygen_gen)
-include(packaging)
-include(set_option)
-include(tests)
-include(smfc_generator)
+# wire up dependency search paths
+foreach(dep_dir
+    "seastar_ext-prefix/src/seastar_ext/build/release"
+    "seastar_ext-prefix/src/seastar_ext/build/release/_cooking/installed"
+    "xxhash_ext-prefix"
+    "HdrHistogram_ext-prefix"
+    "gtest_ext-prefix"
+    "gflags_ext-prefix/lib/cmake"
+    "glog_ext-prefix/lib64/cmake"
+    "googlebenchmark_ext-prefix/lib/cmake")
+  list(APPEND CMAKE_PREFIX_PATH
+    "${CMAKE_CURRENT_BINARY_DIR}/deps-build/${dep_dir}")
+endforeach()
 
-# must come before installation
-# Because of a cmake bugs. One can only include
-# targets defined in the same file. wut!...
-# So here life becomes a french farce and we have to inline a bunch of code
-# https://cmake.org/Bug/view.php?id=14444
+# seastar includes several custom cmake modules
+list(APPEND CMAKE_MODULE_PATH
+  "${CMAKE_CURRENT_BINARY_DIR}/deps-build/seastar_ext-prefix/src/seastar_ext/cmake")
+
+# FIXME: according to the docs, cmake >= 3.1 should support pkg-config
+# automatically searching CMAKE_PREFIX_PATH for pkg-config modules. However, as
+# it stand it seems to only work when configuring the search path via
+# environment variable.
+set(ENV{PKG_CONFIG_PATH}
+  "${CMAKE_CURRENT_BINARY_DIR}/deps-build/zstd_ext-prefix/src/zstd_ext-build/lib")
+
+find_package(Seastar REQUIRED)
 find_package(Flatbuffers REQUIRED)
 find_package(gflags REQUIRED)
 find_package(glog REQUIRED)
@@ -50,92 +73,29 @@ find_package(Boost COMPONENTS
   filesystem
   REQUIRED)
 find_package (Threads)
-
-set(SMFC_SOURCES
-  src/smfc/codegen.cc
-  src/smfc/cpp_generator.cc
-  src/smfc/go_generator.cc
-  src/smfc/main.cc)
-
-set(SMFC_LIBS
-  Flatbuffers::flatbuffers
-  Boost::system
-  Boost::filesystem
-  gflags
-  glog::glog
-  ${CMAKE_THREAD_LIBS_INIT}
-  )
-
-add_executable(smfc ${SMFC_SOURCES})
-target_link_libraries(smfc PRIVATE ${SMFC_LIBS})
-target_include_directories(smfc PRIVATE src/smfc)
-
-
-find_package(Zstd REQUIRED)
 find_package(Hdrhistogram REQUIRED)
 find_package(xxHash REQUIRED)
-find_package(Seastar 1.0 REQUIRED)
+find_package(Zstd REQUIRED)
 
-smfc_gen(
-  CPP
-  TARGET_NAME raw_rpc_gen
-  OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/src/include/smf
-  SOURCES ${PROJECT_SOURCE_DIR}/src/core/rpc.fbs)
-
-
-file(GLOB smf_includes "${CMAKE_CURRENT_SOURCE_DIR}/src/include/*.h")
-file(GLOB smf_srcs "${CMAKE_CURRENT_SOURCE_DIR}/src/core/*.cc")
-add_library(smf STATIC
-  ${raw_rpc_gen}
-  ${smf_srcs}
-  ${smf_includes}
-  )
-set_target_properties(smf PROPERTIES VERSION ${PROJECT_VERSION})
-target_include_directories(smf PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>
-    $<INSTALL_INTERFACE:include>  # <prefix>/include
-)
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-  target_compile_options(smf PRIVATE
-    -fdiagnostics-color=auto
-    -Wall
-    -Werror
-    -Wextra
-    -Wformat
-    -Wmissing-braces
-    -Wparentheses
-    -Wpointer-arith
-    -Wformat-security
-    -Wunused
-    -Wno-unused-parameter
-    -Wcast-align
-    -Wno-missing-field-initializers
-    -Wdelete-non-virtual-dtor
-    -Wno-ignored-qualifiers)
+if(NOT SMF_ENABLE_TESTS)
+  set(SMF_ENABLE_INTEGRATION_TESTS  OFF)
+  set(SMF_ENABLE_UNIT_TESTS  OFF)
+  set(SMF_ENABLE_BENCHMARK_TESTS  OFF)
 endif()
 
-target_compile_definitions(smf PUBLIC -DXXH_PRIVATE_API)
-target_link_libraries(smf
-  PUBLIC
-  Seastar::seastar
-  Flatbuffers::flatbuffers
-  xxHash::xxhash
-  Zstd::zstd
-  Hdrhistogram::hdr_histogram)
+# put all the libs and binaries in one place
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# we need the compiler to generate the rpc header
-add_dependencies(smf smfc)
+include(smfc_generator)
+include(tests)
+include(ccache)
+include(doxygen_gen)
+include(packaging)
 
+add_subdirectory(src)
 
-if(SMF_ENABLE_BENCHMARK_TESTS)
-  add_subdirectory(src/benchmarks)
-endif()
-if(SMF_ENABLE_INTEGRATION_TESTS)
-  add_subdirectory(src/integration_tests)
-endif()
-if(SMF_ENABLE_UNIT_TESTS)
-  add_subdirectory(src/tests)
-endif()
 if(SMF_BUILD_PROGRAMS)
   add_subdirectory(demo_apps)
 endif()
@@ -148,17 +108,6 @@ if(SMF_INSTALL)
   install(
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/include/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-  install(
-    TARGETS
-      smfc
-    EXPORT smf-export
-    DESTINATION ${CMAKE_INSTALL_BINDIR})
-  install(
-    TARGETS
-      smf
-    EXPORT smf-export
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
   install(
     EXPORT smf-export
     FILE smfTargets.cmake
