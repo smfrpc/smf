@@ -25,7 +25,7 @@ option(SMF_ENABLE_TESTS "Useful for disabling all tests" ON)
 # cache pollution. the dependencies are built at configure-time and then
 # imported as normal cmake dependencies, which will easily enable future
 # iterations to selectively satisfy dependencies from system packages.
-configure_file(CMakeLists.txt.in deps-build/CMakeLists.txt @ONLY)
+configure_file(CMakeLists.txt.in ${CMAKE_CURRENT_BINARY_DIR}/deps-build/CMakeLists.txt @ONLY)
 execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
   RESULT_VARIABLE result
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/deps-build)
