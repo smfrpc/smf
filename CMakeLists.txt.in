@@ -17,7 +17,7 @@ ExternalProject_Add(zstd_ext
   SOURCE_SUBDIR   "build/cmake"
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=Release
-    -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+    -DCMAKE_INSTALL_PREFIX=@CMAKE_CURRENT_BINARY_DIR@/deps-build/deps-install
     -DZSTD_MULTITHREAD_SUPPORT=OFF
     -DZSTD_LEGACY_SUPPORT=OFF
     -DZSTD_BUILD_STATIC=ON
@@ -29,7 +29,7 @@ ExternalProject_Add(HdrHistogram_ext
   GIT_TAG         59cbedec68d56ae2b484d45cd7ad2f930f2c9d91
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=Release
-    -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+    -DCMAKE_INSTALL_PREFIX=@CMAKE_CURRENT_BINARY_DIR@/deps-build/deps-install
     -DHDR_HISTOGRAM_BUILD_PROGRAMS=OFF
     -DHDR_HISTOGRAM_BUILD_SHARED=OFF)
 
@@ -39,7 +39,7 @@ ExternalProject_Add(xxhash_ext
   SOURCE_SUBDIR   "cmake_unofficial"
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=Release
-    -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+    -DCMAKE_INSTALL_PREFIX=@CMAKE_CURRENT_BINARY_DIR@/deps-build/deps-install
     -DBUILD_XXHSUM=OFF
     -DBUILD_SHARED_LIBS=OFF
     -DBUILD_ENABLE_INLINE_API=ON)
@@ -49,14 +49,14 @@ ExternalProject_Add(gtest_ext
   GIT_TAG         644319b9f06f6ca9bf69fe791be399061044bc3d
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=Release
-    -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>)
+    -DCMAKE_INSTALL_PREFIX=@CMAKE_CURRENT_BINARY_DIR@/deps-build/deps-install)
 
 ExternalProject_Add(gflags_ext
   GIT_REPOSITORY  https://github.com/gflags/gflags.git
   GIT_TAG         1005485222e8b0feff822c5723ddcaa5abadc01a
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=Release
-    -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+    -DCMAKE_INSTALL_PREFIX=@CMAKE_CURRENT_BINARY_DIR@/deps-build/deps-install
     -DBUILD_SHARED_LIBS=OFF
     -DBUILD_STATIC_LIBS=ON
     -DBUILD_gflags_LIB=ON
@@ -68,7 +68,7 @@ ExternalProject_Add(glog_ext
   GIT_TAG         5d46e1bcfc92bf06a9ca3b3f1c5bb1dc024d9ecd
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=Release
-    -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+    -DCMAKE_INSTALL_PREFIX=@CMAKE_CURRENT_BINARY_DIR@/deps-build/deps-install
     -DBUILD_SHARED_LIBS=OFF
     -DWITH_GFLAGS=ON
   DEPENDS gflags_ext)
@@ -78,7 +78,7 @@ ExternalProject_Add(googlebenchmark_ext
   GIT_TAG         eec9a8e4976a397988c15e5a4b71a542375a2240
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=Release
-    -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+    -DCMAKE_INSTALL_PREFIX=@CMAKE_CURRENT_BINARY_DIR@/deps-build/deps-install
     -DBENCHMARK_ENABLE_GTEST_TESTS=OFF
     -DBENCHMARK_ENABLE_TESTING=OFF
   DEPENDS gflags_ext)

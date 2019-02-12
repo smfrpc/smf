@@ -39,16 +39,15 @@ if(result)
   message(FATAL_ERROR "Build step for deps-build failed: ${result}")
 endif()
 
-# wire up dependency search paths
+# wire up dependency search paths. most of the dependencies land in
+# `deps-install` directory. the exception is seastar which we are currently
+# depending on to build some of its own depenencies. TODO: once we start
+# building seastar's dependencies too, we can install seastar and this will be
+# an even cleaner path configuration.
 foreach(dep_dir
     "seastar_ext-prefix/src/seastar_ext/build/release"
     "seastar_ext-prefix/src/seastar_ext/build/release/_cooking/installed"
-    "xxhash_ext-prefix"
-    "HdrHistogram_ext-prefix"
-    "gtest_ext-prefix"
-    "gflags_ext-prefix/lib/cmake"
-    "glog_ext-prefix/lib64/cmake"
-    "googlebenchmark_ext-prefix/lib/cmake")
+    "deps-install")
   list(APPEND CMAKE_PREFIX_PATH
     "${CMAKE_CURRENT_BINARY_DIR}/deps-build/${dep_dir}")
 endforeach()
@@ -56,13 +55,6 @@ endforeach()
 # seastar includes several custom cmake modules
 list(APPEND CMAKE_MODULE_PATH
   "${CMAKE_CURRENT_BINARY_DIR}/deps-build/seastar_ext-prefix/src/seastar_ext/cmake")
-
-# FIXME: according to the docs, cmake >= 3.1 should support pkg-config
-# automatically searching CMAKE_PREFIX_PATH for pkg-config modules. However, as
-# it stand it seems to only work when configuring the search path via
-# environment variable.
-set(ENV{PKG_CONFIG_PATH}
-  "${CMAKE_CURRENT_BINARY_DIR}/deps-build/zstd_ext-prefix/src/zstd_ext-build/lib")
 
 find_package(Seastar REQUIRED)
 find_package(Flatbuffers REQUIRED)
