@@ -35,6 +35,8 @@ add_library(smf STATIC
   ${raw_rpc_gen}
   ${smf_srcs})
 
+add_library(smf::smf ALIAS smf)
+
 set_target_properties(smf PROPERTIES VERSION ${PROJECT_VERSION})
 
 target_include_directories(smf PUBLIC
