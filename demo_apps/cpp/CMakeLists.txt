@@ -5,6 +5,8 @@ smfc_gen(
   SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/../demo_service.fbs)
 
 add_executable(demo_server server/main.cc "${demo_fbs}")
+set_target_properties(demo_server PROPERTIES
+  OUTPUT_NAME smf_demo_server)
 target_link_libraries(demo_server smf)
 target_include_directories(demo_server
   PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
@@ -12,6 +14,8 @@ target_include_directories(demo_server
 )
 
 add_executable(demo_client client/main.cc "${demo_fbs}")
+set_target_properties(demo_client PROPERTIES
+  OUTPUT_NAME smf_demo_client)
 target_link_libraries(demo_client smf)
 target_include_directories(demo_client
   PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
