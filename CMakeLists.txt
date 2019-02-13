@@ -25,36 +25,26 @@ option(SMF_ENABLE_TESTS "Useful for disabling all tests" ON)
 # cache pollution. the dependencies are built at configure-time and then
 # imported as normal cmake dependencies, which will easily enable future
 # iterations to selectively satisfy dependencies from system packages.
-configure_file(CMakeLists.txt.in ${CMAKE_CURRENT_BINARY_DIR}/deps-build/CMakeLists.txt @ONLY)
+set(SMF_DEPS_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/smf-deps-build)
+set(SMF_DEPS_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/smf-deps-install)
+configure_file(CMakeLists.txt.in ${SMF_DEPS_BUILD_DIR}/CMakeLists.txt @ONLY)
 execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
   RESULT_VARIABLE result
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/deps-build)
+  WORKING_DIRECTORY ${SMF_DEPS_BUILD_DIR})
 if(result)
   message(FATAL_ERROR "CMake step for deps-build failed: ${result}")
 endif()
 execute_process(COMMAND ${CMAKE_COMMAND} --build .
   RESULT_VARIABLE result
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/deps-build)
+  WORKING_DIRECTORY ${SMF_DEPS_BUILD_DIR})
 if(result)
   message(FATAL_ERROR "Build step for deps-build failed: ${result}")
 endif()
 
-# wire up dependency search paths. most of the dependencies land in
-# `deps-install` directory. the exception is seastar which we are currently
-# depending on to build some of its own depenencies. TODO: once we start
-# building seastar's dependencies too, we can install seastar and this will be
-# an even cleaner path configuration.
-foreach(dep_dir
-    "seastar_ext-prefix/src/seastar_ext/build/release"
-    "seastar_ext-prefix/src/seastar_ext/build/release/_cooking/installed"
-    "deps-install")
-  list(APPEND CMAKE_PREFIX_PATH
-    "${CMAKE_CURRENT_BINARY_DIR}/deps-build/${dep_dir}")
-endforeach()
-
+# wire up dependency search paths.
+list(APPEND CMAKE_PREFIX_PATH "${SMF_DEPS_INSTALL_DIR}")
 # seastar includes several custom cmake modules
-list(APPEND CMAKE_MODULE_PATH
-  "${CMAKE_CURRENT_BINARY_DIR}/deps-build/seastar_ext-prefix/src/seastar_ext/cmake")
+list(APPEND CMAKE_MODULE_PATH "${SMF_DEPS_BUILD_DIR}/seastar_ext-prefix/src/seastar_ext/cmake")
 
 find_package(Seastar REQUIRED)
 find_package(Flatbuffers REQUIRED)

@@ -3,6 +3,26 @@
 # Copyright 2018 SMF Authors
 #
 
+# NOAH: current set of fc29 dependencies not covered by deps build
+#
+# cmake
+# gcc-c++
+# make
+# git
+# zlib-devel
+# which
+# c-ares-devel
+# lz4-devel
+# cryptopp-devel
+# gnutls-devel
+# lksctp-tools-devel
+# ragel
+# yaml-cpp-devel
+# hwloc-devel
+# numactl-devel
+# xfsprogs-devel
+# systemtap-sdt-devel
+
 set -e
 
 . /etc/os-release
