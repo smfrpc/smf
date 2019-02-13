@@ -26,7 +26,7 @@ install(TARGETS smfc
 smfc_gen(
   CPP
   TARGET_NAME raw_rpc_gen
-  OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/smf
+  OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/smf
   SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/core/rpc.fbs)
 
 file(GLOB smf_srcs "${CMAKE_CURRENT_SOURCE_DIR}/core/*.cc")
@@ -40,6 +40,7 @@ add_library(smf::smf ALIAS smf)
 set_target_properties(smf PROPERTIES VERSION ${PROJECT_VERSION})
 
 target_include_directories(smf PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 

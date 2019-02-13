@@ -20,6 +20,8 @@ function(smfc_gen)
   set(flatc_generated_includes)
   set(smfc_generated_includes)
 
+  file(MAKE_DIRECTORY ${SMFC_GEN_OUTPUT_DIRECTORY})
+
   # need to know the language we are generating
   set(smfc_language)
   set(flatc_language)
