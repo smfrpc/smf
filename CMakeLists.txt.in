@@ -50,6 +50,33 @@ ExternalProject_Add(protobuf_ext
   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --srcdir=<SOURCE_DIR>
   BUILD_COMMAND ${make_command})
 
+# FIXME: this setup seems to cause dpdk to rebuild each time
+set(dpdk_quadruple ${CMAKE_SYSTEM_PROCESSOR}-native-linuxapp-gcc)
+
+set (dpdk_args
+  EXTRA_CFLAGS=-Wno-error
+  O=<BINARY_DIR>
+  DESTDIR=@SMF_DEPS_INSTALL_DIR@
+  T=${dpdk_quadruple})
+
+ExternalProject_Add(dpdk_ext
+  GIT_REPOSITORY https://github.com/scylladb/dpdk.git
+  GIT_TAG a1774652fbbb1fe7c0ff392d5e66de60a0154df6
+  CONFIGURE_COMMAND
+    COMMAND
+      ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
+      make ${dpdk_args} config
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DSeastar_DPDK_CONFIG_FILE_IN=<BINARY_DIR>/.config
+      -DSeastar_DPDK_CONFIG_FILE_CHANGES=@CMAKE_CURRENT_SOURCE_DIR@/dpdk_config
+      -DSeastar_DPDK_CONFIG_FILE_OUT=<BINARY_DIR>/${dpdk_quadruple}/.config
+      -P @CMAKE_CURRENT_SOURCE_DIR@/cmake/dpdk_configure.cmake
+  BUILD_COMMAND ""
+  INSTALL_COMMAND
+   ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
+   ${make_command} ${dpdk_args} install)
+
 ExternalProject_Add(seastar_ext
   GIT_REPOSITORY    https://github.com/scylladb/seastar.git
   GIT_TAG           9ed5fca9207f81662dd205b5c778890165959f3f
@@ -58,13 +85,13 @@ ExternalProject_Add(seastar_ext
     -DCMAKE_BUILD_TYPE=Release
     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
     -DSeastar_INSTALL=ON
-    -DSeastar_DPDK=OFF
+    -DSeastar_DPDK=ON
     -DSeastar_APPS=OFF
     -DSeastar_DEMOS=OFF
     -DSeastar_DOCS=OFF
     -DSeastar_TESTING=OFF
   BUILD_COMMAND ${make_command}
-  DEPENDS fmt_ext boost_ext protobuf_ext)
+  DEPENDS fmt_ext boost_ext protobuf_ext dpdk_ext)
 
 ExternalProject_Add(zstd_ext
   GIT_REPOSITORY  https://github.com/facebook/zstd.git
