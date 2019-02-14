@@ -77,6 +77,27 @@ ExternalProject_Add(dpdk_ext
    ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
    ${make_command} ${dpdk_args} install)
 
+ExternalProject_Add(c-ares_ext
+  URL https://c-ares.haxx.se/download/c-ares-1.13.0.tar.gz
+  URL_MD5 d2e010b43537794d8bedfb562ae6bba2
+  INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
+  CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --srcdir=<SOURCE_DIR>
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ${make_command} install)
+
+ExternalProject_Add(yaml-cpp_ext
+  URL https://github.com/jbeder/yaml-cpp/archive/yaml-cpp-0.5.3.tar.gz
+  URL_MD5 2bba14e6a7f12c7272f87d044e4a7211
+  INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
+  CMAKE_ARGS
+    -DCMAKE_BUILD_TYPE=Release
+    -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+    -DCMAKE_PREFIX_PATH=<INSTALL_DIR>
+    -DYAML_CPP_BUILD_TESTS=OFF
+    -DBUILD_SHARED_LIBS=ON
+  BUILD_COMMAND ${make_command}
+  DEPENDS boost_ext)
+
 ExternalProject_Add(seastar_ext
   GIT_REPOSITORY    https://github.com/scylladb/seastar.git
   GIT_TAG           9ed5fca9207f81662dd205b5c778890165959f3f
@@ -92,7 +113,7 @@ ExternalProject_Add(seastar_ext
     -DSeastar_DOCS=OFF
     -DSeastar_TESTING=OFF
   BUILD_COMMAND ${make_command}
-  DEPENDS fmt_ext boost_ext protobuf_ext dpdk_ext)
+  DEPENDS fmt_ext boost_ext protobuf_ext dpdk_ext yaml-cpp_ext c-ares_ext)
 
 ExternalProject_Add(zstd_ext
   GIT_REPOSITORY  https://github.com/facebook/zstd.git
