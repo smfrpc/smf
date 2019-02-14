@@ -84,6 +84,7 @@ ExternalProject_Add(seastar_ext
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=Release
     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+    -DCMAKE_PREFIX_PATH=<INSTALL_DIR>
     -DSeastar_INSTALL=ON
     -DSeastar_DPDK=ON
     -DSeastar_APPS=OFF
