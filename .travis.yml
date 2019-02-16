@@ -1,7 +1,15 @@
 dist: xenial
 sudo: required 
 language: cpp
+services:
+  - docker
+
+matrix:
+  include:
+    - os: linux
+      env: DOCKER_IMAGE=fedora:29
+    - os: linux
+      env: DOCKER_IMAGE=ubuntu:bionic
 
 script:
-  - sudo ./install-deps.sh
-  - ./tools/build.sh -rt
+  - ci/build-in-docker.sh ${DOCKER_IMAGE}
