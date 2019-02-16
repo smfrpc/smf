@@ -3,26 +3,6 @@
 # Copyright 2018 SMF Authors
 #
 
-# NOAH: current set of fc29 dependencies not covered by deps build
-#
-# cmake
-# gcc-c++
-# make
-# git
-# zlib-devel
-# which
-# c-ares-devel
-# lz4-devel
-# cryptopp-devel
-# gnutls-devel
-# lksctp-tools-devel
-# ragel
-# yaml-cpp-devel
-# hwloc-devel
-# numactl-devel
-# xfsprogs-devel
-# systemtap-sdt-devel
-
 set -e
 
 . /etc/os-release
@@ -31,35 +11,34 @@ function debs() {
     if [ -n "${USE_CLANG}" ]; then
         extra=clang
     fi
-    if [ "$ID" = "ubuntu" ]; then
-        if [ ! -f /usr/bin/add-apt-repository ]; then
-            apt-get -y install software-properties-common
-        fi
-        add-apt-repository -y ppa:ubuntu-toolchain-r/test
-    fi
+
+    #if [ "$ID" = "ubuntu" ]; then
+    #    if [ ! -f /usr/bin/add-apt-repository ]; then
+    #        apt-get -y install software-properties-common
+    #    fi
+    #    add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    #fi
+
     apt-get update -y
     apt-get install -y \
-            pkg-config \
-            build-essential \
-            g++-8 \
-            gcc-8 \
-            make \
-            cmake \
-            xfslibs-dev \
-            systemtap-sdt-dev \
-            libsctp-dev \
-            libpciaccess-dev \
-            ninja-build \
-            m4 \
-            libtool \
-            doxygen \
-            stow \
-            python ${extra}
-    if [[ ! -z ${CI} ]]; then
-        update-alternatives --remove-all gcc || true
-        update-alternatives --install /usr/bin/g++ g++-8 /usr/bin/g++-8  100
-        update-alternatives --install /usr/bin/gcc gcc-8 /usr/bin/gcc-8  100
-    fi
+        cmake \
+        build-essential \
+        git \
+        pkg-config \
+        liblz4-dev \
+        xfslibs-dev \
+        libsctp-dev \
+        systemtap-sdt-dev \
+        libcrypto++-dev \
+        gnutls-dev \
+        ragel \
+        libhwloc-dev ${extra}
+
+    #if [[ ! -z ${CI} ]]; then
+    #    update-alternatives --remove-all gcc || true
+    #    update-alternatives --install /usr/bin/g++ g++-8 /usr/bin/g++-8  100
+    #    update-alternatives --install /usr/bin/gcc gcc-8 /usr/bin/gcc-8  100
+    #fi
 }
 
 function rpms() {
@@ -82,20 +61,25 @@ function rpms() {
     if [ -n "${USE_CLANG}" ]; then
         extra=clang
     fi
+
     ${yumdnf} install -y \
-              cmake \
-              gcc-c++ \
-              m4 \
-              make \
-              libpciaccess-devel \
-              xfsprogs-devel \
-              systemtap-sdt-devel \
-              lksctp-tools-devel \
-              libtool \
-              ninja-build \
-              doxygen \
-              stow \
-              python ${extra}
+        cmake \
+        gcc-c++ \
+        make \
+        git \
+        zlib-devel \
+        which \
+        lz4-devel \
+        cryptopp-devel \
+        gnutls-devel \
+        lksctp-tools-devel \
+        ragel \
+        hwloc-devel \
+        numactl-devel \
+        xfsprogs-devel \
+        systemtap-sdt-devel \
+        libpciaccess-devel \
+        doxygen ${extra}
 }
 
 case $ID in
