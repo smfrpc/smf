@@ -87,12 +87,14 @@ ExternalProject_Add(dpdk_ext
    ${make_command} ${dpdk_args} install)
 
 ExternalProject_Add(c-ares_ext
-  URL https://c-ares.haxx.se/download/c-ares-1.13.0.tar.gz
-  URL_MD5 d2e010b43537794d8bedfb562ae6bba2
+  URL https://github.com/c-ares/c-ares/archive/cares-1_13_0.tar.gz
+  URL_MD5 cdb21052a7eb85261da22f83c0654cfd
   INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
-  CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --srcdir=<SOURCE_DIR>
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ${make_command} install)
+  CMAKE_ARGS
+    -DCMAKE_BUILD_TYPE=Release
+    -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+    -DCMAKE_PREFIX_PATH=<INSTALL_DIR>
+  BUILD_COMMAND ${make_command})
 
 ExternalProject_Add(yaml-cpp_ext
   URL https://github.com/jbeder/yaml-cpp/archive/yaml-cpp-0.5.3.tar.gz
