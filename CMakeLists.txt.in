@@ -6,6 +6,15 @@ cmake_host_system_information(
   QUERY NUMBER_OF_LOGICAL_CORES)
 set(make_command make -j ${build_concurrency_factor})
 
+set(autotools_flags
+  CFLAGS=-I@SMF_DEPS_INSTALL_DIR@/include
+  CXXFLAGS=-I@SMF_DEPS_INSTALL_DIR@/include
+  LDFLAGS=-L@SMF_DEPS_INSTALL_DIR@/lib)
+
+set(PKG_CONFIG_PATH PKG_CONFIG_PATH=@SMF_DEPS_INSTALL_DIR@/lib/pkgconfig)
+
+set(info_dir --infodir=@SMF_DEPS_INSTALL_DIR@/share/info)
+
 include(ExternalProject)
 
 ExternalProject_Add(boost_ext
@@ -32,8 +41,8 @@ ExternalProject_Add(boost_ext
     dll-path=@SMF_DEPS_INSTALL_DIR@/lib)
 
 ExternalProject_Add(fmt_ext
-  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-  GIT_TAG        9e554999ce02cf86fcdfe74fe740c4fe3f5a56d5
+  URL https://github.com/fmtlib/fmt/archive/9e554999ce02cf86fcdfe74fe740c4fe3f5a56d5.tar.gz
+  URL_MD5 e2869a5032a6cc35b4d14008b6125ed9
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=Release
@@ -60,8 +69,8 @@ set (dpdk_args
   T=${dpdk_quadruple})
 
 ExternalProject_Add(dpdk_ext
-  GIT_REPOSITORY https://github.com/scylladb/dpdk.git
-  GIT_TAG a1774652fbbb1fe7c0ff392d5e66de60a0154df6
+  URL https://github.com/scylladb/dpdk/archive/a1774652fbbb1fe7c0ff392d5e66de60a0154df6.tar.gz
+  URL_MD5 2af337f9ed29955362845808d6cdaa3e
   CONFIGURE_COMMAND
     COMMAND
       ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
@@ -98,9 +107,56 @@ ExternalProject_Add(yaml-cpp_ext
   BUILD_COMMAND ${make_command}
   DEPENDS boost_ext)
 
+ExternalProject_Add(gmp_ext
+  URL https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2
+  URL_MD5 8ddbb26dc3bd4e2302984debba1406a5
+  INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
+  CONFIGURE_COMMAND
+    <SOURCE_DIR>/configure
+    --prefix=<INSTALL_DIR>
+    --srcdir=<SOURCE_DIR>
+    ${info_dir}/gmp
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ${make_command} install)
+
+ExternalProject_Add(nettle_ext
+  URL https://ftp.gnu.org/gnu/nettle/nettle-3.4.tar.gz
+  URL_MD5 dc0f13028264992f58e67b4e8915f53d
+  INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
+  CONFIGURE_COMMAND
+    <SOURCE_DIR>/configure
+    --prefix=<INSTALL_DIR>
+    --srcdir=<SOURCE_DIR>
+    --libdir=<INSTALL_DIR>/lib
+    ${info_dir}/nettle
+    ${autotools_flags}
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ${make_command} install
+  DEPENDS gmp_ext)
+
+ExternalProject_Add(gnutls_ext
+  URL https://www.gnupg.org/ftp/gcrypt/gnutls/v3.5/gnutls-3.5.18.tar.xz
+  URL_MD5 c2d93d305ecbc55939bc2a8ed4a76a3d
+  INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
+  CONFIGURE_COMMAND
+   ${CMAKE_COMMAND} -E env ${PKG_CONFIG_PATH}
+    <SOURCE_DIR>/configure
+    --prefix=<INSTALL_DIR>
+    --srcdir=<SOURCE_DIR>
+    --with-included-unistring
+    --with-included-libtasn1
+    --without-p11-kit
+    # https://lists.gnupg.org/pipermail/gnutls-help/2016-February/004085.html
+    --disable-non-suiteb-curves
+    --disable-doc
+    ${autotools_flags}
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ${make_command} install
+  DEPENDS gmp_ext nettle_ext)
+
 ExternalProject_Add(seastar_ext
-  GIT_REPOSITORY    https://github.com/scylladb/seastar.git
-  GIT_TAG           9ed5fca9207f81662dd205b5c778890165959f3f
+  URL https://github.com/scylladb/seastar/archive/9ed5fca9207f81662dd205b5c778890165959f3f.tar.gz
+  URL_MD5 fd700f0508b953262a224f94baa9128e
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=Release
@@ -113,14 +169,14 @@ ExternalProject_Add(seastar_ext
     -DSeastar_DOCS=OFF
     -DSeastar_TESTING=OFF
   BUILD_COMMAND ${make_command}
-  DEPENDS fmt_ext boost_ext protobuf_ext dpdk_ext yaml-cpp_ext c-ares_ext)
+  DEPENDS fmt_ext boost_ext protobuf_ext dpdk_ext yaml-cpp_ext c-ares_ext gnutls_ext)
 
 # in cmake >= 3.7
 #   use SOURCE_SUBDIR "build/cmake"
 #   instead of CONFIGURE_COMMAND used below
 ExternalProject_Add(zstd_ext
-  GIT_REPOSITORY  https://github.com/facebook/zstd.git
-  GIT_TAG         470344d33e1d52a2ada75d278466da8d4ee2faf6
+  URL https://github.com/facebook/zstd/archive/470344d33e1d52a2ada75d278466da8d4ee2faf6.tar.gz
+  URL_MD5 52368c486e11c0f21990c8f2d4b556f9
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CONFIGURE_COMMAND
     ${CMAKE_COMMAND}
@@ -135,12 +191,13 @@ ExternalProject_Add(zstd_ext
   BUILD_COMMAND ${make_command})
 
 ExternalProject_Add(HdrHistogram_ext
-  GIT_REPOSITORY  https://github.com/HdrHistogram/HdrHistogram_c.git
-  GIT_TAG         59cbedec68d56ae2b484d45cd7ad2f930f2c9d91
+  URL https://github.com/HdrHistogram/HdrHistogram_c/archive/59cbedec68d56ae2b484d45cd7ad2f930f2c9d91.tar.gz
+  URL_MD5 6794ddea304a7e0e939ad807a70fea5b
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=Release
     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+    -DCMAKE_PREFIX_PATH=<INSTALL_DIR>
     -DHDR_HISTOGRAM_BUILD_PROGRAMS=OFF
     -DHDR_HISTOGRAM_BUILD_SHARED=OFF
   BUILD_COMMAND ${make_command})
@@ -149,8 +206,8 @@ ExternalProject_Add(HdrHistogram_ext
 #   use SOURCE_SUBDIR "cmake_unofficial"
 #   instead of CONFIGURE_COMMAND used below
 ExternalProject_Add(xxhash_ext
-  GIT_REPOSITORY  https://github.com/Cyan4973/xxHash.git
-  GIT_TAG         c9970b8ec4155e789f1c3682da923869a496ba9d
+  URL https://github.com/Cyan4973/xxHash/archive/c9970b8ec4155e789f1c3682da923869a496ba9d.tar.gz
+  URL_MD5 c1c87865e98f79144814a1d57db47751
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CONFIGURE_COMMAND
     ${CMAKE_COMMAND}
@@ -163,8 +220,8 @@ ExternalProject_Add(xxhash_ext
   BUILD_COMMAND ${make_command})
 
 ExternalProject_Add(gtest_ext
-  GIT_REPOSITORY  https://github.com/google/googletest.git
-  GIT_TAG         644319b9f06f6ca9bf69fe791be399061044bc3d
+  URL https://github.com/google/googletest/archive/644319b9f06f6ca9bf69fe791be399061044bc3d.tar.gz
+  URL_MD5 e4cfcbe80bf32cb8caa8a7666ebc206c
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=Release
@@ -172,8 +229,8 @@ ExternalProject_Add(gtest_ext
   BUILD_COMMAND ${make_command})
 
 ExternalProject_Add(gflags_ext
-  GIT_REPOSITORY  https://github.com/gflags/gflags.git
-  GIT_TAG         1005485222e8b0feff822c5723ddcaa5abadc01a
+  URL https://github.com/gflags/gflags/archive/1005485222e8b0feff822c5723ddcaa5abadc01a.tar.gz
+  URL_MD5 25582b81561bb2f1d2c05e05b4b566a8
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=Release
@@ -186,8 +243,8 @@ ExternalProject_Add(gflags_ext
   BUILD_COMMAND ${make_command})
 
 ExternalProject_Add(glog_ext
-  GIT_REPOSITORY  https://github.com/google/glog.git
-  GIT_TAG         5d46e1bcfc92bf06a9ca3b3f1c5bb1dc024d9ecd
+  URL https://github.com/google/glog/archive/5d46e1bcfc92bf06a9ca3b3f1c5bb1dc024d9ecd.tar.gz
+  URL_MD5 548900b10c18b2b7a43ae8960ec3a777
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=Release
@@ -198,8 +255,8 @@ ExternalProject_Add(glog_ext
   BUILD_COMMAND ${make_command})
 
 ExternalProject_Add(googlebenchmark_ext
-  GIT_REPOSITORY  https://github.com/google/benchmark.git
-  GIT_TAG         eec9a8e4976a397988c15e5a4b71a542375a2240
+  URL https://github.com/google/benchmark/archive/eec9a8e4976a397988c15e5a4b71a542375a2240.tar.gz
+  URL_MD5 81f6af37a81753cb9d799012b62ae04d
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=Release

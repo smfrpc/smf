@@ -8,37 +8,40 @@ set -e
 . /etc/os-release
 
 function debs() {
+    apt-get update -y
+
+    local extra=""
     if [ -n "${USE_CLANG}" ]; then
         extra=clang
+    else
+        # ensure gcc is installed so we can test its version
+        apt-get install -y build-essential
+        gcc_ver=$(gcc -dumpfullversion -dumpversion)
+        if dpkg --compare-versions ${gcc_ver} lt 8.0; then
+            if ! command -v add-apt-repository; then
+                apt-get -y install software-properties-common
+            fi
+            add-apt-repository -y ppa:ubuntu-toolchain-r/test
+            apt-get update -y
+            apt-get install -y gcc-8 g++-8
+            update-alternatives --remove-all gcc || true
+            update-alternatives --install /usr/bin/g++ g++-8 /usr/bin/g++-8  100
+            update-alternatives --install /usr/bin/gcc gcc-8 /usr/bin/gcc-8  100
+        fi
     fi
 
-    #if [ "$ID" = "ubuntu" ]; then
-    #    if [ ! -f /usr/bin/add-apt-repository ]; then
-    #        apt-get -y install software-properties-common
-    #    fi
-    #    add-apt-repository -y ppa:ubuntu-toolchain-r/test
-    #fi
-
-    apt-get update -y
     apt-get install -y \
         cmake \
         build-essential \
-        git \
+        m4 \
         pkg-config \
         liblz4-dev \
         xfslibs-dev \
         libsctp-dev \
         systemtap-sdt-dev \
         libcrypto++-dev \
-        gnutls-dev \
         ragel \
         libhwloc-dev ${extra}
-
-    #if [[ ! -z ${CI} ]]; then
-    #    update-alternatives --remove-all gcc || true
-    #    update-alternatives --install /usr/bin/g++ g++-8 /usr/bin/g++-8  100
-    #    update-alternatives --install /usr/bin/gcc gcc-8 /usr/bin/gcc-8  100
-    #fi
 }
 
 function rpms() {
@@ -66,12 +69,10 @@ function rpms() {
         cmake \
         gcc-c++ \
         make \
-        git \
         zlib-devel \
         which \
         lz4-devel \
         cryptopp-devel \
-        gnutls-devel \
         lksctp-tools-devel \
         ragel \
         hwloc-devel \
