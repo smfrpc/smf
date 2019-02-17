@@ -50,24 +50,38 @@ function rpms() {
         yumdnf="dnf"
     fi
 
-    ${yumdnf} install -y redhat-lsb-core
-    case $(lsb_release -si) in
-        CentOS)
-            MAJOR_VERSION=$(lsb_release -rs | cut -f1 -d.)
-            $SUDO yum-config-manager --add-repo https://dl.fedoraproject.org/pub/epel/$MAJOR_VERSION/x86_64/
-            $SUDO yum install --nogpgcheck -y epel-release
-            $SUDO rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-$MAJOR_VERSION
-            $SUDO rm -f /etc/yum.repos.d/dl.fedoraproject.org*
-            ;;
+    case ${ID} in
+      centos|rhel)
+        MAJOR_VERSION="$(echo $VERSION_ID | cut -d. -f1)"
+        $SUDO yum-config-manager --add-repo https://dl.fedoraproject.org/pub/epel/$MAJOR_VERSION/x86_64/
+        $SUDO yum install --nogpgcheck -y epel-release
+        $SUDO rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-$MAJOR_VERSION
+        $SUDO rm -f /etc/yum.repos.d/dl.fedoraproject.org*
+        if test $ID = centos -a $MAJOR_VERSION = 7 ; then
+          yum install -y centos-release-scl
+          yum install -y devtoolset-8
+          dts_ver=8
+        fi
+        ;;
     esac
 
     if [ -n "${USE_CLANG}" ]; then
         extra=clang
     fi
 
+    cmake="cmake"
+    case ${ID} in
+      centos|rhel)
+        MAJOR_VERSION="$(echo $VERSION_ID | cut -d. -f1)"
+        if test $MAJOR_VERSION = 7 ; then
+          cmake="cmake3"
+        fi
+    esac
+
     ${yumdnf} install -y \
-        cmake \
+        ${cmake} \
         gcc-c++ \
+        m4 \
         make \
         zlib-devel \
         which \
@@ -81,6 +95,26 @@ function rpms() {
         systemtap-sdt-devel \
         libpciaccess-devel \
         doxygen ${extra}
+
+    if [ -n "$dts_ver" ]; then
+      if test -t 1; then
+        # interactive shell
+        cat <<EOF
+Your GCC is too old. Please run following command to add DTS to your environment:
+
+scl enable devtoolset-8 bash
+
+Or add following line to the end of ~/.bashrc to add it permanently:
+
+source scl_source enable devtoolset-8
+
+see https://www.softwarecollections.org/en/scls/rhscl/devtoolset-8/ for more details.
+EOF
+      else
+        # non-interactive shell
+        source /opt/rh/devtoolset-$dts_ver/enable
+      fi
+    fi
 }
 
 case $ID in
