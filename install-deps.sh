@@ -33,15 +33,13 @@ function debs() {
     apt-get install -y \
         cmake \
         build-essential \
+        libtool \
         m4 \
+        automake \
         pkg-config \
-        liblz4-dev \
         xfslibs-dev \
-        libsctp-dev \
         systemtap-sdt-dev \
-        libcrypto++-dev \
-        ragel \
-        libhwloc-dev ${extra}
+        ragel ${extra}
 }
 
 function rpms() {
@@ -82,18 +80,12 @@ function rpms() {
         ${cmake} \
         gcc-c++ \
         m4 \
+        libtool \
         make \
-        zlib-devel \
         which \
-        lz4-devel \
-        cryptopp-devel \
-        lksctp-tools-devel \
         ragel \
-        hwloc-devel \
-        numactl-devel \
         xfsprogs-devel \
         systemtap-sdt-devel \
-        libpciaccess-devel \
         doxygen ${extra}
 
     if [ -n "$dts_ver" ]; then

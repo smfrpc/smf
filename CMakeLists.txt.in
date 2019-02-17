@@ -52,12 +52,23 @@ ExternalProject_Add(fmt_ext
     -DFMT_TEST=OFF
   BUILD_COMMAND ${make_command})
 
+ExternalProject_Add(zlib_ext
+  URL https://zlib.net/zlib-1.2.11.tar.gz
+  URL_MD5 1c9f62f0778697a09d36121ead88e08e
+  INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
+  CONFIGURE_COMMAND
+    <SOURCE_DIR>/configure
+    --prefix=<INSTALL_DIR>
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ${make_command} install)
+
 ExternalProject_Add(protobuf_ext
   URL https://github.com/protocolbuffers/protobuf/releases/download/v3.3.0/protobuf-cpp-3.3.0.tar.gz
   URL_MD5 73c28d3044e89782bdc8d9fdcfbb5792
   INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --srcdir=<SOURCE_DIR>
-  BUILD_COMMAND ${make_command})
+  BUILD_COMMAND ${make_command}
+  DEPENDS zlib_ext)
 
 # FIXME: this setup seems to cause dpdk to rebuild each time
 set(dpdk_quadruple ${CMAKE_SYSTEM_PROCESSOR}-native-linuxapp-gcc)
@@ -167,6 +178,84 @@ ExternalProject_Add(lz4_ext
   INSTALL_COMMAND
     ${make_command} PREFIX=<INSTALL_DIR> install)
 
+ExternalProject_Add(numactl_ext
+  URL https://github.com/numactl/numactl/releases/download/v2.0.12/numactl-2.0.12.tar.gz
+  URL_MD5 2ba9777d78bfd7d408a387e53bc33ebc
+  INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
+  CONFIGURE_COMMAND
+    <SOURCE_DIR>/configure
+    --prefix=<INSTALL_DIR>
+    --srcdir=<SOURCE_DIR>
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ${make_command} install)
+
+ExternalProject_Add(libpciaccess_ext
+  URL https://www.x.org/releases/individual/lib/libpciaccess-0.13.4.tar.gz
+  URL_MD5 cc1fad87da60682af1d5fa43a5da45a4
+  INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
+  CONFIGURE_COMMAND
+    <SOURCE_DIR>/configure
+    --prefix=<INSTALL_DIR>
+    --srcdir=<SOURCE_DIR>
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ${make_command} install)
+
+ExternalProject_Add(hwloc_ext
+  URL https://download.open-mpi.org/release/hwloc/v1.11/hwloc-1.11.5.tar.gz
+  URL_MD5 8f5fe6a9be2eb478409ad5e640b2d3ba
+  INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
+  CONFIGURE_COMMAND
+    <SOURCE_DIR>/configure
+    --prefix=<INSTALL_DIR>
+    --srcdir=<SOURCE_DIR>
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ${make_command} install
+  DEPENDS numactl_ext libpciaccess_ext)
+
+ExternalProject_Add(xy_ext
+  URL https://tukaani.org/xz/xz-5.2.4.tar.gz
+  URL_MD5 5ace3264bdd00c65eeec2891346f65e6
+  INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
+  CONFIGURE_COMMAND
+    <SOURCE_DIR>/configure
+    --prefix=<INSTALL_DIR>
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ${make_command} install)
+
+ExternalProject_Add(xml2_ext
+  URL ftp://xmlsoft.org/libxml2/libxml2-sources-2.9.9.tar.gz
+  URL_MD5 71650ebeffe776c6aefdbaaa9e437bfc
+  INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
+  CONFIGURE_COMMAND
+    <SOURCE_DIR>/configure
+    --without-python
+    --prefix=<INSTALL_DIR>
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ${make_command} install
+  DEPENDS xy_ext zlib_ext)
+
+ExternalProject_Add(cryptopp_ext
+  URL https://github.com/weidai11/cryptopp/archive/CRYPTOPP_5_6_5.tar.gz
+  URL_MD5 88224d9c0322f63aa1fb5b8ae78170f0
+  INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
+  CMAKE_ARGS
+    -DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@
+    -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+    -DBUILD_TESTING=OFF
+  BUILD_COMMAND ${make_command})
+
+ExternalProject_Add(lksctp-tools_ext
+  URL https://sourceforge.net/projects/lksctp/files/lksctp-tools/lksctp-tools-1.0.16.tar.gz
+  URL_MD5 708bb0b5a6806ad6e8d13c55b067518e
+  INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
+  PATCH_COMMAND ./bootstrap
+  CONFIGURE_COMMAND
+    <SOURCE_DIR>/configure
+    --prefix=<INSTALL_DIR>
+    --srcdir=<SOURCE_DIR>
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ${make_command} install)
+
 ExternalProject_Add(seastar_ext
   URL https://github.com/scylladb/seastar/archive/9ed5fca9207f81662dd205b5c778890165959f3f.tar.gz
   URL_MD5 fd700f0508b953262a224f94baa9128e
@@ -190,7 +279,14 @@ ExternalProject_Add(seastar_ext
     yaml-cpp_ext
     c-ares_ext
     gnutls_ext
-    lz4_ext)
+    lz4_ext
+    hwloc_ext
+    numactl_ext
+    xml2_ext
+    xy_ext
+    cryptopp_ext
+    lksctp-tools_ext
+    zlib_ext)
 
 # in cmake >= 3.7
 #   use SOURCE_SUBDIR "build/cmake"
@@ -221,7 +317,8 @@ ExternalProject_Add(HdrHistogram_ext
     -DCMAKE_PREFIX_PATH=<INSTALL_DIR>
     -DHDR_HISTOGRAM_BUILD_PROGRAMS=OFF
     -DHDR_HISTOGRAM_BUILD_SHARED=OFF
-  BUILD_COMMAND ${make_command})
+  BUILD_COMMAND ${make_command}
+  DEPENDS zlib_ext)
 
 # in cmake >= 3.7
 #   use SOURCE_SUBDIR "cmake_unofficial"
