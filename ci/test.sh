@@ -26,4 +26,6 @@ trap "rm -rf ${build_dir}" EXIT
   ${CMAKE} ${proj_dir}
   make -j$(nproc) VERBOSE=1
   ls -l bin
+  ldd bin/smf_demo_server | grep smf-deps-install
+  ldd bin/smf_demo_server | grep -v smf-deps-install
 )
