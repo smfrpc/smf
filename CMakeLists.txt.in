@@ -309,8 +309,8 @@ ExternalProject_Add(zstd_ext
   BUILD_COMMAND ${make_command})
 
 ExternalProject_Add(HdrHistogram_ext
-  URL https://github.com/HdrHistogram/HdrHistogram_c/archive/59cbedec68d56ae2b484d45cd7ad2f930f2c9d91.tar.gz
-  URL_MD5 6794ddea304a7e0e939ad807a70fea5b
+  URL https://github.com/noahdesu/HdrHistogram_c/archive/eb3c64f0ce8ce57080dcf80f12780d4c99578c4e.tar.gz
+  URL_MD5 215d0431a50b8221307d48afb894015b
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@
