@@ -154,6 +154,16 @@ ExternalProject_Add(gnutls_ext
   INSTALL_COMMAND ${make_command} install
   DEPENDS gmp_ext nettle_ext)
 
+ExternalProject_Add(lz4_ext
+  URL https://github.com/lz4/lz4/archive/v1.8.0.tar.gz
+  URL_MD5 6247bf0e955899969d1600ff34baed6b
+  INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
+  BUILD_IN_SOURCE ON
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND
+    ${make_command} PREFIX=<INSTALL_DIR> install)
+
 ExternalProject_Add(seastar_ext
   URL https://github.com/scylladb/seastar/archive/9ed5fca9207f81662dd205b5c778890165959f3f.tar.gz
   URL_MD5 fd700f0508b953262a224f94baa9128e
@@ -169,7 +179,15 @@ ExternalProject_Add(seastar_ext
     -DSeastar_DOCS=OFF
     -DSeastar_TESTING=OFF
   BUILD_COMMAND ${make_command}
-  DEPENDS fmt_ext boost_ext protobuf_ext dpdk_ext yaml-cpp_ext c-ares_ext gnutls_ext)
+  DEPENDS
+    fmt_ext
+    boost_ext
+    protobuf_ext
+    dpdk_ext
+    yaml-cpp_ext
+    c-ares_ext
+    gnutls_ext
+    lz4_ext)
 
 # in cmake >= 3.7
 #   use SOURCE_SUBDIR "build/cmake"
