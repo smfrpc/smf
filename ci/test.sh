@@ -21,8 +21,9 @@ esac
 build_dir=$(mktemp -d)
 trap "rm -rf ${build_dir}" EXIT
 
-pushd ${build_dir}
-${CMAKE} ${proj_dir}
-make -j$(nproc) VERBOSE=1
-ls -l bin
-popd
+(
+  cd ${build_dir}
+  ${CMAKE} ${proj_dir}
+  make -j$(nproc) VERBOSE=1
+  ls -l bin
+)
