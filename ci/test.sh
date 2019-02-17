@@ -3,7 +3,7 @@ set -e
 set -x
 
 this_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-proj_dir=${this_dir}/../
+proj_dir=$(realpath ${this_dir}/../)
 
 # setup temp dirs
 build_dir=$(mktemp -d)
