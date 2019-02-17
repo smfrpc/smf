@@ -98,13 +98,14 @@ ExternalProject_Add(dpdk_ext
    ${make_command} ${dpdk_args} install)
 
 ExternalProject_Add(c-ares_ext
-  URL https://github.com/c-ares/c-ares/archive/cares-1_13_0.tar.gz
-  URL_MD5 cdb21052a7eb85261da22f83c0654cfd
+  URL https://github.com/c-ares/c-ares/archive/cares-1_14_0.tar.gz
+  URL_MD5 79dcc4f2adaff431920755d9cafc9933
   INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@
     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
     -DCMAKE_PREFIX_PATH=<INSTALL_DIR>
+    -DCARES_INSTALL=ON
   BUILD_COMMAND ${make_command})
 
 ExternalProject_Add(yaml-cpp_ext
