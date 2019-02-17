@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.5.1)
 project(build-deps NONE)
 
 cmake_host_system_information(
@@ -115,12 +115,15 @@ ExternalProject_Add(seastar_ext
   BUILD_COMMAND ${make_command}
   DEPENDS fmt_ext boost_ext protobuf_ext dpdk_ext yaml-cpp_ext c-ares_ext)
 
+# in cmake >= 3.7
+#   use SOURCE_SUBDIR "build/cmake"
+#   instead of CONFIGURE_COMMAND used below
 ExternalProject_Add(zstd_ext
   GIT_REPOSITORY  https://github.com/facebook/zstd.git
   GIT_TAG         470344d33e1d52a2ada75d278466da8d4ee2faf6
-  SOURCE_SUBDIR   "build/cmake"
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
-  CMAKE_ARGS
+  CONFIGURE_COMMAND
+    ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Release
     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
     -DZSTD_MULTITHREAD_SUPPORT=OFF
@@ -128,6 +131,7 @@ ExternalProject_Add(zstd_ext
     -DZSTD_BUILD_STATIC=ON
     -DZSTD_BUILD_SHARED=OFF
     -DZSTD_BUILD_PROGRAMS=OFF
+    <SOURCE_DIR>/build/cmake
   BUILD_COMMAND ${make_command})
 
 ExternalProject_Add(HdrHistogram_ext
@@ -141,17 +145,21 @@ ExternalProject_Add(HdrHistogram_ext
     -DHDR_HISTOGRAM_BUILD_SHARED=OFF
   BUILD_COMMAND ${make_command})
 
+# in cmake >= 3.7
+#   use SOURCE_SUBDIR "cmake_unofficial"
+#   instead of CONFIGURE_COMMAND used below
 ExternalProject_Add(xxhash_ext
   GIT_REPOSITORY  https://github.com/Cyan4973/xxHash.git
   GIT_TAG         c9970b8ec4155e789f1c3682da923869a496ba9d
-  SOURCE_SUBDIR   "cmake_unofficial"
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
-  CMAKE_ARGS
+  CONFIGURE_COMMAND
+    ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Release
     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
     -DBUILD_XXHSUM=OFF
     -DBUILD_SHARED_LIBS=OFF
     -DBUILD_ENABLE_INLINE_API=ON
+    <SOURCE_DIR>/cmake_unofficial
   BUILD_COMMAND ${make_command})
 
 ExternalProject_Add(gtest_ext
