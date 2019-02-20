@@ -6,7 +6,7 @@
 
 namespace smf {
 seastar::future<rpc_recv_context>
-fialure_injector_recv_filter::operator()(rpc_recv_context &&ctx) {
+failure_injector_recv_filter::operator()(rpc_recv_context &&ctx) {
   // TODO(agallego) parse header and throw or sleep
   return seastar::make_ready_future<rpc_recv_context>(std::move(ctx));
 }
