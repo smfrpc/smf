@@ -1,26 +1,25 @@
 #!/bin/bash
-
 # Copyright 2018 SMF Authors
 #
 
-
 set -e
-
-
 if [[ ! -z ${CI} ]]; then
-    echo "In continous integration system..."
-    set -x
+  echo "In continous integration system..."
+  set -x
 fi
+
+this_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+rootdir="$(cd ${this_dir}/.. && pwd)"
+
+build_rootdir=${rootdir}/build
+builddir=""
 
 . /etc/os-release
 
-this_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-root="$(cd ${this_dir}/.. && pwd)"
-buildtype="debug"
-builddir=$root/build
 function buildcmd() {
-    ninja -C $builddir
+  make -j$(nproc) -C ${1}
 }
+
 case $ID in
     debian|ubuntu|linuxmint)
         echo "$ID supported"
@@ -36,59 +35,49 @@ esac
 
 function debug {
     echo "Debug"
-    cd $root
-    builddir="$builddir/debug"
+    builddir="${build_rootdir}/debug"
+
     mkdir -p $builddir
-    $root/cooking.sh -r wellknown -d $builddir
+    cd ${builddir}
+    cmake -DCMAKE_BUILD_TYPE=Debug ${rootdir}
+
     # for fmt.py
-    ln -sfn "${builddir}/compile_commands.json" "${root}/compile_commands.json"
-    buildcmd
+    ln -sfn "${builddir}/compile_commands.json" "${rootdir}/compile_commands.json"
+    buildcmd ${builddir}
 }
 
 function tests {
     echo "Testing"
-    mkdir -p $builddir
     cd ${builddir}
     ctest --output-on-failure -V -R smf
 }
+
 function release {
     echo "Release"
-    cd $root
-    builddir="$builddir/release"
+    builddir="${build_rootdir}/release"
+
     mkdir -p $builddir
-    local travis=""
-    if [[ ! -z ${TRAVIS} ]]; then
-        set -x
-        echo "Travis build. See raw_logs for output"
-        # skip dpdk
-        # use -O1 for speed
-        $this_dir/travis_stdout.sh \
-            "$root/cooking.sh -r wellknown -t Release -d $builddir -- -DCMAKE_CXX_FLAGS_RELEASE='-O1 -DNDEBUG' > $root/travis_cmake.log"
-        tail --lines=1000 $root/travis_cmake.log
-    else
-        $root/cooking.sh -r wellknown -t Release -d $builddir -- -DSMF_ENABLE_BENCHMARK_TESTS=ON
-    fi
+    cd ${builddir}
+    cmake -DSMF_ENABLE_BENCHMARK_TESTS=ON -DCMAKE_BUILD_TYPE=Release ${rootdir}
+
     # for fmt.py
-    ln -sfn "${builddir}/compile_commands.json" "${root}/compile_commands.json"
-    buildcmd
+    ln -sfn "${builddir}/compile_commands.json" "${rootdir}/compile_commands.json"
+    buildcmd ${builddir}
 }
 
 function format {
     echo "Format"
-    cd $root
-    ${root}/tools/fmt.py
+    cd ${rootdir}
+    ${rootdir}/tools/fmt.py
 }
 
 function package {
     echo "Package"
-    mkdir -p $builddir
     cd ${builddir}
     cpack -D CPACK_RPM_PACKAGE_DEBUG=1 \
           -D CPACK_RPM_SPEC_INSTALL_POST="/bin/true" -G RPM;
     cpack -D CPACK_DEBIAN_PACKAGE_DEBUG=1  -G DEB;
 }
-
-
 
 function usage {
     cat <<EOM
@@ -109,6 +98,10 @@ EOM
     exit 1
 }
 
+# run these after builds
+do_tests=""
+do_format=""
+do_package=""
 
 while getopts ":drtfpb" optKey; do
     case $optKey in
@@ -119,13 +112,13 @@ while getopts ":drtfpb" optKey; do
             release
             ;;
         t)
-            tests
+            do_tests=true
             ;;
         f)
-            format
+            do_format=true
             ;;
         p)
-            package
+            do_package=true
             ;;
         *)
             usage
@@ -133,3 +126,14 @@ while getopts ":drtfpb" optKey; do
     esac
 done
 
+if [ "${do_tests}" = "true" ]; then
+  tests
+fi
+
+if [ "${do_format}" = "true" ]; then
+  format
+fi
+
+if [ "${do_package}" = "true" ]; then
+  package
+fi
