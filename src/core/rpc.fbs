@@ -19,24 +19,35 @@ enum compression_flags:byte {
   /// \brief lz4 compression
   lz4
 }
-enum header_bit_flags:byte (bit_flags) {
+enum header_bitflags:byte (bit_flags) {
   // by default bit flags start at _NONE=0
-  has_payload_headers
+  has_dynamic_headers
 }
 
-
+struct ldfi_fspec {
+  end_of_time:             uint;
+  end_of_finite_failures : uint;
+  crashes:  uint;
+  sleep_ms: uint;
+}
 
 /// \brief: header parsed by rpc engine
 /// must be sizeof()'able
 /// that is, must be a struct in fbs language
 ///
 /// layout
-/// [ 8bits(compression) + 8bits(bitflags) + 16bits(session) + 32bits(size) + 32bits(checksum) + 32bits(meta) ]
-/// total = 128bits == 16bytes
+/// [
+///               8bits(compression) + 8bits(bitflags) + 16bits(session) +
+///               32bits(size) +
+///               32bits(checksum) +
+///               32bits(meta)  +
+///               32bits(dynamic_headers_size)
+/// ]
+/// total = 160bits == 20bytes
 ///
 struct header {
   compression:    compression_flags;
-  bitflags:       header_bit_flags;
+  bitflags:       header_bitflags;
   /// 16 bits for storing the actual session id.
   /// used for streaming client and slot allocation
   session:        ushort;
@@ -60,25 +71,20 @@ struct header {
   /// to call
   ///
   meta: uint;
+  /// \brief size of dynamic_headers struct if bit
+  // @bitflags::header_bit_flags_has_dynamic_headers is se
+  dynamic_headers_size: uint;
 }
 
-/// \brief used for extra headers, ala HTTP
-/// The use case for the core is to support
-/// zipkin/google-Dapper style tracing
-table dynamic_header {
-  /// alows for binary search lookup
+table header_kv {
+  /// implementations are strongly encouraged to sort on hdr_key
   /// use with CreateVectorOfSortedTables<> instead of the CreateVector
-  key: string (key);
-  value: string;
+  hdr_key: string (key);
+  hdr_value: [byte];
 }
-
-table payload_headers {
-  /// Headers for forward compat.
-  dynamic_headers: [dynamic_header];
-  /// We need to chain the actual payload
-  size: uint = 0;
-  checksum: uint = 0;
-  compression: compression_flags = none;
+/// \brief user sparingly. Plain text strings are expensive in byte-count.
+table dynamic_headers {
+  values: [header_kv];
 }
 
 /// \brief, useful when the type is empty
