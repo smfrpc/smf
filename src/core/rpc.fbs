@@ -24,13 +24,6 @@ enum header_bitflags:byte (bit_flags) {
   has_dynamic_headers
 }
 
-struct ldfi_fspec {
-  end_of_time:             uint;
-  end_of_finite_failures : uint;
-  crashes:  uint;
-  sleep_ms: uint;
-}
-
 /// \brief: header parsed by rpc engine
 /// must be sizeof()'able
 /// that is, must be a struct in fbs language
@@ -92,3 +85,11 @@ table dynamic_headers {
 /// rpc my_rpc { null_type MutateOnlyOnServerMethod(int); }
 ///
 table null_type {}
+
+/// ---------- Internal protocols below
+struct failure_spec {
+  delay_duration_ms: uint;
+  delay: bool;
+  terminate: bool;
+  exception: bool;
+}
