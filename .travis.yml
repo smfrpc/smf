@@ -12,6 +12,8 @@ matrix:
       env: DOCKER_IMAGE=ubuntu:bionic
     - os: linux
       env: DOCKER_IMAGE=centos:7
+    - os: linux
+      env: DOCKER_IMAGE=ubuntu:xenial
 
 script:
   - ci/build-in-docker.sh ${DOCKER_IMAGE}
