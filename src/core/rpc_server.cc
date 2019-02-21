@@ -134,10 +134,14 @@ rpc_server::stop() {
   LOG_INFO("Stopped seastar::accept() calls");
   listener_->abort_accept();
 
-  std::for_each(open_connections_.begin(), open_connections_.end(),
-                [](auto &client_conn) {
-                  client_conn.second->conn.socket.shutdown_input();
-                });
+  std::for_each(
+    open_connections_.begin(), open_connections_.end(), [](auto &client_conn) {
+      try {
+        client_conn.second->conn.socket.shutdown_input();
+      } catch (...) {
+        LOG_ERROR("Ignoring error while shutting down client incoming socket");
+      }
+    });
 
   return reply_gate_.close().then([admin = admin_ ? admin_ : nullptr] {
     if (!admin) { return seastar::make_ready_future<>(); }

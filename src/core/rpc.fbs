@@ -20,6 +20,7 @@ enum compression_flags:byte {
   lz4
 }
 enum header_bit_flags:byte (bit_flags) {
+  // by default bit flags start at _NONE=0
   has_payload_headers
 }
 
