@@ -71,4 +71,3 @@ src/test/*_unit_test
 # docs
 Doxyfile
 vendor/
-.cooking_memory
