@@ -9,27 +9,32 @@
 namespace smf {
 namespace rpc {
 
+struct ldfi_fspec;
+
 struct header;
 
-struct dynamic_header;
-struct dynamic_headerT;
+struct header_kv;
+struct header_kvT;
 
-struct payload_headers;
-struct payload_headersT;
+struct dynamic_headers;
+struct dynamic_headersT;
 
 struct null_type;
 struct null_typeT;
 
+bool operator==(const ldfi_fspec &lhs, const ldfi_fspec &rhs);
 bool operator==(const header &lhs, const header &rhs);
-bool operator==(const dynamic_headerT &lhs, const dynamic_headerT &rhs);
-bool operator==(const payload_headersT &lhs, const payload_headersT &rhs);
+bool operator==(const header_kvT &lhs, const header_kvT &rhs);
+bool operator==(const dynamic_headersT &lhs, const dynamic_headersT &rhs);
 bool operator==(const null_typeT &lhs, const null_typeT &rhs);
+
+inline const flatbuffers::TypeTable *ldfi_fspecTypeTable();
 
 inline const flatbuffers::TypeTable *headerTypeTable();
 
-inline const flatbuffers::TypeTable *dynamic_headerTypeTable();
+inline const flatbuffers::TypeTable *header_kvTypeTable();
 
-inline const flatbuffers::TypeTable *payload_headersTypeTable();
+inline const flatbuffers::TypeTable *dynamic_headersTypeTable();
 
 inline const flatbuffers::TypeTable *null_typeTypeTable();
 
@@ -79,31 +84,86 @@ inline const char *EnumNamecompression_flags(compression_flags e) {
   return EnumNamescompression_flags()[index];
 }
 
-enum header_bit_flags {
-  header_bit_flags_has_payload_headers = 1,
-  header_bit_flags_NONE = 0,
-  header_bit_flags_ANY = 1
+enum header_bitflags {
+  header_bitflags_has_dynamic_headers = 1,
+  header_bitflags_NONE = 0,
+  header_bitflags_ANY = 1
 };
 
-inline const header_bit_flags (&EnumValuesheader_bit_flags())[1] {
-  static const header_bit_flags values[] = {
-    header_bit_flags_has_payload_headers
+inline const header_bitflags (&EnumValuesheader_bitflags())[1] {
+  static const header_bitflags values[] = {
+    header_bitflags_has_dynamic_headers
   };
   return values;
 }
 
-inline const char * const *EnumNamesheader_bit_flags() {
+inline const char * const *EnumNamesheader_bitflags() {
   static const char * const names[] = {
-    "has_payload_headers",
+    "has_dynamic_headers",
     nullptr
   };
   return names;
 }
 
-inline const char *EnumNameheader_bit_flags(header_bit_flags e) {
-  if (e < header_bit_flags_has_payload_headers || e > header_bit_flags_has_payload_headers) return "";
-  const size_t index = static_cast<int>(e) - static_cast<int>(header_bit_flags_has_payload_headers);
-  return EnumNamesheader_bit_flags()[index];
+inline const char *EnumNameheader_bitflags(header_bitflags e) {
+  if (e < header_bitflags_has_dynamic_headers || e > header_bitflags_has_dynamic_headers) return "";
+  const size_t index = static_cast<int>(e) - static_cast<int>(header_bitflags_has_dynamic_headers);
+  return EnumNamesheader_bitflags()[index];
+}
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) ldfi_fspec FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint32_t end_of_time_;
+  uint32_t end_of_finite_failures_;
+  uint32_t crashes_;
+  uint32_t sleep_ms_;
+
+ public:
+  static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
+    return "smf.rpc.ldfi_fspec";
+  }
+  ldfi_fspec() {
+    memset(this, 0, sizeof(ldfi_fspec));
+  }
+  ldfi_fspec(uint32_t _end_of_time, uint32_t _end_of_finite_failures, uint32_t _crashes, uint32_t _sleep_ms)
+      : end_of_time_(flatbuffers::EndianScalar(_end_of_time)),
+        end_of_finite_failures_(flatbuffers::EndianScalar(_end_of_finite_failures)),
+        crashes_(flatbuffers::EndianScalar(_crashes)),
+        sleep_ms_(flatbuffers::EndianScalar(_sleep_ms)) {
+  }
+  uint32_t end_of_time() const {
+    return flatbuffers::EndianScalar(end_of_time_);
+  }
+  void mutate_end_of_time(uint32_t _end_of_time) {
+    flatbuffers::WriteScalar(&end_of_time_, _end_of_time);
+  }
+  uint32_t end_of_finite_failures() const {
+    return flatbuffers::EndianScalar(end_of_finite_failures_);
+  }
+  void mutate_end_of_finite_failures(uint32_t _end_of_finite_failures) {
+    flatbuffers::WriteScalar(&end_of_finite_failures_, _end_of_finite_failures);
+  }
+  uint32_t crashes() const {
+    return flatbuffers::EndianScalar(crashes_);
+  }
+  void mutate_crashes(uint32_t _crashes) {
+    flatbuffers::WriteScalar(&crashes_, _crashes);
+  }
+  uint32_t sleep_ms() const {
+    return flatbuffers::EndianScalar(sleep_ms_);
+  }
+  void mutate_sleep_ms(uint32_t _sleep_ms) {
+    flatbuffers::WriteScalar(&sleep_ms_, _sleep_ms);
+  }
+};
+FLATBUFFERS_STRUCT_END(ldfi_fspec, 16);
+
+inline bool operator==(const ldfi_fspec &lhs, const ldfi_fspec &rhs) {
+  return
+      (lhs.end_of_time() == rhs.end_of_time()) &&
+      (lhs.end_of_finite_failures() == rhs.end_of_finite_failures()) &&
+      (lhs.crashes() == rhs.crashes()) &&
+      (lhs.sleep_ms() == rhs.sleep_ms());
 }
 
 /// \brief: header parsed by rpc engine
@@ -111,8 +171,14 @@ inline const char *EnumNameheader_bit_flags(header_bit_flags e) {
 /// that is, must be a struct in fbs language
 ///
 /// layout
-/// [ 8bits(compression) + 8bits(bitflags) + 16bits(session) + 32bits(size) + 32bits(checksum) + 32bits(meta) ]
-/// total = 128bits == 16bytes
+/// [
+///               8bits(compression) + 8bits(bitflags) + 16bits(session) +
+///               32bits(size) +
+///               32bits(checksum) +
+///               32bits(meta)  +
+///               32bits(dynamic_headers_size)
+/// ]
+/// total = 160bits == 20bytes
 ///
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) header FLATBUFFERS_FINAL_CLASS {
  private:
@@ -122,6 +188,7 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) header FLATBUFFERS_FINAL_CLASS {
   uint32_t size_;
   uint32_t checksum_;
   uint32_t meta_;
+  uint32_t dynamic_headers_size_;
 
  public:
   static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
@@ -130,13 +197,14 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) header FLATBUFFERS_FINAL_CLASS {
   header() {
     memset(this, 0, sizeof(header));
   }
-  header(compression_flags _compression, header_bit_flags _bitflags, uint16_t _session, uint32_t _size, uint32_t _checksum, uint32_t _meta)
+  header(compression_flags _compression, header_bitflags _bitflags, uint16_t _session, uint32_t _size, uint32_t _checksum, uint32_t _meta, uint32_t _dynamic_headers_size)
       : compression_(flatbuffers::EndianScalar(static_cast<int8_t>(_compression))),
         bitflags_(flatbuffers::EndianScalar(static_cast<int8_t>(_bitflags))),
         session_(flatbuffers::EndianScalar(_session)),
         size_(flatbuffers::EndianScalar(_size)),
         checksum_(flatbuffers::EndianScalar(_checksum)),
-        meta_(flatbuffers::EndianScalar(_meta)) {
+        meta_(flatbuffers::EndianScalar(_meta)),
+        dynamic_headers_size_(flatbuffers::EndianScalar(_dynamic_headers_size)) {
   }
   compression_flags compression() const {
     return static_cast<compression_flags>(flatbuffers::EndianScalar(compression_));
@@ -144,10 +212,10 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) header FLATBUFFERS_FINAL_CLASS {
   void mutate_compression(compression_flags _compression) {
     flatbuffers::WriteScalar(&compression_, static_cast<int8_t>(_compression));
   }
-  header_bit_flags bitflags() const {
-    return static_cast<header_bit_flags>(flatbuffers::EndianScalar(bitflags_));
+  header_bitflags bitflags() const {
+    return static_cast<header_bitflags>(flatbuffers::EndianScalar(bitflags_));
   }
-  void mutate_bitflags(header_bit_flags _bitflags) {
+  void mutate_bitflags(header_bitflags _bitflags) {
     flatbuffers::WriteScalar(&bitflags_, static_cast<int8_t>(_bitflags));
   }
   /// 16 bits for storing the actual session id.
@@ -193,8 +261,15 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) header FLATBUFFERS_FINAL_CLASS {
   void mutate_meta(uint32_t _meta) {
     flatbuffers::WriteScalar(&meta_, _meta);
   }
+  /// \brief size of dynamic_headers struct if bit
+  uint32_t dynamic_headers_size() const {
+    return flatbuffers::EndianScalar(dynamic_headers_size_);
+  }
+  void mutate_dynamic_headers_size(uint32_t _dynamic_headers_size) {
+    flatbuffers::WriteScalar(&dynamic_headers_size_, _dynamic_headers_size);
+  }
 };
-FLATBUFFERS_STRUCT_END(header, 16);
+FLATBUFFERS_STRUCT_END(header, 20);
 
 inline bool operator==(const header &lhs, const header &rhs) {
   return
@@ -203,256 +278,199 @@ inline bool operator==(const header &lhs, const header &rhs) {
       (lhs.session() == rhs.session()) &&
       (lhs.size() == rhs.size()) &&
       (lhs.checksum() == rhs.checksum()) &&
-      (lhs.meta() == rhs.meta());
+      (lhs.meta() == rhs.meta()) &&
+      (lhs.dynamic_headers_size() == rhs.dynamic_headers_size());
 }
 
-struct dynamic_headerT : public flatbuffers::NativeTable {
-  typedef dynamic_header TableType;
+struct header_kvT : public flatbuffers::NativeTable {
+  typedef header_kv TableType;
   static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
-    return "smf.rpc.dynamic_headerT";
+    return "smf.rpc.header_kvT";
   }
-  seastar::sstring key;
-  seastar::sstring value;
-  dynamic_headerT() {
+  seastar::sstring hdr_key;
+  std::vector<int8_t> hdr_value;
+  header_kvT() {
   }
 };
 
-inline bool operator==(const dynamic_headerT &lhs, const dynamic_headerT &rhs) {
+inline bool operator==(const header_kvT &lhs, const header_kvT &rhs) {
   return
-      (lhs.key == rhs.key) &&
-      (lhs.value == rhs.value);
+      (lhs.hdr_key == rhs.hdr_key) &&
+      (lhs.hdr_value == rhs.hdr_value);
 }
 
-/// \brief used for extra headers, ala HTTP
-/// The use case for the core is to support
-/// zipkin/google-Dapper style tracing
-struct dynamic_header FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  typedef dynamic_headerT NativeTableType;
+struct header_kv FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef header_kvT NativeTableType;
   static const flatbuffers::TypeTable *MiniReflectTypeTable() {
-    return dynamic_headerTypeTable();
+    return header_kvTypeTable();
   }
   static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
-    return "smf.rpc.dynamic_header";
+    return "smf.rpc.header_kv";
   }
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_KEY = 4,
-    VT_VALUE = 6
+    VT_HDR_KEY = 4,
+    VT_HDR_VALUE = 6
   };
-  /// alows for binary search lookup
+  /// implementations are strongly encouraged to sort on hdr_key
   /// use with CreateVectorOfSortedTables<> instead of the CreateVector
-  const flatbuffers::String *key() const {
-    return GetPointer<const flatbuffers::String *>(VT_KEY);
+  const flatbuffers::String *hdr_key() const {
+    return GetPointer<const flatbuffers::String *>(VT_HDR_KEY);
   }
-  flatbuffers::String *mutable_key() {
-    return GetPointer<flatbuffers::String *>(VT_KEY);
+  flatbuffers::String *mutable_hdr_key() {
+    return GetPointer<flatbuffers::String *>(VT_HDR_KEY);
   }
-  bool KeyCompareLessThan(const dynamic_header *o) const {
-    return *key() < *o->key();
+  bool KeyCompareLessThan(const header_kv *o) const {
+    return *hdr_key() < *o->hdr_key();
   }
   int KeyCompareWithValue(const char *val) const {
-    return strcmp(key()->c_str(), val);
+    return strcmp(hdr_key()->c_str(), val);
   }
-  const flatbuffers::String *value() const {
-    return GetPointer<const flatbuffers::String *>(VT_VALUE);
+  const flatbuffers::Vector<int8_t> *hdr_value() const {
+    return GetPointer<const flatbuffers::Vector<int8_t> *>(VT_HDR_VALUE);
   }
-  flatbuffers::String *mutable_value() {
-    return GetPointer<flatbuffers::String *>(VT_VALUE);
+  flatbuffers::Vector<int8_t> *mutable_hdr_value() {
+    return GetPointer<flatbuffers::Vector<int8_t> *>(VT_HDR_VALUE);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffsetRequired(verifier, VT_KEY) &&
-           verifier.VerifyString(key()) &&
-           VerifyOffset(verifier, VT_VALUE) &&
-           verifier.VerifyString(value()) &&
+           VerifyOffsetRequired(verifier, VT_HDR_KEY) &&
+           verifier.VerifyString(hdr_key()) &&
+           VerifyOffset(verifier, VT_HDR_VALUE) &&
+           verifier.VerifyVector(hdr_value()) &&
            verifier.EndTable();
   }
-  dynamic_headerT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
-  void UnPackTo(dynamic_headerT *_o, const flatbuffers::resolver_function_t *_resolver = nullptr) const;
-  static flatbuffers::Offset<dynamic_header> Pack(flatbuffers::FlatBufferBuilder &_fbb, const dynamic_headerT* _o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+  header_kvT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  void UnPackTo(header_kvT *_o, const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  static flatbuffers::Offset<header_kv> Pack(flatbuffers::FlatBufferBuilder &_fbb, const header_kvT* _o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
 };
 
-struct dynamic_headerBuilder {
+struct header_kvBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_key(flatbuffers::Offset<flatbuffers::String> key) {
-    fbb_.AddOffset(dynamic_header::VT_KEY, key);
+  void add_hdr_key(flatbuffers::Offset<flatbuffers::String> hdr_key) {
+    fbb_.AddOffset(header_kv::VT_HDR_KEY, hdr_key);
   }
-  void add_value(flatbuffers::Offset<flatbuffers::String> value) {
-    fbb_.AddOffset(dynamic_header::VT_VALUE, value);
+  void add_hdr_value(flatbuffers::Offset<flatbuffers::Vector<int8_t>> hdr_value) {
+    fbb_.AddOffset(header_kv::VT_HDR_VALUE, hdr_value);
   }
-  explicit dynamic_headerBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit header_kvBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  dynamic_headerBuilder &operator=(const dynamic_headerBuilder &);
-  flatbuffers::Offset<dynamic_header> Finish() {
+  header_kvBuilder &operator=(const header_kvBuilder &);
+  flatbuffers::Offset<header_kv> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<dynamic_header>(end);
-    fbb_.Required(o, dynamic_header::VT_KEY);
+    auto o = flatbuffers::Offset<header_kv>(end);
+    fbb_.Required(o, header_kv::VT_HDR_KEY);
     return o;
   }
 };
 
-inline flatbuffers::Offset<dynamic_header> Createdynamic_header(
+inline flatbuffers::Offset<header_kv> Createheader_kv(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::String> key = 0,
-    flatbuffers::Offset<flatbuffers::String> value = 0) {
-  dynamic_headerBuilder builder_(_fbb);
-  builder_.add_value(value);
-  builder_.add_key(key);
+    flatbuffers::Offset<flatbuffers::String> hdr_key = 0,
+    flatbuffers::Offset<flatbuffers::Vector<int8_t>> hdr_value = 0) {
+  header_kvBuilder builder_(_fbb);
+  builder_.add_hdr_value(hdr_value);
+  builder_.add_hdr_key(hdr_key);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<dynamic_header> Createdynamic_headerDirect(
+inline flatbuffers::Offset<header_kv> Createheader_kvDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const char *key = nullptr,
-    const char *value = nullptr) {
-  auto key__ = key ? _fbb.CreateString(key) : 0;
-  auto value__ = value ? _fbb.CreateString(value) : 0;
-  return smf::rpc::Createdynamic_header(
+    const char *hdr_key = nullptr,
+    const std::vector<int8_t> *hdr_value = nullptr) {
+  auto hdr_key__ = hdr_key ? _fbb.CreateString(hdr_key) : 0;
+  auto hdr_value__ = hdr_value ? _fbb.CreateVector<int8_t>(*hdr_value) : 0;
+  return smf::rpc::Createheader_kv(
       _fbb,
-      key__,
-      value__);
+      hdr_key__,
+      hdr_value__);
 }
 
-flatbuffers::Offset<dynamic_header> Createdynamic_header(flatbuffers::FlatBufferBuilder &_fbb, const dynamic_headerT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+flatbuffers::Offset<header_kv> Createheader_kv(flatbuffers::FlatBufferBuilder &_fbb, const header_kvT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
 
-struct payload_headersT : public flatbuffers::NativeTable {
-  typedef payload_headers TableType;
+struct dynamic_headersT : public flatbuffers::NativeTable {
+  typedef dynamic_headers TableType;
   static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
-    return "smf.rpc.payload_headersT";
+    return "smf.rpc.dynamic_headersT";
   }
-  std::vector<std::unique_ptr<dynamic_headerT>> dynamic_headers;
-  uint32_t size;
-  uint32_t checksum;
-  compression_flags compression;
-  payload_headersT()
-      : size(0),
-        checksum(0),
-        compression(compression_flags_none) {
+  std::vector<std::unique_ptr<header_kvT>> values;
+  dynamic_headersT() {
   }
 };
 
-inline bool operator==(const payload_headersT &lhs, const payload_headersT &rhs) {
+inline bool operator==(const dynamic_headersT &lhs, const dynamic_headersT &rhs) {
   return
-      (lhs.dynamic_headers == rhs.dynamic_headers) &&
-      (lhs.size == rhs.size) &&
-      (lhs.checksum == rhs.checksum) &&
-      (lhs.compression == rhs.compression);
+      (lhs.values == rhs.values);
 }
 
-struct payload_headers FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  typedef payload_headersT NativeTableType;
+/// \brief user sparingly. Plain text strings are expensive in byte-count.
+struct dynamic_headers FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef dynamic_headersT NativeTableType;
   static const flatbuffers::TypeTable *MiniReflectTypeTable() {
-    return payload_headersTypeTable();
+    return dynamic_headersTypeTable();
   }
   static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
-    return "smf.rpc.payload_headers";
+    return "smf.rpc.dynamic_headers";
   }
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_DYNAMIC_HEADERS = 4,
-    VT_SIZE = 6,
-    VT_CHECKSUM = 8,
-    VT_COMPRESSION = 10
+    VT_VALUES = 4
   };
-  /// Headers for forward compat.
-  const flatbuffers::Vector<flatbuffers::Offset<dynamic_header>> *dynamic_headers() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<dynamic_header>> *>(VT_DYNAMIC_HEADERS);
+  const flatbuffers::Vector<flatbuffers::Offset<header_kv>> *values() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<header_kv>> *>(VT_VALUES);
   }
-  flatbuffers::Vector<flatbuffers::Offset<dynamic_header>> *mutable_dynamic_headers() {
-    return GetPointer<flatbuffers::Vector<flatbuffers::Offset<dynamic_header>> *>(VT_DYNAMIC_HEADERS);
-  }
-  /// We need to chain the actual payload
-  uint32_t size() const {
-    return GetField<uint32_t>(VT_SIZE, 0);
-  }
-  bool mutate_size(uint32_t _size) {
-    return SetField<uint32_t>(VT_SIZE, _size, 0);
-  }
-  uint32_t checksum() const {
-    return GetField<uint32_t>(VT_CHECKSUM, 0);
-  }
-  bool mutate_checksum(uint32_t _checksum) {
-    return SetField<uint32_t>(VT_CHECKSUM, _checksum, 0);
-  }
-  compression_flags compression() const {
-    return static_cast<compression_flags>(GetField<int8_t>(VT_COMPRESSION, 0));
-  }
-  bool mutate_compression(compression_flags _compression) {
-    return SetField<int8_t>(VT_COMPRESSION, static_cast<int8_t>(_compression), 0);
+  flatbuffers::Vector<flatbuffers::Offset<header_kv>> *mutable_values() {
+    return GetPointer<flatbuffers::Vector<flatbuffers::Offset<header_kv>> *>(VT_VALUES);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_DYNAMIC_HEADERS) &&
-           verifier.VerifyVector(dynamic_headers()) &&
-           verifier.VerifyVectorOfTables(dynamic_headers()) &&
-           VerifyField<uint32_t>(verifier, VT_SIZE) &&
-           VerifyField<uint32_t>(verifier, VT_CHECKSUM) &&
-           VerifyField<int8_t>(verifier, VT_COMPRESSION) &&
+           VerifyOffset(verifier, VT_VALUES) &&
+           verifier.VerifyVector(values()) &&
+           verifier.VerifyVectorOfTables(values()) &&
            verifier.EndTable();
   }
-  payload_headersT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
-  void UnPackTo(payload_headersT *_o, const flatbuffers::resolver_function_t *_resolver = nullptr) const;
-  static flatbuffers::Offset<payload_headers> Pack(flatbuffers::FlatBufferBuilder &_fbb, const payload_headersT* _o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+  dynamic_headersT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  void UnPackTo(dynamic_headersT *_o, const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  static flatbuffers::Offset<dynamic_headers> Pack(flatbuffers::FlatBufferBuilder &_fbb, const dynamic_headersT* _o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
 };
 
-struct payload_headersBuilder {
+struct dynamic_headersBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_dynamic_headers(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<dynamic_header>>> dynamic_headers) {
-    fbb_.AddOffset(payload_headers::VT_DYNAMIC_HEADERS, dynamic_headers);
+  void add_values(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<header_kv>>> values) {
+    fbb_.AddOffset(dynamic_headers::VT_VALUES, values);
   }
-  void add_size(uint32_t size) {
-    fbb_.AddElement<uint32_t>(payload_headers::VT_SIZE, size, 0);
-  }
-  void add_checksum(uint32_t checksum) {
-    fbb_.AddElement<uint32_t>(payload_headers::VT_CHECKSUM, checksum, 0);
-  }
-  void add_compression(compression_flags compression) {
-    fbb_.AddElement<int8_t>(payload_headers::VT_COMPRESSION, static_cast<int8_t>(compression), 0);
-  }
-  explicit payload_headersBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit dynamic_headersBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  payload_headersBuilder &operator=(const payload_headersBuilder &);
-  flatbuffers::Offset<payload_headers> Finish() {
+  dynamic_headersBuilder &operator=(const dynamic_headersBuilder &);
+  flatbuffers::Offset<dynamic_headers> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<payload_headers>(end);
+    auto o = flatbuffers::Offset<dynamic_headers>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<payload_headers> Createpayload_headers(
+inline flatbuffers::Offset<dynamic_headers> Createdynamic_headers(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<dynamic_header>>> dynamic_headers = 0,
-    uint32_t size = 0,
-    uint32_t checksum = 0,
-    compression_flags compression = compression_flags_none) {
-  payload_headersBuilder builder_(_fbb);
-  builder_.add_checksum(checksum);
-  builder_.add_size(size);
-  builder_.add_dynamic_headers(dynamic_headers);
-  builder_.add_compression(compression);
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<header_kv>>> values = 0) {
+  dynamic_headersBuilder builder_(_fbb);
+  builder_.add_values(values);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<payload_headers> Createpayload_headersDirect(
+inline flatbuffers::Offset<dynamic_headers> Createdynamic_headersDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<flatbuffers::Offset<dynamic_header>> *dynamic_headers = nullptr,
-    uint32_t size = 0,
-    uint32_t checksum = 0,
-    compression_flags compression = compression_flags_none) {
-  auto dynamic_headers__ = dynamic_headers ? _fbb.CreateVector<flatbuffers::Offset<dynamic_header>>(*dynamic_headers) : 0;
-  return smf::rpc::Createpayload_headers(
+    const std::vector<flatbuffers::Offset<header_kv>> *values = nullptr) {
+  auto values__ = values ? _fbb.CreateVector<flatbuffers::Offset<header_kv>>(*values) : 0;
+  return smf::rpc::Createdynamic_headers(
       _fbb,
-      dynamic_headers__,
-      size,
-      checksum,
-      compression);
+      values__);
 }
 
-flatbuffers::Offset<payload_headers> Createpayload_headers(flatbuffers::FlatBufferBuilder &_fbb, const payload_headersT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+flatbuffers::Offset<dynamic_headers> Createdynamic_headers(flatbuffers::FlatBufferBuilder &_fbb, const dynamic_headersT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
 
 struct null_typeT : public flatbuffers::NativeTable {
   typedef null_type TableType;
@@ -511,68 +529,59 @@ inline flatbuffers::Offset<null_type> Createnull_type(
 
 flatbuffers::Offset<null_type> Createnull_type(flatbuffers::FlatBufferBuilder &_fbb, const null_typeT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
 
-inline dynamic_headerT *dynamic_header::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
-  auto _o = new dynamic_headerT();
+inline header_kvT *header_kv::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
+  auto _o = new header_kvT();
   UnPackTo(_o, _resolver);
   return _o;
 }
 
-inline void dynamic_header::UnPackTo(dynamic_headerT *_o, const flatbuffers::resolver_function_t *_resolver) const {
+inline void header_kv::UnPackTo(header_kvT *_o, const flatbuffers::resolver_function_t *_resolver) const {
   (void)_o;
   (void)_resolver;
-  { auto _e = key(); if (_e) _o->key = _e->str(); };
-  { auto _e = value(); if (_e) _o->value = _e->str(); };
+  { auto _e = hdr_key(); if (_e) _o->hdr_key = _e->str(); };
+  { auto _e = hdr_value(); if (_e) { _o->hdr_value.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->hdr_value[_i] = _e->Get(_i); } } };
 }
 
-inline flatbuffers::Offset<dynamic_header> dynamic_header::Pack(flatbuffers::FlatBufferBuilder &_fbb, const dynamic_headerT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
-  return Createdynamic_header(_fbb, _o, _rehasher);
+inline flatbuffers::Offset<header_kv> header_kv::Pack(flatbuffers::FlatBufferBuilder &_fbb, const header_kvT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
+  return Createheader_kv(_fbb, _o, _rehasher);
 }
 
-inline flatbuffers::Offset<dynamic_header> Createdynamic_header(flatbuffers::FlatBufferBuilder &_fbb, const dynamic_headerT *_o, const flatbuffers::rehasher_function_t *_rehasher) {
+inline flatbuffers::Offset<header_kv> Createheader_kv(flatbuffers::FlatBufferBuilder &_fbb, const header_kvT *_o, const flatbuffers::rehasher_function_t *_rehasher) {
   (void)_rehasher;
   (void)_o;
-  struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const dynamic_headerT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
-  auto _key = _fbb.CreateString(_o->key);
-  auto _value = _o->value.empty() ? _fbb.CreateSharedString("") : _fbb.CreateString(_o->value);
-  return smf::rpc::Createdynamic_header(
+  struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const header_kvT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
+  auto _hdr_key = _fbb.CreateString(_o->hdr_key);
+  auto _hdr_value = _fbb.CreateVector(_o->hdr_value);
+  return smf::rpc::Createheader_kv(
       _fbb,
-      _key,
-      _value);
+      _hdr_key,
+      _hdr_value);
 }
 
-inline payload_headersT *payload_headers::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
-  auto _o = new payload_headersT();
+inline dynamic_headersT *dynamic_headers::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
+  auto _o = new dynamic_headersT();
   UnPackTo(_o, _resolver);
   return _o;
 }
 
-inline void payload_headers::UnPackTo(payload_headersT *_o, const flatbuffers::resolver_function_t *_resolver) const {
+inline void dynamic_headers::UnPackTo(dynamic_headersT *_o, const flatbuffers::resolver_function_t *_resolver) const {
   (void)_o;
   (void)_resolver;
-  { auto _e = dynamic_headers(); if (_e) { _o->dynamic_headers.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->dynamic_headers[_i] = std::unique_ptr<dynamic_headerT>(_e->Get(_i)->UnPack(_resolver)); } } };
-  { auto _e = size(); _o->size = _e; };
-  { auto _e = checksum(); _o->checksum = _e; };
-  { auto _e = compression(); _o->compression = _e; };
+  { auto _e = values(); if (_e) { _o->values.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->values[_i] = std::unique_ptr<header_kvT>(_e->Get(_i)->UnPack(_resolver)); } } };
 }
 
-inline flatbuffers::Offset<payload_headers> payload_headers::Pack(flatbuffers::FlatBufferBuilder &_fbb, const payload_headersT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
-  return Createpayload_headers(_fbb, _o, _rehasher);
+inline flatbuffers::Offset<dynamic_headers> dynamic_headers::Pack(flatbuffers::FlatBufferBuilder &_fbb, const dynamic_headersT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
+  return Createdynamic_headers(_fbb, _o, _rehasher);
 }
 
-inline flatbuffers::Offset<payload_headers> Createpayload_headers(flatbuffers::FlatBufferBuilder &_fbb, const payload_headersT *_o, const flatbuffers::rehasher_function_t *_rehasher) {
+inline flatbuffers::Offset<dynamic_headers> Createdynamic_headers(flatbuffers::FlatBufferBuilder &_fbb, const dynamic_headersT *_o, const flatbuffers::rehasher_function_t *_rehasher) {
   (void)_rehasher;
   (void)_o;
-  struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const payload_headersT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
-  auto _dynamic_headers = _fbb.CreateVector<flatbuffers::Offset<dynamic_header>> (_o->dynamic_headers.size(), [](size_t i, _VectorArgs *__va) { return Createdynamic_header(*__va->__fbb, __va->__o->dynamic_headers[i].get(), __va->__rehasher); }, &_va );
-  auto _size = _o->size;
-  auto _checksum = _o->checksum;
-  auto _compression = _o->compression;
-  return smf::rpc::Createpayload_headers(
+  struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const dynamic_headersT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
+  auto _values = _fbb.CreateVector<flatbuffers::Offset<header_kv>> (_o->values.size(), [](size_t i, _VectorArgs *__va) { return Createheader_kv(*__va->__fbb, __va->__o->values[i].get(), __va->__rehasher); }, &_va );
+  return smf::rpc::Createdynamic_headers(
       _fbb,
-      _dynamic_headers,
-      _size,
-      _checksum,
-      _compression);
+      _values);
 }
 
 inline null_typeT *null_type::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
@@ -620,19 +629,39 @@ inline const flatbuffers::TypeTable *compression_flagsTypeTable() {
   return &tt;
 }
 
-inline const flatbuffers::TypeTable *header_bit_flagsTypeTable() {
+inline const flatbuffers::TypeTable *header_bitflagsTypeTable() {
   static const flatbuffers::TypeCode type_codes[] = {
     { flatbuffers::ET_CHAR, 0, 0 }
   };
   static const flatbuffers::TypeFunction type_refs[] = {
-    header_bit_flagsTypeTable
+    header_bitflagsTypeTable
   };
   static const int64_t values[] = { 1 };
   static const char * const names[] = {
-    "has_payload_headers"
+    "has_dynamic_headers"
   };
   static const flatbuffers::TypeTable tt = {
     flatbuffers::ST_ENUM, 1, type_codes, type_refs, values, names
+  };
+  return &tt;
+}
+
+inline const flatbuffers::TypeTable *ldfi_fspecTypeTable() {
+  static const flatbuffers::TypeCode type_codes[] = {
+    { flatbuffers::ET_UINT, 0, -1 },
+    { flatbuffers::ET_UINT, 0, -1 },
+    { flatbuffers::ET_UINT, 0, -1 },
+    { flatbuffers::ET_UINT, 0, -1 }
+  };
+  static const int64_t values[] = { 0, 4, 8, 12, 16 };
+  static const char * const names[] = {
+    "end_of_time",
+    "end_of_finite_failures",
+    "crashes",
+    "sleep_ms"
+  };
+  static const flatbuffers::TypeTable tt = {
+    flatbuffers::ST_STRUCT, 4, type_codes, nullptr, values, names
   };
   return &tt;
 }
@@ -644,35 +673,37 @@ inline const flatbuffers::TypeTable *headerTypeTable() {
     { flatbuffers::ET_USHORT, 0, -1 },
     { flatbuffers::ET_UINT, 0, -1 },
     { flatbuffers::ET_UINT, 0, -1 },
+    { flatbuffers::ET_UINT, 0, -1 },
     { flatbuffers::ET_UINT, 0, -1 }
   };
   static const flatbuffers::TypeFunction type_refs[] = {
     compression_flagsTypeTable,
-    header_bit_flagsTypeTable
+    header_bitflagsTypeTable
   };
-  static const int64_t values[] = { 0, 1, 2, 4, 8, 12, 16 };
+  static const int64_t values[] = { 0, 1, 2, 4, 8, 12, 16, 20 };
   static const char * const names[] = {
     "compression",
     "bitflags",
     "session",
     "size",
     "checksum",
-    "meta"
+    "meta",
+    "dynamic_headers_size"
   };
   static const flatbuffers::TypeTable tt = {
-    flatbuffers::ST_STRUCT, 6, type_codes, type_refs, values, names
+    flatbuffers::ST_STRUCT, 7, type_codes, type_refs, values, names
   };
   return &tt;
 }
 
-inline const flatbuffers::TypeTable *dynamic_headerTypeTable() {
+inline const flatbuffers::TypeTable *header_kvTypeTable() {
   static const flatbuffers::TypeCode type_codes[] = {
     { flatbuffers::ET_STRING, 0, -1 },
-    { flatbuffers::ET_STRING, 0, -1 }
+    { flatbuffers::ET_CHAR, 1, -1 }
   };
   static const char * const names[] = {
-    "key",
-    "value"
+    "hdr_key",
+    "hdr_value"
   };
   static const flatbuffers::TypeTable tt = {
     flatbuffers::ST_TABLE, 2, type_codes, nullptr, nullptr, names
@@ -680,25 +711,18 @@ inline const flatbuffers::TypeTable *dynamic_headerTypeTable() {
   return &tt;
 }
 
-inline const flatbuffers::TypeTable *payload_headersTypeTable() {
+inline const flatbuffers::TypeTable *dynamic_headersTypeTable() {
   static const flatbuffers::TypeCode type_codes[] = {
-    { flatbuffers::ET_SEQUENCE, 1, 0 },
-    { flatbuffers::ET_UINT, 0, -1 },
-    { flatbuffers::ET_UINT, 0, -1 },
-    { flatbuffers::ET_CHAR, 0, 1 }
+    { flatbuffers::ET_SEQUENCE, 1, 0 }
   };
   static const flatbuffers::TypeFunction type_refs[] = {
-    dynamic_headerTypeTable,
-    compression_flagsTypeTable
+    header_kvTypeTable
   };
   static const char * const names[] = {
-    "dynamic_headers",
-    "size",
-    "checksum",
-    "compression"
+    "values"
   };
   static const flatbuffers::TypeTable tt = {
-    flatbuffers::ST_TABLE, 4, type_codes, type_refs, nullptr, names
+    flatbuffers::ST_TABLE, 1, type_codes, type_refs, nullptr, names
   };
   return &tt;
 }

@@ -68,7 +68,7 @@ rpc_recv_context::parse_payload(rpc_connection *conn, rpc::header hdr) {
         return seastar::make_ready_future<ret_type>(stdx::nullopt);
       }
       if (hdr.bitflags() &
-          rpc::header_bit_flags::header_bit_flags_has_payload_headers) {
+          rpc::header_bitflags::header_bitflags_has_dynamic_headers) {
         LOG_ERROR("Reading payload headers is not yet implemented");
         return seastar::make_ready_future<ret_type>(stdx::nullopt);
       }
