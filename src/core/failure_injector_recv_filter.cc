@@ -9,22 +9,28 @@
 #include "smf/log.h"
 #include "smf/rpc_envelope.h"
 #include "smf/rpc_recv_context.h"
-#include "smf/stdx.h"
 
 namespace smf {
 class failure_injector_recv_filter_exception final : public std::exception {
  public:
   virtual const char *
   what() const noexcept {
-    return "Injected by `failure_injector_recv_filter`";
+    return "Exception injected by `failure_injector_recv_filter`";
   }
 };
 
 stdx::optional<rpc::failure_spec>
-find_failure_spec(const rpc::dynamic_headers *hdrs) {
+failure_injector_recv_filter::find_failure_spec(
+  const rpc::dynamic_headers *hdrs) {
   rpc::failure_spec spec;
   for (const rpc::header_kv *kv : *(hdrs->values())) {
     if (kv->KeyCompareWithValue("x-smf-failure-spec")) {
+      if (kv->hdr_value()->size() != sizeof(spec)) {
+        DLOG_ERROR(
+          "failure_spec cannot be instantiated. header bytes: {}, required: {}",
+          kv->hdr_value()->size(), sizeof(spec));
+        return nullopt;
+      }
       std::memcpy(&spec, kv->hdr_value()->data(), kv->hdr_value()->size());
       return spec;
     }

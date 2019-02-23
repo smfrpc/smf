@@ -91,6 +91,7 @@ table null_type {}
 enum failure_spec_type:byte {
   terminate,
   exception,
+  message_drop,
   delay
 }
 struct failure_spec {
