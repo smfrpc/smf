@@ -87,9 +87,13 @@ table dynamic_headers {
 table null_type {}
 
 /// ---------- Internal protocols below
+
+enum failure_spec_type:byte {
+  terminate,
+  exception,
+  delay
+}
 struct failure_spec {
+  ftype: failure_spec_type;
   delay_duration_ms: uint;
-  delay: bool;
-  terminate: bool;
-  exception: bool;
 }

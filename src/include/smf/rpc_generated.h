@@ -111,6 +111,40 @@ inline const char *EnumNameheader_bitflags(header_bitflags e) {
   return EnumNamesheader_bitflags()[index];
 }
 
+/// ---------- Internal protocols below
+enum failure_spec_type {
+  failure_spec_type_terminate = 0,
+  failure_spec_type_exception = 1,
+  failure_spec_type_delay = 2,
+  failure_spec_type_MIN = failure_spec_type_terminate,
+  failure_spec_type_MAX = failure_spec_type_delay
+};
+
+inline const failure_spec_type (&EnumValuesfailure_spec_type())[3] {
+  static const failure_spec_type values[] = {
+    failure_spec_type_terminate,
+    failure_spec_type_exception,
+    failure_spec_type_delay
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesfailure_spec_type() {
+  static const char * const names[] = {
+    "terminate",
+    "exception",
+    "delay",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNamefailure_spec_type(failure_spec_type e) {
+  if (e < failure_spec_type_terminate || e > failure_spec_type_delay) return "";
+  const size_t index = static_cast<int>(e);
+  return EnumNamesfailure_spec_type()[index];
+}
+
 /// \brief: header parsed by rpc engine
 /// must be sizeof()'able
 /// that is, must be a struct in fbs language
@@ -227,14 +261,11 @@ inline bool operator==(const header &lhs, const header &rhs) {
       (lhs.dynamic_headers_size() == rhs.dynamic_headers_size());
 }
 
-/// ---------- Internal protocols below
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) failure_spec FLATBUFFERS_FINAL_CLASS {
  private:
+  int8_t ftype_;
+  int8_t padding0__;  int16_t padding1__;
   uint32_t delay_duration_ms_;
-  uint8_t delay_;
-  uint8_t terminate_;
-  uint8_t exception_;
-  int8_t padding0__;
 
  public:
   static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
@@ -243,13 +274,18 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) failure_spec FLATBUFFERS_FINAL_CLASS {
   failure_spec() {
     memset(this, 0, sizeof(failure_spec));
   }
-  failure_spec(uint32_t _delay_duration_ms, bool _delay, bool _terminate, bool _exception)
-      : delay_duration_ms_(flatbuffers::EndianScalar(_delay_duration_ms)),
-        delay_(flatbuffers::EndianScalar(static_cast<uint8_t>(_delay))),
-        terminate_(flatbuffers::EndianScalar(static_cast<uint8_t>(_terminate))),
-        exception_(flatbuffers::EndianScalar(static_cast<uint8_t>(_exception))),
-        padding0__(0) {
-    (void)padding0__;
+  failure_spec(failure_spec_type _ftype, uint32_t _delay_duration_ms)
+      : ftype_(flatbuffers::EndianScalar(static_cast<int8_t>(_ftype))),
+        padding0__(0),
+        padding1__(0),
+        delay_duration_ms_(flatbuffers::EndianScalar(_delay_duration_ms)) {
+    (void)padding0__;    (void)padding1__;
+  }
+  failure_spec_type ftype() const {
+    return static_cast<failure_spec_type>(flatbuffers::EndianScalar(ftype_));
+  }
+  void mutate_ftype(failure_spec_type _ftype) {
+    flatbuffers::WriteScalar(&ftype_, static_cast<int8_t>(_ftype));
   }
   uint32_t delay_duration_ms() const {
     return flatbuffers::EndianScalar(delay_duration_ms_);
@@ -257,33 +293,13 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) failure_spec FLATBUFFERS_FINAL_CLASS {
   void mutate_delay_duration_ms(uint32_t _delay_duration_ms) {
     flatbuffers::WriteScalar(&delay_duration_ms_, _delay_duration_ms);
   }
-  bool delay() const {
-    return flatbuffers::EndianScalar(delay_) != 0;
-  }
-  void mutate_delay(bool _delay) {
-    flatbuffers::WriteScalar(&delay_, static_cast<uint8_t>(_delay));
-  }
-  bool terminate() const {
-    return flatbuffers::EndianScalar(terminate_) != 0;
-  }
-  void mutate_terminate(bool _terminate) {
-    flatbuffers::WriteScalar(&terminate_, static_cast<uint8_t>(_terminate));
-  }
-  bool exception() const {
-    return flatbuffers::EndianScalar(exception_) != 0;
-  }
-  void mutate_exception(bool _exception) {
-    flatbuffers::WriteScalar(&exception_, static_cast<uint8_t>(_exception));
-  }
 };
 FLATBUFFERS_STRUCT_END(failure_spec, 8);
 
 inline bool operator==(const failure_spec &lhs, const failure_spec &rhs) {
   return
-      (lhs.delay_duration_ms() == rhs.delay_duration_ms()) &&
-      (lhs.delay() == rhs.delay()) &&
-      (lhs.terminate() == rhs.terminate()) &&
-      (lhs.exception() == rhs.exception());
+      (lhs.ftype() == rhs.ftype()) &&
+      (lhs.delay_duration_ms() == rhs.delay_duration_ms());
 }
 
 struct header_kvT : public flatbuffers::NativeTable {
@@ -650,6 +666,26 @@ inline const flatbuffers::TypeTable *header_bitflagsTypeTable() {
   return &tt;
 }
 
+inline const flatbuffers::TypeTable *failure_spec_typeTypeTable() {
+  static const flatbuffers::TypeCode type_codes[] = {
+    { flatbuffers::ET_CHAR, 0, 0 },
+    { flatbuffers::ET_CHAR, 0, 0 },
+    { flatbuffers::ET_CHAR, 0, 0 }
+  };
+  static const flatbuffers::TypeFunction type_refs[] = {
+    failure_spec_typeTypeTable
+  };
+  static const char * const names[] = {
+    "terminate",
+    "exception",
+    "delay"
+  };
+  static const flatbuffers::TypeTable tt = {
+    flatbuffers::ST_ENUM, 3, type_codes, type_refs, nullptr, names
+  };
+  return &tt;
+}
+
 inline const flatbuffers::TypeTable *headerTypeTable() {
   static const flatbuffers::TypeCode type_codes[] = {
     { flatbuffers::ET_CHAR, 0, 0 },
@@ -720,20 +756,19 @@ inline const flatbuffers::TypeTable *null_typeTypeTable() {
 
 inline const flatbuffers::TypeTable *failure_specTypeTable() {
   static const flatbuffers::TypeCode type_codes[] = {
-    { flatbuffers::ET_UINT, 0, -1 },
-    { flatbuffers::ET_BOOL, 0, -1 },
-    { flatbuffers::ET_BOOL, 0, -1 },
-    { flatbuffers::ET_BOOL, 0, -1 }
+    { flatbuffers::ET_CHAR, 0, 0 },
+    { flatbuffers::ET_UINT, 0, -1 }
   };
-  static const int64_t values[] = { 0, 4, 5, 6, 8 };
+  static const flatbuffers::TypeFunction type_refs[] = {
+    failure_spec_typeTypeTable
+  };
+  static const int64_t values[] = { 0, 4, 8 };
   static const char * const names[] = {
-    "delay_duration_ms",
-    "delay",
-    "terminate",
-    "exception"
+    "ftype",
+    "delay_duration_ms"
   };
   static const flatbuffers::TypeTable tt = {
-    flatbuffers::ST_STRUCT, 4, type_codes, nullptr, values, names
+    flatbuffers::ST_STRUCT, 2, type_codes, type_refs, values, names
   };
   return &tt;
 }
