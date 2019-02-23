@@ -9,8 +9,6 @@
 namespace smf {
 namespace rpc {
 
-struct ldfi_fspec;
-
 struct header;
 
 struct header_kv;
@@ -22,13 +20,13 @@ struct dynamic_headersT;
 struct null_type;
 struct null_typeT;
 
-bool operator==(const ldfi_fspec &lhs, const ldfi_fspec &rhs);
+struct failure_spec;
+
 bool operator==(const header &lhs, const header &rhs);
 bool operator==(const header_kvT &lhs, const header_kvT &rhs);
 bool operator==(const dynamic_headersT &lhs, const dynamic_headersT &rhs);
 bool operator==(const null_typeT &lhs, const null_typeT &rhs);
-
-inline const flatbuffers::TypeTable *ldfi_fspecTypeTable();
+bool operator==(const failure_spec &lhs, const failure_spec &rhs);
 
 inline const flatbuffers::TypeTable *headerTypeTable();
 
@@ -37,6 +35,8 @@ inline const flatbuffers::TypeTable *header_kvTypeTable();
 inline const flatbuffers::TypeTable *dynamic_headersTypeTable();
 
 inline const flatbuffers::TypeTable *null_typeTypeTable();
+
+inline const flatbuffers::TypeTable *failure_specTypeTable();
 
 /// \brief: headers that are stored in an int
 /// so they need to be inclusive. That is, you can turn on
@@ -109,61 +109,6 @@ inline const char *EnumNameheader_bitflags(header_bitflags e) {
   if (e < header_bitflags_has_dynamic_headers || e > header_bitflags_has_dynamic_headers) return "";
   const size_t index = static_cast<int>(e) - static_cast<int>(header_bitflags_has_dynamic_headers);
   return EnumNamesheader_bitflags()[index];
-}
-
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) ldfi_fspec FLATBUFFERS_FINAL_CLASS {
- private:
-  uint32_t end_of_time_;
-  uint32_t end_of_finite_failures_;
-  uint32_t crashes_;
-  uint32_t sleep_ms_;
-
- public:
-  static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
-    return "smf.rpc.ldfi_fspec";
-  }
-  ldfi_fspec() {
-    memset(this, 0, sizeof(ldfi_fspec));
-  }
-  ldfi_fspec(uint32_t _end_of_time, uint32_t _end_of_finite_failures, uint32_t _crashes, uint32_t _sleep_ms)
-      : end_of_time_(flatbuffers::EndianScalar(_end_of_time)),
-        end_of_finite_failures_(flatbuffers::EndianScalar(_end_of_finite_failures)),
-        crashes_(flatbuffers::EndianScalar(_crashes)),
-        sleep_ms_(flatbuffers::EndianScalar(_sleep_ms)) {
-  }
-  uint32_t end_of_time() const {
-    return flatbuffers::EndianScalar(end_of_time_);
-  }
-  void mutate_end_of_time(uint32_t _end_of_time) {
-    flatbuffers::WriteScalar(&end_of_time_, _end_of_time);
-  }
-  uint32_t end_of_finite_failures() const {
-    return flatbuffers::EndianScalar(end_of_finite_failures_);
-  }
-  void mutate_end_of_finite_failures(uint32_t _end_of_finite_failures) {
-    flatbuffers::WriteScalar(&end_of_finite_failures_, _end_of_finite_failures);
-  }
-  uint32_t crashes() const {
-    return flatbuffers::EndianScalar(crashes_);
-  }
-  void mutate_crashes(uint32_t _crashes) {
-    flatbuffers::WriteScalar(&crashes_, _crashes);
-  }
-  uint32_t sleep_ms() const {
-    return flatbuffers::EndianScalar(sleep_ms_);
-  }
-  void mutate_sleep_ms(uint32_t _sleep_ms) {
-    flatbuffers::WriteScalar(&sleep_ms_, _sleep_ms);
-  }
-};
-FLATBUFFERS_STRUCT_END(ldfi_fspec, 16);
-
-inline bool operator==(const ldfi_fspec &lhs, const ldfi_fspec &rhs) {
-  return
-      (lhs.end_of_time() == rhs.end_of_time()) &&
-      (lhs.end_of_finite_failures() == rhs.end_of_finite_failures()) &&
-      (lhs.crashes() == rhs.crashes()) &&
-      (lhs.sleep_ms() == rhs.sleep_ms());
 }
 
 /// \brief: header parsed by rpc engine
@@ -280,6 +225,65 @@ inline bool operator==(const header &lhs, const header &rhs) {
       (lhs.checksum() == rhs.checksum()) &&
       (lhs.meta() == rhs.meta()) &&
       (lhs.dynamic_headers_size() == rhs.dynamic_headers_size());
+}
+
+/// ---------- Internal protocols below
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) failure_spec FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint32_t delay_duration_ms_;
+  uint8_t delay_;
+  uint8_t terminate_;
+  uint8_t exception_;
+  int8_t padding0__;
+
+ public:
+  static FLATBUFFERS_CONSTEXPR const char *GetFullyQualifiedName() {
+    return "smf.rpc.failure_spec";
+  }
+  failure_spec() {
+    memset(this, 0, sizeof(failure_spec));
+  }
+  failure_spec(uint32_t _delay_duration_ms, bool _delay, bool _terminate, bool _exception)
+      : delay_duration_ms_(flatbuffers::EndianScalar(_delay_duration_ms)),
+        delay_(flatbuffers::EndianScalar(static_cast<uint8_t>(_delay))),
+        terminate_(flatbuffers::EndianScalar(static_cast<uint8_t>(_terminate))),
+        exception_(flatbuffers::EndianScalar(static_cast<uint8_t>(_exception))),
+        padding0__(0) {
+    (void)padding0__;
+  }
+  uint32_t delay_duration_ms() const {
+    return flatbuffers::EndianScalar(delay_duration_ms_);
+  }
+  void mutate_delay_duration_ms(uint32_t _delay_duration_ms) {
+    flatbuffers::WriteScalar(&delay_duration_ms_, _delay_duration_ms);
+  }
+  bool delay() const {
+    return flatbuffers::EndianScalar(delay_) != 0;
+  }
+  void mutate_delay(bool _delay) {
+    flatbuffers::WriteScalar(&delay_, static_cast<uint8_t>(_delay));
+  }
+  bool terminate() const {
+    return flatbuffers::EndianScalar(terminate_) != 0;
+  }
+  void mutate_terminate(bool _terminate) {
+    flatbuffers::WriteScalar(&terminate_, static_cast<uint8_t>(_terminate));
+  }
+  bool exception() const {
+    return flatbuffers::EndianScalar(exception_) != 0;
+  }
+  void mutate_exception(bool _exception) {
+    flatbuffers::WriteScalar(&exception_, static_cast<uint8_t>(_exception));
+  }
+};
+FLATBUFFERS_STRUCT_END(failure_spec, 8);
+
+inline bool operator==(const failure_spec &lhs, const failure_spec &rhs) {
+  return
+      (lhs.delay_duration_ms() == rhs.delay_duration_ms()) &&
+      (lhs.delay() == rhs.delay()) &&
+      (lhs.terminate() == rhs.terminate()) &&
+      (lhs.exception() == rhs.exception());
 }
 
 struct header_kvT : public flatbuffers::NativeTable {
@@ -646,26 +650,6 @@ inline const flatbuffers::TypeTable *header_bitflagsTypeTable() {
   return &tt;
 }
 
-inline const flatbuffers::TypeTable *ldfi_fspecTypeTable() {
-  static const flatbuffers::TypeCode type_codes[] = {
-    { flatbuffers::ET_UINT, 0, -1 },
-    { flatbuffers::ET_UINT, 0, -1 },
-    { flatbuffers::ET_UINT, 0, -1 },
-    { flatbuffers::ET_UINT, 0, -1 }
-  };
-  static const int64_t values[] = { 0, 4, 8, 12, 16 };
-  static const char * const names[] = {
-    "end_of_time",
-    "end_of_finite_failures",
-    "crashes",
-    "sleep_ms"
-  };
-  static const flatbuffers::TypeTable tt = {
-    flatbuffers::ST_STRUCT, 4, type_codes, nullptr, values, names
-  };
-  return &tt;
-}
-
 inline const flatbuffers::TypeTable *headerTypeTable() {
   static const flatbuffers::TypeCode type_codes[] = {
     { flatbuffers::ET_CHAR, 0, 0 },
@@ -730,6 +714,26 @@ inline const flatbuffers::TypeTable *dynamic_headersTypeTable() {
 inline const flatbuffers::TypeTable *null_typeTypeTable() {
   static const flatbuffers::TypeTable tt = {
     flatbuffers::ST_TABLE, 0, nullptr, nullptr, nullptr, nullptr
+  };
+  return &tt;
+}
+
+inline const flatbuffers::TypeTable *failure_specTypeTable() {
+  static const flatbuffers::TypeCode type_codes[] = {
+    { flatbuffers::ET_UINT, 0, -1 },
+    { flatbuffers::ET_BOOL, 0, -1 },
+    { flatbuffers::ET_BOOL, 0, -1 },
+    { flatbuffers::ET_BOOL, 0, -1 }
+  };
+  static const int64_t values[] = { 0, 4, 5, 6, 8 };
+  static const char * const names[] = {
+    "delay_duration_ms",
+    "delay",
+    "terminate",
+    "exception"
+  };
+  static const flatbuffers::TypeTable tt = {
+    flatbuffers::ST_STRUCT, 4, type_codes, nullptr, values, names
   };
   return &tt;
 }

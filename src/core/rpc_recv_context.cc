@@ -25,7 +25,14 @@ rpc_recv_context::rpc_recv_context(
   seastar::temporary_buffer<char> body)
   : rpc_server_limits(server_instance_limits), remote_address(address),
     header(hdr), payload(std::move(body)) {
-  assert(header.size() == payload.size());
+  DLOG_THROW_IF(header.size() == payload.size(),
+                "Bad parsing. Header::size must match payload size");
+  if (hdr.bitflags() &
+      rpc::header_bitflags::header_bitflags_has_dynamic_headers) {
+    dynamic_headers_buf = payload.share(0, header.dynamic_headers_size());
+    auto tmp = payload.share(header.dynamic_headers_size(), payload.size());
+    std::swap(payload, tmp);
+  }
 }
 
 rpc_recv_context::rpc_recv_context(rpc_recv_context &&o) noexcept
@@ -69,8 +76,10 @@ rpc_recv_context::parse_payload(rpc_connection *conn, rpc::header hdr) {
       }
       if (hdr.bitflags() &
           rpc::header_bitflags::header_bitflags_has_dynamic_headers) {
-        LOG_ERROR("Reading payload headers is not yet implemented");
-        return seastar::make_ready_future<ret_type>(stdx::nullopt);
+        if (hdr.size() <= hdr.dynamic_headers_size()) {
+          LOG_ERROR("Request contains only headers. No payload registered");
+          return seastar::make_ready_future<ret_type>(stdx::nullopt);
+        }
       }
 
       const uint32_t xx = rpc_checksum_payload(body.get(), body.size());

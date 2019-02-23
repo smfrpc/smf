@@ -53,10 +53,18 @@ struct rpc_recv_context {
     return header.session();
   }
 
+  const rpc::dynamic_headers *
+  payload_headers() const {
+    if (dynamic_headers_buf.size() == 0) { return nullptr; }
+    auto ptr = static_cast<const void *>(dynamic_headers_buf.get());
+    return flatbuffers::GetRoot<rpc::dynamic_headers>(ptr);
+  }
+
   seastar::lw_shared_ptr<rpc_connection_limits> rpc_server_limits;
   const seastar::socket_address remote_address;
   rpc::header header;
   seastar::temporary_buffer<char> payload;
+  seastar::temporary_buffer<char> dynamic_headers_buf;
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_recv_context);
 };
 }  // namespace smf
