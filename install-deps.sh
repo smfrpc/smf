@@ -83,7 +83,6 @@ function rpms() {
         m4 \
         libtool \
         make \
-        which \
         ragel \
         xfsprogs-devel \
         systemtap-sdt-devel \
