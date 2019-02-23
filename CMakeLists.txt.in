@@ -4,7 +4,7 @@ project(build-deps NONE)
 cmake_host_system_information(
   RESULT build_concurrency_factor
   QUERY NUMBER_OF_LOGICAL_CORES)
-set(make_command make -j ${build_concurrency_factor})
+set(make_command ${CMAKE_MAKE_PROGRAM} -j ${build_concurrency_factor})
 
 set(autotools_flags
   CFLAGS=-I@SMF_DEPS_INSTALL_DIR@/include
@@ -59,15 +59,16 @@ ExternalProject_Add(zlib_ext
   CONFIGURE_COMMAND
     <SOURCE_DIR>/configure
     --prefix=<INSTALL_DIR>
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ${make_command} install)
+  BUILD_COMMAND make -j${build_concurrency_factor}
+  INSTALL_COMMAND make install)
 
 ExternalProject_Add(protobuf_ext
   URL https://github.com/protocolbuffers/protobuf/releases/download/v3.3.0/protobuf-cpp-3.3.0.tar.gz
   URL_MD5 73c28d3044e89782bdc8d9fdcfbb5792
   INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --srcdir=<SOURCE_DIR>
-  BUILD_COMMAND ${make_command}
+  BUILD_COMMAND make -j${build_concurrency_factor}
+  INSTALL_COMMAND make install
   DEPENDS zlib_ext)
 
 # FIXME: this setup seems to cause dpdk to rebuild each time
@@ -95,7 +96,7 @@ ExternalProject_Add(dpdk_ext
   BUILD_COMMAND ""
   INSTALL_COMMAND
    ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
-   ${make_command} ${dpdk_args} install)
+   make -j${build_concurrency_factor} ${dpdk_args} install)
 
 ExternalProject_Add(c-ares_ext
   URL https://github.com/c-ares/c-ares/archive/cares-1_14_0.tar.gz
@@ -131,8 +132,8 @@ ExternalProject_Add(gmp_ext
     --prefix=<INSTALL_DIR>
     --srcdir=<SOURCE_DIR>
     ${info_dir}/gmp
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ${make_command} install)
+  BUILD_COMMAND make -j${build_concurrency_factor}
+  INSTALL_COMMAND make install)
 
 ExternalProject_Add(nettle_ext
   URL https://ftp.gnu.org/gnu/nettle/nettle-3.4.tar.gz
@@ -145,8 +146,8 @@ ExternalProject_Add(nettle_ext
     --libdir=<INSTALL_DIR>/lib
     ${info_dir}/nettle
     ${autotools_flags}
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ${make_command} install
+  BUILD_COMMAND make -j${build_concurrency_factor}
+  INSTALL_COMMAND make install
   DEPENDS gmp_ext)
 
 ExternalProject_Add(gnutls_ext
@@ -165,8 +166,8 @@ ExternalProject_Add(gnutls_ext
     --disable-non-suiteb-curves
     --disable-doc
     ${autotools_flags}
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ${make_command} install
+  BUILD_COMMAND make -j${build_concurrency_factor}
+  INSTALL_COMMAND make install
   DEPENDS gmp_ext nettle_ext)
 
 # in cmake >= 3.7
@@ -178,6 +179,7 @@ ExternalProject_Add(lz4_ext
   INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
   CONFIGURE_COMMAND
     ${CMAKE_COMMAND}
+    -G ${CMAKE_GENERATOR}
     -DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@
     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
     <SOURCE_DIR>/contrib/cmake_unofficial
@@ -191,8 +193,8 @@ ExternalProject_Add(numactl_ext
     <SOURCE_DIR>/configure
     --prefix=<INSTALL_DIR>
     --srcdir=<SOURCE_DIR>
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ${make_command} install)
+  BUILD_COMMAND make -j${build_concurrency_factor}
+  INSTALL_COMMAND make install)
 
 ExternalProject_Add(libpciaccess_ext
   URL https://www.x.org/releases/individual/lib/libpciaccess-0.13.4.tar.gz
@@ -202,8 +204,8 @@ ExternalProject_Add(libpciaccess_ext
     <SOURCE_DIR>/configure
     --prefix=<INSTALL_DIR>
     --srcdir=<SOURCE_DIR>
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ${make_command} install)
+  BUILD_COMMAND make -j${build_concurrency_factor}
+  INSTALL_COMMAND make install)
 
 ExternalProject_Add(hwloc_ext
   URL https://download.open-mpi.org/release/hwloc/v1.11/hwloc-1.11.5.tar.gz
@@ -213,8 +215,8 @@ ExternalProject_Add(hwloc_ext
     <SOURCE_DIR>/configure
     --prefix=<INSTALL_DIR>
     --srcdir=<SOURCE_DIR>
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ${make_command} install
+  BUILD_COMMAND make -j${build_concurrency_factor}
+  INSTALL_COMMAND make install
   DEPENDS numactl_ext libpciaccess_ext)
 
 ExternalProject_Add(xy_ext
@@ -224,8 +226,8 @@ ExternalProject_Add(xy_ext
   CONFIGURE_COMMAND
     <SOURCE_DIR>/configure
     --prefix=<INSTALL_DIR>
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ${make_command} install)
+  BUILD_COMMAND make -j${build_concurrency_factor}
+  INSTALL_COMMAND make install)
 
 ExternalProject_Add(xml2_ext
   URL https://github.com/GNOME/libxml2/archive/f8a8c1f59db355b46962577e7b74f1a1e8149dc6.tar.gz
@@ -239,8 +241,8 @@ ExternalProject_Add(xml2_ext
       <SOURCE_DIR>/configure
       --without-python
       --prefix=<INSTALL_DIR>
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ${make_command} install
+  BUILD_COMMAND make -j${build_concurrency_factor}
+  INSTALL_COMMAND make install
   DEPENDS xy_ext zlib_ext)
 
 ExternalProject_Add(cryptopp_ext
@@ -262,8 +264,8 @@ ExternalProject_Add(lksctp-tools_ext
     <SOURCE_DIR>/configure
     --prefix=<INSTALL_DIR>
     --srcdir=<SOURCE_DIR>
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ${make_command} install)
+  BUILD_COMMAND make -j${build_concurrency_factor}
+  INSTALL_COMMAND make install)
 
 ExternalProject_Add(seastar_ext
   URL https://github.com/scylladb/seastar/archive/9ed5fca9207f81662dd205b5c778890165959f3f.tar.gz
@@ -306,6 +308,7 @@ ExternalProject_Add(zstd_ext
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CONFIGURE_COMMAND
     ${CMAKE_COMMAND}
+    -G ${CMAKE_GENERATOR}
     -DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@
     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
     -DZSTD_MULTITHREAD_SUPPORT=OFF
@@ -338,6 +341,7 @@ ExternalProject_Add(xxhash_ext
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CONFIGURE_COMMAND
     ${CMAKE_COMMAND}
+    -G ${CMAKE_GENERATOR}
     -DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@
     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
     -DBUILD_XXHSUM=OFF

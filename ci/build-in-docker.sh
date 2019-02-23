@@ -15,5 +15,5 @@ else
 fi
 
 # TODO: run as non-root
-docker run --rm -v ${proj_dir}:/src/smf:z,ro ${extra} \
+docker run --rm -v ${proj_dir}:/src/smf:z,ro ${extra} -e BUILD_GENERATOR \
   -w /src/smf ${base_img} /bin/bash -c "./install-deps.sh && ci/test.sh"

@@ -35,6 +35,7 @@ function debs() {
         build-essential \
         libtool \
         m4 \
+        ninja-build \
         automake \
         pkg-config \
         xfslibs-dev \
