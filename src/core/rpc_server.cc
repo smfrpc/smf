@@ -112,14 +112,15 @@ rpc_server::start() {
         handle_client_connection(conn);
       });
   })
-    .handle_exception([](std::exception_ptr eptr) {
+    .handle_exception([this](std::exception_ptr eptr) {
+      stopped_.set_value();
       try {
         std::rethrow_exception(eptr);
       } catch (const std::system_error &e) {
         // Current and future \ref accept() calls will terminate immediately
-        // 103 is expected
-        if (e.code().value() == 103) {
-          return;
+        auto const err_value = e.code().value();
+        if (err_value == 103 || err_value == 22) {
+          LOG_INFO("Shutting down server with expected exit codes");
         } else {
           LOG_ERROR("Unknown system error: {}", e);
         }
@@ -133,17 +134,22 @@ seastar::future<>
 rpc_server::stop() {
   LOG_INFO("Stopped seastar::accept() calls");
   listener_->abort_accept();
-
-  std::for_each(open_connections_.begin(), open_connections_.end(),
-                [](auto &client_conn) {
-                  client_conn.second->conn.socket.shutdown_input();
-                });
-
-  return reply_gate_.close().then([admin = admin_ ? admin_ : nullptr] {
-    if (!admin) { return seastar::make_ready_future<>(); }
-    return admin->stop().handle_exception([](auto ep) {
-      LOG_WARN("Warning (ignoring...) shutting down HTTP server: {}", ep);
-      return seastar::make_ready_future<>();
+  return stopped_.get_future().then([this] {
+    std::for_each(
+      open_connections_.begin(), open_connections_.end(),
+      [](auto &client_conn) {
+        try {
+          client_conn.second->conn.socket.shutdown_input();
+        } catch (...) {
+          LOG_ERROR("Detected error shutting down client connection: ignoring");
+        }
+      });
+    return reply_gate_.close().then([admin = admin_ ? admin_ : nullptr] {
+      if (!admin) { return seastar::make_ready_future<>(); }
+      return admin->stop().handle_exception([](auto ep) {
+        LOG_WARN("Warning (ignoring...) shutting down HTTP server: {}", ep);
+        return seastar::make_ready_future<>();
+      });
     });
   });
 }

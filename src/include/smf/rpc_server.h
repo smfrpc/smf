@@ -114,6 +114,9 @@ class rpc_server {
   std::unordered_map<uint64_t, seastar::lw_shared_ptr<rpc_server_connection>>
     open_connections_;
 
+  /// \brief set once keep_listening has exited
+  seastar::promise<> stopped_;
+  /// \brief keeps server alive until all continuations have finished
   seastar::gate reply_gate_;
   /// \brief prometheus metrics exposed
   seastar::metrics::metric_groups metrics_{};
