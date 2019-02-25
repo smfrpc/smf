@@ -21,13 +21,14 @@ install(TARGETS smfc
   EXPORT smf-export
   DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-# TODO: rpc_generated.h should not be checked into git. instead, it should be
-# generated at build-time and installed/packaged explicitly.
 smfc_gen(
   CPP
   TARGET_NAME raw_rpc_gen
   OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/smf
   SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/core/rpc.fbs)
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/include/smf/rpc_generated.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/smf)
 
 file(GLOB smf_srcs "${CMAKE_CURRENT_SOURCE_DIR}/core/*.cc")
 

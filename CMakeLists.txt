@@ -19,32 +19,38 @@ option(SMF_ENABLE_UNIT_TESTS "control if unit tests are bulit and ran" ON)
 option(SMF_ENABLE_BENCHMARK_TESTS "control if benchmarks are bulit and ran" OFF)
 option(SMF_INSTALL "Enable installation of smf" ON)
 option(SMF_ENABLE_TESTS "Useful for disabling all tests" ON)
+option(SMF_MANAGE_DEPS "Use smf's reproducible build" ON)
 
-# fetch and build dependencies. each dependency is built in isolation allowing
-# tight control over the build configuration, and avoiding any inadvertant cmake
-# cache pollution. the dependencies are built at configure-time and then
-# imported as normal cmake dependencies, which will easily enable future
-# iterations to selectively satisfy dependencies from system packages.
-set(SMF_DEPS_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/smf-deps-build)
-set(SMF_DEPS_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/smf-deps-install)
-configure_file(CMakeLists.txt.in ${SMF_DEPS_BUILD_DIR}/CMakeLists.txt @ONLY)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-  RESULT_VARIABLE result
-  WORKING_DIRECTORY ${SMF_DEPS_BUILD_DIR})
-if(result)
-  message(FATAL_ERROR "CMake step for deps-build failed: ${result}")
+if(SMF_MANAGE_DEPS)
+  # don't export() the contents to registry
+  set(CMAKE_EXPORT_NO_PACKAGE_REGISTRY ON  CACHE "" INTERNAL FORCE)
+  # disable system level registry /usr/local/share/cmake/*
+  set(CMAKE_FIND_PACKAGE_NO_SYSTEM_PACKAGE_REGISTRY ON  CACHE "" INTERNAL FORCE)
+  # disable user package registry ~/.cmake/*
+  set(CMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY ON  CACHE "" INTERNAL FORCE)
+  # fetch and build dependencies. each dependency is built in isolation allowing
+  # tight control over the build configuration, and avoiding any inadvertant cmake
+  # cache pollution. the dependencies are built at configure-time and then
+  # imported as normal cmake dependencies, which will easily enable future
+  # iterations to selectively satisfy dependencies from system packages.
+  set(SMF_DEPS_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/smf-deps-build)
+  set(SMF_DEPS_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/smf-deps-install)
+  configure_file(CMakeLists.txt.in ${SMF_DEPS_BUILD_DIR}/CMakeLists.txt @ONLY)
+  execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+    RESULT_VARIABLE result
+    WORKING_DIRECTORY ${SMF_DEPS_BUILD_DIR})
+  if(result)
+    message(FATAL_ERROR "CMake step for deps-build failed: ${result}")
+  endif()
+  execute_process(COMMAND ${CMAKE_COMMAND} --build .
+    RESULT_VARIABLE result
+    WORKING_DIRECTORY ${SMF_DEPS_BUILD_DIR})
+  if(result)
+    message(FATAL_ERROR "Build step for deps-build failed: ${result}")
+  endif()
+  # wire up dependency search paths.
+  list(APPEND CMAKE_PREFIX_PATH "${SMF_DEPS_INSTALL_DIR}")
 endif()
-execute_process(COMMAND ${CMAKE_COMMAND} --build .
-  RESULT_VARIABLE result
-  WORKING_DIRECTORY ${SMF_DEPS_BUILD_DIR})
-if(result)
-  message(FATAL_ERROR "Build step for deps-build failed: ${result}")
-endif()
-
-# wire up dependency search paths.
-list(APPEND CMAKE_PREFIX_PATH "${SMF_DEPS_INSTALL_DIR}")
-# seastar includes several custom cmake modules
-list(APPEND CMAKE_MODULE_PATH "${SMF_DEPS_BUILD_DIR}/seastar_ext-prefix/src/seastar_ext/cmake")
 
 find_package(Seastar REQUIRED)
 find_package(Flatbuffers REQUIRED)
@@ -106,7 +112,6 @@ if(SMF_INSTALL)
   install(
     FILES
     ${CMAKE_CURRENT_BINARY_DIR}/smf-config.cmake
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindBoost.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/smfc_generator.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindZstd.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindxxHash.cmake
