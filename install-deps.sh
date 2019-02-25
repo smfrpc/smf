@@ -86,6 +86,9 @@ function rpms() {
         ragel \
         xfsprogs-devel \
         systemtap-sdt-devel \
+        libasan \
+        libubsan \
+        libatomic \
         doxygen ${extra}
 
     if [ -n "$dts_ver" ]; then
