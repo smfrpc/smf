@@ -17,7 +17,7 @@ builddir=""
 . /etc/os-release
 
 function buildcmd() {
-  make -j$(nproc) -C ${1}
+  ninja -C ${1}
 }
 
 case $ID in
@@ -39,7 +39,7 @@ function debug {
 
     mkdir -p $builddir
     cd ${builddir}
-    cmake -DCMAKE_BUILD_TYPE=Debug ${rootdir}
+    cmake -GNinja -DCMAKE_BUILD_TYPE=Debug ${rootdir}
 
     # for fmt.py
     ln -sfn "${builddir}/compile_commands.json" "${rootdir}/compile_commands.json"
@@ -58,7 +58,7 @@ function release {
 
     mkdir -p $builddir
     cd ${builddir}
-    cmake -DSMF_ENABLE_BENCHMARK_TESTS=ON -DCMAKE_BUILD_TYPE=Release ${rootdir}
+    cmake -GNinja -DSMF_ENABLE_BENCHMARK_TESTS=ON -DCMAKE_BUILD_TYPE=Release ${rootdir}
 
     # for fmt.py
     ln -sfn "${builddir}/compile_commands.json" "${rootdir}/compile_commands.json"
