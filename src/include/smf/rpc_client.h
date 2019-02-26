@@ -72,10 +72,12 @@ class rpc_client {
     uint16_t session{0};
   };
 
-  using in_filter_t =
-    std::function<seastar::future<rpc_recv_context>(rpc_recv_context)>;
-  using out_filter_t =
-    std::function<seastar::future<rpc_envelope>(rpc_envelope)>;
+  using in_filter_t = typename rpc_incoming_filter::type;
+  using out_filter_t = typename rpc_outoing_filter::type;
+  using fn_in_filter_t =
+    std::function<seastar::future<in_filter_t>(in_filter_t)>;
+  using fn_out_filter_t =
+    std::function<seastar::future<out_filter_t>(out_filter_t)>;
 
  public:
   explicit rpc_client(seastar::ipv4_addr server_addr);
@@ -127,7 +129,7 @@ class rpc_client {
   /// \code{.cpp}
   ///    client->incoming_filters().push_back(zstd_decompression_filter());
   /// \endcode
-  SMF_ALWAYS_INLINE virtual std::vector<in_filter_t> &
+  SMF_ALWAYS_INLINE virtual std::vector<fn_in_filter_t> &
   incoming_filters() final {
     return in_filters_;
   }
@@ -135,7 +137,7 @@ class rpc_client {
   /// \code{.cpp}
   ///    client->outgoing_filters().push_back(zstd_compression_filter(1000));
   /// \endcode
-  SMF_ALWAYS_INLINE virtual std::vector<out_filter_t> &
+  SMF_ALWAYS_INLINE virtual std::vector<fn_out_filter_t> &
   outgoing_filters() final {
     return out_filters_;
   }
@@ -150,8 +152,8 @@ class rpc_client {
   const seastar::ipv4_addr server_addr;
 
   // public for the stage pipelines
-  seastar::future<rpc_recv_context> apply_incoming_filters(rpc_recv_context);
-  seastar::future<rpc_envelope> apply_outgoing_filters(rpc_envelope);
+  seastar::future<in_filter_t> apply_incoming_filters(in_filter_t);
+  seastar::future<out_filter_t> apply_outgoing_filters(out_filter_t);
 
  private:
   seastar::future<stdx::optional<rpc_recv_context>> raw_send(rpc_envelope e);
@@ -160,8 +162,8 @@ class rpc_client {
   seastar::future<> process_one_request();
   void fail_outstanding_futures();
   // stage pipeline applications
-  seastar::future<rpc_recv_context> stage_incoming_filters(rpc_recv_context);
-  seastar::future<rpc_envelope> stage_outgoing_filters(rpc_envelope);
+  seastar::future<in_filter_t> stage_incoming_filters(in_filter_t);
+  seastar::future<out_filter_t> stage_outgoing_filters(out_filter_t);
 
  private:
   seastar::lw_shared_ptr<rpc_connection_limits> limits_;
@@ -170,8 +172,8 @@ class rpc_client {
   seastar::lw_shared_ptr<rpc_connection> conn_;
   std::unordered_map<uint16_t, seastar::lw_shared_ptr<work_item>> rpc_slots_;
 
-  std::vector<in_filter_t> in_filters_;
-  std::vector<out_filter_t> out_filters_;
+  std::vector<fn_in_filter_t> in_filters_;
+  std::vector<fn_out_filter_t> out_filters_;
 
   seastar::gate dispatch_gate_;
   seastar::semaphore serialize_writes_{1};
