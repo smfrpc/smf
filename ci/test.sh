@@ -8,11 +8,13 @@ proj_dir=$(realpath ${this_dir}/../)
 . /etc/os-release
 
 CMAKE="cmake"
+CTEST="ctest"
 case ${ID} in
   centos|rhel)
     MAJOR_VERSION="$(echo $VERSION_ID | cut -d. -f1)"
     if test $MAJOR_VERSION = 7 ; then
       CMAKE="cmake3"
+      CTEST="ctest3"
       source /opt/rh/devtoolset-8/enable
     fi
 esac
@@ -34,4 +36,5 @@ trap "rm -rf ${build_dir}" EXIT
   ls -l bin
   ldd bin/smf_demo_server | grep smf-deps-install
   ldd bin/smf_demo_server | grep -v smf-deps-install
+  ${CTEST} -V
 )
