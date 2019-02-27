@@ -29,9 +29,18 @@ function debs() {
             update-alternatives --install /usr/bin/gcc gcc-8 /usr/bin/gcc-8  100
         fi
     fi
-
+    if [[ ${UBUNTU_CODENAME} == "xenial" ]]; then
+        set -evx
+        cmake_version="3.14.0-rc2"
+        cmake_full_name="cmake-${cmake_version}-Linux-x86_64.sh"
+        apt-get install -y wget
+        wget https://github.com/Kitware/CMake/releases/download/v${cmake_version}/${cmake_full_name} -O /tmp/${cmake_full_name}
+        chmod +x /tmp/${cmake_full_name}
+        /tmp/${cmake_full_name} --skip-license --prefix=/usr
+    else
+        apt-get install -y cmake
+    fi
     apt-get install -y \
-        cmake \
         build-essential \
         libtool \
         m4 \
