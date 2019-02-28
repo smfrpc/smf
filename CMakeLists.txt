@@ -19,7 +19,7 @@ option(SMF_ENABLE_UNIT_TESTS "control if unit tests are bulit and ran" ON)
 option(SMF_ENABLE_BENCHMARK_TESTS "control if benchmarks are bulit and ran" OFF)
 option(SMF_INSTALL "Enable installation of smf" ON)
 option(SMF_ENABLE_TESTS "Useful for disabling all tests" ON)
-option(SMF_MANAGE_DEPS "Use smf's reproducible build" ON)
+option(SMF_MANAGE_DEPS "Use smf's reproducible build" OFF)
 
 if(SMF_MANAGE_DEPS)
   # don't export() the contents to registry
