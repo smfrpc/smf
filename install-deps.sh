@@ -5,7 +5,8 @@
 
 set -e
 
-. /etc/os-release
+# shellcheck disable=SC1091
+source /etc/os-release
 
 function debs() {
     apt-get update -y
@@ -17,7 +18,7 @@ function debs() {
         # ensure gcc is installed so we can test its version
         apt-get install -y build-essential
         gcc_ver=$(gcc -dumpfullversion -dumpversion)
-        if dpkg --compare-versions ${gcc_ver} lt 8.0; then
+        if dpkg --compare-versions "${gcc_ver}" lt 8.0; then
             if ! command -v add-apt-repository; then
                 apt-get -y install software-properties-common
             fi
@@ -60,12 +61,12 @@ function rpms() {
 
     case ${ID} in
       centos|rhel)
-        MAJOR_VERSION="$(echo $VERSION_ID | cut -d. -f1)"
-        $SUDO yum-config-manager --add-repo https://dl.fedoraproject.org/pub/epel/$MAJOR_VERSION/x86_64/
+        MAJOR_VERSION="$(echo "$VERSION_ID" | cut -d. -f1)"
+        $SUDO yum-config-manager --add-repo https://dl.fedoraproject.org/pub/epel/"$MAJOR_VERSION"/x86_64/
         $SUDO yum install --nogpgcheck -y epel-release
-        $SUDO rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-$MAJOR_VERSION
+        $SUDO rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-"$MAJOR_VERSION"
         $SUDO rm -f /etc/yum.repos.d/dl.fedoraproject.org*
-        if test $ID = centos -a $MAJOR_VERSION = 7 ; then
+        if test "$ID" = centos -a "$MAJOR_VERSION" = 7 ; then
           yum install -y centos-release-scl
           yum install -y devtoolset-8
           dts_ver=8
@@ -80,8 +81,8 @@ function rpms() {
     cmake="cmake"
     case ${ID} in
       centos|rhel)
-        MAJOR_VERSION="$(echo $VERSION_ID | cut -d. -f1)"
-        if test $MAJOR_VERSION = 7 ; then
+        MAJOR_VERSION="$(echo "$VERSION_ID" | cut -d. -f1)"
+        if test "$MAJOR_VERSION" = 7 ; then
           cmake="cmake3"
         fi
     esac
@@ -116,7 +117,8 @@ see https://www.softwarecollections.org/en/scls/rhscl/devtoolset-8/ for more det
 EOF
       else
         # non-interactive shell
-        source /opt/rh/devtoolset-$dts_ver/enable
+        # shellcheck disable=SC1090
+        source /opt/rh/devtoolset-"$dts_ver"/enable
       fi
     fi
 }

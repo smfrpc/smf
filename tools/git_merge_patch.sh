@@ -12,9 +12,8 @@ if [[ ! -e $patch_file ]]; then
 fi
 echo "Working with file $patch_file"
 
-cwd=$CWD
 git_root=$(git rev-parse --show-toplevel)
-cd $git_root
+cd "$git_root"
 
-git am --interactive $patch_file
+git am --interactive "$patch_file"
 echo "Remember to git push origin master"
