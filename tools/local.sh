@@ -13,9 +13,9 @@ ubuntu:bionic
 "
 # Always has to be launched from root
 # Docker depends on it
-cd $ROOT
+cd "$ROOT"
 for img in ${IMAGES}; do
   if [[ ${img} != -* ]]; then
-    IMAGE=${img} ${THIS_DIR}/one.sh
+    IMAGE=${img} "${THIS_DIR}"/one.sh
   fi
 done

@@ -14,6 +14,6 @@ echo "Working with file $patch_file"
 
 # first look for the subject line,
 # then set the first field to blank
-subject_line=$(grep '^Subject: ' $patch_file  | awk '{$1=""; print $0}')
+subject_line=$(grep '^Subject: ' "$patch_file" | awk '{$1=""; print $0}')
 
 git send-email HEAD^..HEAD --compose --subject "$subject_line" --to smf-dev@googlegroups.com

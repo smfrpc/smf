@@ -7,7 +7,10 @@
 # targeted to be used by a Dockerfile
 
 set -e
-. /etc/os-release
+
+# shellcheck disable=SC1091
+source /etc/os-release
+
 function redhat() {
     dnf update -y
     dnf install \
