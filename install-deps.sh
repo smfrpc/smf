@@ -90,6 +90,7 @@ function rpms() {
     ${yumdnf} install -y \
         ${cmake} \
         gcc-c++ \
+        ninja-build \
         m4 \
         libtool \
         make \
