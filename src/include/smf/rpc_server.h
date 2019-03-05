@@ -79,8 +79,15 @@ class rpc_server {
   handle_one_client_session(seastar::lw_shared_ptr<rpc_server_connection> conn);
 
   seastar::future<>
-  dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
-               rpc_recv_context &&ctx);
+  dispatch_rpc(int32_t payload_size,
+               seastar::lw_shared_ptr<rpc_server_connection> conn,
+               stdx::optional<rpc_recv_context> ctx);
+
+  /// \brief main difference between dispatch_rpc and do_dispatch_rpc
+  /// is that the former just wraps the calls in a safe seastar::gate
+  seastar::future<>
+  do_dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
+                  rpc_recv_context &&ctx);
 
   seastar::future<>
   cleanup_dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn);

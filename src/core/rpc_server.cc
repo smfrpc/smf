@@ -174,26 +174,9 @@ rpc_server::handle_one_client_session(
         .then([this, conn, h = hdr.value(), payload_size] {
           return rpc_recv_context::parse_payload(&conn->conn, std::move(h))
             .then([this, conn, payload_size](auto maybe_payload) {
-              if (!maybe_payload) {
-                conn->limits()->resources_available.signal(payload_size);
-                conn->set_error("Could not parse payload");
-                return seastar::make_ready_future<>();
-              }
-              //
               // Launch the actual processing on a background
-              // future
-              //
-              dispatch_rpc(conn, std::move(maybe_payload.value()))
-                .then([this, conn] { return cleanup_dispatch_rpc(conn); })
-                .finally([m = hist_->auto_measure(), limits = conn->limits(),
-                          payload_size] {
-                  // Note: do not use seastar::with_semaphore here
-                  // since the relese happens async on *this* continuation chain
-                  // and not on the last returned future which is just a plain
-                  // make_ready_future<>();
-                  //
-                  limits->resources_available.signal(payload_size);
-                });
+              dispatch_rpc(payload_size, conn, std::move(maybe_payload));
+
               return seastar::make_ready_future<>();
             });
         });
@@ -214,8 +197,35 @@ rpc_server::handle_client_connection(
 }
 
 seastar::future<>
-rpc_server::dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
-                         rpc_recv_context &&ctx) {
+rpc_server::dispatch_rpc(int32_t payload_size,
+                         seastar::lw_shared_ptr<rpc_server_connection> conn,
+                         stdx::optional<rpc_recv_context> ctx) {
+  if (!ctx) {
+    conn->limits()->resources_available.signal(payload_size);
+    conn->set_error("Could not parse payload");
+    return seastar::make_ready_future<>();
+  }
+
+  return seastar::with_gate(
+    reply_gate_,
+    [this, conn, context = std::move(ctx.value()), payload_size]() mutable {
+      return do_dispatch_rpc(conn, std::move(context))
+        .then([this, conn] { return cleanup_dispatch_rpc(conn); })
+        .finally(
+          [m = hist_->auto_measure(), limits = conn->limits(), payload_size] {
+            // Note: do not use seastar::with_semaphore here
+            // since the relese happens async on *this* continuation chain
+            // and not on the last returned future which is just a plain
+            // make_ready_future<>();
+            //
+            limits->resources_available.signal(payload_size);
+          });
+    });
+}
+
+seastar::future<>
+rpc_server::do_dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
+                            rpc_recv_context &&ctx) {
   if (ctx.request_id() == 0) {
     conn->set_error("Missing request_id. Invalid request");
     return seastar::make_ready_future<>();
@@ -233,40 +243,34 @@ rpc_server::dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
   /// the filters invalidate the request - they have full mutable access
   /// to it, or they throw an exception if they wish to interrupt the entire
   /// connection
-  return seastar::with_gate(
-           reply_gate_,
-           [this, ctx = std::move(ctx), conn, method_dispatch]() mutable {
-             return stage_apply_incoming_filters(std::move(ctx))
-               .then([this, conn, method_dispatch](auto ctx) {
-                 if (ctx.header.compression() !=
-                     rpc::compression_flags::compression_flags_none) {
-                   conn->set_error(
-                     fmt::format("There was no decompression filter for "
-                                 "compression enum: {}",
-                                 ctx.header.compression()));
-                   return seastar::make_ready_future<>();
-                 }
-                 return method_dispatch->apply(std::move(ctx))
-                   .then([this](rpc_envelope e) {
-                     return stage_apply_outgoing_filters(std::move(e));
-                   })
-                   .then([this, conn](rpc_envelope e) {
-                     if (!conn->is_valid()) {
-                       DLOG_INFO("Cannot send respond. client connection '{}' "
-                                 "is invalid. Skipping reply from server",
-                                 conn->id);
-                       return seastar::make_ready_future<>();
-                     }
-                     conn->stats->out_bytes += e.letter.size();
-                     return seastar::with_semaphore(
-                       conn->serialize_writes, 1,
-                       [conn, ee = std::move(e)]() mutable {
-                         return smf::rpc_envelope::send(&conn->conn.ostream,
-                                                        std::move(ee));
-                       });
-                   });
-               });
-           })
+  return stage_apply_incoming_filters(std::move(ctx))
+    .then([this, conn, method_dispatch](auto ctx) {
+      if (ctx.header.compression() !=
+          rpc::compression_flags::compression_flags_none) {
+        conn->set_error(fmt::format("There was no decompression filter for "
+                                    "compression enum: {}",
+                                    ctx.header.compression()));
+        return seastar::make_ready_future<>();
+      }
+      return method_dispatch->apply(std::move(ctx))
+        .then([this](rpc_envelope e) {
+          return stage_apply_outgoing_filters(std::move(e));
+        })
+        .then([this, conn](rpc_envelope e) {
+          if (!conn->is_valid()) {
+            DLOG_INFO("Cannot send respond. client connection '{}' "
+                      "is invalid. Skipping reply from server",
+                      conn->id);
+            return seastar::make_ready_future<>();
+          }
+          conn->stats->out_bytes += e.letter.size();
+          return seastar::with_semaphore(
+            conn->serialize_writes, 1, [conn, ee = std::move(e)]() mutable {
+              return smf::rpc_envelope::send(&conn->conn.ostream,
+                                             std::move(ee));
+            });
+        });
+    })
     .then([this, conn] {
       if (conn->is_valid()) { return conn->conn.ostream.flush(); }
       return seastar::make_ready_future<>();
