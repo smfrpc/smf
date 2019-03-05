@@ -185,13 +185,14 @@ rpc_server::handle_one_client_session(
               //
               dispatch_rpc(conn, std::move(maybe_payload.value()))
                 .then([this, conn] { return cleanup_dispatch_rpc(conn); })
-                .finally([m = hist_->auto_measure(), conn, payload_size] {
+                .finally([m = hist_->auto_measure(), limits = conn->limits(),
+                          payload_size] {
                   // Note: do not use seastar::with_semaphore here
                   // since the relese happens async on *this* continuation chain
                   // and not on the last returned future which is just a plain
                   // make_ready_future<>();
                   //
-                  conn->limits()->resources_available.signal(payload_size);
+                  limits->resources_available.signal(payload_size);
                 });
               return seastar::make_ready_future<>();
             });
@@ -250,6 +251,12 @@ rpc_server::dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
                      return stage_apply_outgoing_filters(std::move(e));
                    })
                    .then([this, conn](rpc_envelope e) {
+                     if (!conn->is_valid()) {
+                       DLOG_INFO("Cannot send respond. client connection '{}' "
+                                 "is invalid. Skipping reply from server",
+                                 conn->id);
+                       return seastar::make_ready_future<>();
+                     }
                      conn->stats->out_bytes += e.letter.size();
                      return seastar::with_semaphore(
                        conn->serialize_writes, 1,
@@ -260,24 +267,30 @@ rpc_server::dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
                    });
                });
            })
-    .then([this, conn] { return conn->conn.ostream.flush(); });
+    .then([this, conn] {
+      if (conn->is_valid()) { return conn->conn.ostream.flush(); }
+      return seastar::make_ready_future<>();
+    });
 }
 seastar::future<>
 rpc_server::cleanup_dispatch_rpc(
   seastar::lw_shared_ptr<rpc_server_connection> conn) {
   if (conn->has_error()) {
-    LOG_ERROR("There was an error with the connection: {}", conn->get_error());
-    conn->stats->bad_requests++;
-    conn->stats->active_connections--;
-    LOG_INFO("Closing connection for client: {}", conn->conn.remote_address);
     auto it = open_connections_.find(conn->id);
-    if (it != open_connections_.end()) { open_connections_.erase(it); }
-    try {
-      // after nice shutdow; force it
-      conn->conn.disable();
-      conn->conn.socket.shutdown_input();
-      conn->conn.socket.shutdown_output();
-    } catch (...) {}
+    if (it != open_connections_.end()) {
+      open_connections_.erase(it);
+      LOG_ERROR("There was an error with the connection: {}",
+                conn->get_error());
+      conn->stats->bad_requests++;
+      conn->stats->active_connections--;
+      LOG_INFO("Closing connection for client: {}", conn->conn.remote_address);
+      try {
+        // after nice shutdow; force it
+        conn->conn.disable();
+        conn->conn.socket.shutdown_input();
+        conn->conn.socket.shutdown_output();
+      } catch (...) {}
+    }
   } else {
     conn->stats->completed_requests++;
   }

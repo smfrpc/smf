@@ -47,7 +47,7 @@ class rpc_connection final {
   }
   SMF_ALWAYS_INLINE bool
   is_valid() {
-    return !istream.eof() && !has_error() && enabled_;
+    return enabled_ && !has_error() && !istream.eof();
   }
   SMF_ALWAYS_INLINE bool
   has_error() const {

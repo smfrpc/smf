@@ -92,7 +92,7 @@ class rpc_client {
   send(rpc_envelope e) {
     using ret_type = rpc_recv_typed_context<T>;
     return seastar::with_gate(
-      dispatch_gate_, [this, e = std::move(e)]() mutable {
+      *dispatch_gate_, [this, e = std::move(e)]() mutable {
         return raw_send(std::move(e)).then([](auto opt_ctx) {
           return seastar::make_ready_future<ret_type>(std::move(opt_ctx));
         });
@@ -173,7 +173,7 @@ class rpc_client {
   std::vector<in_filter_t> in_filters_;
   std::vector<out_filter_t> out_filters_;
 
-  seastar::gate dispatch_gate_;
+  std::unique_ptr<seastar::gate> dispatch_gate_ = nullptr;
   seastar::semaphore serialize_writes_{1};
   seastar::lw_shared_ptr<histogram> hist_ = nullptr;
   uint16_t session_idx_{0};

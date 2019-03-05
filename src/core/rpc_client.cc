@@ -35,11 +35,13 @@ rpc_client::rpc_client(seastar::ipv4_addr addr) : server_addr(addr) {
   rpc_client_opts opts;
   limits_ = seastar::make_lw_shared<rpc_connection_limits>(
     opts.memory_avail_for_client, opts.recv_timeout);
+  dispatch_gate_ = std::make_unique<seastar::gate>();
   serialize_writes_.ensure_space_for_waiters(1);
 }
 rpc_client::rpc_client(rpc_client_opts opts) : server_addr(opts.server_addr) {
   limits_ = seastar::make_lw_shared<rpc_connection_limits>(
     opts.memory_avail_for_client, opts.recv_timeout);
+  dispatch_gate_ = std::make_unique<seastar::gate>();
   serialize_writes_.ensure_space_for_waiters(1);
 }
 
@@ -56,10 +58,10 @@ seastar::future<>
 rpc_client::stop() {
   fail_outstanding_futures();
   // now wait for all the fibers to finish
-  return dispatch_gate_.close();
+  return dispatch_gate_->close();
 }
 
-rpc_client::~rpc_client(){};
+rpc_client::~rpc_client() {}
 
 void
 rpc_client::disable_histogram_metrics() {
@@ -119,6 +121,11 @@ seastar::future<>
 rpc_client::reconnect() {
   fail_outstanding_futures();
   return stop().then([this] {
+    // ensure that gate is closed
+    // gates can only be closed but not reopened
+    LOG_THROW_IF(!dispatch_gate_->is_closed(),
+                 "Dispatch gate is not properly closed. Unrecoverable error.");
+    dispatch_gate_ = std::make_unique<seastar::gate>();
     conn_ = nullptr;
     return connect();
   });
@@ -139,7 +146,7 @@ rpc_client::connect() {
       conn_ =
         seastar::make_lw_shared<rpc_connection>(std::move(fd), local, limits_);
       // dispatch in background
-      seastar::with_gate(dispatch_gate_,
+      seastar::with_gate(*dispatch_gate_,
                          [this]() mutable { return do_reads(); });
       return seastar::make_ready_future<>();
     });
@@ -148,23 +155,24 @@ seastar::future<>
 rpc_client::dispatch_write(rpc_envelope e) {
   // NOTE: The reason for the double gate, is that this future
   // is dispatched in the background
-  return seastar::with_gate(dispatch_gate_, [this, e = std::move(e)]() mutable {
-    auto payload_size = e.size();
-    return seastar::with_semaphore(
-      conn_->limits->resources_available, payload_size,
-      [this, e = std::move(e)]() mutable {
-        if (!is_conn_valid()) { return seastar::make_ready_future<>(); }
-        return seastar::with_semaphore(
-          serialize_writes_, 1, [this, e = std::move(e)]() mutable {
-            if (!is_conn_valid()) { return seastar::make_ready_future<>(); }
-            return rpc_envelope::send(&conn_->ostream, std::move(e))
-              .handle_exception([this](auto _) {
-                LOG_INFO("Handling exception(2): {}", _);
-                fail_outstanding_futures();
-              });
-          });
-      });
-  });
+  return seastar::with_gate(
+    *dispatch_gate_, [this, e = std::move(e)]() mutable {
+      auto payload_size = e.size();
+      return seastar::with_semaphore(
+        conn_->limits->resources_available, payload_size,
+        [this, e = std::move(e)]() mutable {
+          if (!is_conn_valid()) { return seastar::make_ready_future<>(); }
+          return seastar::with_semaphore(
+            serialize_writes_, 1, [this, e = std::move(e)]() mutable {
+              if (!is_conn_valid()) { return seastar::make_ready_future<>(); }
+              return rpc_envelope::send(&conn_->ostream, std::move(e))
+                .handle_exception([this](auto _) {
+                  LOG_INFO("Handling exception(2): {}", _);
+                  fail_outstanding_futures();
+                });
+            });
+        });
+    });
 }
 
 void
