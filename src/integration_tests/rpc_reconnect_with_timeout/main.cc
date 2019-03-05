@@ -72,12 +72,12 @@ backpressure_request(uint16_t port) {
               int server_counter = std::stoi(n);
               LOG_THROW_IF(server_counter == 0,
                            "The first try we are supposed to timeout");
+              LOG_INFO("Success. Reconnected and method returned. Server "
+                       "Iteration: {}",
+                       server_counter);
             })
-            .handle_exception([counter, client](auto err) {
-              LOG_THROW_IF(counter != 0,
-                           "Only supposed to throw on the first try");
-              return client->reconnect();
-            });
+            .handle_exception(
+              [counter, client](auto err) { return client->reconnect(); });
         });
     })
     .then([client] { return client->stop().finally([client] {}); });

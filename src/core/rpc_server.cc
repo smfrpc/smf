@@ -213,11 +213,9 @@ rpc_server::dispatch_rpc(int32_t payload_size,
         .then([this, conn] { return cleanup_dispatch_rpc(conn); })
         .finally(
           [m = hist_->auto_measure(), limits = conn->limits(), payload_size] {
-            // Note: do not use seastar::with_semaphore here
-            // since the relese happens async on *this* continuation chain
-            // and not on the last returned future which is just a plain
-            // make_ready_future<>();
-            //
+            // these limits are acquired *BEFORE* the call to dispatch_rpc()
+            // happens. Critical to understand memory ownership since it happens
+            // accross multiple futures.
             limits->resources_available.signal(payload_size);
           });
     });
