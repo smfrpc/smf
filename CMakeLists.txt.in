@@ -248,8 +248,8 @@ ExternalProject_Add(cryptopp
     -DBUILD_TESTING=OFF)
 
 ExternalProject_Add(lksctp-tools
-  URL https://sourceforge.net/projects/lksctp/files/lksctp-tools/lksctp-tools-1.0.16.tar.gz
-  URL_MD5 708bb0b5a6806ad6e8d13c55b067518e
+  URL https://github.com/sctp/lksctp-tools/archive/v1.0.18.tar.gz
+  URL_MD5 d95bba03e21749619d15e2df555c46be
   INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
   PATCH_COMMAND ./bootstrap
   CONFIGURE_COMMAND
