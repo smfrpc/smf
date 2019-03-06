@@ -253,17 +253,17 @@ ExternalProject_Add(cryptopp
     -DBUILD_TESTING=OFF)
 
 ExternalProject_Add(lksctp-tools
-  URL https://github.com/sctp/lksctp-tools/archive/v1.0.18.tar.gz
-  URL_MD5 d95bba03e21749619d15e2df555c46be
+  # Note: 1.0.18 has a bug w/ the build/configuration system that does not
+  # produce sctp.h.in -> sctp.h and instead install sctp.h.in
+  URL https://github.com/sctp/lksctp-tools/archive/lksctp-tools-1.0.17.tar.gz
+  URL_MD5 910a4f1d4024d71149b91f50f97eae23
   INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
-  # testing to see if failure goes away
-  BUILD_IN_SOURCE ON
   PATCH_COMMAND ./bootstrap
   CONFIGURE_COMMAND
     <SOURCE_DIR>/configure
     --prefix=<INSTALL_DIR>
     --srcdir=<SOURCE_DIR>
-  BUILD_COMMAND ${make_command}
+  BUILD_COMMAND ""
   INSTALL_COMMAND ${make_command} install)
 
 ExternalProject_Add(seastar
