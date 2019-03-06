@@ -215,13 +215,14 @@ ExternalProject_Add(hwloc
   INSTALL_COMMAND ${make_command} install
   DEPENDS numactl libpciaccess)
 
-ExternalProject_Add(xy
-  URL https://tukaani.org/xz/xz-5.2.4.tar.gz
-  URL_MD5 5ace3264bdd00c65eeec2891346f65e6
+ExternalProject_Add(xz
+  URL https://github.com/xz-mirror/xz/releases/download/v5.2.2/xz-5.2.2.tar.gz
+  URL_MD5 7cf6a8544a7dae8e8106fdf7addfa28c
   INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
   CONFIGURE_COMMAND
-    <SOURCE_DIR>/configure
-    --prefix=<INSTALL_DIR>
+    COMMAND
+      <SOURCE_DIR>/configure
+      --prefix=<INSTALL_DIR>
   BUILD_COMMAND ${make_command}
   INSTALL_COMMAND ${make_command} install)
 
@@ -239,7 +240,7 @@ ExternalProject_Add(xml2
       --prefix=<INSTALL_DIR>
   BUILD_COMMAND ${make_command}
   INSTALL_COMMAND ${make_command} install
-  DEPENDS xy zlib)
+  DEPENDS xz zlib)
 
 ExternalProject_Add(cryptopp
   URL https://github.com/weidai11/cryptopp/archive/CRYPTOPP_5_6_5.tar.gz
@@ -289,7 +290,7 @@ ExternalProject_Add(seastar
     hwloc
     numactl
     xml2
-    xy
+    xz
     cryptopp
     lksctp-tools
     zlib)
