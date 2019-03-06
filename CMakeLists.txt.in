@@ -256,6 +256,8 @@ ExternalProject_Add(lksctp-tools
   URL https://github.com/sctp/lksctp-tools/archive/v1.0.18.tar.gz
   URL_MD5 d95bba03e21749619d15e2df555c46be
   INSTALL_DIR @SMF_DEPS_INSTALL_DIR@
+  # testing to see if failure goes away
+  BUILD_IN_SOURCE ON
   PATCH_COMMAND ./bootstrap
   CONFIGURE_COMMAND
     <SOURCE_DIR>/configure
