@@ -19,6 +19,15 @@ struct internal_logger {
 };
 
 namespace log_detail {
+/// \brief compile time log helper to print log file name.
+/// @sz must be inclusive
+static constexpr const char *
+find_last_slash(const char *file, std::size_t sz, char x) {
+  return sz == 0
+           ? file
+           : file[sz] == x ? &file[sz + 1] : find_last_slash(file, sz - 1, x);
+}
+
 // A small helper for throw_if_null().
 template <typename T>
 T *
@@ -50,7 +59,7 @@ app_run_log_level(seastar::log_level l) {
 }  // namespace smf
 
 #define __FILENAME__                                                           \
-  (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+  smf::log_detail::find_last_slash(__FILE__, SMF_ARRAYSIZE(__FILE__) - 1, '/')
 #define LOG_INFO(format, args...)                                              \
   smf::internal_logger::get().info("{}:{}] " format, __FILENAME__, __LINE__,   \
                                    ##args)
