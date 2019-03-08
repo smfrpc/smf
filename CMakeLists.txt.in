@@ -263,7 +263,7 @@ ExternalProject_Add(lksctp-tools
     <SOURCE_DIR>/configure
     --prefix=<INSTALL_DIR>
     --srcdir=<SOURCE_DIR>
-  BUILD_COMMAND ""
+  BUILD_COMMAND ${make_command}
   INSTALL_COMMAND ${make_command} install)
 
 ExternalProject_Add(seastar
