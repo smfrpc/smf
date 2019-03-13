@@ -15,5 +15,5 @@ else
 fi
 
 docker run --rm --privileged \
-  -v "${proj_dir}":/src/smf:z,ro ${extra} -e BUILD_GENERATOR \
+  -v "${proj_dir}":/src/smf:z,ro ${extra} -e BUILD_GENERATOR -e CI="${CI}" \
   -w /src/smf "${base_img}" /bin/bash -c "./install-deps.sh && ci/test.sh"

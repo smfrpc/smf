@@ -8,9 +8,12 @@ agent:
 blocks:
   - name: "Build"
     task:
+      env_vars:
+      - name: CI
+        value: "1"
       jobs:
       - name: build-it
         commands:
           - checkout
-          - sudo ./install-deps.sh
+          - sudo -E bash -c './install-deps.sh'
           - ./tools/build.sh -rt

@@ -4,7 +4,9 @@
 #
 
 set -e
-
+if [ -n "${CI}" ]; then
+    set -x
+fi
 # shellcheck disable=SC1091
 source /etc/os-release
 
@@ -31,8 +33,9 @@ function debs() {
                 update-alternatives --install /usr/bin/gcc gcc-8 /usr/bin/gcc-8  100
             fi
         fi
+        echo "using gcc: $(gcc -dumpfullversion -dumpversion)"
     fi
-    if [[ ${UBUNTU_CODENAME} == "xenial" ]] && [[ -n "${CI}" ]]; then
+    if [ ${UBUNTU_CODENAME} == "xenial" ] && [ -n "${CI}" ]; then
         cmake_version="3.14.0-rc2"
         cmake_full_name="cmake-${cmake_version}-Linux-x86_64.sh"
         apt-get install -y wget
