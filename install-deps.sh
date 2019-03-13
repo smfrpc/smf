@@ -35,7 +35,7 @@ function debs() {
         fi
         echo "using gcc: $(gcc -dumpfullversion -dumpversion)"
     fi
-    if [ ${UBUNTU_CODENAME} == "xenial" ] && [ -n "${CI}" ]; then
+    if [ "${UBUNTU_CODENAME}" == "xenial" ] && [ -n "${CI}" ]; then
         cmake_version="3.14.0-rc2"
         cmake_full_name="cmake-${cmake_version}-Linux-x86_64.sh"
         apt-get install -y wget
