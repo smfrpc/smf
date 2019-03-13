@@ -8,4 +8,4 @@ if ! command -v shellcheck > /dev/null; then
   exit 1
 fi
 
-find "${rootdir}" -name '*.sh' -exec shellcheck {} \;
+(cd "${rootdir}" && for f in $(git ls-files --full-name '*.sh'); do shellcheck "$f"; done)
