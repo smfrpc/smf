@@ -28,7 +28,6 @@ function debs() {
             apt-get update -y
             apt-get install -y gcc-8 g++-8
         fi
-        echo "using gcc: $(gcc -dumpfullversion -dumpversion)"
     fi
     if [ "${UBUNTU_CODENAME}" == "xenial" ] && [ -n "${CI}" ]; then
         cmake_version="3.14.0-rc2"
