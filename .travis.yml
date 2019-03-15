@@ -1,6 +1,6 @@
 dist: xenial
 sudo: required 
-language: cpp
+language: minimal
 services:
   - docker
 
