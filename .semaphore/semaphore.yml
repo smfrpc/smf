@@ -11,6 +11,10 @@ blocks:
       env_vars:
       - name: CI
         value: "1"
+      - name: CXX
+        value: g++-8
+      - name: CC
+        value: gcc-8
       jobs:
       - name: build-it
         commands:
