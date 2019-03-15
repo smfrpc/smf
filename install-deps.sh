@@ -27,11 +27,6 @@ function debs() {
             add-apt-repository -y ppa:ubuntu-toolchain-r/test
             apt-get update -y
             apt-get install -y gcc-8 g++-8
-            if [ -n "${CI}" ]; then
-                update-alternatives --remove-all gcc || true
-                update-alternatives --install /usr/bin/g++ g++-8 /usr/bin/g++-8  100
-                update-alternatives --install /usr/bin/gcc gcc-8 /usr/bin/gcc-8  100
-            fi
         fi
         echo "using gcc: $(gcc -dumpfullversion -dumpversion)"
     fi
