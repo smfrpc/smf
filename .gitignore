@@ -58,6 +58,11 @@ CTestTestfile.cmake
 CMakeDoxyfile.in
 CMakeDoxygenDefaults.cmake
 deps-build/
+smf-config-version.cmake
+smf-config.cmake
+smf-deps-build/
+smf-deps-install/
+smfTargets.cmake
 
 src/demo_apps/demo_client
 src/demo_apps/demo_server
