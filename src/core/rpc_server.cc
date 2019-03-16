@@ -70,7 +70,7 @@ rpc_server::copy_histogram() {
 
 void
 rpc_server::start() {
-  LOG_INFO("Starging server:{}", *this);
+  LOG_INFO("Starting server:{}", *this);
   if (!(args_.flags & rpc_server_flags_disable_http_server)) {
     LOG_INFO("Starting HTTP admin server on background future");
     admin_ = seastar::make_lw_shared<seastar::http_server>("smf admin server");
