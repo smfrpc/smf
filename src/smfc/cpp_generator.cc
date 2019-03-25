@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+// vars,  Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #include "cpp_generator.h"
 
@@ -79,37 +79,40 @@ print_header_service_ctor_dtor(smf_printer &printer,
 
   vars["Service"] = service->name();
   printer.print(vars, "virtual ~$Service$() = default;\n");
-  printer.print(vars, "$Service$() {\n");
+  printer.print(vars, "$Service$() : handles_({\n");
   printer.indent();
 
-  for (auto &method : service->methods()) {
+  for (auto i = 0; i < service->methods().size(); ++i) {
+    auto &method = service->methods()[i];
     vars["MethodName"] = method->name();
     vars["RawMethodName"] = proper_prefix_token("raw", method->name());
     vars["InType"] = method->input_type_name();
     vars["OutType"] = method->output_type_name();
     vars["MethodId"] = std::to_string(method->method_id());
-    printer.print("handles_.emplace_back(\n");
+    printer.print("smf::rpc_service_method_handle(\n");
     printer.indent();
-    printer.print(vars, "\"$MethodName$\", $MethodId$,\n");
     printer.print("[this](smf::rpc_recv_context c) -> "
                   "seastar::future<smf::rpc_envelope> {\n");
     printer.indent();
     printer.print("// Session accounting\n"
                   "auto session_id = c.session();\n");
     printer.print(vars, "return $RawMethodName$(std::move(c)).then("
-                        "[session_id](auto e){\n");
+                        "[session_id](auto e) {\n");
     printer.indent();
     printer.print(
       "e.letter.header.mutate_session(session_id);\n"
       "return seastar::make_ready_future<smf::rpc_envelope>(std::move(e));\n");
     printer.outdent();
-    printer.print("});\n");
+    if (i != 0) {
+      printer.print("});}),\n");
+    } else {
+      printer.print("});})\n");
+    }
     printer.outdent();
     printer.outdent();
-    printer.print("});\n");
   }
   printer.outdent();
-  printer.print("}\n");
+  printer.print("}) {}\n");
 }
 
 static void
@@ -139,9 +142,13 @@ print_header_service_handle_request_id(smf_printer &printer,
 }
 
 static void
-print_header_service_handles(smf_printer &printer) {
-  printer.print("virtual const std::vector<smf::rpc_service_method_handle> &\n"
-                "methods() override final {\n");
+print_header_service_handles(smf_printer &printer, const smf_service *service) {
+  std::map<std::string, std::string> vars;
+  vars["ServiceHandleSize"] = std::to_string(service->methods().size());
+  printer.print(vars,
+                "virtual const std::array<smf::rpc_service_method_handle, "
+                "$ServiceHandleSize$> &\n"
+                "methods() final {\n");
   printer.indent();
   printer.print("return handles_;\n");
   printer.outdent();
@@ -186,7 +193,7 @@ print_header_service_method(smf_printer &printer, const smf_method *method) {
   printer.print(
     vars, "using inner_t = $InType$;\n"
           "using input_t = smf::rpc_recv_typed_context<inner_t>;\n"
-          "return $MethodName$(input_t(std::move(c))).then([this](auto x){\n");
+          "return $MethodName$(input_t(std::move(c))).then([this](auto x) {\n");
   printer.indent();
   printer.print("return "
                 "seastar::make_ready_future<smf::rpc_envelope>(x.serialize_"
@@ -203,10 +210,12 @@ print_header_service(smf_printer &printer, const smf_service *service) {
   std::map<std::string, std::string> vars{};
   vars["Service"] = service->name();
   vars["ServiceID"] = std::to_string(service->service_id());
+  vars["ServiceHandleSize"] = std::to_string(service->methods().size());
 
   printer.print(vars, "class $Service$: public smf::rpc_service {\n");
   printer.print(" private:\n");
-  printer.print("  std::vector<smf::rpc_service_method_handle> handles_;\n");
+  printer.print(vars, "  std::array<smf::rpc_service_method_handle, "
+                      "$ServiceHandleSize$> handles_;\n");
   printer.print(" public:\n");
   printer.indent();
   print_header_service_ctor_dtor(printer, service);
@@ -225,7 +234,15 @@ print_header_service(smf_printer &printer, const smf_service *service) {
   printer.outdent();
   printer.print("}\n");
 
-  print_header_service_handles(printer);
+  // print the overrides for smf
+  printer.print(
+    "virtual std::ostream &\nprint(std::ostream &o) const override final {\n");
+  printer.indent();
+  printer.print("return o << *this;\n");
+  printer.outdent();
+  printer.print("}\n");
+
+  print_header_service_handles(printer, service);
   print_header_service_handle_request_id(printer, service);
 
   for (auto &method : service->methods()) {
@@ -236,7 +253,7 @@ print_header_service(smf_printer &printer, const smf_service *service) {
   printer.print(vars, "}; // end of service: $Service$\n");
 }
 
-void
+static void
 print_header_client_method(smf_printer &printer, const smf_method *method) {
   std::map<std::string, std::string> vars;
   vars["RawMethodName"] = proper_prefix_token("raw", method->name());
@@ -269,7 +286,7 @@ print_header_client_method(smf_printer &printer, const smf_method *method) {
   printer.print("}\n");
 }
 
-void
+static void
 print_header_client(smf_printer &printer, const smf_service *service) {
   // print the client rpc code
   VLOG(1) << "print_header_client for service: " << service->name();
@@ -310,7 +327,45 @@ print_header_client(smf_printer &printer, const smf_service *service) {
   printer.print(vars, "}; // end of rpc client: $ClientName$\n");
   printer.outdent();
 }
+static void
+print_std_ostream_services(smf_printer &printer, const smf_service *service) {
+  VLOG(1) << "print_std_ostream_services: " << service->name();
+  std::map<std::string, std::string> vars{};
+  {
+    std::vector<std::string> tmp(
+      service->raw_service()->defined_namespace->components.begin(),
+      service->raw_service()->defined_namespace->components.end());
+    tmp.push_back(service->name());
+    vars["FQDNService"] = boost::algorithm::join(tmp, "::");
+  }
+  vars["ServiceID"] = std::to_string(service->service_id());
+  vars["ServiceHandleSize"] = std::to_string(service->methods().size());
 
+  printer.print("namespace std {\n");
+  printer.indent();
+  printer.print(vars, "inline ostream& operator<<(ostream &o, const "
+                      "$FQDNService$ &s) {\n");
+  printer.indent();
+  printer.print(
+    vars, "o << \"$FQDNService$={total_handles=$ServiceHandleSize$,\";\n");
+  for (auto i = 0; i < service->methods().size(); ++i) {
+    auto &method = service->methods()[i];
+    if (i != 0) { printer.print("o << \", \";\n"); }
+    vars["MethodName"] = method->name();
+    vars["InType"] = method->input_type_name();
+    vars["OutType"] = method->output_type_name();
+    vars["MethodId"] = std::to_string(method->method_id());
+    printer.print(vars, "o << \"method={id=$MethodId$, "
+                        "fn=$MethodName$($InType$):$OutType$}\";\n");
+  }
+  printer.print("return o << \"}\";\n");
+  printer.outdent();
+  printer.print("}\n");
+
+  // namespace outdent
+  printer.outdent();
+  printer.print("} // namespace std\n");
+}
 }  // namespace utils
 }  // namespace smf_gen
 
@@ -343,17 +398,49 @@ cpp_generator::generate_header_prologue() {
 }
 
 void
-cpp_generator::generate_header_includes() {
+cpp_generator::generate_header_prologue_forward_decl_external() {
+  for (auto &srv : services()) {
+    for (auto &srv : services()) {
+      print_std_ostream_services(printer_, srv.get());
+    }
+ }
+  printer_.print("\n");
+}
+
+void
+cpp_generator::generate_header_prologue_forward_decl() {
+  for (auto &srv : services()) {
+    std::map<std::string, std::string> vars;
+    vars["Service"] = srv->name();
+    vars["ClientName"] = proper_postfix_token(srv->name(), "client");
+    printer_.print(vars, "class $Service$;\n");
+    printer_.print(vars, "class $ClientName$;\n");
+  }
+  printer_.print("\n");
+}
+
+void
+cpp_generator::generate_header_prologue_namespace() {
+  if (!package().empty()) {
+    std::vector<std::string> parts = package_parts();
+    std::map<std::string, std::string> vars;
+    for (auto part = parts.begin(); part != parts.end(); part++) {
+      vars["part"] = *part;
+      printer_.print(vars, "namespace $part$ {\n");
+    }
+    printer_.print("\n");
+  }
+}
+
+void
+cpp_generator::generate_header_prologue_includes() {
   VLOG(1) << "get_header_includes";
   std::map<std::string, std::string> vars;
   static const std::vector<std::string> headers = {
-    "experimental/optional",
-    "seastar/core/sstring.hh",
-    "smf/rpc_service.h",
-    "smf/rpc_client.h",
-    "smf/rpc_recv_typed_context.h",
-    "smf/rpc_typed_envelope.h",
-    "smf/log.h"};
+    "experimental/optional",    "ostream",
+    "seastar/core/sstring.hh",  "smf/rpc_service.h",
+    "smf/rpc_client.h",         "smf/rpc_recv_typed_context.h",
+    "smf/rpc_typed_envelope.h", "smf/log.h"};
 
   for (auto &hdr : headers) {
     vars["header"] = hdr;
@@ -366,21 +453,10 @@ cpp_generator::generate_header_includes() {
   vars["filename_base"] = input_filename_without_ext();
   vars["message_header_ext"] = message_header_ext();
   printer_.print(vars, "#include \"$filename_base$$message_header_ext$\"\n\n");
-
-  if (!package().empty()) {
-    std::vector<std::string> parts = package_parts();
-
-    for (auto part = parts.begin(); part != parts.end(); part++) {
-      vars["part"] = *part;
-      printer_.print(vars, "namespace $part$ {\n");
-    }
-    printer_.print("\n");
-  }
 }
-
 void
-cpp_generator::generate_header_epilogue() {
-  VLOG(1) << "get_header_epilogue";
+cpp_generator::generate_header_epilogue_namespace() {
+  VLOG(1) << "get_header_epilogue_namespace";
   std::map<std::string, std::string> vars;
 
   vars["filename"] = input_filename;
@@ -396,8 +472,19 @@ cpp_generator::generate_header_epilogue() {
     }
     printer_.print(vars, "\n");
   }
-
   printer_.print(vars, "\n");
+}
+
+void
+cpp_generator::generate_header_epilogue() {
+  VLOG(1) << "get_header_epilogue";
+  std::map<std::string, std::string> vars;
+
+  vars["filename"] = input_filename;
+  vars["filename_identifier"] =
+    file_name_identifier(input_filename_without_ext());
+
+  printer_.print("\n\n");
   printer_.print(vars, "#endif  // SMF_$filename_identifier$_INCLUDED\n");
 }
 

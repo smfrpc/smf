@@ -39,6 +39,11 @@ class smf_service {
     return methods_;
   }
 
+  const flatbuffers::ServiceDef *
+  raw_service() const {
+    return service_;
+  };
+
  private:
   const flatbuffers::ServiceDef *service_;
   uint32_t id_{0};

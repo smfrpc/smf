@@ -28,10 +28,24 @@ class rpc_handle_router {
   void register_rpc_service(rpc_service *s);
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_handle_router);
 
+  const std::vector<std::unique_ptr<rpc_service>> &
+  services() const {
+    return services_;
+  }
+
  private:
   std::vector<std::unique_ptr<rpc_service>> services_{};
-
-  friend std::ostream &operator<<(std::ostream &,
-                                  const smf::rpc_handle_router &);
 };
 }  // namespace smf
+
+namespace std {
+static inline ostream &
+operator<<(std::ostream &o, const smf::rpc_handle_router &r) {
+  o << "rpc_handle_router{";
+  for (const auto &service : r.services()) {
+    service->print(o);
+  }
+  o << "}";
+  return o;
+}
+}  // namespace std
