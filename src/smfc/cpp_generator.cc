@@ -82,7 +82,7 @@ print_header_service_ctor_dtor(smf_printer &printer,
   printer.print(vars, "$Service$() : handles_({\n");
   printer.indent();
 
-  for (auto i = 0; i < service->methods().size(); ++i) {
+  for (int32_t i = 0, max = service->methods().size(); i < max; ++i) {
     auto &method = service->methods()[i];
     vars["MethodName"] = method->name();
     vars["RawMethodName"] = proper_prefix_token("raw", method->name());
@@ -103,7 +103,7 @@ print_header_service_ctor_dtor(smf_printer &printer,
       "e.letter.header.mutate_session(session_id);\n"
       "return seastar::make_ready_future<smf::rpc_envelope>(std::move(e));\n");
     printer.outdent();
-    if (i != 0) {
+    if (i < max - 1) {
       printer.print("});}),\n");
     } else {
       printer.print("});})\n");
@@ -403,7 +403,7 @@ cpp_generator::generate_header_prologue_forward_decl_external() {
     for (auto &srv : services()) {
       print_std_ostream_services(printer_, srv.get());
     }
- }
+  }
   printer_.print("\n");
 }
 

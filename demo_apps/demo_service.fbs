@@ -14,4 +14,11 @@ table Response {
 
 rpc_service SmfStorage {
   Get(Request):Response;
+
+  // -- test for the compiler generator
+
+  Put(Request):Response;
+  Fire(Request):Response;
+  Forget(Request):Response;
+  SomethingElse(Request):Response;
 }
