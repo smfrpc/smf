@@ -30,9 +30,20 @@ class cpp_generator : public generator {
   virtual std::experimental::optional<std::string>
   gen() final {
     generate_header_prologue();
-    generate_header_includes();
+    generate_header_prologue_includes();
+
+    generate_header_prologue_namespace();
+    generate_header_prologue_forward_decl();
+    generate_header_epilogue_namespace();
+
+    generate_header_prologue_forward_decl_external();
+
+    generate_header_prologue_namespace();
     generate_header_services();
+
+    generate_header_epilogue_namespace();
     generate_header_epilogue();
+
     return save_conents_to_file();
   }
 
@@ -43,9 +54,13 @@ class cpp_generator : public generator {
 
  private:
   void generate_header_prologue();
-  void generate_header_includes();
+  void generate_header_prologue_includes();
+  void generate_header_prologue_forward_decl();
+  void generate_header_prologue_forward_decl_external();
+  void generate_header_prologue_namespace();
   void generate_header_services();
   void generate_header_epilogue();
+  void generate_header_epilogue_namespace();
 };
 
 }  // namespace smf_gen

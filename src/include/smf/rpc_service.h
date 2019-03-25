@@ -1,8 +1,12 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #pragma once
+
+#include <seastar/util/noncopyable_function.hh>
+
 #include "smf/rpc_envelope.h"
 #include "smf/rpc_recv_context.h"
+
 namespace smf {
 // https://github.com/grpc/grpc/blob/d0fbba52d6e379b76a69016bc264b96a2318315f/include/grpc%2B%2B/impl/codegen/rpc_method.h
 struct rpc_service_method_handle {
@@ -15,25 +19,25 @@ struct rpc_service_method_handle {
     BIDI_STREAMING
   };
 
-  using fn_t =
-    std::function<seastar::future<rpc_envelope>(rpc_recv_context &&recv)>;
-  rpc_service_method_handle(const char *name, const uint32_t &id, fn_t f)
-    : method_name(name), method_id(id), apply(f) {}
+  using fn_t = seastar::noncopyable_function<seastar::future<rpc_envelope>(
+    rpc_recv_context &&recv)>;
 
-  rpc_service_method_handle(const rpc_service_method_handle &o)
-    : method_name(o.method_name), method_id(o.method_id), apply(o.apply) {}
+  rpc_service_method_handle(fn_t &&f) : apply(std::move(f)) {}
+  ~rpc_service_method_handle() = default;
 
-  const char *method_name;
-  const uint32_t method_id;
   fn_t apply;
 };
 
 struct rpc_service {
   virtual const char *service_name() const = 0;
-  /// \brief crc32(service_name())
   virtual uint32_t service_id() const = 0;
-  virtual const std::vector<rpc_service_method_handle> &methods() = 0;
   virtual rpc_service_method_handle *method_for_request_id(uint32_t idx) = 0;
+  virtual std::ostream &print(std::ostream &) const = 0;
   virtual ~rpc_service() {}
+  rpc_service() {}
 };
 }  // namespace smf
+
+// namespace std {
+// ostream &operator<<(ostream &o, const smf::rpc_service *s);
+// }  // namespace std
