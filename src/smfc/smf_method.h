@@ -54,6 +54,13 @@ class smf_method {
     }
     case language::go:
       return sd.name;
+    case language::python: {
+      std::deque<std::string> tmp(sd.defined_namespace->components.begin(),
+                                  sd.defined_namespace->components.end());
+      tmp.push_back(sd.name);
+      tmp.push_back(sd.name);  // name is inside module
+      return boost::algorithm::join(tmp, ".");
+    }
     default:
       throw std::runtime_error("Unknown language for the method.h");
     }
