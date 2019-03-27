@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Copyright 2019 SMF Authors
+#
+
+
 this_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 rootdir="$(cd "${this_dir}"/.. && pwd)"
 

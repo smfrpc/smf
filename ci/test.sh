@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# Copyright 2019 SMF Authors
+#
+
 set -e
 set -x
 

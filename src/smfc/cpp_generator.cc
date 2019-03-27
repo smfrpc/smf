@@ -1,3 +1,6 @@
+// Copyright 2019 SMF Authors
+//
+
 // vars,  Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #include "cpp_generator.h"

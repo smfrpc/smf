@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Copyright 2019 SMF Authors
+#
+
+
 cmd="$*"
 echo "Launching command in background: $cmd"
 eval "${cmd}" &
