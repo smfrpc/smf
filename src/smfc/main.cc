@@ -41,6 +41,8 @@ split_langs(const std::string &lang) {
       retval.push_back(smf_gen::language::cpp);
     } else if (l == "go") {
       retval.push_back(smf_gen::language::go);
+    } else if (l == "python") {
+      retval.push_back(smf_gen::language::python);
     } else {
       LOG(ERROR) << "Skipping unknown language: " << l;
     }

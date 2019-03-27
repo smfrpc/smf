@@ -4,6 +4,7 @@ set(SMFC_SOURCES
   smfc/codegen.cc
   smfc/cpp_generator.cc
   smfc/go_generator.cc
+  smfc/python_generator.cc
   smfc/main.cc)
 
 set(SMFC_LIBS

@@ -10,6 +10,7 @@
 
 #include "cpp_generator.h"
 #include "go_generator.h"
+#include "python_generator.h"
 
 namespace smf_gen {
 
@@ -92,6 +93,15 @@ codegen::gen() {
       VLOG(1) << "Adding golang generator";
       auto g = std::make_unique<go_generator>(*parser_.get(), input_filename,
                                               output_dir);
+      x = g->gen();
+      if (x) { return x; }
+      VLOG(1) << "Generated: " << g->output_filename();
+      break;
+    }
+    case language::python: {
+      VLOG(1) << "Adding python generator";
+      auto g = std::make_unique<python_generator>(*parser_.get(),
+                                                  input_filename, output_dir);
       x = g->gen();
       if (x) { return x; }
       VLOG(1) << "Generated: " << g->output_filename();
