@@ -32,6 +32,8 @@ ExternalProject_Add(boost
     --build-dir=<BINARY_DIR>
     install
     variant=release
+    cflags=-fPIC
+    cxxflags=-fPIC
     link=static
     threading=multi
     hardcode-dll-paths=true
