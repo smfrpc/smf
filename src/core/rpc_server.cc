@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Alexander Gallego. All rights reserved.
+// Copyright (c) 2016 Alexand Gallego. All rights reserved.
 //
 #include "smf/rpc_server.h"
 
@@ -168,17 +168,22 @@ rpc_server::handle_one_client_session(
         conn->set_error("Error parsing connection header");
         return seastar::make_ready_future<>();
       }
+      auto timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                          conn->limits()->max_body_parsing_duration)
+                          .count();
       auto payload_size = hdr->size();
       return conn->limits()
         ->resources_available.wait(payload_size)
-        .then([this, conn, h = hdr.value(), payload_size] {
-          return rpc_recv_context::parse_payload(&conn->conn, std::move(h))
-            .then([this, conn, payload_size](auto maybe_payload) {
-              // Launch the actual processing on a background
-              dispatch_rpc(payload_size, conn, std::move(maybe_payload));
-
-              return seastar::make_ready_future<>();
-            });
+        .then([this, conn, h = hdr.value(), payload_size, timeout_ms] {
+          auto timeout = seastar::timer<>::clock::now() +
+                         std::chrono::milliseconds(timeout_ms);
+          return seastar::with_timeout(timeout, rpc_recv_context::parse_payload(
+                                                  &conn->conn, std::move(h)));
+        })
+        .then([this, conn, payload_size](auto maybe_payload) {
+          // Launch the actual processing on a background
+          dispatch_rpc(payload_size, conn, std::move(maybe_payload));
+          return seastar::make_ready_future<>();
         });
     });
 }
@@ -256,9 +261,10 @@ rpc_server::do_dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
         })
         .then([this, conn](rpc_envelope e) {
           if (!conn->is_valid()) {
-            DLOG_INFO("Cannot send respond. client connection '{}' "
-                      "is invalid. Skipping reply from server",
-                      conn->id);
+            DLOG_INFO(
+              "Invalid client connection remote={} server_id={} Skipping "
+              "reply from server",
+              conn->conn.remote_address, conn->id);
             return seastar::make_ready_future<>();
           }
           conn->stats->out_bytes += e.letter.size();
@@ -281,11 +287,12 @@ rpc_server::cleanup_dispatch_rpc(
     auto it = open_connections_.find(conn->id);
     if (it != open_connections_.end()) {
       open_connections_.erase(it);
-      LOG_ERROR("There was an error with the connection: {}",
+      LOG_ERROR("Connection: remote:{}: {}", conn->conn.remote_address,
                 conn->get_error());
       conn->stats->bad_requests++;
       conn->stats->active_connections--;
-      LOG_INFO("Closing connection for client: {}", conn->conn.remote_address);
+      LOG_INFO("Closing connection for client: remote:{}",
+               conn->conn.remote_address);
       try {
         // after nice shutdow; force it
         conn->conn.disable();

@@ -178,7 +178,7 @@ rpc_client::dispatch_write(rpc_envelope e) {
 void
 rpc_client::fail_outstanding_futures() {
   if (is_conn_valid()) {
-    DLOG_INFO("Disabling connection to: {}", server_addr);
+    DLOG_TRACE("Disabling connection to: {}", server_addr);
     try {
       // NOTE: This is critical. If we don't shutdown the input
       // the server *might* return data which we will leak since the
@@ -191,7 +191,8 @@ rpc_client::fail_outstanding_futures() {
   }
   while (!rpc_slots_.empty()) {
     auto [session, promise_ptr] = *rpc_slots_.begin();
-    LOG_INFO("Setting exceptional state for session: {}", session);
+    LOG_INFO("Setting exceptional state for {} client_id={}", server_addr,
+             session);
     promise_ptr->pr.set_exception(remote_connection_error());
     rpc_slots_.erase(rpc_slots_.begin());
   }
@@ -199,35 +200,39 @@ rpc_client::fail_outstanding_futures() {
 
 seastar::future<>
 rpc_client::process_one_request() {
-  return rpc_recv_context::parse_header(conn_.get()).then([this](auto hdr) {
-    if (SMF_UNLIKELY(!hdr)) {
-      conn_->set_error("Could not parse header from server");
-      fail_outstanding_futures();
-      return seastar::make_ready_future<>();
-    }
-    return rpc_recv_context::parse_payload(conn_.get(), std::move(hdr.value()))
-      .then([this](stdx::optional<rpc_recv_context> opt) mutable {
-        DLOG_THROW_IF(read_counter_ <= 0, "Internal error. Invalid counter: {}",
-                      read_counter_);
-        if (SMF_UNLIKELY(!opt)) {
-          conn_->set_error("Could not parse response from server. Bad payload");
-          fail_outstanding_futures();
-          return seastar::make_ready_future<>();
-        }
-        uint16_t sess = opt->session();
-        auto it = rpc_slots_.find(sess);
-        if (SMF_UNLIKELY(it == rpc_slots_.end())) {
-          LOG_ERROR("Cannot find session: {}", sess);
-          conn_->set_error("Invalid session");
-          fail_outstanding_futures();
-          return seastar::make_ready_future<>();
-        }
-        --read_counter_;
-        it->second->pr.set_value(std::move(opt));
-        rpc_slots_.erase(it);
+  // due to a timeout exception, we make a copy of the conn in the
+  // lambda capture param of the lw_shared_ptr
+  return rpc_recv_context::parse_header(conn_.get())
+    .then([this, conn = conn_](auto hdr) {
+      if (SMF_UNLIKELY(!hdr)) {
+        conn->set_error("Could not parse header from server");
+        fail_outstanding_futures();
         return seastar::make_ready_future<>();
-      });
-  });
+      }
+      return rpc_recv_context::parse_payload(conn.get(), std::move(hdr.value()))
+        .then([this, conn](stdx::optional<rpc_recv_context> opt) mutable {
+          DLOG_THROW_IF(read_counter_ <= 0,
+                        "Internal error. Invalid counter: {}", read_counter_);
+          if (SMF_UNLIKELY(!opt)) {
+            conn->set_error(
+              "Could not parse response from server. Bad payload");
+            fail_outstanding_futures();
+            return seastar::make_ready_future<>();
+          }
+          uint16_t sess = opt->session();
+          auto it = rpc_slots_.find(sess);
+          if (SMF_UNLIKELY(it == rpc_slots_.end())) {
+            LOG_ERROR("Cannot find session: {}", sess);
+            conn->set_error("Invalid session");
+            fail_outstanding_futures();
+            return seastar::make_ready_future<>();
+          }
+          --read_counter_;
+          it->second->pr.set_value(std::move(opt));
+          rpc_slots_.erase(it);
+          return seastar::make_ready_future<>();
+        });
+    });
 }
 seastar::future<>
 rpc_client::do_reads() {
