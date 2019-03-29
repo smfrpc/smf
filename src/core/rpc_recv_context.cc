@@ -34,16 +34,6 @@ rpc_recv_context::rpc_recv_context(rpc_recv_context &&o) noexcept
 
 rpc_recv_context::~rpc_recv_context() {}
 
-seastar::future<seastar::temporary_buffer<char>>
-read_payload(rpc_connection *conn, size_t payload_size) {
-  auto timeout = conn->limits->max_body_parsing_duration;
-  auto timeout_ms =
-    std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count();
-  return seastar::with_timeout(seastar::timer<>::clock::now() +
-                                 std::chrono::milliseconds(timeout_ms),
-                               conn->istream.read_exactly(payload_size));
-}
-
 constexpr uint32_t
 max_flatbuffers_size() {
   // 2GB - 1 is the max a flatbuffers::vector<uint8_t> can hold
@@ -56,7 +46,7 @@ max_flatbuffers_size() {
 seastar::future<stdx::optional<rpc_recv_context>>
 rpc_recv_context::parse_payload(rpc_connection *conn, rpc::header hdr) {
   using ret_type = stdx::optional<rpc_recv_context>;
-  return read_payload(conn, hdr.size())
+  return conn->istream.read_exactly(hdr.size())
     .then([conn, hdr](seastar::temporary_buffer<char> body) mutable {
       if (hdr.size() != body.size()) {
         LOG_ERROR("Read incorrect number of bytes `{}`, expected header: `{}`",

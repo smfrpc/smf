@@ -30,8 +30,7 @@ class storage_service final : public smf_gen::demo::SmfStorage {
 
   seastar::future<>
   simple_state() {
-    if (internal_counter == 0) {
-      ++internal_counter;
+    if (internal_counter++ == 0) {
       return seastar::sleep(kMinRequestDurationOnServer);
     }
     return seastar::make_ready_future<>();
@@ -62,7 +61,7 @@ backpressure_request(uint16_t port) {
       return seastar::do_for_each(
         boost::counting_iterator<uint32_t>(0),
         boost::counting_iterator<uint32_t>(3), [=](uint32_t counter) {
-          LOG_INFO("Iteration: {}", counter);
+          LOG_INFO("client iteration: {}", counter);
           smf::random r;
           smf::rpc_typed_envelope<smf_gen::demo::Request> req;
           req.data->name = r.next_alphanum(100);
@@ -70,7 +69,7 @@ backpressure_request(uint16_t port) {
             .then([](auto r) {
               const char *n = r->name()->c_str();
               int server_counter = std::stoi(n);
-              LOG_THROW_IF(server_counter == 0,
+              LOG_THROW_IF(server_counter == 1,
                            "The first try we are supposed to timeout");
               LOG_INFO("Success. Reconnected and method returned. Server "
                        "Iteration: {}",
