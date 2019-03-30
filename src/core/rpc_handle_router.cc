@@ -4,7 +4,6 @@
 
 namespace smf {
 
-
 smf::rpc_service_method_handle *
 rpc_handle_router::get_handle_for_request(const uint32_t &request_id) {
   for (auto &p : services_) {

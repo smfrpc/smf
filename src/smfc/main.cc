@@ -88,9 +88,8 @@ main(int argc, char **argv, char **env) {
   }
   if (codegenerator->service_count() == 0) {
     LOG(INFO) << "No services need to be generated";
-    // if we return 0, the cmake module cannot detect if we generate a file or not
-    // and always calls smfc
-    // return 0;
+    // if we return 0, the cmake module cannot detect if we generate a file or
+    // not and always calls smfc return 0;
   }
   status = codegenerator->gen();
   if (status) {
