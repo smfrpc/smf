@@ -55,6 +55,10 @@ rpc_server::rpc_server(rpc_server_args args)
         "too_large_requests", stats_->too_large_requests,
         sm::description(
           "Requests made to this server larger than max allowedd (2GB)")),
+      sm::make_histogram(
+        "handler_dispatch_latency",
+        sm::description("Server handler dispatch latency"),
+        [this] { return hist_->get_seastar_metrics_histogram(); }),
     });
 }
 
