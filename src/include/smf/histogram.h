@@ -7,6 +7,7 @@
 #include <utility>
 
 #include <hdr_histogram.h>
+#include <seastar/core/metrics_types.hh>
 #include <seastar/core/shared_ptr.hh>
 
 #include "smf/macros.h"
@@ -41,6 +42,8 @@ struct hist_t {
     }
   }
   hdr_histogram *hist = nullptr;
+  uint64_t sample_count = 0;
+  uint64_t sample_sum = 0;
 };
 
 /// brief - simple wrapper for hdr_histogram_c project
@@ -75,6 +78,8 @@ class histogram final : public seastar::enable_lw_shared_from_this<histogram> {
   std::unique_ptr<histogram_measure> auto_measure();
 
   int print(FILE *fp) const;
+
+  seastar::metrics::histogram get_seastar_metrics_histogram() const;
 
   ~histogram();
 

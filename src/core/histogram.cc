@@ -45,16 +45,24 @@ histogram::operator=(histogram &&o) noexcept {
 
 void
 histogram::record(const uint64_t &v) {
+  hist_->sample_count++;
+  hist_->sample_sum += v;
   ::hdr_record_value(hist_->hist, v);
 }
 
 void
 histogram::record_multiple_times(const uint64_t &v, const uint32_t &times) {
+  hist_->sample_count += times;
+  hist_->sample_sum += v * times;
   ::hdr_record_values(hist_->hist, v, times);
 }
 
 void
 histogram::record_corrected(const uint64_t &v, const uint64_t &interval) {
+  // TODO: how should summation work for coordinated omission values? the sum is
+  // tracked outside hdr, currently.
+  hist_->sample_count++;
+  hist_->sample_sum += v;
   ::hdr_record_corrected_value(hist_->hist, v, interval);
 }
 
@@ -94,6 +102,65 @@ histogram::print(FILE *fp) const {
                                  5,         // Granularity of printed values
                                  1.0,       // Multiplier for results
                                  CLASSIC);  // Format CLASSIC/CSV supported.
+}
+
+seastar::metrics::histogram
+histogram::get_seastar_metrics_histogram() const {
+  // logarithmic histogram configuration. this will range from 10 microseconds
+  // through around 6000 seconds with 26 buckets doubling.
+  //
+  // TODO:
+  //   1) expose these settings through arguments
+  //   2) upstream log_base fix for sub-2.0 values. in hdr the log_base is a
+  //   double but is truncated (see the int64_t casts on log_base below which is
+  //   the same as in the hdr C library). this means that if we want buckets
+  //   with a log base of 1.5, the histogram becomes linear...
+  const size_t num_buckets = 26;
+  const int64_t first_value = 10;
+  const double log_base = 2.0;
+
+  seastar::metrics::histogram sshist;
+  sshist.buckets.resize(num_buckets);
+
+  sshist.sample_count = hist_->sample_count;
+  sshist.sample_sum = (double)hist_->sample_sum;
+
+  // stack allocated; no cleanup needed
+  struct hdr_iter iter;
+  struct hdr_iter_log *log = &iter.specifics.log;
+  hdr_iter_log_init(&iter, hist_->hist, first_value, log_base);
+
+  // fill in buckets from hdr histogram logarithmic iteration. there may be more
+  // or less hdr buckets reported than what will be returned to seastar.
+  size_t bucket_idx = 0;
+  while (hdr_iter_next(&iter) && bucket_idx < sshist.buckets.size()) {
+    auto &bucket = sshist.buckets[bucket_idx];
+    bucket.count = iter.cumulative_count;
+    bucket.upper_bound = iter.value_iterated_to;
+    bucket_idx++;
+  }
+
+  if (bucket_idx == 0) {
+    // if the histogram is empty hdr_iter_init doesn't initialize the first
+    // bucket value which is neede by the loop below.
+    iter.value_iterated_to = first_value;
+  } else if (bucket_idx < sshist.buckets.size()) {
+    // if there are padding buckets that need to be created, advance the bucket
+    // boundary which would normally be done by hdr_iter_next, except that
+    // doesn't happen when iteration reaches the end of the recorded values.
+    iter.value_iterated_to *= (int64_t)log->log_base;
+  }
+
+  // prometheus expects a fixed number of buckets. hdr iteration will stop after
+  // the max observed value. this loops pads buckets past iteration, if needed.
+  for (; bucket_idx < sshist.buckets.size(); bucket_idx++) {
+    auto &bucket = sshist.buckets[bucket_idx];
+    bucket.count = iter.cumulative_count;
+    bucket.upper_bound = iter.value_iterated_to;
+    iter.value_iterated_to *= (int64_t)log->log_base;
+  }
+
+  return sshist;
 }
 
 histogram::~histogram() {}
