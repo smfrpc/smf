@@ -39,7 +39,7 @@ class histgen_server {
   ~histgen_server() {}
 
   seastar::future<>
-  start() {
+  serve() {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<uint64_t> dist(args.min_val, args.max_val);
@@ -109,6 +109,6 @@ main(int args, char **argv, char **env) {
     args.num_samples = cfg["num_samples"].as<uint32_t>();
 
     return server.start(args).then(
-      [&server] { return server.invoke_on_all(&histgen_server::start); });
+      [&server] { return server.invoke_on_all(&histgen_server::serve); });
   });
 }
