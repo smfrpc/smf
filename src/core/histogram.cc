@@ -123,7 +123,7 @@ histogram::get_seastar_metrics_histogram() const {
   sshist.buckets.resize(num_buckets);
 
   sshist.sample_count = hist_->sample_count;
-  sshist.sample_sum = (double)hist_->sample_sum;
+  sshist.sample_sum = static_cast<double>(hist_->sample_sum);
 
   // stack allocated; no cleanup needed
   struct hdr_iter iter;
@@ -148,7 +148,7 @@ histogram::get_seastar_metrics_histogram() const {
     // if there are padding buckets that need to be created, advance the bucket
     // boundary which would normally be done by hdr_iter_next, except that
     // doesn't happen when iteration reaches the end of the recorded values.
-    iter.value_iterated_to *= (int64_t)log->log_base;
+    iter.value_iterated_to *= static_cast<int64_t>(log->log_base);
   }
 
   // prometheus expects a fixed number of buckets. hdr iteration will stop after
@@ -157,7 +157,7 @@ histogram::get_seastar_metrics_histogram() const {
     auto &bucket = sshist.buckets[bucket_idx];
     bucket.count = iter.cumulative_count;
     bucket.upper_bound = iter.value_iterated_to;
-    iter.value_iterated_to *= (int64_t)log->log_base;
+    iter.value_iterated_to *= static_cast<int64_t>(log->log_base);
   }
 
   return sshist;
