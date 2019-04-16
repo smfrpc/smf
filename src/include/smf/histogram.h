@@ -79,7 +79,7 @@ class histogram final : public seastar::enable_lw_shared_from_this<histogram> {
 
   int print(FILE *fp) const;
 
-  seastar::metrics::histogram get_seastar_metrics_histogram() const;
+  seastar::metrics::histogram seastar_histogram_logform() const;
 
   ~histogram();
 
