@@ -32,7 +32,7 @@ class histgen_server {
       {
         sm::make_histogram(
           "synthetic_histogram", sm::description("Synthetic histogram data"),
-          [this] { return hist->get_seastar_metrics_histogram(); }),
+          [this] { return hist->seastar_histogram_logform(); }),
       });
   }
 

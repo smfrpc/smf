@@ -58,7 +58,7 @@ rpc_server::rpc_server(rpc_server_args args)
       sm::make_histogram(
         "handler_dispatch_latency",
         sm::description("Server handler dispatch latency"),
-        [this] { return hist_->get_seastar_metrics_histogram(); }),
+        [this] { return hist_->seastar_histogram_logform(); }),
     });
 }
 

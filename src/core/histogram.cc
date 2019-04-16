@@ -105,7 +105,7 @@ histogram::print(FILE *fp) const {
 }
 
 seastar::metrics::histogram
-histogram::get_seastar_metrics_histogram() const {
+histogram::seastar_histogram_logform() const {
   // logarithmic histogram configuration. this will range from 10 microseconds
   // through around 6000 seconds with 26 buckets doubling.
   //
