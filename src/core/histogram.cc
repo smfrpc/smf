@@ -115,9 +115,9 @@ histogram::get_seastar_metrics_histogram() const {
   //   double but is truncated (see the int64_t casts on log_base below which is
   //   the same as in the hdr C library). this means that if we want buckets
   //   with a log base of 1.5, the histogram becomes linear...
-  const size_t num_buckets = 26;
-  const int64_t first_value = 10;
-  const double log_base = 2.0;
+  constexpr size_t num_buckets = 26;
+  constexpr int64_t first_value = 10;
+  constexpr double log_base = 2.0;
 
   seastar::metrics::histogram sshist;
   sshist.buckets.resize(num_buckets);
