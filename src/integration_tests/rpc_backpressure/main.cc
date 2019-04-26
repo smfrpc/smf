@@ -13,11 +13,13 @@
 #include "integration_tests/non_root_port.h"
 #include "smf/log.h"
 #include "smf/random.h"
+#include "smf/reconnect_client.h"
 #include "smf/rpc_generated.h"
 #include "smf/rpc_handle_router.h"
 #include "smf/rpc_recv_context.h"
 #include "smf/rpc_server.h"
 #include "smf/time_utils.h"
+
 // generated-templates
 #include "integration_tests/demo_service.smf.fb.h"
 
@@ -51,8 +53,8 @@ backpressure_request(uint16_t port) {
   // The first request should succeed. and the second should fail w/ a timeout
   smf::rpc_client_opts opts{};
   opts.server_addr = seastar::ipv4_addr{"127.0.0.1", port};
-  auto client =
-    seastar::make_shared<smf_gen::demo::SmfStorageClient>(std::move(opts));
+  auto client = seastar::make_shared<
+    smf::reconnect_client<smf_gen::demo::SmfStorageClient>>(std::move(opts));
   return client->connect()
     .then([=] {
       return seastar::do_for_each(
@@ -64,15 +66,17 @@ backpressure_request(uint16_t port) {
           LOG_INFO("Sending request: {}, with: {}", i,
                    smf::human_bytes(req.data->name.size()));
           auto begin = std::chrono::high_resolution_clock::now();
-          return client->Get(std::move(req)).then_wrapped([begin](auto f) {
-            auto end = std::chrono::high_resolution_clock::now();
-            auto diff =
-              std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
-                .count();
-            LOG_INFO("Request lasted: {}ms", diff);
-            LOG_THROW_IF((end - begin) <= kMinRequestDurationOnServer,
-                         "Request lasted less than expected. {}us", diff);
-          });
+          return client->get()
+            ->Get(std::move(req))
+            .then_wrapped([begin](auto f) {
+              auto end = std::chrono::high_resolution_clock::now();
+              auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            end - begin)
+                            .count();
+              LOG_INFO("Request lasted: {}ms", diff);
+              LOG_THROW_IF((end - begin) <= kMinRequestDurationOnServer,
+                           "Request lasted less than expected. {}us", diff);
+            });
         });
     })
     .then([client] { return client->stop().finally([client] {}); });

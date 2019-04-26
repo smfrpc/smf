@@ -69,5 +69,15 @@ smf_test(
   INCLUDES ${CMAKE_CURRENT_BINARY_DIR}/..
   LIBRARIES smf
   )
+smf_test(
+  INTEGRATION_TEST
+  BINARY_NAME rpc_hystrix_basic
+  SOURCES ${IT_ROOT}/hystrix/main.cc ${demo_test_fbs}
+  SOURCE_DIRECTORY ${IT_ROOT}/hystrix
+  INCLUDES ${PROJECT_SOURCE_DIR}/src
+  INCLUDES ${CMAKE_CURRENT_BINARY_DIR}/..
+  LIBRARIES smf
+  )
+
 
 add_subdirectory(rpc_bad_msg_t)
