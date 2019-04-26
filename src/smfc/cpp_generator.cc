@@ -303,11 +303,11 @@ print_header_client(smf_printer &printer, const smf_service *service) {
   printer.print("public:\n");
   printer.indent();
   // print ctor
-  printer.print(vars, "$ClientName$(seastar::ipv4_addr "
+  printer.print(vars, "explicit $ClientName$(seastar::ipv4_addr "
                       "server_addr)\n:smf::rpc_client(std::move("
                       "server_addr)) {}\n");
   // print ctor2
-  printer.print(vars, "$ClientName$(smf::rpc_client_opts o)"
+  printer.print(vars, "explicit $ClientName$(smf::rpc_client_opts o)"
                       "\n:smf::rpc_client(std::move(o)) {}\n");
   // move ctor
   printer.print(vars, "$ClientName$($ClientName$ &&o) = default;\n");

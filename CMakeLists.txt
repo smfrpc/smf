@@ -80,7 +80,6 @@ include(smfc_generator)
 include(tests)
 include(ccache)
 include(doxygen_gen)
-include(packaging)
 
 add_subdirectory(src)
 
