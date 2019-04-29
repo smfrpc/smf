@@ -3,6 +3,7 @@
 #include <type_traits>
 
 #include <smf/log.h>
+#include <smf/random.h>
 #include <smf/rpc_client.h>
 
 namespace smf {
@@ -34,7 +35,7 @@ class reconnect_client {
   explicit reconnect_client(smf::rpc_client_opts o)
     : client_(seastar::make_shared<type>(std::move(o))) {}
   reconnect_client(reconnect_client &&o) noexcept
-    : client_(std::move(o.client_)), bo_(o.bo_),
+    : client_(std::move(o.client_)), bo_(o.bo_), rand_(std::move(o.rand_)),
       reconnect_gate_(std::move(o.reconnect_gate_)) {}
 
   /// \brief main method
@@ -58,6 +59,7 @@ class reconnect_client {
  private:
   seastar::shared_ptr<T> client_;
   reconnect_backoff bo_{reconnect_backoff::none};
+  random rand_;
   seastar::gate reconnect_gate_;
 };
 
@@ -96,8 +98,11 @@ reconnect_client<T>::connect() {
         LOG_INFO("Recovering from '{}' for {}", eptr, client_->server_addr);
         // perform in background; increase the backoff to next version
         seastar::with_gate(reconnect_gate_, [this] {
-          auto secs = std::chrono::seconds(
-            static_cast<std::underlying_type_t<reconnect_backoff>>(++bo_));
+          // ensure 100ms random jitter
+          auto secs =
+            std::chrono::milliseconds(rand_.next() % 100) +
+            std::chrono::seconds(
+              static_cast<std::underlying_type_t<reconnect_backoff>>(++bo_));
           DLOG_TRACE("Sleeping for {}", secs.count());
           return seastar::sleep(secs)
             .then([this] { return connect(); })
