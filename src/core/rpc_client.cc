@@ -136,20 +136,21 @@ rpc_client::connect() {
                "Client already connected to server: `{}'. connect "
                "called more than once.",
                server_addr);
-
-  auto local = seastar::socket_address(sockaddr_in{AF_INET, INADDR_ANY, {0}});
-  return seastar::engine()
-    .net()
-    .connect(seastar::make_ipv4_address(server_addr), local,
-             seastar::transport::TCP)
-    .then([this, local](seastar::connected_socket fd) mutable {
-      conn_ =
-        seastar::make_lw_shared<rpc_connection>(std::move(fd), local, limits_);
-      // dispatch in background
-      seastar::with_gate(*dispatch_gate_,
-                         [this]() mutable { return do_reads(); });
-      return seastar::make_ready_future<>();
-    });
+  // Protect the socket opening from being concurrently written to
+  return seastar::with_semaphore(serialize_writes_, 1, [this] {
+    auto local = seastar::socket_address(sockaddr_in{AF_INET, INADDR_ANY, {0}});
+    return seastar::engine()
+      .net()
+      .connect(seastar::make_ipv4_address(server_addr), local,
+               seastar::transport::TCP)
+      .then([this, local](seastar::connected_socket fd) mutable {
+        conn_ = seastar::make_lw_shared<rpc_connection>(std::move(fd), local,
+                                                        limits_);
+        // dispatch in background
+        seastar::with_gate(*dispatch_gate_,
+                           [this]() mutable { return do_reads(); });
+      });
+  });
 }
 seastar::future<>
 rpc_client::dispatch_write(rpc_envelope e) {
@@ -164,7 +165,11 @@ rpc_client::dispatch_write(rpc_envelope e) {
           if (!is_conn_valid()) { return seastar::make_ready_future<>(); }
           return seastar::with_semaphore(
             serialize_writes_, 1, [this, e = std::move(e)]() mutable {
-              if (!is_conn_valid()) { return seastar::make_ready_future<>(); }
+              if (!is_conn_valid()) {
+                LOG_ERROR("Cannot send rpc_envelope with invalid connection");
+                return seastar::make_exception_future<>(
+                  invalid_connection_state());
+              }
               return rpc_envelope::send(&conn_->ostream, std::move(e))
                 .handle_exception([this](auto _) {
                   LOG_INFO("Handling exception(2): {}", _);
