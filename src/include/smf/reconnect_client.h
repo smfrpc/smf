@@ -66,7 +66,7 @@ class reconnect_client {
 };
 
 /// \brief prefix operator i.e.: `++backoff;`
-reconnect_backoff &
+inline reconnect_backoff &
 operator++(reconnect_backoff &b) {
   const auto as_num = static_cast<std::underlying_type_t<reconnect_backoff>>(b);
   // increment always, so clamp table below works on 'next'
