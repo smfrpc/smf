@@ -161,10 +161,8 @@ rpc_client::dispatch_write(rpc_envelope e) {
       return seastar::with_semaphore(
         conn_->limits->resources_available, payload_size,
         [this, e = std::move(e)]() mutable {
-          if (!is_conn_valid()) { return seastar::make_ready_future<>(); }
           return seastar::with_semaphore(
             serialize_writes_, 1, [this, e = std::move(e)]() mutable {
-              if (!is_conn_valid()) { return seastar::make_ready_future<>(); }
               return rpc_envelope::send(&conn_->ostream, std::move(e))
                 .handle_exception([this](auto _) {
                   LOG_INFO("Handling exception(2): {}", _);
