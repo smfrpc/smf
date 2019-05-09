@@ -100,7 +100,7 @@ print_header_service_ctor_dtor(smf_printer &printer,
     printer.print("// Session accounting\n"
                   "auto session_id = c.session();\n");
     printer.print(vars, "return $RawMethodName$(std::move(c)).then("
-                        "[session_id](auto e) {\n");
+                        "[session_id](smf::rpc_envelope e) {\n");
     printer.indent();
     printer.print(
       "e.letter.header.mutate_session(session_id);\n"
@@ -194,9 +194,11 @@ print_header_service_method(smf_printer &printer, const smf_method *method) {
   printer.print(vars, "$RawMethodName$(smf::rpc_recv_context &&c) {\n");
   printer.indent();
   printer.print(
-    vars, "using inner_t = $InType$;\n"
-          "using input_t = smf::rpc_recv_typed_context<inner_t>;\n"
-          "return $MethodName$(input_t(std::move(c))).then([this](auto x) {\n");
+    vars,
+    "using inner_t = $InType$;\n"
+    "using input_t = smf::rpc_recv_typed_context<inner_t>;\n"
+    "using mid_t = smf::rpc_typed_envelope<$OutType$>;\n"
+    "return $MethodName$(input_t(std::move(c))).then([this](mid_t x) {\n");
   printer.indent();
   printer.print("return "
                 "seastar::make_ready_future<smf::rpc_envelope>(x.serialize_"
