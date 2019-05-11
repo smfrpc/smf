@@ -82,7 +82,7 @@ print_header_service_ctor_dtor(smf_printer &printer,
 
   vars["Service"] = service->name();
   printer.print(vars, "virtual ~$Service$() = default;\n");
-  printer.print(vars, "$Service$() : handles_({\n");
+  printer.print(vars, "$Service$() : handles_{{\n");
   printer.indent();
 
   for (int32_t i = 0, max = service->methods().size(); i < max; ++i) {
@@ -115,7 +115,7 @@ print_header_service_ctor_dtor(smf_printer &printer,
     printer.outdent();
   }
   printer.outdent();
-  printer.print("}) {}\n");
+  printer.print("}} {}\n");
 }
 
 static void
