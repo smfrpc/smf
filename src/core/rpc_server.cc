@@ -178,7 +178,7 @@ rpc_server::handle_one_client_session(
       auto payload_size = hdr->size();
       return conn->limits()
         ->resources_available.wait(payload_size)
-        .then([this, conn, h = hdr.value(), payload_size, timeout_ms] {
+        .then([conn, h = hdr.value(), timeout_ms] {
           auto timeout = seastar::timer<>::clock::now() +
                          std::chrono::milliseconds(timeout_ms);
           return seastar::with_timeout(timeout, rpc_recv_context::parse_payload(
@@ -263,7 +263,7 @@ rpc_server::do_dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
         .then([this](rpc_envelope e) {
           return stage_apply_outgoing_filters(std::move(e));
         })
-        .then([this, conn](rpc_envelope e) {
+        .then([conn](rpc_envelope e) {
           if (!conn->is_valid()) {
             DLOG_INFO(
               "Invalid client connection remote={} server_id={} Skipping "
@@ -279,7 +279,7 @@ rpc_server::do_dispatch_rpc(seastar::lw_shared_ptr<rpc_server_connection> conn,
             });
         });
     })
-    .then([this, conn] {
+    .then([conn] {
       if (conn->is_valid()) { return conn->conn.ostream.flush(); }
       return seastar::make_ready_future<>();
     });
