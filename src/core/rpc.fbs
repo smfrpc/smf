@@ -19,7 +19,7 @@ enum compression_flags:byte {
   /// \brief lz4 compression
   lz4
 }
-enum header_bit_flags:byte (bit_flags) {
+enum header_bit_flags:ubyte (bit_flags) {
   has_payload_headers
 }
 
