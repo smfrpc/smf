@@ -11,8 +11,7 @@ namespace smf.rpc;
 enum compression_flags:byte {
   /// \brief compression not set
   none,
-  /// \brief useful for preventing outgoing filters from
-  /// enabling some compression
+  /// \brief useful for preventing outgoing filters from enabling some compression
   disabled,
   /// \brief zstd compression
   zstd,
