@@ -63,6 +63,8 @@ function(smfc_gen)
       ARGS --gen-mutable --cpp-str-type 'seastar::sstring'
       ARGS --cpp-str-flex-ctor
       ARGS -o "${SMFC_GEN_OUTPUT_DIRECTORY}/" "${FILE}"
+      COMMAND sed
+      ARGS -i '/\#include/a\#include \<seastar/core/sstring.hh\>' ${FLATC_OUTPUT}
       COMMENT "Building C++ header for ${FILE}"
       DEPENDS ${FILE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
