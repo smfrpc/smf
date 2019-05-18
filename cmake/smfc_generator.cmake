@@ -61,6 +61,7 @@ function(smfc_gen)
       ARGS ${flatc_generated_includes} --force-empty --gen-compare
       ARGS --keep-prefix --json --reflect-names --defaults-json
       ARGS --gen-mutable --cpp-str-type 'seastar::sstring'
+      ARGS --cpp-str-flex-ctor
       ARGS -o "${SMFC_GEN_OUTPUT_DIRECTORY}/" "${FILE}"
       COMMENT "Building C++ header for ${FILE}"
       DEPENDS ${FILE}
