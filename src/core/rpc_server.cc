@@ -55,10 +55,9 @@ rpc_server::rpc_server(rpc_server_args args)
         "too_large_requests", stats_->too_large_requests,
         sm::description(
           "Requests made to this server larger than max allowedd (2GB)")),
-      sm::make_histogram(
-        "handler_dispatch_latency",
-        sm::description("Server handler dispatch latency"),
-        [this] { return hist_->seastar_histogram_logform(); }),
+      sm::make_histogram("handler_dispatch_latency",
+                         sm::description("Server handler dispatch latency"),
+                         [this] { return hist_->seastar_histogram_logform(); }),
     });
 }
 
@@ -115,23 +114,22 @@ rpc_server::start() {
         // DO NOT return the future. Need to execute in parallel
         handle_client_connection(conn);
       });
-  })
-    .handle_exception([this](std::exception_ptr eptr) {
-      stopped_.set_value();
-      try {
-        std::rethrow_exception(eptr);
-      } catch (const std::system_error &e) {
-        // Current and future \ref accept() calls will terminate immediately
-        auto const err_value = e.code().value();
-        if (err_value == 103 || err_value == 22) {
-          LOG_INFO("Shutting down server with expected exit codes");
-        } else {
-          LOG_ERROR("Unknown system error: {}", e);
-        }
-      } catch (const std::exception &e) {
-        LOG_ERROR("Abrupt server stop: {}", e);
+  }).handle_exception([this](std::exception_ptr eptr) {
+    stopped_.set_value();
+    try {
+      std::rethrow_exception(eptr);
+    } catch (const std::system_error &e) {
+      // Current and future \ref accept() calls will terminate immediately
+      auto const err_value = e.code().value();
+      if (err_value == 103 || err_value == 22) {
+        LOG_INFO("Shutting down server with expected exit codes");
+      } else {
+        LOG_ERROR("Unknown system error: {}", e);
       }
-    });
+    } catch (const std::exception &e) {
+      LOG_ERROR("Abrupt server stop: {}", e);
+    }
+  });
 }
 
 seastar::future<>

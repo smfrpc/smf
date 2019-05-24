@@ -81,7 +81,7 @@ def run_subprocess(cmd):
 
 def get_clang_prog(prog):
     """ALL tools for clang should be pinned to one version"""
-    CLANG_SOURCE_VERSION = "7.0.1"
+    CLANG_SOURCE_VERSION = "8.0.0"
     ret = subprocess.check_output("which %s" % prog, shell=True)
     if ret != None:
         original = "".join(str(ret).split())

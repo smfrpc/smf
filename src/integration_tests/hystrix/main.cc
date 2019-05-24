@@ -1,3 +1,6 @@
+// Copyright 2019 SMF Authors
+//
+
 #include <chrono>
 
 #include <fmt/format.h>

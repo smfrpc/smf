@@ -133,7 +133,8 @@ histogram::seastar_histogram_logform() const {
   // fill in buckets from hdr histogram logarithmic iteration. there may be more
   // or less hdr buckets reported than what will be returned to seastar.
   size_t bucket_idx = 0;
-  for (; hdr_iter_next(&iter) && bucket_idx < sshist.buckets.size(); bucket_idx++) {
+  for (; hdr_iter_next(&iter) && bucket_idx < sshist.buckets.size();
+       bucket_idx++) {
     auto &bucket = sshist.buckets[bucket_idx];
     bucket.count = iter.cumulative_count;
     bucket.upper_bound = iter.value_iterated_to;
