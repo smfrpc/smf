@@ -1,6 +1,5 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
-#include <experimental/optional>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -13,6 +12,7 @@
 #include <glog/logging.h>
 
 #include "codegen.h"
+#include "smf/std-compat.h"
 
 DEFINE_string(filename, "", "filename to parse");
 DEFINE_string(include_dirs, "", "extra include directories");

@@ -17,7 +17,7 @@ set(SMFC_LIBS
 
 add_executable(smfc ${SMFC_SOURCES})
 target_link_libraries(smfc PRIVATE ${SMFC_LIBS})
-target_include_directories(smfc PRIVATE src/smfc)
+target_include_directories(smfc PRIVATE src/smfc include)
 install(TARGETS smfc
   EXPORT smf-export
   DESTINATION ${CMAKE_INSTALL_BINDIR})

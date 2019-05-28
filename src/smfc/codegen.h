@@ -2,7 +2,6 @@
 //
 #pragma once
 
-#include <experimental/optional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -10,13 +9,14 @@
 #include <flatbuffers/flatbuffers.h>
 #include <flatbuffers/idl.h>
 
+#include "smf/std-compat.h"
 #include "language.h"
 
 namespace smf_gen {
 
 class codegen {
  public:
-  using status = std::experimental::optional<std::string>;
+  using status = smf::compat::optional<std::string>;
 
   codegen(std::string ifname, std::string output_dir,
           std::vector<std::string> include_dirs, std::vector<language> langs);

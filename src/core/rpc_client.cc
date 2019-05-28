@@ -72,9 +72,9 @@ rpc_client::enable_histogram_metrics() {
   if (!hist_) hist_ = histogram::make_lw_shared();
 }
 
-seastar::future<stdx::optional<rpc_recv_context>>
+seastar::future<smf::compat::optional<rpc_recv_context>>
 rpc_client::raw_send(rpc_envelope e) {
-  using opt_recv_t = stdx::optional<rpc_recv_context>;
+  using opt_recv_t = smf::compat::optional<rpc_recv_context>;
   if (SMF_UNLIKELY(!is_conn_valid())) {
     return seastar::make_exception_future<opt_recv_t>(
       invalid_connection_state());
@@ -208,7 +208,7 @@ rpc_client::process_one_request() {
         return seastar::make_ready_future<>();
       }
       return rpc_recv_context::parse_payload(conn.get(), std::move(hdr.value()))
-        .then([this, conn](stdx::optional<rpc_recv_context> opt) mutable {
+        .then([this, conn](smf::compat::optional<rpc_recv_context> opt) mutable {
           DLOG_THROW_IF(read_counter_ <= 0,
                         "Internal error. Invalid counter: {}", read_counter_);
           if (SMF_UNLIKELY(!opt)) {

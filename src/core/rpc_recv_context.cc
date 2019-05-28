@@ -43,43 +43,43 @@ max_flatbuffers_size() {
   return static_cast<uint32_t>(FLATBUFFERS_MAX_BUFFER_SIZE);
 }
 
-seastar::future<stdx::optional<rpc_recv_context>>
+seastar::future<smf::compat::optional<rpc_recv_context>>
 rpc_recv_context::parse_payload(rpc_connection *conn, rpc::header hdr) {
-  using ret_type = stdx::optional<rpc_recv_context>;
+  using ret_type = smf::compat::optional<rpc_recv_context>;
   return conn->istream.read_exactly(hdr.size())
     .then([conn, hdr](seastar::temporary_buffer<char> body) mutable {
       if (hdr.size() != body.size()) {
         LOG_ERROR("Read incorrect number of bytes `{}`, expected header: `{}`",
                   body.size(), hdr);
-        return seastar::make_ready_future<ret_type>(stdx::nullopt);
+        return seastar::make_ready_future<ret_type>(smf::compat::nullopt);
       }
       if (hdr.size() > max_flatbuffers_size()) {
         LOG_ERROR("Bad payload. Body is >  FLATBUFFERS_MAX_BUFFER_SIZE");
-        return seastar::make_ready_future<ret_type>(stdx::nullopt);
+        return seastar::make_ready_future<ret_type>(smf::compat::nullopt);
       }
       if (hdr.bitflags() &
           rpc::header_bit_flags::header_bit_flags_has_payload_headers) {
         LOG_ERROR("Reading payload headers is not yet implemented");
-        return seastar::make_ready_future<ret_type>(stdx::nullopt);
+        return seastar::make_ready_future<ret_type>(smf::compat::nullopt);
       }
 
       const uint32_t xx = rpc_checksum_payload(body.get(), body.size());
       if (xx != hdr.checksum()) {
         LOG_ERROR("Payload checksum `{}` does not match header checksum `{}`",
                   xx, hdr.checksum());
-        return seastar::make_ready_future<ret_type>(stdx::nullopt);
+        return seastar::make_ready_future<ret_type>(smf::compat::nullopt);
       }
 
       rpc_recv_context ctx(conn->limits, conn->remote_address, hdr,
                            std::move(body));
       return seastar::make_ready_future<ret_type>(
-        stdx::optional<rpc_recv_context>(std::move(ctx)));
+        smf::compat::optional<rpc_recv_context>(std::move(ctx)));
     });
 }
 
-seastar::future<stdx::optional<rpc::header>>
+seastar::future<smf::compat::optional<rpc::header>>
 rpc_recv_context::parse_header(rpc_connection *conn) {
-  using ret_type = stdx::optional<rpc::header>;
+  using ret_type = smf::compat::optional<rpc::header>;
 
   static constexpr size_t kRPCHeaderSize = sizeof(rpc::header);
   DLOG_THROW_IF(
@@ -93,25 +93,25 @@ rpc_recv_context::parse_header(rpc_connection *conn) {
         LOG_ERROR_IF(conn->is_valid(),
                      "Invalid header size `{}`, expected `{}`, skipping req",
                      header.size(), kRPCHeaderSize);
-        return seastar::make_ready_future<ret_type>(stdx::nullopt);
+        return seastar::make_ready_future<ret_type>(smf::compat::nullopt);
       }
       auto hdr = rpc::header();
       std::memcpy(&hdr, header.get(), kRPCHeaderSize);
       if (hdr.size() == 0) {
         LOG_ERROR("Emty body to parse. skipping");
-        return seastar::make_ready_future<ret_type>(stdx::nullopt);
+        return seastar::make_ready_future<ret_type>(smf::compat::nullopt);
       }
       if (hdr.compression() > rpc::compression_flags_MAX) {
         LOG_ERROR("Compression out of range", hdr);
-        return seastar::make_ready_future<ret_type>(stdx::nullopt);
+        return seastar::make_ready_future<ret_type>(smf::compat::nullopt);
       }
       if (hdr.checksum() <= 0) {
         LOG_ERROR("checksum is empty");
-        return seastar::make_ready_future<ret_type>(stdx::nullopt);
+        return seastar::make_ready_future<ret_type>(smf::compat::nullopt);
       }
       if (hdr.meta() <= 0) {
         LOG_ERROR("meta is empty");
-        return seastar::make_ready_future<ret_type>(stdx::nullopt);
+        return seastar::make_ready_future<ret_type>(smf::compat::nullopt);
       }
       if (hdr.compression() ==
           rpc::compression_flags::compression_flags_disabled) {

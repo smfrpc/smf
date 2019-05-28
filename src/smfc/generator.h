@@ -2,7 +2,6 @@
 //
 
 #pragma once
-#include <experimental/optional>
 #include <map>
 #include <memory>
 #include <set>
@@ -13,6 +12,7 @@
 
 #include "smf_printer.h"
 #include "smf_service.h"
+#include "smf/std-compat.h"
 
 namespace smf_gen {
 class generator {
@@ -33,7 +33,7 @@ class generator {
   virtual ~generator() = default;
 
   virtual std::string output_filename() = 0;
-  virtual std::experimental::optional<std::string> gen() = 0;
+  virtual smf::compat::optional<std::string> gen() = 0;
 
   virtual const std::string &
   contents() final {
@@ -82,7 +82,7 @@ class generator {
     return flatbuffers::StripExtension(input_filename_without_path());
   }
 
-  virtual std::experimental::optional<std::string>
+  virtual smf::compat::optional<std::string>
   save_conents_to_file() {
     auto outname = output_filename();
     if (boost::filesystem::exists(outname)) {
@@ -91,7 +91,7 @@ class generator {
     if (!flatbuffers::SaveFile(outname.c_str(), printer_.contents(), false)) {
       return "Could not create filename: " + outname;
     }
-    return std::experimental::nullopt;
+    return smf::compat::nullopt;
   }
 
  protected:

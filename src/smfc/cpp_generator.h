@@ -1,7 +1,6 @@
 // Copyright (c) 2016 Alexander Gallego. All rights reserved.
 //
 #pragma once
-#include <experimental/optional>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -12,6 +11,7 @@
 #include <glog/logging.h>
 
 #include "generator.h"
+#include "smf/std-compat.h"
 
 namespace smf_gen {
 
@@ -27,7 +27,7 @@ class cpp_generator : public generator {
     return output_dir + "/" + input_filename_without_ext() + ".smf.fb.h";
   }
 
-  virtual std::experimental::optional<std::string>
+  virtual smf::compat::optional<std::string>
   gen() final {
     generate_header_prologue();
     generate_header_prologue_includes();

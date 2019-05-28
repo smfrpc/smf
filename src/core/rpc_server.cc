@@ -14,7 +14,6 @@
 #include "smf/rpc_header_ostream.h"
 
 namespace smf {
-namespace stdx = std::experimental;
 
 std::ostream &
 operator<<(std::ostream &o, const smf::rpc_server &s) {
@@ -165,7 +164,7 @@ seastar::future<>
 rpc_server::handle_one_client_session(
   seastar::lw_shared_ptr<rpc_server_connection> conn) {
   return rpc_recv_context::parse_header(&conn->conn)
-    .then([this, conn](stdx::optional<rpc::header> hdr) {
+    .then([this, conn](smf::compat::optional<rpc::header> hdr) {
       if (!hdr) {
         conn->set_error("Error parsing connection header");
         return seastar::make_ready_future<>();
@@ -206,7 +205,7 @@ rpc_server::handle_client_connection(
 seastar::future<>
 rpc_server::dispatch_rpc(int32_t payload_size,
                          seastar::lw_shared_ptr<rpc_server_connection> conn,
-                         stdx::optional<rpc_recv_context> ctx) {
+                         smf::compat::optional<rpc_recv_context> ctx) {
   if (!ctx) {
     conn->limits()->resources_available.signal(payload_size);
     conn->set_error("Could not parse payload");
