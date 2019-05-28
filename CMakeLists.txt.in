@@ -117,8 +117,8 @@ ExternalProject_Add(c-ares
     -DCARES_INSTALL=ON)
 
 ExternalProject_Add(yaml-cpp
-  URL https://github.com/jbeder/yaml-cpp/archive/yaml-cpp-0.5.3.tar.gz
-  URL_MD5 2bba14e6a7f12c7272f87d044e4a7211
+  URL https://github.com/jbeder/yaml-cpp/archive/yaml-cpp-0.6.0.tar.gz
+  URL_MD5 8adc0ae6c2698a61ab086606cc7cf562
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@
@@ -178,8 +178,8 @@ ExternalProject_Add(gnutls
   DEPENDS gmp nettle)
 
 ExternalProject_Add(lz4
-  URL https://github.com/lz4/lz4/archive/v1.8.0.tar.gz
-  URL_MD5 6247bf0e955899969d1600ff34baed6b
+  URL https://github.com/lz4/lz4/archive/v1.8.3.tar.gz
+  URL_MD5 d5ce78f7b1b76002bbfffa6f78a5fc4e
   INSTALL_DIR   @SMF_DEPS_INSTALL_DIR@
   SOURCE_SUBDIR contrib/cmake_unofficial
   CMAKE_ARGS
@@ -273,8 +273,8 @@ ExternalProject_Add(lksctp-tools
   INSTALL_COMMAND ${make_command} install)
 
 ExternalProject_Add(seastar
-  URL https://github.com/scylladb/seastar/archive/d66b6719ce007f143599a469cb86b3bc51a82770.tar.gz
-  URL_MD5 404d9ae47d765e315ba2a902a18fed53
+  URL https://github.com/vectorizedio/seastar/archive/a99a8eae0757790a3caac151beed137b2e9a4ba4.tar.gz
+  URL_MD5 888abc894e479a7fc40d42650674fe0e
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@
@@ -393,8 +393,8 @@ ExternalProject_Add(googlebenchmark
 
 # note about master
 ExternalProject_Add(flatbuffers
-  URL https://github.com/google/flatbuffers/archive/718ddea558b3efb0544fc56bea07ed3da8884125.tar.gz
-  URL_MD5 3adb11ec8c0c734cf2706394f82edd73
+  URL https://github.com/google/flatbuffers/archive/b56d60f058cbe0c9b41d884857e977f38e9b0205.tar.gz
+  URL_MD5 89a3cc9195532360ca454430f513b4e5
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@
