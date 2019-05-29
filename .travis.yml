@@ -20,8 +20,6 @@ matrix:
       env:
         - DOCKER_IMAGE=ubuntu:disco
         - CI=1
-        - CC=gcc-8
-        - CXX=g++-8
     - os: linux
       env:
         - DOCKER_IMAGE=ubuntu:bionic
