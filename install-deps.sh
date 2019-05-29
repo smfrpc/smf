@@ -22,13 +22,14 @@ function debs() {
         if ! command -v add-apt-repository; then
             apt-get -y install software-properties-common
         fi
-        add-apt-repository -y ppa:ubuntu-toolchain-r/test
         apt-get update -y
         if [ "$(apt-cache search '^gcc-9$' | awk '{print $1}')" == "gcc-9" ]; then
             apt-get install -y gcc-9 g++-9
         fi
         gcc_ver=$(gcc -dumpfullversion -dumpversion)
         if dpkg --compare-versions "${gcc_ver}" lt 8.0; then
+            # as of may 29, 2019, ubuntu:disco did not have this ppa enabled
+            add-apt-repository -y ppa:ubuntu-toolchain-r/test
             apt-get install -y gcc-8 g++-8
         fi
     fi
