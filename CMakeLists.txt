@@ -12,6 +12,8 @@ set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os")
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE Release)
 endif()
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(SMF_BUILD_PROGRAMS "Build smf programs and demos" ON)
 option(SMF_ENABLE_INTEGRATION_TESTS "control if integrations are bulit and ran" ON)
