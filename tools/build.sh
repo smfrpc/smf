@@ -6,6 +6,8 @@ set -e
 set -x
 if [[ -n ${CI} ]]; then
   echo "In continous integration system..."
+  # disable colors so we can parse travis better
+  export GCC_COLORS=""
   set -x
 fi
 
