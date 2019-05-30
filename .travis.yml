@@ -16,12 +16,13 @@ matrix:
         - DOCKER_IMAGE=fedora:29
         - BUILD_GENERATOR=Ninja
         - CI=1
-    - os: linux
-      env:
-        - DOCKER_IMAGE=ubuntu:disco
-        - CI=1
-        - CC=gcc-9
-        - CXX=g++-9
+    # disable ubuntu disco for now
+    # - os: linux
+    #   env:
+    #     - DOCKER_IMAGE=ubuntu:disco
+    #     - CI=1
+    #     - CC=gcc-9
+    #     - CXX=g++-9
     - os: linux
       env:
         - DOCKER_IMAGE=ubuntu:bionic
