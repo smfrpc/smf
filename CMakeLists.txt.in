@@ -397,8 +397,8 @@ ExternalProject_Add(googlebenchmark
 
 # note about master
 ExternalProject_Add(flatbuffers
-  URL https://github.com/google/flatbuffers/archive/b56d60f058cbe0c9b41d884857e977f38e9b0205.tar.gz
-  URL_MD5 89a3cc9195532360ca454430f513b4e5
+  URL https://github.com/google/flatbuffers/archive/bc7ede8fb3a754a04e507992d5514b528270ee06.tar.gz
+  URL_MD5 e424cde3f805ebd36895d049d1611d40
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@
