@@ -10,6 +10,19 @@ fi
 # shellcheck disable=SC1091
 source /etc/os-release
 
+function apt_gcc {
+    local gccver=$1
+    local cc="gcc-${gccver}"
+    local cxx="g++-${gccver}"
+    apt-get install -y "${cc}" "${cxx}"
+    if [ -n "${CI}" ]; then
+        update-alternatives \
+            --install /usr/bin/gcc gcc "/usr/bin/${cc}" 800 \
+            --slave /usr/bin/g++ g++ "/usr/bin/${cxx}"
+    fi
+
+}
+
 function debs() {
     apt-get update -y
 
@@ -24,13 +37,14 @@ function debs() {
         fi
         apt-get update -y
         if [ "$(apt-cache search '^gcc-9$' | awk '{print $1}')" == "gcc-9" ]; then
-            apt-get install -y gcc-9 g++-9
-        fi
-        gcc_ver=$(gcc -dumpfullversion -dumpversion)
-        if dpkg --compare-versions "${gcc_ver}" lt 8.0; then
-            # as of may 29, 2019, ubuntu:disco did not have this ppa enabled
-            add-apt-repository -y ppa:ubuntu-toolchain-r/test
-            apt-get install -y gcc-8 g++-8
+            apt_gcc 9
+        else
+            gcc_ver=$(gcc -dumpfullversion -dumpversion)
+            if dpkg --compare-versions "${gcc_ver}" lt 8.0; then
+                # as of may 29, 2019, ubuntu:disco did not have this ppa enabled
+                add-apt-repository -y ppa:ubuntu-toolchain-r/test
+                apt_gcc 8
+            fi
         fi
     fi
     if [ "${UBUNTU_CODENAME}" == "xenial" ] && [ -n "${CI}" ]; then
