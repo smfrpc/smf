@@ -28,6 +28,15 @@ class rpc_recv_typed_context {
   rpc_recv_typed_context(rpc_recv_typed_context<T> &&o) noexcept
     : ctx(std::move(o.ctx)), cache_(std::move(o.cache_)) {}
 
+  rpc_recv_typed_context &
+  operator=(rpc_recv_typed_context<T> &&o) noexcept {
+    if (this != &o) {
+      this->~rpc_recv_typed_context();
+      new (this) rpc_recv_typed_context(std::move(o));
+    }
+    return *this;
+  }
+
   SMF_ALWAYS_INLINE T *operator->() { return cache_; }
   SMF_ALWAYS_INLINE T *
   get() const {
