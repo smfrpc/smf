@@ -96,7 +96,7 @@ rpc_client::raw_send(rpc_envelope e) {
   return stage_outgoing_filters(std::move(e))
     .then([this, work](rpc_envelope e) {
       // dispatch the write concurrently!
-      dispatch_write(std::move(e));
+      (void)dispatch_write(std::move(e));
       return work->pr.get_future();
     })
     .then([this, m = std::move(measure)](opt_recv_t r) mutable {
@@ -146,7 +146,7 @@ rpc_client::connect() {
       conn_ =
         seastar::make_lw_shared<rpc_connection>(std::move(fd), local, limits_);
       // dispatch in background
-      seastar::with_gate(*dispatch_gate_,
+      (void)seastar::with_gate(*dispatch_gate_,
                          [this]() mutable { return do_reads(); });
       return seastar::make_ready_future<>();
     });

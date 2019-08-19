@@ -81,7 +81,7 @@ rpc_server::start() {
     conf.metric_help = "smf rpc server statistics";
     conf.prefix = "smf";
     // start on background co-routine
-    seastar::prometheus::add_prometheus_routes(*admin_, conf)
+    (void)seastar::prometheus::add_prometheus_routes(*admin_, conf)
       .then([http_port = args_.http_port, admin = admin_, ip = args_.ip]() {
         return admin
           ->listen(seastar::make_ipv4_address(
@@ -101,17 +101,17 @@ rpc_server::start() {
       args_.ip.empty() ? seastar::ipv4_addr{args_.rpc_port}
                        : seastar::ipv4_addr{args_.ip, args_.rpc_port}),
     lo);
-  seastar::keep_doing([this] {
+  (void)seastar::keep_doing([this] {
     return listener_->accept().then(
       [this, stats = stats_, limits = limits_](
-        seastar::connected_socket fd, seastar::socket_address addr) mutable {
+       seastar::accept_result result) mutable {
         auto conn = seastar::make_lw_shared<rpc_server_connection>(
-          std::move(fd), limits, addr, stats, ++connection_idx_);
+          std::move(result.connection), limits, result.remote_address, stats, ++connection_idx_);
 
         open_connections_.insert({connection_idx_, conn});
 
         // DO NOT return the future. Need to execute in parallel
-        handle_client_connection(conn);
+        (void)handle_client_connection(conn);
       });
   }).handle_exception([this](std::exception_ptr eptr) {
     stopped_.set_value();
@@ -183,7 +183,7 @@ rpc_server::handle_one_client_session(
         })
         .then([this, conn, payload_size](auto maybe_payload) {
           // Launch the actual processing on a background
-          dispatch_rpc(payload_size, conn, std::move(maybe_payload));
+          (void)dispatch_rpc(payload_size, conn, std::move(maybe_payload));
           return seastar::make_ready_future<>();
         });
     });
