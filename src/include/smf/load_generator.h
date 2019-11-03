@@ -93,8 +93,9 @@ class __attribute__((visibility("default"))) load_generator {
                                                      method_cb]() mutable {
                             // notice that this does not return, hence
                             // executing concurrently
-                            c->invoke(reqs_per_channel, args.cfg, duration, gen,
-                                      method_cb)
+                            (void)c
+                              ->invoke(reqs_per_channel, args.cfg, duration,
+                                       gen, method_cb)
                               .finally([&limit] { limit.signal(1); });
                           });
                         })

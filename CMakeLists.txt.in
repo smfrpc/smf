@@ -275,8 +275,8 @@ ExternalProject_Add(lksctp-tools
   INSTALL_COMMAND ${make_command} install)
 
 ExternalProject_Add(seastar
-  URL https://github.com/vectorizedio/seastar/archive/afc5bbf5.tar.gz
-  URL_MD5 d851a1f739918d208ff4c08d9906caa5
+  URL https://github.com/vectorizedio/seastar/archive/319d359.tar.gz
+  URL_MD5 341f15559319f93463961db03978d45c
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@
@@ -289,8 +289,10 @@ ExternalProject_Add(seastar
     -DSeastar_DOCS=OFF
     -DSeastar_TESTING=OFF
     -DSeastar_CXX_FLAGS=-Wno-error
+    -DSeastar_LD_FLAGS=-pthread
     -DSeastar_STD_OPTIONAL_VARIANT_STRINGVIEW=ON
     -DSeastar_CXX_DIALECT=c++17
+    -DSeastar_UNUSED_RESULT_ERROR=ON
   DEPENDS
     fmt
     boost

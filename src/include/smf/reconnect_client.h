@@ -102,7 +102,7 @@ reconnect_client<T>::connect() {
       .handle_exception([this](auto eptr) {
         LOG_INFO("Recovering from '{}' for {}", eptr, client_->server_addr);
         // perform in background; increase the backoff to next version
-        seastar::with_gate(reconnect_gate_, [this] {
+        (void)seastar::with_gate(reconnect_gate_, [this] {
           // ensure 100ms random jitter
           auto secs =
             std::chrono::milliseconds(rand_.next() % 100) +
