@@ -29,9 +29,5 @@ matrix:
         - CI=1
         - CC=gcc-8
         - CXX=g++-8
-    - os: linux
-      env:
-        - DOCKER_IMAGE=centos:7
-        - CI=1
 script:
   - ci/build-in-docker.sh ${DOCKER_IMAGE}
