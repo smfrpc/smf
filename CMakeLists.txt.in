@@ -283,7 +283,7 @@ ExternalProject_Add(seastar
     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
     -DCMAKE_PREFIX_PATH=<INSTALL_DIR>
     -DSeastar_INSTALL=ON
-    -DSeastar_DPDK=ON
+    -DSeastar_DPDK=OFF
     -DSeastar_APPS=OFF
     -DSeastar_DEMOS=OFF
     -DSeastar_DOCS=OFF
