@@ -2,6 +2,8 @@
 
 ![](docs/public/logo.png)
 
+> We're looking for a new maintainer for the SMF project. As I have little time to keep up with issues. Please let me know by filing an issue.
+
 
 **smf** is pronounced **/smɝf/**
 
