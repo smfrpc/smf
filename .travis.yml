@@ -18,7 +18,7 @@ matrix:
         - CI=1
     - os: linux
       env:
-        - DOCKER_IMAGE=ubuntu:disco
+        - DOCKER_IMAGE=ubuntu:focal
         - CI=1
         - CC=gcc-9
         - CXX=g++-9
