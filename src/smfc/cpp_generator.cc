@@ -443,7 +443,7 @@ cpp_generator::generate_header_prologue_includes() {
   std::map<std::string, std::string> vars;
   static const std::vector<std::string> headers = {
         "ostream", "seastar/core/sstring.hh",  
-        "smf/std-compat.h", "smf/rpc_service.h",
+        "smf/rpc_service.h",
         "smf/rpc_client.h", "smf/rpc_recv_typed_context.h",
         "smf/rpc_typed_envelope.h", "smf/log.h" };
 

@@ -6,6 +6,7 @@
 // seastar
 #include <seastar/core/app-template.hh>
 #include <seastar/core/distributed.hh>
+#include <seastar/core/reactor.hh>
 // smf
 #include "integration_tests/demo_service.smf.fb.h"
 #include "integration_tests/non_root_port.h"

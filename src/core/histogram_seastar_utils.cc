@@ -6,6 +6,7 @@
 
 #include <seastar/core/file.hh>
 #include <seastar/core/reactor.hh>
+#include <seastar/core/fstream.hh>
 // smf
 #include "smf/histogram.h"
 #include "smf/log.h"

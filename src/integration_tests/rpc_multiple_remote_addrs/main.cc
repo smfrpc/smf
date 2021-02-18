@@ -10,6 +10,7 @@
 // seastar
 #include <seastar/core/app-template.hh>
 #include <seastar/core/distributed.hh>
+#include <seastar/core/reactor.hh>
 #include <seastar/core/sleep.hh>
 #include <seastar/core/sstring.hh>
 #include <seastar/net/api.hh>

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <type_traits>
 #include <unordered_map>
+#include <optional>
 
 #include <seastar/core/distributed.hh>
 #include <seastar/core/gate.hh>
@@ -81,7 +82,7 @@ class rpc_server {
   seastar::future<>
   dispatch_rpc(int32_t payload_size,
                seastar::lw_shared_ptr<rpc_server_connection> conn,
-               smf::compat::optional<rpc_recv_context> ctx);
+               std::optional<rpc_recv_context> ctx);
 
   /// \brief main difference between dispatch_rpc and do_dispatch_rpc
   /// is that the former just wraps the calls in a safe seastar::gate
