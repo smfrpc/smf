@@ -41,13 +41,13 @@ codegen::service_count() const {
   return parser_->services_.vec.size();
 }
 
-smf::compat::optional<std::string>
+std::optional<std::string>
 codegen::parse() {
   if (parsed_) {
     if (!parser_->error_.empty()) {
       return "Parser in error state: " + parser_->error_;
     }
-    return smf::compat::nullopt;
+    return std::nullopt;
   }
   parsed_ = true;
 
@@ -71,10 +71,10 @@ codegen::parse() {
     return "Could not PARSE file: " + parser_->error_;
   }
 
-  return smf::compat::nullopt;
+  return std::nullopt;
 }
 
-smf::compat::optional<std::string>
+std::optional<std::string>
 codegen::gen() {
   auto x = parse();
   if (x) { return x; }
@@ -111,7 +111,7 @@ codegen::gen() {
       LOG(ERROR) << "Uknown code generator";
     }
   }
-  return smf::compat::nullopt;
+  return std::nullopt;
 }
 
 }  // namespace smf_gen

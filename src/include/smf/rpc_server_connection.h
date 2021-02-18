@@ -9,7 +9,6 @@
 #include "smf/log.h"
 #include "smf/rpc_connection.h"
 #include "smf/rpc_server_stats.h"
-#include "smf/std-compat.h"
 namespace smf {
 struct rpc_server_connection_options {
   explicit rpc_server_connection_options(bool _nodelay = false,

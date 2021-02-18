@@ -9,7 +9,6 @@
 #include <boost/filesystem.hpp>
 
 #include "generator.h"
-#include "smf/std-compat.h"
 
 namespace smf_gen {
 
@@ -35,7 +34,7 @@ class go_generator : public generator {
     return str.str();
   }
 
-  virtual smf::compat::optional<std::string>
+  virtual std::optional<std::string>
   gen() final {
     generate_header_prologue();
     generate_header_includes();

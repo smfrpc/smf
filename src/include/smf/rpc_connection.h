@@ -2,12 +2,12 @@
 //
 #pragma once
 #include <utility>
+#include <optional>
 // seastar
 #include <seastar/core/iostream.hh>
 #include <seastar/core/shared_ptr.hh>
 #include <seastar/net/api.hh>
 
-#include "smf/std-compat.h"
 #include "smf/macros.h"
 #include "smf/rpc_connection_limits.h"
 
@@ -74,7 +74,7 @@ class rpc_connection final {
   SMF_DISALLOW_COPY_AND_ASSIGN(rpc_connection);
 
  private:
-  smf::compat::optional<seastar::sstring> error_;
+  std::optional<seastar::sstring> error_;
   bool enabled_{true};
 };
 }  // namespace smf

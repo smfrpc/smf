@@ -4,6 +4,7 @@
 
 #include "smf/macros.h"
 #include "smf/rpc_recv_context.h"
+#include <optional>
 
 namespace smf {
 
@@ -14,9 +15,9 @@ class rpc_recv_typed_context {
 
  public:
   using type = T;
-  using opt_recv_ctx_t = smf::compat::optional<rpc_recv_context>;
+  using opt_recv_ctx_t = std::optional<rpc_recv_context>;
 
-  rpc_recv_typed_context() : ctx(smf::compat::nullopt) {}
+  rpc_recv_typed_context() : ctx(std::nullopt) {}
 
   explicit rpc_recv_typed_context(opt_recv_ctx_t t) : ctx(std::move(t)) {
     if (SMF_LIKELY(!!ctx)) {

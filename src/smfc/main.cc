@@ -12,7 +12,6 @@
 #include <glog/logging.h>
 
 #include "codegen.h"
-#include "smf/std-compat.h"
 
 DEFINE_string(filename, "", "filename to parse");
 DEFINE_string(include_dirs, "", "extra include directories");

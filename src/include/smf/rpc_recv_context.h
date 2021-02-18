@@ -2,6 +2,7 @@
 //
 #pragma once
 // std
+#include <optional>
 // seastar
 #include <seastar/core/iostream.hh>
 #include <seastar/net/api.hh>
@@ -10,7 +11,6 @@
 #include "smf/rpc_connection.h"
 #include "smf/rpc_connection_limits.h"
 #include "smf/rpc_generated.h"
-#include "smf/std-compat.h"
 
 namespace smf {
 struct rpc_recv_context {
@@ -22,9 +22,9 @@ struct rpc_recv_context {
   /// size of the header, so we parse sizeof(Header). We with this information
   /// we parse the body of the request
   ///
-  static seastar::future<smf::compat::optional<rpc::header>>
+  static seastar::future<std::optional<rpc::header>>
   parse_header(rpc_connection *conn);
-  static seastar::future<smf::compat::optional<rpc_recv_context>>
+  static seastar::future<std::optional<rpc_recv_context>>
   parse_payload(rpc_connection *conn, rpc::header hdr);
 
   explicit rpc_recv_context(

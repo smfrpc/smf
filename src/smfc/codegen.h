@@ -5,18 +5,18 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <optional>
 
 #include <flatbuffers/flatbuffers.h>
 #include <flatbuffers/idl.h>
 
-#include "smf/std-compat.h"
 #include "language.h"
 
 namespace smf_gen {
 
 class codegen {
  public:
-  using status = smf::compat::optional<std::string>;
+  using status = std::optional<std::string>;
 
   codegen(std::string ifname, std::string output_dir,
           std::vector<std::string> include_dirs, std::vector<language> langs);

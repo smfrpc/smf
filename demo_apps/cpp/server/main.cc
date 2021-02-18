@@ -6,6 +6,7 @@
 
 #include <seastar/core/app-template.hh>
 #include <seastar/core/distributed.hh>
+#include <seastar/core/reactor.hh>
 #include <seastar/net/api.hh>
 
 #include "smf/histogram_seastar_utils.h"

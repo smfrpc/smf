@@ -5,6 +5,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <optional>
 
 #include <seastar/core/gate.hh>
 #include <seastar/core/shared_ptr.hh>
@@ -15,7 +16,6 @@
 #include "smf/rpc_envelope.h"
 #include "smf/rpc_filter.h"
 #include "smf/rpc_recv_typed_context.h"
-#include "smf/std-compat.h"
 
 namespace smf {
 
@@ -60,7 +60,7 @@ struct rpc_client_opts {
 class rpc_client {
  public:
   struct work_item {
-    using promise_t = seastar::promise<smf::compat::optional<rpc_recv_context>>;
+    using promise_t = seastar::promise<std::optional<rpc_recv_context>>;
     explicit work_item(uint16_t idx) : session(idx) {}
     ~work_item() {}
 
@@ -152,7 +152,7 @@ class rpc_client {
   seastar::future<rpc_envelope> apply_outgoing_filters(rpc_envelope);
 
  private:
-  seastar::future<smf::compat::optional<rpc_recv_context>> raw_send(rpc_envelope e);
+  seastar::future<std::optional<rpc_recv_context>> raw_send(rpc_envelope e);
   seastar::future<> do_reads();
   seastar::future<> dispatch_write(rpc_envelope e);
   seastar::future<> process_one_request();

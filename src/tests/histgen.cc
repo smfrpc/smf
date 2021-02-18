@@ -9,6 +9,7 @@
 #include <seastar/core/distributed.hh>
 #include <seastar/core/metrics_registration.hh>
 #include <seastar/core/prometheus.hh>
+#include <seastar/core/reactor.hh>
 #include <seastar/http/httpd.hh>
 
 #include "smf/histogram.h"

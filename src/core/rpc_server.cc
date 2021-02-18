@@ -6,12 +6,15 @@
 #include <seastar/core/execution_stage.hh>
 #include <seastar/core/metrics.hh>
 #include <seastar/core/prometheus.hh>
+#include <seastar/core/with_timeout.hh>
 
 #include "smf/histogram_seastar_utils.h"
 #include "smf/log.h"
 #include "smf/rpc_connection_limits.h"
 #include "smf/rpc_envelope.h"
 #include "smf/rpc_header_ostream.h"
+
+#include <optional>
 
 namespace smf {
 
@@ -164,7 +167,7 @@ seastar::future<>
 rpc_server::handle_one_client_session(
   seastar::lw_shared_ptr<rpc_server_connection> conn) {
   return rpc_recv_context::parse_header(&conn->conn)
-    .then([this, conn](smf::compat::optional<rpc::header> hdr) {
+    .then([this, conn](std::optional<rpc::header> hdr) {
       if (!hdr) {
         conn->set_error("Error parsing connection header");
         return seastar::make_ready_future<>();
@@ -205,7 +208,7 @@ rpc_server::handle_client_connection(
 seastar::future<>
 rpc_server::dispatch_rpc(int32_t payload_size,
                          seastar::lw_shared_ptr<rpc_server_connection> conn,
-                         smf::compat::optional<rpc_recv_context> ctx) {
+                         std::optional<rpc_recv_context> ctx) {
   if (!ctx) {
     conn->limits()->resources_available.signal(payload_size);
     conn->set_error("Could not parse payload");
