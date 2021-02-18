@@ -66,6 +66,7 @@ function debs() {
         pkg-config \
         xfslibs-dev \
         systemtap-sdt-dev \
+        valgrind \
         ragel ${extra}
 }
 
@@ -116,6 +117,7 @@ function rpms() {
         libasan \
         libubsan \
         libatomic \
+        valgrind-devel \
         doxygen ${extra}
 
     if [ -n "$dts_ver" ]; then
