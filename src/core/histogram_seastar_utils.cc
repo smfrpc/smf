@@ -39,14 +39,14 @@ histogram_seastar_utils::write_histogram(seastar::sstring filename,
     seastar::open_file_dma(filename, flags),
     [h = std::move(h)](seastar::file file) mutable {
       return  seastar::make_file_output_stream(std::move(file))
-        .then([h = std::move(h)](seastar::output_stream<char> f) mutable {
+        .then([h = std::move(h)](seastar::output_stream<char> out) mutable {
           return histogram_seastar_utils::print_histogram(h)
-            .then([f = std::move(f)](seastar::temporary_buffer<char> buf) mutable {
-              return f.write(buf.get(), buf.size())
-                .then([f = std::move(f)]() mutable {
-                  return f.flush()
-                    .then([f = std::move(f)]() mutable { 
-                      return f.close().finally([f = std::move(f)] {}); 
+            .then([out = std::move(out)](seastar::temporary_buffer<char> buf) mutable {
+              return out.write(buf.get(), buf.size())
+                .then([out = std::move(out)]() mutable {
+                  return out.flush()
+                    .then([out = std::move(out)]() mutable { 
+                      return out.close().finally([out = std::move(out)] {}); 
                     });
                 });
             });
