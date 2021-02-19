@@ -32,24 +32,18 @@ histogram_seastar_utils::print_histogram(histogram *h) {
 seastar::future<>
 histogram_seastar_utils::write_histogram(seastar::sstring filename,
                                          histogram *h) {
-  static constexpr const size_t buf_size = 4096;
   auto flags = seastar::open_flags::rw | seastar::open_flags::create
                  | seastar::open_flags::truncate;
 
   return seastar::with_file_close_on_failure(
-
     seastar::open_file_dma(filename, flags),
     [h = std::move(h)](seastar::file file) mutable {
-
-      return  seastar::make_file_output_stream(std::move(file), buf_size)
+      return  seastar::make_file_output_stream(std::move(file))
         .then([h = std::move(h)](seastar::output_stream<char> f) mutable {
-
           return histogram_seastar_utils::print_histogram(h)
             .then([f = std::move(f)](seastar::temporary_buffer<char> buf) mutable {
-
               return f.write(buf.get(), buf.size())
                 .then([f = std::move(f)]() mutable {
-
                   return f.flush()
                     .then([f = std::move(f)]() mutable { 
                       return f.close().finally([f = std::move(f)] {}); 
