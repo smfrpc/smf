@@ -326,8 +326,8 @@ ExternalProject_Add(zstd
     -DZSTD_BUILD_PROGRAMS=OFF)
 
 ExternalProject_Add(HdrHistogram
-  URL https://github.com/HdrHistogram/HdrHistogram_c/archive/7381c1bf78d462917cf31b736d5d9e700bfedb0f.tar.gz
-  URL_MD5 7e9776c558fa9385776cb8c1e5ac7d1a
+  URL https://storage.googleapis.com/vectorizedio-public/dependencies/HdrHistogram_c-0.11.2.tar.gz
+  URL_MD5 95970dea64f1a7a8d199aeb9f7c15e60
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@
