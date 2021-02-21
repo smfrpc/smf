@@ -19,9 +19,8 @@ set(info_dir --infodir=@SMF_DEPS_INSTALL_DIR@/share/info)
 include(ExternalProject)
 
 ExternalProject_Add(boost
-  # The 1.67.0 release has a bug in Boost Lockfree around a missing header.
-  URL https://dl.bintray.com/boostorg/release/1.64.0/source/boost_1_64_0.tar.gz
-  URL_MD5 319c6ffbbeccc366f14bb68767a6db79
+  URL https://storage.googleapis.com/vectorizedio-public/dependencies/boost_1_75_0.tar.gz
+  URL_MD5 38813f6feb40387dfe90160debd71251
   INSTALL_DIR    @SMF_DEPS_INSTALL_DIR@
   PATCH_COMMAND
     ./bootstrap.sh
