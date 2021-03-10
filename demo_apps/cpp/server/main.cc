@@ -38,6 +38,12 @@ cli_opts(boost::program_options::options_description_easy_init o) {
   o("port", po::value<uint16_t>()->default_value(20776), "port for service");
   o("httpport", po::value<uint16_t>()->default_value(20777),
     "port for http stats service");
+  o("key",
+    po::value<std::string>()->default_value(""),
+    "key for TLS seccured connection");
+  o("cert",
+    po::value<std::string>()->default_value(""),
+      "cert for TLS seccured connection");
 }
 
 int
@@ -66,6 +72,19 @@ main(int args, char **argv, char **env) {
     args.ip = cfg["ip"].as<std::string>().c_str();
     args.rpc_port = cfg["port"].as<uint16_t>();
     args.http_port = cfg["httpport"].as<uint16_t>();
+
+    auto key = cfg["key"].as<std::string>();
+    auto cert = cfg["cert"].as<std::string>();
+    if (key != "" && cert != "") {
+        auto builder = seastar::tls::credentials_builder();
+        builder.set_dh_level(seastar::tls::dh_params::level::MEDIUM);
+        builder
+          .set_x509_key_file(cert, key, seastar::tls::x509_crt_format::PEM)
+          .get();
+        args.credentials
+          = builder.build_reloadable_server_credentials().get0();
+    }
+ 
     args.memory_avail_per_core =
       static_cast<uint64_t>(0.9 * seastar::memory::stats().total_memory());
 
