@@ -41,9 +41,8 @@ cli_opts(boost::program_options::options_description_easy_init o) {
   o("key",
     po::value<std::string>()->default_value(""),
     "key for TLS seccured connection");
-  o("cert",
-    po::value<std::string>()->default_value(""),
-      "cert for TLS seccured connection");
+  o("cert", po::value<std::string>()->default_value(""),
+    "cert for TLS seccured connection");
 }
 
 int

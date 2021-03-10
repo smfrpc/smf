@@ -3,6 +3,7 @@
 #pragma once
 
 #include <boost/program_options.hpp>
+#include <seastar/net/tls.hh>
 #include <memory>
 #include <vector>
 
@@ -32,6 +33,7 @@ struct load_generator_args {
   size_t concurrency;
   size_t memory_per_core;
   smf::rpc::compression_flags compression;
+  seastar::shared_ptr<seastar::tls::certificate_credentials> credentials;
   const boost::program_options::variables_map cfg;
 };
 

@@ -80,6 +80,10 @@ cli_opts(boost::program_options::options_description_easy_init o) {
   // currently these are sockets
   o("concurrency", po::value<uint32_t>()->default_value(10),
     "number of green threads per real thread (seastar::futures<>)");
+
+  o("ca-cert", po::value<std::string>()->default_value(""),
+      "CA root certificate");
+
 }
 
 int
@@ -97,6 +101,16 @@ main(int args, char **argv, char **env) {
       cfg["req-num"].as<uint32_t>(), cfg["concurrency"].as<uint32_t>(),
       static_cast<uint64_t>(0.9 * seastar::memory::stats().total_memory()),
       smf::rpc::compression_flags::compression_flags_none, cfg);
+
+    // TODO(lumontec): uniform largs instantiation with server side
+    auto ca_cert = cfg["ca-cert"].as<std::string>();
+    if (ca_cert != "") {
+        auto builder = seastar::tls::credentials_builder();
+        builder.set_x509_trust_file(ca_cert, seastar::tls::x509_crt_format::PEM)
+          .get0();
+        largs.credentials
+          = builder.build_reloadable_certificate_credentials().get0();
+    }
 
     LOG_INFO("Load args: {}", largs);
 
