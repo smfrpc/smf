@@ -144,7 +144,7 @@ main(int args, char **argv, char **env) {
         .get();
 
       LOG_INFO("Exiting");
-      return 0;
+      seastar::make_ready_future<int>(0).get();
     });
   });
 }

@@ -3,8 +3,8 @@
 #pragma once
 
 #include <boost/program_options.hpp>
-#include <seastar/net/tls.hh>
 #include <memory>
+#include <seastar/net/tls.hh>
 #include <vector>
 
 #include <smf/log.h>
