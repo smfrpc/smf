@@ -7,6 +7,7 @@
 #include <seastar/core/app-template.hh>
 #include <seastar/core/distributed.hh>
 #include <seastar/core/reactor.hh>
+#include <seastar/core/thread.hh>
 
 #include "smf/histogram_seastar_utils.h"
 #include "smf/load_channel.h"
@@ -82,8 +83,7 @@ cli_opts(boost::program_options::options_description_easy_init o) {
     "number of green threads per real thread (seastar::futures<>)");
 
   o("ca-cert", po::value<std::string>()->default_value(""),
-      "CA root certificate");
-
+    "CA root certificate");
 }
 
 int
@@ -96,54 +96,54 @@ main(int args, char **argv, char **env) {
     seastar::engine().at_exit([&] { return load.stop(); });
     auto &cfg = app.configuration();
 
-    ::smf::load_generator_args largs(
-      cfg["ip"].as<std::string>().c_str(), cfg["port"].as<uint16_t>(),
-      cfg["req-num"].as<uint32_t>(), cfg["concurrency"].as<uint32_t>(),
-      static_cast<uint64_t>(0.9 * seastar::memory::stats().total_memory()),
-      smf::rpc::compression_flags::compression_flags_none, cfg);
+    return seastar::async([&] {
+      ::smf::load_generator_args largs(
+        cfg["ip"].as<std::string>().c_str(), cfg["port"].as<uint16_t>(),
+        cfg["req-num"].as<uint32_t>(), cfg["concurrency"].as<uint32_t>(),
+        static_cast<uint64_t>(0.9 * seastar::memory::stats().total_memory()),
+        smf::rpc::compression_flags::compression_flags_none, cfg);
 
-    // TODO(lumontec): uniform largs instantiation with server side
-    auto ca_cert = cfg["ca-cert"].as<std::string>();
-    if (ca_cert != "") {
+      // TODO(lumontec): uniform largs instantiation with server side
+      auto ca_cert = cfg["ca-cert"].as<std::string>();
+      if (ca_cert != "") {
         auto builder = seastar::tls::credentials_builder();
         builder.set_x509_trust_file(ca_cert, seastar::tls::x509_crt_format::PEM)
           .get0();
-        largs.credentials
-          = builder.build_reloadable_certificate_credentials().get0();
-    }
+        largs.credentials =
+          builder.build_reloadable_certificate_credentials().get0();
+      }
 
-    LOG_INFO("Load args: {}", largs);
+      LOG_INFO("Load args: {}", largs);
+      load.start(std::move(largs)).get();
 
-    return load.start(std::move(largs))
-      .then([&load] {
-        LOG_INFO("Connecting to server");
-        return load.invoke_on_all(&load_gen_t::connect);
-      })
-      .then([&load] {
-        LOG_INFO("Benchmarking server");
-        return load.invoke_on_all([](load_gen_t &server) {
+      LOG_INFO("Connecting to server");
+      load.invoke_on_all(&load_gen_t::connect).get();
+
+      LOG_INFO("Benchmarking server");
+      load
+        .invoke_on_all([](load_gen_t &server) {
           load_gen_t::generator_cb_t gen = generator{};
           load_gen_t::method_cb_t method = method_callback{};
           return server.benchmark(gen, method).then([](auto test) {
             LOG_INFO("Bench: {}", test);
             return seastar::make_ready_future<>();
           });
-        });
-      })
-      .then([&load] {
-        LOG_INFO("MapReducing stats");
-        return load
-          .map_reduce(smf::unique_histogram_adder(),
-                      [](load_gen_t &shard) { return shard.copy_histogram(); })
-          .then([](std::unique_ptr<smf::histogram> h) {
-            LOG_INFO("Writing client histograms");
-            return smf::histogram_seastar_utils::write("clients_latency.hgrm",
-                                                       std::move(h));
-          });
-      })
-      .then([] {
-        LOG_INFO("Exiting");
-        return seastar::make_ready_future<int>(0);
-      });
+        })
+        .get();
+
+      LOG_INFO("MapReducing stats");
+      load
+        .map_reduce(smf::unique_histogram_adder(),
+                    [](load_gen_t &shard) { return shard.copy_histogram(); })
+        .then([](std::unique_ptr<smf::histogram> h) {
+          LOG_INFO("Writing client histograms");
+          return smf::histogram_seastar_utils::write("clients_latency.hgrm",
+                                                     std::move(h));
+        })
+        .get();
+
+      LOG_INFO("Exiting");
+      seastar::make_ready_future<int>(0).get();
+    });
   });
 }
