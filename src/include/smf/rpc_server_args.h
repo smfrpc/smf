@@ -16,11 +16,9 @@ struct rpc_server_args {
   seastar::sstring ip = "";
   uint16_t rpc_port = 11225;
   uint16_t http_port = 33140;
-
   /// \brief rpc_server_flags are bitwise flags.
   ///
   uint32_t flags = 0;
-
   /// \ brief rpc server tls certs and keys
   ///
   seastar::shared_ptr<seastar::tls::server_credentials> credentials;

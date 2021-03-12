@@ -12,6 +12,7 @@
 #include <seastar/core/metrics_registration.hh>
 #include <seastar/core/timer.hh>
 #include <seastar/http/httpd.hh>
+#include <seastar/net/tls.hh>
 
 #include "smf/histogram.h"
 #include "smf/macros.h"

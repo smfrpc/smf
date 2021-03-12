@@ -106,6 +106,7 @@ main(int args, char **argv, char **env) {
       // TODO(lumontec): uniform largs instantiation with server side
       auto ca_cert = cfg["ca-cert"].as<std::string>();
       if (ca_cert != "") {
+        LOG_INFO("Setting ca-certificate client");
         auto builder = seastar::tls::credentials_builder();
         builder.set_x509_trust_file(ca_cert, seastar::tls::x509_crt_format::PEM)
           .get0();
@@ -143,7 +144,7 @@ main(int args, char **argv, char **env) {
         .get();
 
       LOG_INFO("Exiting");
-      seastar::make_ready_future<int>(0).get();
+      return 0;
     });
   });
 }
