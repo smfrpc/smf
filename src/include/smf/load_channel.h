@@ -3,6 +3,7 @@
 #pragma once
 
 #include <seastar/core/shared_ptr.hh>
+#include <seastar/net/tls.hh>
 
 #include "smf/load_generator_duration.h"
 #include "smf/log.h"
@@ -22,11 +23,13 @@ struct load_channel {
     const boost::program_options::variables_map &)>;
 
   load_channel(uint64_t id, const char *ip, uint16_t port, uint64_t mem,
-               smf::rpc::compression_flags compression)
+               smf::rpc::compression_flags compression, 
+               seastar::shared_ptr<seastar::tls::certificate_credentials> credentials)
     : channel_id_(id) {
     smf::rpc_client_opts opts{};
     opts.server_addr = seastar::ipv4_addr{ip, port};
     opts.memory_avail_for_client = mem;
+    opts.credentials = credentials;
     client = seastar::make_shared<ClientService>(std::move(opts));
     client->enable_histogram_metrics();
     if (compression == smf::rpc::compression_flags::compression_flags_zstd) {

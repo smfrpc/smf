@@ -6,10 +6,11 @@
 #include <utility>
 #include <vector>
 #include <optional>
+#include <map>
 
 #include <seastar/core/gate.hh>
+#include <seastar/net/tls.hh>
 #include <seastar/core/shared_ptr.hh>
-#include <seastar/net/api.hh>
 #include "smf/histogram.h"
 #include "smf/macros.h"
 #include "smf/rpc_connection.h"
@@ -21,6 +22,9 @@ namespace smf {
 
 struct rpc_client_opts {
   seastar::ipv4_addr server_addr;
+  /// \ brief rpc client tls trust certficate
+  ///
+  seastar::shared_ptr<seastar::tls::certificate_credentials> credentials;
   /// \ brief The default timeout PER connection body. After we
   /// parse the header of the connection we need to
   /// make sure that we at some point receive some
@@ -163,6 +167,7 @@ class rpc_client {
 
  private:
   seastar::lw_shared_ptr<rpc_connection_limits> limits_;
+  seastar::shared_ptr<seastar::tls::certificate_credentials> creds_;
   // need to be public for parent_shared_from_this()
   uint64_t read_counter_{0};
   seastar::lw_shared_ptr<rpc_connection> conn_;
