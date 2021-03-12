@@ -39,10 +39,10 @@ class __attribute__((visibility("default"))) load_generator {
     random rand;
     channels_.reserve(args.concurrency);
     for (uint32_t i = 0u; i < args.concurrency; ++i) {
-      channels_.push_back(std::make_unique<channel_t>(
-        rand.next(), args.ip, args.port,
-        args.memory_per_core / args.concurrency, args.compression, 
-        args.credentials));
+      channels_.push_back(
+        std::make_unique<channel_t>(rand.next(), args.ip, args.port,
+                                    args.memory_per_core / args.concurrency,
+                                    args.compression, args.credentials));
     }
   }
   ~load_generator() {}

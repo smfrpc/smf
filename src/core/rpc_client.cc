@@ -3,16 +3,16 @@
 #include "smf/rpc_client.h"
 
 #include <memory>
+#include <optional>
 #include <seastar/core/future.hh>
 #include <utility>
-#include <optional>
 // seastar
 #include <seastar/core/execution_stage.hh>
 #include <seastar/core/reactor.hh>
-#include <seastar/core/thread.hh>
 #include <seastar/core/sleep.hh>
-#include <seastar/net/api.hh>
+#include <seastar/core/thread.hh>
 #include <seastar/core/with_timeout.hh>
+#include <seastar/net/api.hh>
 // smf
 #include "smf/log.h"
 #include "smf/rpc_recv_context.h"
@@ -53,13 +53,14 @@ rpc_client::rpc_client(rpc_client_opts opts) : server_addr(opts.server_addr) {
 }
 
 rpc_client::rpc_client(rpc_client &&o) noexcept
-  : server_addr(o.server_addr), limits_(std::move(o.limits_)), creds_(std::move(o.creds_)),
-    read_counter_(o.read_counter_), conn_(std::move(o.conn_)),
-    rpc_slots_(std::move(o.rpc_slots_)), in_filters_(std::move(o.in_filters_)),
+  : server_addr(o.server_addr), limits_(std::move(o.limits_)),
+    creds_(std::move(o.creds_)), read_counter_(o.read_counter_),
+    conn_(std::move(o.conn_)), rpc_slots_(std::move(o.rpc_slots_)),
+    in_filters_(std::move(o.in_filters_)),
     out_filters_(std::move(o.out_filters_)),
     dispatch_gate_(std::move(o.dispatch_gate_)),
     serialize_writes_(std::move(o.serialize_writes_)),
-    hist_(std::move(o.hist_)), session_idx_(o.session_idx_) {} 
+    hist_(std::move(o.hist_)), session_idx_(o.session_idx_) {}
 
 seastar::future<>
 rpc_client::stop() {
@@ -146,27 +147,27 @@ rpc_client::connect() {
                server_addr);
 
   return seastar::async([&] {
-    auto socket = seastar::make_lw_shared<seastar::socket>(seastar::engine().net().socket());
+    auto socket = seastar::make_lw_shared<seastar::socket>(
+      seastar::engine().net().socket());
     auto servaddr = seastar::make_ipv4_address(server_addr);
-    auto sockaddr = seastar::socket_address(sockaddr_in{AF_INET, INADDR_ANY, {0}});
-    auto fd = socket
-               ->connect(
-                 servaddr, 
-                 sockaddr,
-                 seastar::transport::TCP).get();
+    auto sockaddr =
+      seastar::socket_address(sockaddr_in{AF_INET, INADDR_ANY, {0}});
+    auto fd =
+      socket->connect(servaddr, sockaddr, seastar::transport::TCP).get();
     if (creds_) {
 
-        fd = seastar::tls::wrap_client(
-              std::move(creds_),
-              std::move(fd), seastar::sstring{}).get();
+      fd = seastar::tls::wrap_client(std::move(creds_), std::move(fd),
+                                     seastar::sstring{})
+             .get();
     }
 
-    conn_ = seastar::make_lw_shared<rpc_connection>(std::move(fd), std::move(sockaddr), limits_);
+    conn_ = seastar::make_lw_shared<rpc_connection>(
+      std::move(fd), std::move(sockaddr), limits_);
 
     // dispatch in background
     (void)seastar::with_gate(*dispatch_gate_,
-                         [this]() mutable { return do_reads(); });
-    return;
+                             [this]() mutable { return do_reads(); });
+    seastar::make_ready_future<>().get();
   });
 };
 

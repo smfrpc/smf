@@ -25,18 +25,16 @@ operator<<(std::ostream &o, const smf::rpc_server &s) {
     << ", args.rpc_port=" << s.args_.rpc_port
     << ", args.http_port=" << s.args_.http_port << ", rpc_routes=" << s.routes_
     << ", has_tls_credentials: " << (s.creds_ ? "yes" : "no")
-    << ", limits=" << *s.limits_
-    << ", limits=" << *s.limits_
+    << ", limits=" << *s.limits_ << ", limits=" << *s.limits_
     << ", incoming_filters=" << s.in_filters_.size()
     << ", outgoing_filters=" << s.out_filters_.size() << "}";
   return o;
 }
 
 rpc_server::rpc_server(rpc_server_args args)
-  : args_(args)
-  , limits_(seastar::make_lw_shared<rpc_connection_limits>(
-                   args.memory_avail_per_core, args.recv_timeout))
-  , creds_(args_.credentials) {
+  : args_(args), limits_(seastar::make_lw_shared<rpc_connection_limits>(
+                   args.memory_avail_per_core, args.recv_timeout)),
+    creds_(args_.credentials) {
   namespace sm = seastar::metrics;
   metrics_.add_group(
     "smf::rpc_server",
@@ -104,7 +102,7 @@ rpc_server::start() {
   LOG_INFO("Starting rpc server");
   seastar::listen_options lo;
   lo.reuse_address = true;
-  
+
   if (!creds_) {
     listener_ = seastar::listen(
       seastar::make_ipv4_address(
@@ -112,25 +110,27 @@ rpc_server::start() {
                          : seastar::ipv4_addr{args_.ip, args_.rpc_port}),
       lo);
   } else {
-    listener_ = seastar::tls::listen(creds_, seastar::listen(
-      seastar::make_ipv4_address(
-        args_.ip.empty() ? seastar::ipv4_addr{args_.rpc_port}
-                         : seastar::ipv4_addr{args_.ip, args_.rpc_port}),
-      lo));
+    listener_ = seastar::tls::listen(
+      creds_,
+      seastar::listen(seastar::make_ipv4_address(
+                        args_.ip.empty()
+                          ? seastar::ipv4_addr{args_.rpc_port}
+                          : seastar::ipv4_addr{args_.ip, args_.rpc_port}),
+                      lo));
   }
 
   (void)seastar::keep_doing([this] {
-    return listener_->accept().then(
-      [this, stats = stats_, limits = limits_](
-       seastar::accept_result result) mutable {
-        auto conn = seastar::make_lw_shared<rpc_server_connection>(
-          std::move(result.connection), limits, result.remote_address, stats, ++connection_idx_);
+    return listener_->accept().then([this, stats = stats_, limits = limits_](
+                                      seastar::accept_result result) mutable {
+      auto conn = seastar::make_lw_shared<rpc_server_connection>(
+        std::move(result.connection), limits, result.remote_address, stats,
+        ++connection_idx_);
 
-        open_connections_.insert({connection_idx_, conn});
+      open_connections_.insert({connection_idx_, conn});
 
-        // DO NOT return the future. Need to execute in parallel
-        (void)handle_client_connection(conn);
-      });
+      // DO NOT return the future. Need to execute in parallel
+      (void)handle_client_connection(conn);
+    });
   }).handle_exception([this](std::exception_ptr eptr) {
     stopped_.set_value();
     try {
