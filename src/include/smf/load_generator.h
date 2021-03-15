@@ -63,13 +63,13 @@ class __attribute__((visibility("default"))) load_generator {
 
   seastar::future<>
   stop() {
-    return seastar::do_for_each(channels_.begin(), channels_.end(),
+    return seastar::parallel_for_each(channels_.begin(), channels_.end(),
                                 [](auto &c) { return c->stop(); });
   }
   seastar::future<>
   connect() {
     LOG_INFO("Making {} connections on this core.", channels_.size());
-    return seastar::do_for_each(channels_.begin(), channels_.end(),
+    return seastar::parallel_for_each(channels_.begin(), channels_.end(),
                                 [](auto &c) { return c->connect(); });
   }
   seastar::future<load_generator_duration>
@@ -85,7 +85,7 @@ class __attribute__((visibility("default"))) load_generator {
              [this, duration, method_cb, gen,
               reqs_per_channel](auto &limit) mutable {
                duration->begin();
-               return seastar::do_for_each(
+               return seastar::parallel_for_each(
                         channels_.begin(), channels_.end(),
                         [this, &limit, gen, method_cb, reqs_per_channel,
                          duration](auto &c) mutable {
