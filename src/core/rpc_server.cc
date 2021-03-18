@@ -213,9 +213,7 @@ rpc_server::handle_client_connection(
   return seastar::do_until(
            [conn] { return !conn->is_valid(); },
            [this, conn]() mutable { return handle_one_client_session(conn); })
-    .finally([this, conn]{
-      return cleanup_dispatch_rpc(conn);
-    })
+    .finally([this, conn] { return cleanup_dispatch_rpc(conn); })
     .handle_exception([this, conn](auto ptr) {
       LOG_INFO("Error with client rpc session: {}", ptr);
       conn->set_error("handling client session exception");
