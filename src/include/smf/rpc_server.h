@@ -129,7 +129,7 @@ class rpc_server {
   /// \brief prometheus metrics exposed
   seastar::metrics::metric_groups metrics_{};
   /// \brief tls credentials
-  seastar::shared_ptr<seastar::tls::server_credentials> _creds;
+  seastar::shared_ptr<seastar::tls::server_credentials> creds_;
 
  private:
   friend std::ostream &operator<<(std::ostream &, const smf::rpc_server &);

@@ -24,6 +24,8 @@ operator<<(std::ostream &o, const smf::rpc_server &s) {
   o << "rpc_server{args.ip=" << s.args_.ip << ", args.flags=" << s.args_.flags
     << ", args.rpc_port=" << s.args_.rpc_port
     << ", args.http_port=" << s.args_.http_port << ", rpc_routes=" << s.routes_
+    << ", has_tls_credentials: " << (s.creds_ ? "yes" : "no")
+    << ", limits=" << *s.limits_
     << ", limits=" << *s.limits_
     << ", incoming_filters=" << s.in_filters_.size()
     << ", outgoing_filters=" << s.out_filters_.size() << "}";
@@ -34,7 +36,7 @@ rpc_server::rpc_server(rpc_server_args args)
   : args_(args)
   , limits_(seastar::make_lw_shared<rpc_connection_limits>(
                    args.memory_avail_per_core, args.recv_timeout))
-  , _creds() {
+  , creds_(args_.credentials) {
   namespace sm = seastar::metrics;
   metrics_.add_group(
     "smf::rpc_server",
@@ -103,14 +105,14 @@ rpc_server::start() {
   seastar::listen_options lo;
   lo.reuse_address = true;
   
-  if (!_creds) {
+  if (!creds_) {
     listener_ = seastar::listen(
       seastar::make_ipv4_address(
         args_.ip.empty() ? seastar::ipv4_addr{args_.rpc_port}
                          : seastar::ipv4_addr{args_.ip, args_.rpc_port}),
       lo);
   } else {
-    listener_ = seastar::tls::listen(_creds, seastar::listen(
+    listener_ = seastar::tls::listen(creds_, seastar::listen(
       seastar::make_ipv4_address(
         args_.ip.empty() ? seastar::ipv4_addr{args_.rpc_port}
                          : seastar::ipv4_addr{args_.ip, args_.rpc_port}),
