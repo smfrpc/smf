@@ -25,7 +25,7 @@ If you are using **smf**, drop us a line on the mailing list introducing your pr
 **smf** is a new RPC system and code generation like gRPC, Cap n Proto,
 Apache Thrift, etc, but designed for **microsecond tail latency***.
 
-Current benchmarks in microseconds
+Current benchmarks in microseconds (e2e see docs)
 
 | 60 byte payload  | latency   |
 | ---------------- | --------- |
