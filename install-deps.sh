@@ -64,6 +64,7 @@ function debs() {
         m4 \
         ninja-build \
         meson \
+        python3-pyelftools \
         automake \
         pkg-config \
         xfslibs-dev \
@@ -112,6 +113,7 @@ function rpms() {
         gcc-c++ \
         ninja-build \
         meson \
+        python3-pyelftools \
         m4 \
         libtool \
         make \
