@@ -37,7 +37,7 @@ trap 'rm -rf ${build_dir}' EXIT
 
 (
   cd "${build_dir}"
-  ${CMAKE} -G"${BUILD_GENERATOR}" -DSMF_MANAGE_DEPS=ON "${proj_dir}"
+  ${CMAKE} -G"${BUILD_GENERATOR}" -DSMF_MANAGE_DEPS=ON -DSMF_ENABLE_DPDK=ON -DSMF_ENABLE_HWLOC=ON "${proj_dir}"
   ${build_cmd} -j"$(nproc)"
   ls -l bin
   ldd bin/smf_demo_server | grep smf-deps-install
