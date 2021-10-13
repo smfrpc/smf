@@ -22,5 +22,7 @@ docker run --rm --privileged \
        -v "${proj_dir}":/src/smf:z,ro ${extra} \
        -e BUILD_GENERATOR -e CI="${CI}" \
        -e CC="${CC}" -e CXX="${CXX}" \
+       -e DEBIAN_FRONTEND=noninteractive \
+       -e TZ=$(cat /etc/timezone) \
        -w /src/smf "${base_img}" \
        /bin/bash -c "./install-deps.sh && ci/test.sh"
