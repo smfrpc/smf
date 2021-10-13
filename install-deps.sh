@@ -58,6 +58,7 @@ function debs() {
         apt-get install -y cmake
     fi
     apt-get install -y \
+        git \
         build-essential \
         libtool \
         m4 \
@@ -105,6 +106,7 @@ function rpms() {
     esac
 
     ${yumdnf} install -y \
+        git \
         ${cmake} \
         gcc-c++ \
         ninja-build \
