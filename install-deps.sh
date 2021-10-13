@@ -63,14 +63,15 @@ function debs() {
         libtool \
         m4 \
         ninja-build \
-        meson \
-        python3-pyelftools \
+        python3 python3-pip \
         automake \
         pkg-config \
         xfslibs-dev \
         systemtap-sdt-dev \
         valgrind \
         ragel ${extra}
+
+    python3 -m pip install meson pyelftools
 }
 
 function rpms() {
@@ -112,8 +113,7 @@ function rpms() {
         ${cmake} \
         gcc-c++ \
         ninja-build \
-        meson \
-        python3-pyelftools \
+        python3 python3-pip \
         m4 \
         libtool \
         make \
@@ -125,6 +125,8 @@ function rpms() {
         libatomic \
         valgrind-devel \
         doxygen ${extra}
+
+    python3 -m pip install meson pyelftools
 
     if [ -n "$dts_ver" ]; then
       if test -t 1; then
