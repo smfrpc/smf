@@ -22,6 +22,12 @@ option(SMF_ENABLE_BENCHMARK_TESTS "control if benchmarks are bulit and ran" OFF)
 option(SMF_INSTALL "Enable installation of smf" ON)
 option(SMF_ENABLE_TESTS "Useful for disabling all tests" ON)
 option(SMF_MANAGE_DEPS "Use smf's reproducible build" OFF)
+option(SMF_ENABLE_HWLOC "Enable HWLOC support" OFF)
+option(SMF_ENABLE_DPDK "Enable DPDK support" OFF)
+
+if(NOT SMF_DPDK_MACHINE)
+  set(SMF_DPDK_MACHINE "native")
+endif()
 
 if(SMF_MANAGE_DEPS)
   # don't export() the contents to registry
@@ -52,6 +58,13 @@ if(SMF_MANAGE_DEPS)
   endif()
   # wire up dependency search paths.
   list(APPEND CMAKE_PREFIX_PATH "${SMF_DEPS_INSTALL_DIR}")
+endif()
+
+if(SMF_ENABLE_DPDK)
+  # this way we don't have to copy Finddpdk.cmake from seastar
+  # but it will only work with SMF_MANAGE_DEPS enabled
+  list(APPEND CMAKE_MODULE_PATH ${SMF_DEPS_INSTALL_DIR}/lib/cmake/Seastar)
+  find_package(dpdk REQUIRED)
 endif()
 
 find_package(Seastar REQUIRED)

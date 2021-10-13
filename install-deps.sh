@@ -63,6 +63,7 @@ function debs() {
         libtool \
         m4 \
         ninja-build \
+        meson \
         automake \
         pkg-config \
         xfslibs-dev \
@@ -110,6 +111,7 @@ function rpms() {
         ${cmake} \
         gcc-c++ \
         ninja-build \
+        meson \
         m4 \
         libtool \
         make \
