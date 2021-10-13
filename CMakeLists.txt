@@ -61,9 +61,6 @@ if(SMF_MANAGE_DEPS)
 endif()
 
 if(SMF_ENABLE_DPDK)
-  # this way we don't have to copy Finddpdk.cmake from seastar
-  # but it will only work with SMF_MANAGE_DEPS enabled
-  list(APPEND CMAKE_MODULE_PATH ${SMF_DEPS_INSTALL_DIR}/lib/cmake/Seastar)
   find_package(dpdk REQUIRED)
 endif()
 
