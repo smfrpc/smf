@@ -298,7 +298,6 @@ ExternalProject_Add(seastar
     -DSeastar_TESTING=OFF
     -DSeastar_CXX_FLAGS=-Wno-error
     -DSeastar_LD_FLAGS=-pthread
-    -DSeastar_STD_OPTIONAL_VARIANT_STRINGVIEW=ON
     -DSeastar_API_LEVEL=6
     -DSeastar_CXX_DIALECT=c++17
     -DSeastar_UNUSED_RESULT_ERROR=ON
