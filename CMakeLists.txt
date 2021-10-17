@@ -125,6 +125,7 @@ if(SMF_INSTALL)
     ${CMAKE_CURRENT_BINARY_DIR}/smf-config.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/smfc_generator.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindZstd.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Finddpdk.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindxxHash.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindHdrhistogram.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindFlatbuffers.cmake
