@@ -4,7 +4,7 @@
 #include <bitset>
 #include <iostream>
 
-#include <smf/rpc_generated.h>
+#include "smf/rpc_generated.h"
 
 namespace std {
 inline ostream &
