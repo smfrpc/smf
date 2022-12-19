@@ -7,7 +7,7 @@
 #include <utility>
 
 #include <smf/log.h>
-#include <smf/rpc_generated.h>
+#include "smf/rpc_generated.h"
 
 #include "smf/rpc_header_ostream.h"
 #include "smf/rpc_header_utils.h"
